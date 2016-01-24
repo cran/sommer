@@ -1,0 +1,16 @@
+Package: sommer
+Type: Package
+Title: Solving Mixed Model Equations in R
+Version: 1.1
+Date: 2016-01-06
+Author: Giovanny Covarrubias-Pazaran
+Maintainer: Giovanny Covarrubias-Pazaran <covarrubiasp@wisc.edu>
+Description: General mixed model equations solver, allowing the specification of variance covariance matrices of random effects and residual structures.
+Depends: R (>= 2.10), Matrix (>= 1.1.1), methods, stats
+License: GPL-3
+URL: http://www.wisc.edu
+Packaged: 2016-01-24 18:27:40 UTC; cova_ruber
+Imports: parallel, plotrix, matrixcalc, RColorBrewer
+NeedsCompilation: no
+Repository: CRAN
+Date/Publication: 2016-01-24 21:22:39

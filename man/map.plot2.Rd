@@ -1,0 +1,55 @@
+\name{map.plot2}
+\alias{map.plot2}
+\title{Creating a genetic map}
+\description{
+This function was designed to create a genetic map using a data frame indicating the Linkage Group (LG), Position and marker names (Locus). 
+}
+\usage{
+map.plot2(data, trait = NULL, trait.scale = "same", 
+        col.chr = NULL, col.trait = NULL, type = "hist", cex = 0.4,
+        lwd = 1, cex.axis = 0.4, cex.trait=0.8, jump = 5)
+}
+%- maybe also 'usage' for other objects documented here.
+\arguments{
+  \item{data}{the data frame with 3 columns with names; Locus, LG and Position}
+  \item{trait}{if something wants to be plotted next the linkage groups the user must indicate the name of the column containing the values to be ploted, i.e. p-values, LOD scores, X2 segregation distortion values, etc.}
+  \item{trait.scale}{a character value indicating if the scale should be the same or different for each linkage group. The default value id "same".}
+  \item{col.chr}{a vector with color names for the chromosomes}
+  \item{col.trait}{a vector with color names for the trait plotted next to the LG's}
+  \item{type}{a character value indicating if the trait should be plotted as scatterplot `scatter`, histogram `hist`, line `line` next to the chromosomes.}
+  \item{cex}{the cex value determining the value of the position number in the LGs}
+  \item{lwd}{the width of the lines in the plot}
+  \item{cex.axis}{the cex value for sizing the labels of LGs and traits plotted}
+  \item{cex.trait}{the cex value for sizing the dots or lines of the trait plotted}
+  \item{jump}{a scalar value indicating how often should be drawn a number next to the LG indicating the position. The default is 5 which means every 5 cM a label will be drawn, i.e. 0,5,10,15,... cM.}
+}
+
+\value{
+If all parameters are correctly indicated the program will return:
+\describe{
+
+\item{$plot.data}{ a plot with the LGs and the information used to create a plot}
+
+}
+}
+\references{
+Kang et al. 2008. Efficient control of population structure in model organism association mapping. Genetics 178:1709-1723.
+}
+\author{
+Giovanny Covarrubias-Pazaran
+}
+\examples{
+#random population of 200 lines with 1000 markers
+M <- matrix(rep(0,200*1000),1000,200)
+for (i in 1:200) {
+  M[,i] <- ifelse(runif(1000)<0.5,-1,1)
+}
+colnames(M) <- 1:200
+set.seed(1234)
+geno <- data.frame(Locus=1:500,LG=sort(rep(c(1:5),100)),
+                   Position=rep(seq(1,100,1),5),
+                   X2=rnorm(500,10,4), check.names=FALSE)
+head(geno)
+map.plot2(geno, trait="X2")
+
+}
