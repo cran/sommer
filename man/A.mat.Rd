@@ -9,7 +9,7 @@ Calculates the realized additive relationship matrix. Is a wrapper of the A.mat 
 }
 \usage{
 A.mat(X,min.MAF=NULL,max.missing=NULL,impute.method="mean",tol=0.02,
-      n.core=1,shrink=FALSE,return.imputed=FALSE)
+      n.core=1,shrink=FALSE,return.imputed=FALSE, ploidy=2)
 }
 
 \arguments{
@@ -38,6 +38,9 @@ Set shrink=TRUE to use the shrinkage estimation procedure (see Details).
 \item{return.imputed}{
 When TRUE, the imputed marker matrix is returned.  
 }
+\item{ploidy}{
+The ploidy of the organism. The default is 2 which means diploid but higher ploidy levels are supported. 
+}
 }
 \details{
 At high marker density, the relationship matrix is estimated as \eqn{A=W W'/c}, where \eqn{W_{ik} = X_{ik} + 1 - 2 p_k} and \eqn{p_k} is the frequency of the 1 allele at marker k.  By using a normalization constant of \eqn{c = 2 \sum_k {p_k (1-p_k)}}, the mean of the diagonal elements is \eqn{1 + f} (Endelman and Jannink 2012).
@@ -61,7 +64,10 @@ If return.imputed = TRUE, the function returns a list containing
 }
 
 \references{
+
 Endelman, J.B., and J.-L. Jannink. 2012. Shrinkage estimation of the realized relationship matrix. G3:Genes, Genomes, Genetics. 2:1405-1413. doi: 10.1534/g3.112.004259
+
+Covarrubias-Pazaran G. 2016. Genomic prediction using the R package sommer. Genetics X:yyy-yyy.
 
 Poland, J., J. Endelman et al. 2012. Genomic selection in wheat breeding using genotyping-by-sequencing. Plant Genome 5:103-113. doi: 10.3835/plantgenome2012.06.0006
 }

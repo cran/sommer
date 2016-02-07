@@ -1,21 +1,28 @@
 AI <- function (y, X = NULL, ZETA = NULL, R = NULL, draw = TRUE, REML = TRUE, 
-                silent = FALSE, iters = 50) 
-{
+                silent = FALSE, iters = 50, constraint = TRUE, init = NULL, 
+                sherman = FALSE, che = TRUE, MTG2 = FALSE) {
+  y.or <- y
+  x.or <- X
   make.full <- function(X) {
     svd.X <- svd(X)
     r <- max(which(svd.X$d > 1e-08))
     return(as.matrix(svd.X$u[, 1:r]))
   }
-  if (is.list(ZETA)) {
-    if (is.list(ZETA[[1]])) {
-      ZETA = ZETA
+  if (MTG2) {
+    cat("MTG2 feature activated. Eigen decomposition of K will be performed")
+  }
+  if (che) {
+    if (is.list(ZETA)) {
+      if (is.list(ZETA[[1]])) {
+        ZETA = ZETA
+      }
+      else {
+        ZETA = list(ZETA)
+      }
     }
     else {
-      ZETA = list(ZETA)
+      cat("\nThe random effects need to be provided in a list format, please see examples")
     }
-  }
-  else {
-    cat("\nThe random effects need to be provided in a list format, please see examples")
   }
   if (is.null(X) & is.null(ZETA)) {
     tn = length(y)
@@ -44,58 +51,88 @@ AI <- function (y, X = NULL, ZETA = NULL, R = NULL, draw = TRUE, REML = TRUE,
     if (is.null(R)) {
       R <- diag(length(y))
     }
-    ZETA <- lapply(ZETA, function(x) {
-      if (length(x) == 1) {
-        provided <- names(x)
-        if (provided == "Z") {
-          y <- list(Z = x[[1]], K = diag(dim(x[[1]])[2]))
-        }
-        if (provided == "K") {
-          y <- list(Z = diag(length(y)), K = x[[1]])
+    if (che) {
+      ZETA <- lapply(ZETA, function(x) {
+        if (length(x) == 1) {
+          provided <- names(x)
+          if (provided == "Z") {
+            y <- list(Z = x[[1]], K = diag(dim(x[[1]])[2]))
+          }
+          if (provided == "K") {
+            y <- list(Z = diag(length(y)), K = x[[1]])
+          }
+          else {
+            stop()
+            cat("Names of matrices provided can only be 'Z' or 'K', the names you provided don't match the arguments required")
+          }
         }
         else {
-          stop()
-          cat("Names of matrices provided can only be 'Z' or 'K', the names you provided don't match the arguments required")
+          y <- x
         }
-      }
-      else {
-        y <- x
-      }
-      return(y)
-    })
+        return(y)
+      })
+    }
     x.or <- as.matrix(xm)
     zeta.or <- ZETA
     zeta.or <- lapply(zeta.or, function(x) {
       lapply(x, as.matrix)
     })
+    if (length(ZETA) == 1 & (dim(ZETA[[1]][[1]])[2] == dim(ZETA[[1]][[2]])[2])) {
+      misso <- which(is.na(y))
+      if (length(misso) > 0) {
+        y[misso] <- median(y, na.rm = TRUE)
+      }
+    }
     ZETA2 <- ZETA
     y2 <- y
     good <- which(!is.na(y))
-    ZETA <- lapply(ZETA2, function(x, good) {
-      x[[1]] <- x[[1]][good, ]
-      x[[2]] <- x[[2]]
-      return(x)
-    }, good = good)
+    if (length(ZETA) == 1 & MTG2 == TRUE & (dim(ZETA[[1]][[1]])[2] == 
+                                            dim(ZETA[[1]][[2]])[2])) {
+      ZETA <- lapply(ZETA2, function(x, good) {
+        if (dim(x[[1]])[2] == dim(x[[2]])[2]) {
+          x[[1]] <- x[[1]][good, good]
+          x[[2]] <- x[[2]][good, good]
+          return(x)
+        }
+        else {
+          x[[1]] <- x[[1]][good, ]
+          x[[2]] <- x[[2]]
+          return(x)
+        }
+      }, good = good)
+    }
+    else {
+      ZETA <- lapply(ZETA2, function(x, good) {
+        x[[1]] <- x[[1]][good, ]
+        x[[2]] <- x[[2]]
+        return(x)
+      }, good = good)
+    }
     y <- y[good]
     ZETA <- lapply(ZETA, function(x) {
       lapply(x, as.matrix)
     })
     xm <- as.matrix(xm[good, ])
+    txm <- t(xm)
     R <- R[good, good]
-    var.y <- var(y, na.rm = TRUE)
-    yv <- scale(y)
-    nvarcom <- length(ZETA) + 1
-    base.var <- var(yv, na.rm = TRUE)/nvarcom
-    var.com <- rep(base.var, nvarcom)
-    zvar <- which(unlist(lapply(ZETA, function(x) {
-      names(x)[1]
-    })) == "Z")
-    tn = length(yv)
-    logL2 = -1e+07
-    logL2.stored <- round(logL2, 0)
-    conv = 0
-    wi = 0
-    record <- matrix(var.com, ncol = 1)
+    if (length(ZETA) == 1 & MTG2 == TRUE & (dim(ZETA[[1]][[1]])[2] == 
+                                            dim(ZETA[[1]][[2]])[2])) {
+      EIGENS <- lapply(ZETA, function(x) {
+        eigen(x[[2]])
+      })
+      Us <- lapply(EIGENS, function(x) {
+        x$vectors
+      })
+      Usp <- as(do.call("adiag1", Us), Class = "sparseMatrix")
+      Ds <- lapply(EIGENS, function(x) {
+        diag(x$values)
+      })
+      Dsp <- as(do.call("adiag1", Ds), Class = "sparseMatrix")
+      ZETA <- lapply(as.list(1:length(ZETA)), function(x, 
+                                                       zz, kk) {
+        list(Z = zz[[x]][[1]], K = kk[[x]])
+      }, zz = ZETA, kk = Ds)
+    }
     Zs <- lapply(ZETA, function(x) {
       x[[1]]
     })
@@ -103,13 +140,71 @@ AI <- function (y, X = NULL, ZETA = NULL, R = NULL, draw = TRUE, REML = TRUE,
       x[[2]]
     })
     Zsp <- as(do.call("cbind", Zs), Class = "sparseMatrix")
+    tZsp <- t(Zsp)
+    Ksp <- as(do.call("adiag1", Gs), Class = "sparseMatrix")
     fail = FALSE
+    ZETA2 <- lapply(ZETA, function(x) {
+      y = list(Z = as(x[[1]], Class = "sparseMatrix"), 
+               K = as(x[[2]], Class = "sparseMatrix"))
+    })
+    zvar <- which(unlist(lapply(ZETA, function(x) {
+      names(x)[1]
+    })) == "Z")
+    om <- list()
+    for (k in zvar) {
+      om[[k]] <- tcrossprod(ZETA2[[k]][[1]], ZETA2[[k]][[1]] %*% 
+                              (ZETA2[[k]][[2]]))
+    }
+    om[[length(om) + 1]] <- as(diag(length(y)), Class = "sparseMatrix")
+    if (length(ZETA) == 1 & MTG2 == TRUE & (dim(ZETA[[1]][[1]])[2] == 
+                                            dim(ZETA[[1]][[2]])[2])) {
+      y <- as.vector(t(Usp) %*% as.matrix(y, ncol = 1))
+      xm <- t(Usp) %*% xm
+      txm <- t(xm)
+    }
+    var.y <- var(y, na.rm = TRUE)
+    yv <- scale(y)
+    nvarcom <- length(ZETA) + 1
+    base.var <- var(yv, na.rm = TRUE)/nvarcom
+    if (length(ZETA) == 1 & MTG2 == TRUE & (dim(ZETA[[1]][[1]])[2] == 
+                                            dim(ZETA[[1]][[2]])[2])) {
+      if (is.null(init)) {
+        var.com <- rep(0.1, nvarcom)
+      }
+      else {
+        var.com <- init/var.y
+      }
+    }
+    else {
+      if (is.null(init)) {
+        var.com <- rep(base.var, nvarcom)
+      }
+      else {
+        var.com <- init/var.y
+      }
+    }
+    tn = length(yv)
+    logL2 = -1e+07
+    logL2.stored <- round(logL2, 0)
+    conv = 0
+    wi = 0
+    record <- matrix(var.com * var.y, ncol = 1)
+    lege2 <- list()
+    for (k in 1:length(var.com)) {
+      if (k == length(var.com)) {
+        lege2[[k]] <- paste("Var(e):")
+      }
+      else {
+        lege2[[k]] <- paste("Var(u", k, "):", sep = "")
+      }
+    }
     if (!silent) {
       count <- 0
       tot <- 15
       pb <- txtProgressBar(style = 3)
       setTxtProgressBar(pb, 0)
     }
+    ups <- numeric()
     while (conv == 0) {
       wi = wi + 1
       if (!silent) {
@@ -124,31 +219,36 @@ AI <- function (y, X = NULL, ZETA = NULL, R = NULL, draw = TRUE, REML = TRUE,
       Gsp <- as(do.call("adiag1", Gspo), Class = "sparseMatrix")
       Rsp <- as(R * as.numeric(var.com[length(var.com)]), 
                 Class = "sparseMatrix")
-      vm <- Zsp %*% Gsp %*% t(Zsp) + Rsp
-      vmi <- solve(vm)
-      ZETA2 <- lapply(ZETA, function(x) {
-        y = list(Z = as(x[[1]], Class = "sparseMatrix"), 
-                 K = as(x[[2]], Class = "sparseMatrix"))
-      })
-      om <- list()
-      for (k in zvar) {
-        om[[k]] <- tcrossprod(ZETA2[[k]][[1]], ZETA2[[k]][[1]] %*% 
-                                (ZETA2[[k]][[2]]))
+      varo <- NULL
+      Gspo <- NULL
+      if (sherman) {
+        Rinv = solve(Rsp, sparse = TRUE, tol = 1e-19)
+        Ginv = solve(Gsp, sparse = TRUE, tol = 1e-19)
+        ZRZG = solve(as(tZsp %*% Rinv %*% Zsp + Ginv, 
+                        Class = "sparseMatrix"), sparse = TRUE, tol = 1e-19)
+        vm <- Zsp %*% (Gsp %*% tZsp) + Rsp
+        vmi = Rinv - (Rinv %*% Zsp %*% ZRZG %*% t(Zsp) %*% 
+                        Rinv)
       }
-      om[[length(om) + 1]] <- as(diag(length(y)), Class = "sparseMatrix")
-      xvx = t(xm) %*% vmi %*% xm
-      xvxi = solve(xvx)
-      s1 = vmi %*% xm
-      s2 = xvxi %*% t(xm) %*% vmi
-      pm = vmi - s1 %*% s2
-      if (REML == TRUE) {
+      else {
+        vm <- Zsp %*% crossprod(Gsp, tZsp) + Rsp
+        vmi <- solve(vm, sparse = TRUE, tol = 1e-19)
+      }
+      vmi.xm <- vmi %*% xm
+      xvx = txm %*% vmi.xm
+      xvxi = solve(xvx, sparse = TRUE, tol = 1e-19)
+      s2 = xvxi %*% txm %*% vmi
+      pm = vmi - crossprod(t(vmi.xm), s2)
+      vmi = NULL
+      if (REML) {
         ddv <- determinant(vm, logarithm = TRUE)$modulus[[1]]
         if (is.infinite(ddv)) {
           stop("Infinite values found in the determinant, please make sure your variance-covariance matrices K's, are scaled matrices as regularly should be.")
         }
         else {
-          logL = as.numeric(-0.5 * ((ddv) + log(det(xvx)) + 
-                                      t(yv) %*% pm %*% yv))
+          logL = as.numeric(-0.5 * ((ddv) + determinant(xvx, 
+                                                        logarithm = TRUE)$modulus[[1]] + t(yv) %*% 
+                                      (pm %*% yv)))
         }
       }
       else {
@@ -158,7 +258,7 @@ AI <- function (y, X = NULL, ZETA = NULL, R = NULL, draw = TRUE, REML = TRUE,
         }
         else {
           logL = as.numeric(-0.5 * ((ddv) + t(yv) %*% 
-                                      pm %*% yv))
+                                      (pm %*% yv)))
         }
       }
       if (abs(logL - logL2) < 0.001 | wi == iters) {
@@ -202,6 +302,7 @@ AI <- function (y, X = NULL, ZETA = NULL, R = NULL, draw = TRUE, REML = TRUE,
         }
         up = aimi %*% dldv
         var.com <- as.matrix(var.com) + up
+        ups <- cbind(ups, var.com)
         fail <- which(var.com <= 0)
         if (length(fail) > 0) {
           var.com[fail] <- 0.001
@@ -211,15 +312,6 @@ AI <- function (y, X = NULL, ZETA = NULL, R = NULL, draw = TRUE, REML = TRUE,
           var.com[extreme] <- 0.002
         }
         record <- cbind(record, var.com * as.numeric(var.y))
-        lege2 <- list()
-        for (k in 1:length(var.com)) {
-          if (k == length(var.com)) {
-            lege2[[k]] <- paste("Var(e):")
-          }
-          else {
-            lege2[[k]] <- paste("Var(u", k, "):", sep = "")
-          }
-        }
         if (draw) {
           ylim <- max(unlist(record), na.rm = TRUE)
           my.palette <- RColorBrewer::brewer.pal(7, "Accent")
@@ -263,12 +355,29 @@ AI <- function (y, X = NULL, ZETA = NULL, R = NULL, draw = TRUE, REML = TRUE,
     else {
       var.com2 <- as.matrix(record[, dim(record)[2]])
     }
+    pushes <- apply(ups, 1, function(fg) {
+      length(which(fg < 0))/length(fg)
+    })
+    nnn <- length(which(pushes > 0.75))
+    if ((nnn >= 1 & nnn <= 4) & (nnn < (dim(var.com2)[1]) - 
+                                 1) & (fail == FALSE) & (constraint == TRUE)) {
+      cat("\nOne or more variance components close to zero.\nBoundary constraint applied\n")
+      zero <- which(pushes > 0.75)
+      nonzero <- (1:dim(var.com2)[1])[-zero]
+      boost <- AI2(y = y.or, X = x.or, ZETA = zeta.or[-zero], 
+                   R = NULL, REML = REML, draw = draw, silent = silent, 
+                   iters = 10, init = as.vector(var.com2)[-zero], 
+                   sherman = sherman)
+      var.com2[nonzero, ] <- boost
+      boost2 <- AI3(y = y.or, X = x.or, ZETA = zeta.or, 
+                    R = NULL, REML = REML, draw = draw, forced = nonzero, 
+                    silent = silent, iters = 15, init = as.vector(var.com2/var.y), 
+                    sherman = sherman)
+      var.com2[zero, ] <- boost2[zero, ]
+    }
   }
   AIC = (-2 * logL) + (2 * dim(xm)[2])
   BIC = (-2 * logL) + (log(length(y)) * dim(xm)[2])
-  zvar <- which(unlist(lapply(ZETA, function(x) {
-    names(x)[1]
-  })) == "Z")
   varo <- as.list(var.com2)
   Gspo <- lapply(as.list(c(1:length(ZETA))), function(x, K, 
                                                       v) {
@@ -277,17 +386,27 @@ AI <- function (y, X = NULL, ZETA = NULL, R = NULL, draw = TRUE, REML = TRUE,
   }, K = Gs, v = varo)
   Gsp <- as(do.call("adiag1", Gspo), Class = "sparseMatrix")
   Rsp <- as(R * as.numeric(var.com2[length(var.com2)]), Class = "sparseMatrix")
-  vm <- Zsp %*% Gsp %*% t(Zsp) + Rsp
-  Vinv <- solve(vm)
-  Vinv2 <- Vinv
-  beta <- solve(crossprod(xm, Vinv %*% xm)) %*% crossprod(xm, 
-                                                          Vinv %*% y)
-  var.beta <- solve(crossprod(xm, Vinv2 %*% xm))
-  Var.u <- list()
-  PEV.u <- list()
-  xvx = t(xm) %*% Vinv %*% xm
-  xvxi = solve(xvx)
-  pm = Vinv - Vinv %*% xm %*% xvxi %*% t(xm) %*% Vinv
+  varo = NULL
+  Gspo = NULL
+  if (sherman) {
+    Rinv = solve(Rsp, sparse = TRUE, tol = 1e-19)
+    Ginv = solve(Gsp, sparse = TRUE, tol = 1e-19)
+    ZRZG = solve(tZsp %*% Rinv %*% Zsp + Ginv, sparse = TRUE, 
+                 tol = 1e-19)
+    vm <- Zsp %*% (Gsp %*% tZsp) + Rsp
+    Vinv = Rinv - (Rinv %*% Zsp %*% ZRZG %*% t(Zsp) %*% Rinv)
+  }
+  else {
+    vm <- Zsp %*% crossprod(Gsp, tZsp) + Rsp
+    Vinv <- solve(vm, sparse = TRUE, tol = 1e-19)
+  }
+  xvx <- crossprod(xm, Vinv %*% xm)
+  xvxi <- solve(xvx)
+  beta <- xvxi %*% crossprod(xm, Vinv %*% y)
+  Var.u <- vector(mode = "list", length = length(zvar))
+  PEV.u <- Var.u
+  u <- Var.u
+  pm = Vinv - Vinv %*% xm %*% (xvxi %*% txm %*% (Vinv))
   ZETA3 <- lapply(ZETA, function(x) {
     y = list(Z = as(x[[1]], Class = "sparseMatrix"), K = as(x[[2]], 
                                                             Class = "sparseMatrix"))
@@ -298,34 +417,41 @@ AI <- function (y, X = NULL, ZETA = NULL, R = NULL, draw = TRUE, REML = TRUE,
     PEV.u[[h]] <- as.numeric(var.com2[h, 1]) * ZETA3[[h]][[2]] - 
       Var.u[[h]]
   }
-  u <- list()
-  for (k in zvar) {
-    ee <- (y - (xm %*% beta))
-    u[[k]] <- ((ZETA3[[k]][[2]] * as.numeric(var.com2[k, 
-                                                      1])) %*% t(ZETA3[[k]][[1]]) %*% Vinv %*% ee)
+  ee <- (y - (xm %*% beta))
+  if (length(ZETA) == 1 & MTG2 == TRUE & (dim(ZETA[[1]][[1]])[2] == 
+                                          dim(ZETA[[1]][[2]])[2])) {
+    for (k in zvar) {
+      u[[k]] <- solve(t(Us[[k]])) %*% (((ZETA3[[k]][[2]] * 
+                                           as.numeric(var.com2[k, 1])) %*% t(ZETA3[[k]][[1]]) %*% 
+                                          Vinv %*% ee))
+    }
+  }
+  else {
+    for (k in zvar) {
+      u[[k]] <- ((ZETA3[[k]][[2]] * as.numeric(var.com2[k, 
+                                                        1])) %*% t(ZETA3[[k]][[1]]) %*% Vinv %*% ee)
+    }
   }
   u <- u[zvar]
-  residuals2 <- (y - (xm %*% beta))
-  fitted.y <- x.or %*% beta
   fitted.u <- 0
   for (h in 1:length(zeta.or)) {
-    fitted.y <- fitted.y + (zeta.or[[h]][[1]] %*% u[[h]])
     fitted.u <- fitted.u + (zeta.or[[h]][[1]] %*% u[[h]])
   }
+  fitted.y <- (x.or %*% beta) + fitted.u
   fitted.y.good <- fitted.y[good]
   residuals3 <- y - fitted.y[good]
   rownames(beta) <- colnames(xm)
   for (i in 1:length(ZETA)) {
     rownames(u[[i]]) <- colnames(ZETA[[i]][[1]])
   }
-  out1 <- var.com2
+  out1 <- as.matrix(var.com2)
   rownames(out1) <- unlist(lege2)
   colnames(out1) <- "Variance Components"
   res <- list(var.comp = out1, V.inv = Vinv, u.hat = u, Var.u.hat = Var.u, 
-              PEV.u.hat = PEV.u, beta.hat = beta, Var.beta.hat = var.beta, 
+              PEV.u.hat = PEV.u, beta.hat = beta, Var.beta.hat = xvxi, 
               LL = logL, AIC = AIC, BIC = BIC, X = xm, fitted.y = fitted.y, 
-              fitted.u = fitted.u, residuals = residuals2, cond.residuals = residuals3, 
-              fitted.y.good = fitted.y.good)
+              fitted.u = fitted.u, residuals = ee, cond.residuals = residuals3, 
+              fitted.y.good = fitted.y.good, Z = Zsp, K = Ksp)
   layout(matrix(1, 1, 1))
   return(res)
 }

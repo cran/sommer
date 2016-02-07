@@ -9,7 +9,7 @@ Calculates the realized dominance relationship matrix.
 }
 \usage{
 D.mat(X,min.MAF=NULL,max.missing=NULL,impute.method="mean",tol=0.02,
-      n.core=1,shrink=FALSE,return.imputed=FALSE)
+      n.core=1,shrink=FALSE,return.imputed=FALSE, ploidy=2)
 }
 
 \arguments{
@@ -38,6 +38,8 @@ Set shrink=TRUE to use the shrinkage estimation procedure (see Details).
 \item{return.imputed}{
 When TRUE, the imputed marker matrix is returned.  
 }
+\item{ploidy}{
+The ploidy of the organism. The default is 2 which means diploid but higher ploidy levels are supported.} 
 }
 \details{
 At high marker density, the relationship matrix is estimated as \eqn{D=W W'/c}, where \eqn{W_{ik} = X_{ik} + 1 - 2 p_k} and \eqn{p_k} is the frequency of the 1 allele at marker k.  By using a normalization constant of \eqn{c = 2 \sum_k {p_k (1-p_k)}}, the mean of the diagonal elements is \eqn{1 + f} (Endelman and Jannink 2012).

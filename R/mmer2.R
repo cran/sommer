@@ -1,9 +1,37 @@
-mmer2 <- function (fixed = NULL, random = NULL, G = NULL, R = NULL, method = "AI", 
-                   REML = TRUE, iters = 50, draw = FALSE, init = NULL, data = NULL, 
-                   family = gaussian, silent = FALSE) 
-{
+mmer2 <-function (fixed = NULL, random = NULL, G = NULL, R = NULL, method = "AI", 
+          REML = TRUE, iters = 50, draw = FALSE, init = NULL, data = NULL, 
+          family = gaussian, silent = FALSE, constraint = TRUE, sherman = FALSE, 
+          MTG2 = FALSE){
   yvar <- gsub(" ", "", as.character(fixed[2]))
   xvar <- gsub(" ", "", strsplit(as.character(fixed[3]), split = "[+]")[[1]])
+  if (!is.null(random)) {
+    zvar <- gsub(" ", "", strsplit(as.character(random[2]), 
+                                   split = "[+]")[[1]])
+    varsss <- c(xvar, zvar)
+  }
+  else {
+    varsss <- xvar
+  }
+  varsss <- varsss[which(varsss != "1")]
+  doto <- grep(":", varsss)
+  if (length(doto) > 0) {
+    varsss <- varsss[-doto]
+  }
+  good <- list()
+  for (i in 1:length(varsss)) {
+    xxx <- data[, varsss[i]]
+    good[[i]] <- which(!is.na(xxx))
+  }
+  if (length(varsss) == 1) {
+    keep <- as.vector(unlist(good))
+  }
+  else {
+    keep <- good[[1]]
+    for (j in 1:length(good)) {
+      keep <- intersect(keep, good[[j]])
+    }
+  }
+  data <- data[keep, ]
   if (xvar %in% "1") {
     X <- as.matrix(model.matrix(as.formula(paste("~ ", paste(c(xvar), 
                                                              collapse = "+"))), data = data))
@@ -13,8 +41,6 @@ mmer2 <- function (fixed = NULL, random = NULL, G = NULL, R = NULL, method = "AI
                                                                xvar), collapse = "+"))), data = data))
   }
   if (!is.null(random)) {
-    zvar <- gsub(" ", "", strsplit(as.character(random[2]), 
-                                   split = "[+]")[[1]])
     yvars <- data[, yvar]
     if (is.null(random)) {
       Z = NULL
@@ -43,7 +69,9 @@ mmer2 <- function (fixed = NULL, random = NULL, G = NULL, R = NULL, method = "AI
       }
       res <- mmer(y = yvars, X = X, Z = Z, R = R, method = method, 
                   REML = REML, iters = iters, draw = draw, init = init, 
-                  silent = silent)
+                  silent = silent, constraint = constraint, sherman = sherman, 
+                  MTG2 = MTG2)
+      rownames(res$var.comp) <- c(zvar, "Error")
     }
   }
   else {

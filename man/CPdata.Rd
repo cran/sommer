@@ -51,6 +51,7 @@ y.trn[ww] <- NA
 #ans.AD <- mmer(y=y.trn, Z=ETA.AD)
 #cor(ans.AD$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 ### greater accuracy !!!! 4 percent increment!!
+### we run 100 iterations, 4 percent increment in general
 ###===================================###
 ### ADDITIVE-DOMINANT-EPISTATIC MODEL ###
 ###===================================###

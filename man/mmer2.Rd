@@ -6,7 +6,8 @@ This function solves the mixed model equations proposed by Henderson (1975). It 
 }
 \usage{
 mmer2(fixed=NULL, random=NULL, G=NULL, R=NULL, method="AI", REML=TRUE, 
-      iters=50, draw=FALSE, init=NULL, data=NULL, family=gaussian, silent=FALSE)
+      iters=50, draw=FALSE, init=NULL, data=NULL, family=gaussian, 
+      silent=FALSE, constraint=TRUE, sherman=FALSE, MTG2=FALSE)
 }
 \arguments{
   \item{fixed}{a formula specifying the response variable and the fixed effects, i.e. Yield ~ Location}
@@ -20,7 +21,13 @@ mmer2(fixed=NULL, random=NULL, G=NULL, R=NULL, method="AI", REML=TRUE,
   \item{init}{an vector of initial values for the EM algorithm if this is the method selected. If not provided the program uses a starting values the variance(y)/#random.eff which is usually a good starting value.}
   \item{data}{a data frame containing the variables specified in the formulas for response, fixed, and random effects.}
     \item{family}{a family object to specify the distribution of the response variable. The program will only use the link function to transform the response. For details see \code{\link{family}} help page. The argument would look something like this; family=poisson(), or family=Gamma(), etc. For more sophisticated models please look at lme4 package from Douglas Bates. NOT IMPLEMENTED YET.}
-  \item{silent}{a TRUE/FALSE value indicating if the function should draw the progress bar and poems (see \code{\link{poe}} function) while working or should not be displayed. The default is FALSE, which means is not silent and will display the progress bar and a short poem to help the scientist (and me) remember that life is more than analyzing data.}
+  \item{silent}{a TRUE/FALSE value indicating if the function should draw the progress bar and poems (see \code{\link{poe}} function) while working or should not be displayed. The default is FALSE, which means is not silent and will display the progress bar and a short poem to help the scientist (and me haha) remember that life is more than analyzing data.}
+      \item{constraint}{a TRUE/FALSE value indicating if the program should use the boundary constraint when one or more variance component is close to the zero boundary. The default is TRUE but needs to be used carefully. It works ideally when few variance components are close to the boundary but when there are too many variance components close to zero we highly recommend setting this parameter to FALSE since is more likely to get the right value of the variance components in this way.}
+      \item{sherman}{a TRUE/FALSE value indicating if Sherman-Morrison-Woodbury formula (Seber, 2003, p. 467) should be used when estimating variance components in order to perform faster when a mixed model with no covariance structure using the average information algorithm is fitted. The default is FALSE since this software was designed for unreplicated data (altough can fit models with replicated data but slower than lme4).}
+      \item{MTG2}{a TRUE/FALSE value indicating if an eigen decomposition for the additive relationship matrix should be performed or not. This is based on Lee (2015). The limitations of this methos are:
+      1) can only be applied to one relationship matrix
+      2) The system needs to be squared and no missing data is allowed (then missing data is imputed with the median).
+   The default is FALSE to avoid the user get into trouble but experimented users can take advantage from this feature to fit big models, i.e. 5000 individuals in 555 seconds = 9 minutes in a MacBook 4GB RAM.}
     
 }
 \details{
@@ -80,7 +87,7 @@ In addition, the package contains a very nice function to plot genetic maps with
 
 \code{\link{score.calc}} is a function that can be used to calculate a -log10 p-value for a vector of BLUEs for marker effects.
 
-Other functions such as \code{\link{summary}}, \code{\link{fitted}}, \code{\link{ranef}}, \code{\link{anova}}, \code{\link{residuals}}, \code{\link{coef}} and \code{\link{plot}} applicable to typical linear models can also be applied to models fitted using this function which is a wrapper of \code{\link{mmer}}, the core of the sommer package.
+Other functions such as \code{\link{summary}}, \code{\link{fitted}}, \code{\link{randef}} (notice sommer uses randef not ranef), \code{\link{anova}}, \code{\link{residuals}}, \code{\link{coef}} and \code{\link{plot}} applicable to typical linear models can also be applied to models fitted using this function which is a wrapper of \code{\link{mmer}}, the core of the sommer package.
 
 }
 \value{

@@ -61,6 +61,8 @@ A platform for meta-analysis of rice crop data. \emph{Plant Physiology} \bold{13
 #ETA2 <- list( list(Z=X))
 #ans2 <- mmer(y=y, Z=ETA2, method="EMMA") # marker based
 ##========### compare and check that is the same result
+#plot(ans$u.hat, (X%*%ans2$u.hat), xaxt="n", yaxt="n", 
+#     ylab="Marker-based GBLUP", xlab="Pedigree-based GBLUP")
 #####################
 ## PREDICT PROGENY ##
 #####################
@@ -76,6 +78,7 @@ A platform for meta-analysis of rice crop data. \emph{Plant Physiology} \bold{13
 ##========### join everything
 #BV <- data.frame(crosses2,GCA1,GCA2); head(BV)
 #BV$BVcross <- apply(BV[,c(3:4)],1,mean); head(BV)
+#plot(BV$BVcross)
 
 }
 \keyword{datasets}

@@ -1,6 +1,5 @@
 EM <- function (y, X = NULL, ETA = NULL, R = NULL, init = NULL, iters = 50, 
-          REML = TRUE, draw = TRUE, silent = FALSE) 
-{
+          REML = TRUE, draw = TRUE, silent = FALSE){
   if (is.null(X) & is.null(ETA)) {
     tn = length(y)
     xm <- matrix(1, tn, 1)
@@ -19,6 +18,14 @@ EM <- function (y, X = NULL, ETA = NULL, R = NULL, init = NULL, iters = 50,
       stop
       cat("\nThe random effects need to be provided in a list format, please see examples")
     }
+    Zs <- lapply(ETA, function(x) {
+      x[[1]]
+    })
+    Gs <- lapply(ETA, function(x) {
+      x[[2]]
+    })
+    Zsp <- as(do.call("cbind", Zs), Class = "sparseMatrix")
+    Ksp <- as(do.call("adiag1", Gs), Class = "sparseMatrix")
     if (is.null(X) & !is.null(ETA)) {
       ETA0 <- list(X = matrix(rep(1, times = length(y)), 
                               ncol = 1), K = diag(dim(matrix(rep(1, times = length(y))))[2]))
@@ -87,8 +94,13 @@ EM <- function (y, X = NULL, ETA = NULL, R = NULL, init = NULL, iters = 50,
         x = var.y/nran
       })
     }
+    else {
+      var.com <- as.list(init)
+    }
     var.com.sto <- var.com
-    var.com[[length(var.com)]] = var.y
+    if (is.null(init)) {
+      var.com[[length(var.com)]] = var.y
+    }
     ETA <- lapply(ETA, function(x) {
       lapply(x, as.matrix)
     })
@@ -98,7 +110,12 @@ EM <- function (y, X = NULL, ETA = NULL, R = NULL, init = NULL, iters = 50,
       pb <- txtProgressBar(style = 3)
       setTxtProgressBar(pb, 0)
     }
-    varE = var(y, na.rm = TRUE)
+    if (is.null(init)) {
+      varE = var(y, na.rm = TRUE)
+    }
+    else {
+      varE = init[length(init)]
+    }
     conv = 0
     wi = 0
     change = 1
@@ -214,13 +231,15 @@ EM <- function (y, X = NULL, ETA = NULL, R = NULL, init = NULL, iters = 50,
       if (wi > 1) {
         change = abs(sum(unlist(var.com) - unlist(track)))
       }
-      if (change < 1e-05 | wi == iters) {
+      if (change < 1e-08 | wi == iters) {
         conv = 1
         if (!silent) {
           setTxtProgressBar(pb, (tot/tot))
         }
         if (wi == iters) {
-          cat("\nMaximum number of iterations reached with no convergence using the EM algorithm, look at the variance components change over iterations (plot) and be cautious using the variance components estimated if they don't look steady")
+          if (!silent) {
+            cat("\nMaximum number of iterations reached with no convergence using the EM algorithm, look at the variance components change over iterations (plot) and be cautious using the variance components estimated if they don't look steady")
+          }
         }
       }
     }
@@ -294,12 +313,12 @@ EM <- function (y, X = NULL, ETA = NULL, R = NULL, init = NULL, iters = 50,
     for (i in 2:length(ETA)) {
       rownames(u[[i - 1]]) <- colnames(ETA[[i]][[1]])
     }
-    output <- list(var.comp = out1, V.inv = Vinv, u.hat = u, 
-                   Var.u.hat = Var.u.hat, PEV.u.hat = PEV.u.hat, beta.hat = beta, 
-                   Var.beta.hat = Var.beta.hat, LL = logL, AIC = AIC, 
-                   BIC = BIC, X = ETA[[xvar]][[1]], fitted.y = fitted.y, 
+    output <- list(var.comp = (as.matrix(out1, ncol = 1)), 
+                   V.inv = Vinv, u.hat = u, Var.u.hat = Var.u.hat, PEV.u.hat = PEV.u.hat, 
+                   beta.hat = beta, Var.beta.hat = Var.beta.hat, LL = logL, 
+                   AIC = AIC, BIC = BIC, X = ETA[[xvar]][[1]], fitted.y = fitted.y, 
                    fitted.u = fitted.u, residuals = residuals2, cond.residuals = residuals3, 
-                   fitted.y.good = fitted.y.good)
+                   fitted.y.good = fitted.y.good, Z = Zsp, K = Ksp)
   }
   return(output)
 }

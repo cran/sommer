@@ -2,31 +2,44 @@
 \alias{fdr}
 \title{False Discovery Rate calculation}
 \description{
-This function calculates the FDR rate of 0.05 and is calculated using the qvalue package (Storey and Tibshirani 2003). The p-value corresponding to a q-value of 0.05 is determined by interpolation. The input is just a vector of p-values.
+This function calculates the false discovery rate (FDR) at a certain value specified by the user. Is a wrapper of the p.adjust function from the stats package. It has been adjusted to facilitate the user to find the FDR value for a vector of values in scale minus log10.
 }
 \usage{
-fdr(p, fdr.level = 0.05, type = "-log10")
+fdr(p, fdr.level = 0.05)
 }
 
 \arguments{
-  \item{p}{a vector of -log(p-values) or p-values}
+  \item{p}{a vector of minus log(p values)}
   \item{fdr.level}{the level of false discovery rate desired}
-  \item{type}{the type of p-values we are entering, either "-log10" or "raw" p-values}
 }
 \value{
 \describe{
 
-\item{$fdr.value}{ a scalar value indicating where the FDR line should be drawn for your raw p-values}
+\item{$p.ad}{ a vector of new minus log10(p values) adjusted for false discovery rate at a given level specified by the user.}
+\item{$fdr.value}{ a scalar value indicating where the FDR line should be drawn for your new adjusted minus log10(p values)}
+\item{$p.or}{ a vector with the initial minus log10(p values) provided by the user.}
+\item{$fdr.or}{ a scalar value indicating where the FDR line should be drawn for your original minus log10(p values), if the user prefers to plot the original values and wants to draw the FDR line in the original scale.}
+
 }
 }
 \references{
-Storey and Tibshirani. 2003. Statistical significance for genome-wide studies. PNAS 100:9440-9445
+Benjamini, Y., and Yekutieli, D. 2001. The control of the false discovery rate in multiple testing under dependency. Annals of Statistics 29, 1165-1188.
 }
 \author{
 Giovanny Covarrubias-Pazaran
 }
 
 \examples{
-pp <- rnorm(100,15,2) # -log10(p-values) obtained by GWAS
-fdr(pp)
+#### generate your mickey mouse -log10(p-values)
+set.seed(1253)
+pp <- abs(rnorm(500,0,3));pp[23:34] <- abs(rnorm(12,0,20))
+#### see how they look like
+plot(pp, col=transp("cadetblue"), pch=20, cex=1.5)
+#### adjust the values for FDR and see how they look like
+new.pp <- fdr(pp)
+plot(new.pp$p.ad, col=transp("cadetblue"), pch=20, cex=1.5)
+#### or you may want to plot your original values 
+#### with the FDR line instead
+plot(pp, col=transp("cadetblue"), pch=20, cex=1.5)
+abline(h=new.pp$fdr.or, lty=3, col="red", lwd=2)
 }

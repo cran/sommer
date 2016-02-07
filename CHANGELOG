@@ -1,0 +1,29 @@
+########################
+version 1.1 (2016-01-24)
+########################
+
+  Initial release
+  
+########################  
+version 1.2 (2016-03-01)
+########################
+
+  + 'fdr' function bug was fixed
+  + addition of the 'randef' function
+  + addition of the converter 'atcg1234' function 
+  + names in the blup's or random effects added
+  + zero-boundary constraint added to Average Information algorithm
+     - it finds which var.comps are pushed to zero constantly
+     - recalculates variance components removing such components 
+     - fix those values and calculates the most likely value for 
+       the problematic var.comp  
+  + now 'mmer2' can handle missing data in explanatory variables as lmer
+  + now summary of 'mmer2' has names in the variance components
+  + A.mat, D.mat and E.mat supported for polyploids
+  + mmer can run GWAS for polyploid organisms
+     - the models implemented are the same than Rosyara (2016):
+     - "additive","1-dom-alt","1-dom-ref","2-dom-alt","2-dom-ref"
+  + eigen decomposition to accelarate genomic prediction based on Lee (2015)
+    has been added in the argument 'MTG2' of the AI algorithm
+  
+

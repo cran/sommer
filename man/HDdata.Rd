@@ -22,10 +22,13 @@ Covarrubias-Pazaran G (2016) sommer: An R package for mixed model analysis educa
 \examples{
 data(HDdata)
 head(HDdata)
-### GCA matrix for half diallel using male and female columns
-#Z1 <- hdm(HDdata[,c(3:4)]) 
-#Z2 <- model.matrix(~as.factor(geno)-1, data=HDdata)# SCA matrix
-#y <- HDdata$sugar # response
+#### GCA matrix for half diallel using male and female columns
+#### use the 'hdm' function to create the half diallel matrix
+#Z1 <- hdm(HDdata[,c(3:4)])
+#### SCA matrix
+#Z2 <- model.matrix(~as.factor(geno)-1, data=HDdata)
+#### response variable
+#y <- HDdata$sugar
 #ETA <- list(list(Z=Z1), list(Z=Z2)) # Zu component
 #modHD <- mmer(y=y, Z=ETA, draw=FALSE, silent=TRUE)
 #summary(modHD)

@@ -6,8 +6,9 @@ This function is the core of the package and solves the mixed model equations pr
 }
 \usage{
 mmer(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
-     iters=50, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE, 
-     min.MAF = 0.05, silent=FALSE, family=NULL)
+     iters=50, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE,
+     models="additive", ploidy=2, min.MAF = 0.05, silent=FALSE, 
+     family=NULL, constraint=TRUE, sherman=FALSE, MTG2=FALSE)
 }
 \arguments{
   \item{y}{a numeric vector for the response variable}
@@ -48,9 +49,17 @@ mmer(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE,
   \item{init}{an vector of initial values for the EM algorithm if this is the method selected. If not provided the program uses a starting values the variance(y)/#random.eff which is usually a good starting value.}
   \item{n.PC}{Number of principal components to include as fixed effects. Default is 0 (equals K model).}
   \item{P3D}{When P3D=TRUE, variance components are estimated by REML only once, without any markers in the model. When P3D=FALSE, variance components are estimated by REML for each marker separately. The default is the first case.}
+    \item{models}{The model to be used in GWAS. The default is the additive model which applies for diploids and polyploids but the model can be a vector with all possible models, i.e. "additive","1-dom-alt","1-dom-ref","2-dom-alt","2-dom-ref" models are supported for polyploids based on Rosyara (2016).}
+      \item{ploidy}{A numeric value indicating the ploidy level of the organism. The default is 2 which means diploid but higher ploidy levels are supported.}
   \item{min.MAF}{a scalar value between 0-1 indicating what is theminor allele frequency to be allowed for a marker during a GWAS analysis when providing the matrix W of markers. In general is known that results for markers with alleles with MAF < 0.05 are not reliable unless sample size is big enough.}
   \item{silent}{a TRUE/FALSE value indicating if the function should draw the progress bar and poems (see \code{\link{poe}} function) while working or should not be displayed. The default is FALSE, which means is not silent and will display the progress bar and a short poem to help the scientist (and me haha) remember that life is more than analyzing data.}
   \item{family}{a family object to specify the distribution of the response variable. The program will only use the link function to transform the response. For details see \code{\link{family}} help page. The argument would look something like this; family=poisson(), or family=Gamma(), etc. For more sophisticated models please look at lme4 package from Douglas Bates. NOT IMPLEMENTED YET.}
+      \item{constraint}{a TRUE/FALSE value indicating if the program should use the boundary constraint when one or more variance component is close to the zero boundary. The default is TRUE but needs to be used carefully. It works ideally when few variance components are close to the boundary but when there are too many variance components close to zero we highly recommend setting this parameter to FALSE since is more likely to get the right value of the variance components in this way.}
+      \item{sherman}{a TRUE/FALSE value indicating if Sherman-Morrison-Woodbury formula (Seber, 2003, p. 467) should be used when estimating variance components in order to perform faster when a mixed model with no covariance structure using the average information algorithm is fitted. The default is FALSE since this software was designed for unreplicated data (altough can fit models with replicated data but slower than lme4).}
+      \item{MTG2}{a TRUE/FALSE value indicating if an eigen decomposition for the additive relationship matrix should be performed or not. This is based on Lee (2015). The limitations of this methos are:
+      1) can only be applied to one relationship matrix
+      2) The system needs to be squared and no missing data is allowed (then missing data is imputed with the median).
+   The default is FALSE to avoid the user get into trouble but experimented users can take advantage from this feature to fit big models, i.e. 5000 individuals in 555 seconds = 9 minutes in a MacBook 4GB RAM.}
 
 }
 \details{
@@ -130,7 +139,7 @@ In addition, the package contains a very nice function to plot genetic maps with
 
 \code{\link{score.calc}} is a function that can be used to calculate a -log10 p-value for a vector of BLUEs for marker effects.
 
-Other functions such as \code{\link{summary}}, \code{\link{fitted}}, \code{\link{ranef}}, \code{\link{anova}}, \code{\link{residuals}}, \code{\link{coef}} and \code{\link{plot}} applicable to typical linear models can also be applied to models fitted using this function which is the core of the sommer package.
+Other functions such as \code{\link{summary}}, \code{\link{fitted}}, \code{\link{randef}} (notice sommer uses randef not ranef), \code{\link{anova}}, \code{\link{residuals}}, \code{\link{coef}} and \code{\link{plot}} applicable to typical linear models can also be applied to models fitted using this function which is the core of the sommer package.
 
 }
 \value{
@@ -241,7 +250,7 @@ ETA <- list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=S))
 # summary(ans)
 
 #############################
-## COMPARE WITH MCMCglmm ##
+##  COMPARE WITH MCMCglmm  ##
 #############################
 ##== the same model run in MCMCglmm:
 #library(MCMCglmm)
@@ -256,6 +265,16 @@ ETA <- list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=S))
 ## for effects of GCA1, GCA2, SCA
 
 #############################
+##  COMPARE WITH cpgen     ##
+#############################
+#Z_list = list(Z1,Z2,Z3)
+#G_list = list(solve(K1), solve(K2), solve(S))
+#fit <- clmm(y = y, Z = Z_list, ginverse=G_list, niter=15000, burnin=5000)
+### inspect results
+#str(fit)
+### notice that variance components were not estimated correctly!!
+
+#############################
 ## COMPARE WITH pedigreemm ##
 #############################
 # library(pedigreemm)
@@ -268,7 +287,7 @@ ETA <- list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=S))
 #ETA<- list(list(Z=Z1, K=K1),list(Z=Z2))
 #fm3 <- mmer(y=y, Z=ETA) # or using mmer2 would look:
 #fm3 <- mmer2(fixed=milk ~ 1, random = ~ id + herd, 
-#             + G=list(id=K1), data=milk, draw=FALSE)
+#             G=list(id=K1), data=milk, draw=FALSE)
 #summary(fm3)
 # Try pedigreemm but takes longer, is an extension of lme4
 #fm2 <- pedigreemm(milk ~ (1 | id) + (1 | herd),data = milk, pedigree = list(id= pedCowsR))

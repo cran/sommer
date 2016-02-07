@@ -129,6 +129,8 @@ If all parameters are correctly indicated the program will return a list with th
 \item{$beta.hat}{ a vector for BLUEs of fixed effects}
 \item{$Var.beta.hat}{ a vector with variances for BLUEs}
 \item{$X}{ incidence matrix for fixed effects}
+\item{$Z}{ incidence matrix for random effects, if not passed is assumed to be a diagonal matrix}
+\item{$K}{ the var-cov matrix for the random effect fitted in Z}
 
 }
 }

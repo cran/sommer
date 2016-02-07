@@ -5,7 +5,7 @@
 This function is used internally in the function \code{\link{mmer}} when ONLY ONE variance component other than the error needs to be estimated through the use of the efficient mixed model association (EMMA) algorithm.
 }
 \usage{
-EMMA(y, X=NULL, Z=NULL, K=NULL, REML=TRUE)
+EMMA(y, X=NULL, Z=NULL, K=NULL, REML=TRUE, silent=FALSE)
 }
 \arguments{
   \item{y}{a numeric vector for the response variable}
@@ -13,6 +13,7 @@ EMMA(y, X=NULL, Z=NULL, K=NULL, REML=TRUE)
   \item{Z}{an incidence matrix for the random effect fitted other than the error variance component.}
   \item{K}{a var-cov matrix for the random effect fitted in Z.}
   \item{REML}{a TRUE/FALSE value indicating if restricted maximum likelihood should be used instead of ML. The default is TRUE.}
+    \item{silent}{a TRUE/FALSE value indicating if the function should draw the progress bar or iterations performed while working or should not be displayed.}
 }
 \details{
 This algorithm is based on Kang et al. (2008), it is based on REML using the ridge regression parameter lambda as the ration of Var(e)/Var(u). This handles models of the form:

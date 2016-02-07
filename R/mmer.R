@@ -1,7 +1,8 @@
 mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI", 
           REML = TRUE, iters = 50, draw = FALSE, init = NULL, n.PC = 0, 
-          P3D = TRUE, min.MAF = 0.05, silent = FALSE, family = NULL) 
-{
+          P3D = TRUE, models = "additive", ploidy = 2, min.MAF = 0.05, 
+          silent = FALSE, family = NULL, constraint = TRUE, sherman = FALSE, 
+          MTG2 = FALSE){
   make.full <- function(X) {
     svd.X <- svd(X)
     r <- max(which(svd.X$d > 1e-08))
@@ -15,7 +16,6 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
         if (length(provided2) == 1) {
           if (provided2 == "K") {
             zz <- diag(length(y))
-            colnames(zz) <- NULL
             Z[[s]] <- list(Z = zz, K = Z[[s]][[1]])
           }
           if (provided2 == "Z") {
@@ -82,14 +82,14 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
     z = list(Z = im, K = x[[2]])
     return(z)
   })
-  if (!silent) {
-    poe(sample(1:9, 1))
-  }
   if (is.list(Z)) {
     if (!is.null(Z) & !is.null(W)) {
       misso <- which(is.na(y))
       if (length(misso) > 0) {
         y[misso] <- mean(y, na.rm = TRUE)
+      }
+      if (is.null(colnames(W))) {
+        colnames(W) <- paste("M", 1:dim(W)[2], sep = "-")
       }
       W <- apply(W, 2, function(x) {
         vv <- which(is.na(x))
@@ -143,7 +143,9 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
       }
       if (method == "AI") {
         res <- AI(y = y, X = X, ZETA = Z, R = R, REML = REML, 
-                  draw = draw, silent = silent, iters = iters)
+                  draw = draw, silent = silent, iters = iters, 
+                  constraint = constraint, init = init, sherman = sherman, 
+                  che = FALSE, MTG2 = MTG2)
       }
       if (n.PC > 0) {
         X2 <- X
@@ -153,15 +155,31 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
       }
       min.MAF = min.MAF
       n <- length(y)
-      cat("\nPerforming GWAS\n")
-      step2 <- score.calc(M = W, y = y, Hinv = res$V.inv, 
-                          min.MAF = min.MAF, X2 = X2, method = method, 
-                          P3D = P3D, ZO = Z, iters = iters, REML = REML, 
-                          draw = draw)
-      res$W.scores <- step2
+      cat("\nPerforming GWAS")
+      max.geno.freq = 1 - min.MAF
+      W.scores <- list(NA)
+      if (length(models) > 2) {
+        layout(matrix(1:4, 2, 2))
+      }
+      else {
+        layout(matrix(1:length(models), 1, length(models)))
+      }
+      for (u in 1:length(models)) {
+        model <- models[u]
+        cat(paste("\nRunning", model, "model"))
+        ZO <- diag(dim(W)[1])
+        step2 <- score.calc(marks = colnames(W), y = y, 
+                            Z = ZO, X = X2, K = res$K, M = W, Hinv = res$V.inv, 
+                            ploidy = ploidy, model = model, min.MAF = min.MAF, 
+                            max.geno.freq = max.geno.freq)
+        W.scores[[u]] <- step2$score
+        plot(step2$score, col = transp("cadetblue", 0.6), 
+             pch = 20, xlab = "Marker index", ylab = "-log10(p)", 
+             main = paste(model, "model"), bty = "n", cex = 1.5)
+      }
+      names(W.scores) <- models
+      res$W.scores <- W.scores
       res$method <- method
-      plot(res$W.scores, col = transp(2, 0.6), pch = 20, 
-           xlab = "Marker index", ylab = "-log10(p)")
     }
   }
   if (is.list(Z)) {
@@ -195,7 +213,9 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
       }
       if (method == "AI") {
         res <- AI(y = y, X = X, ZETA = Z, R = R, REML = REML, 
-                  draw = draw, silent = silent, iters = iters)
+                  draw = draw, silent = silent, iters = iters, 
+                  constraint = constraint, init = init, sherman = sherman, 
+                  che = FALSE, MTG2 = MTG2)
       }
       res$method <- method
       res$maxim <- REML
@@ -213,9 +233,6 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
 }
 
 
-#### =========== ####
-## SUMMARY FUNCTION #
-#### =========== ####
 "summary.mmer" <- function(object, ...) {
   digits = max(3, getOption("digits") - 3)
   groupss <- unlist(lapply(object$u.hat, function(y){dim(y)[1]}))
@@ -237,7 +254,7 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
   w <- data.frame(VarianceComp = matrix(c(object$var.comp), ncol = 1))
   
   if(object$method == "EM"){
-    row.names(w) <- names(object$var.comp)
+    row.names(w) <- rownames(object$var.comp)
   }
   if(object$method == "AI" | object$method == "EMMA"){
     row.names(w) <- rownames(object$var.comp)
@@ -272,6 +289,7 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
   cat("\nInformation contained in this fitted model: \n* Variance components\n* Residuals and conditional residuals\n* BLUEs and BLUPs\n* Inverse phenotypic variance(V)\n* Variance-covariance matrix for fixed effects\n* Variance-covariance matrix for random effects\n* Predicted error variance (PEV)\n* LogLikelihood\n* AIC and BIC\n* Fitted values\nUse the 'str' function to access such information\n")
   cat("\n=======================================================")
   cat("\nLinear mixed model fit by restricted maximum likelihood\n")
+  cat("********************  sommer 1.2  *********************\n")
   cat("=======================================================")
   cat("\nMethod:")
   print(x$method)
@@ -309,9 +327,6 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
   cat("\nUse the 'str' function to have access to all information\n\n")
 }
 
-#### =========== ######
-## RESIDUALS FUNCTION #
-#### =========== ######
 "residuals.mmer" <- function(object, type="conditional", ...) {
   digits = max(3, getOption("digits") - 3)
   if(type=="conditional"){
@@ -326,22 +341,14 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
   print((x))
 }
 
-#### =========== ######
-## RANEF FUNCTION #
-#### =========== ######
-"ranef.mmer" <- function(object, ...) {
+
+
+"randef" <- function(object) {
   digits = max(3, getOption("digits") - 3)
   output <- object$u.hat
   return(output)
 }
 
-"print.ranef.mmer"<- function(x, digits = max(3, getOption("digits") - 3), ...) {
-  print((x))
-}
-
-#### =========== ######
-## FIXEF FUNCTION #
-#### =========== ######
 "fixef.mmer" <- function(object, ...) {
   digits = max(3, getOption("digits") - 3)
   output <- object$beta.hat
@@ -352,9 +359,7 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
   print((x))
 }
 
-#### =========== ####
-## FITTED FUNCTION ##
-#### =========== ####
+
 "fitted.mmer" <- function(object, type="complete", ...) {
   #type="complete" 
   digits = max(3, getOption("digits") - 3)
@@ -369,9 +374,7 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
   print((x))
 } 
 
-#### =========== ####
-## COEF FUNCTION ####
-#### =========== ####
+
 "coef.mmer" <- function(object, ...){
   object$beta.hat
 }
@@ -380,9 +383,7 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
   print((x))
 } 
 
-#### =========== ####
-## ANOVA FUNCTION ###
-#### =========== ####
+
 anova.mmer <- function(object, object2=NULL, ...) {
   signifo <- function(x){
     if(x >= 0 & x < 0.001){y="***"}
@@ -432,9 +433,7 @@ anova.mmer <- function(object, object2=NULL, ...) {
   }
 }
 
-#### =========== ####
-## PLOTING FUNCTION #
-#### =========== ####
+
 plot.mmer <- function(x, ...) {
   digits = max(3, getOption("digits") - 3)
   transp <- function (col, alpha = 0.5){
@@ -450,4 +449,29 @@ plot.mmer <- function(x, ...) {
   plot(diag(hat), scale(x$cond.residuals), pch=20, col=transp("springgreen3"), ylab="Std Residuals", xlab="Leverage", main="Residual vs Leverage", bty="n", ...); grid()
   #####################
   layout(matrix(1,1,1))
+}
+
+
+
+#this function is executed once the library is loaded
+.onAttach = function(library, pkg)
+{
+  Rv = R.Version()
+  if(!exists("getRversion", baseenv()) || (getRversion() < "2.1"))
+    stop("This package requires R 2.1 or later")
+  assign(".sommer.home", file.path(library, pkg),
+         pos=match("package:sommer", search()))
+  sommer.version = "1.2 (2016-03-01)"
+  assign(".sommer.version", sommer.version, pos=match("package:sommer", search()))
+  if(interactive())
+  {
+    packageStartupMessage(paste("## ========================================================= ## "),appendLF=TRUE)
+    packageStartupMessage(paste("# Solving Mixed Model Equations in R (sommer) ", sommer.version, ". ",sep=""),appendLF=TRUE)
+    packageStartupMessage(paste("# Mixed models allowing covariance structures in random effects"),appendLF=TRUE)
+    packageStartupMessage("# Author: Giovanny Covarrubias-Pazaran",appendLF=TRUE)
+    packageStartupMessage("# Supported by the Council of Science and Technology (CONACYT)", appendLF=TRUE)
+    packageStartupMessage("# Type 'help(sommer)' for summary information",appendLF=TRUE)
+    packageStartupMessage(paste("## ========================================================= ## "),appendLF=TRUE)
+  }
+  invisible()
 }

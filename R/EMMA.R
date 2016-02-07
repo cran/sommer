@@ -1,5 +1,10 @@
-EMMA <- function (y, X = NULL, Z = NULL, K = NULL, REML = TRUE) 
-{
+EMMA <- function (y, X = NULL, Z = NULL, K = NULL, REML = TRUE, silent = FALSE){
+  if (!silent) {
+    count <- 0
+    tot <- 1
+    pb <- txtProgressBar(style = 3)
+    setTxtProgressBar(pb, 0)
+  }
   y.or <- y
   if (is.null(X)) {
     x.or <- matrix(rep(1, length(y)), ncol = 1)
@@ -127,6 +132,10 @@ EMMA <- function (y, X = NULL, Z = NULL, K = NULL, REML = TRUE)
   residuals2 <- y.or[good] - fitted.y[good]
   rownames(u) <- colnames(Z)
   rownames(beta) <- colnames(X)
+  if (!silent) {
+    count <- count + 1
+    setTxtProgressBar(pb, (tot/tot))
+  }
   return(list(var.comp = out, beta.hat = beta, u.hat = u, Var.u.hat = (Var.u), 
               Var.beta.hat = var.beta, PEV.u.hat = (PEV.u), LL = ll, 
               AIC = AIC, BIC = BIC, V.inv = H.hat.inv, X = X, Z = Z, 

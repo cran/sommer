@@ -9,7 +9,7 @@ Calculates the realized epistatic relationship matrix of second order (additive 
 }
 \usage{
 E.mat(X,min.MAF=NULL,max.missing=NULL,impute.method="mean",tol=0.02,
-      n.core=1,shrink=FALSE,return.imputed=FALSE, type="A#A")
+      n.core=1,shrink=FALSE,return.imputed=FALSE, type="A#A", ploidy=2)
 }
 
 \arguments{
@@ -41,6 +41,8 @@ When TRUE, the imputed marker matrix is returned.
 \item{type}{
 An argument specifying the type of epistatic relationship matrix desired. The default is the second order epistasis (additive x additive) type="A#A". Other options are additive x dominant (type="A#D"), or dominant by dominant (type="D#D").  
 }
+\item{ploidy}{
+The ploidy of the organism. The default is 2 which means diploid but higher ploidy levels are supported.} 
 }
 \details{
 it is computed as the Hadamard product of the epistatic relationship matrix (A); E=A#A.
