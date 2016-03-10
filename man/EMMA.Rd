@@ -100,18 +100,21 @@ Kang et al. 2008. Efficient control of population structure in model organism as
 
 }
 \examples{
-############################################
-############################################
-# breeding values with 1 variance component
-# using EMMA algorithm
-############################################
-############################################
-#random population of 200 lines with 1000 markers
+####=========================================####
+#### breeding values with 1 variance component
+#### using EMMA algorithm
+####=========================================####
+
+####=========================================####
+#### random population of 200 lines with 1000 markers
+####=========================================####
 M <- matrix(rep(0,200*1000),200,1000)
 for (i in 1:200) {
   M[i,] <- ifelse(runif(1000)<0.5,-1,1)
 }
-#random phenotypes
+####=========================================####
+#### Simulate random phenotypes
+####=========================================####
 u <- rnorm(1000)
 g <- as.vector(crossprod(t(M),u))
 h2 <- 0.5  #heritability

@@ -16,7 +16,7 @@ map.plot2(data, trait = NULL, trait.scale = "same",
   \item{trait.scale}{a character value indicating if the scale should be the same or different for each linkage group. The default value id "same".}
   \item{col.chr}{a vector with color names for the chromosomes}
   \item{col.trait}{a vector with color names for the trait plotted next to the LG's}
-  \item{type}{a character value indicating if the trait should be plotted as scatterplot `scatter`, histogram `hist`, line `line` next to the chromosomes.}
+  \item{type}{a character value indicating if the trait should be plotted as scatterplot `dot`, histogram `hist`, line `line` next to the chromosomes.}
   \item{cex}{the cex value determining the value of the position number in the LGs}
   \item{lwd}{the width of the lines in the plot}
   \item{cex.axis}{the cex value for sizing the labels of LGs and traits plotted}
@@ -49,7 +49,12 @@ set.seed(1234)
 geno <- data.frame(Locus=1:500,LG=sort(rep(c(1:5),100)),
                    Position=rep(seq(1,100,1),5),
                    X2=rnorm(500,10,4), check.names=FALSE)
+## look at the data, 5LGs, 100 markers in each
+## X2 value for segregation distortion available
 head(geno)
-map.plot2(geno, trait="X2")
+tail(geno)
+map.plot2(geno, trait="X2", type="line")
+map.plot2(geno, trait="X2", type="hist")
+map.plot2(geno, trait="X2", type="dot")
 
 }

@@ -6,7 +6,8 @@ This function is used internally in the function \code{\link{mmer}} when MORE th
 }
 \usage{
 AI(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, 
-   iters=50, constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, MTG2=FALSE)
+   iters=50, constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, 
+   MTG2=FALSE, Fishers=FALSE)
 }
 \arguments{
   \item{y}{a numeric vector for the response variable}
@@ -25,6 +26,7 @@ AI(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
       1) can only be applied to one relationship matrix
       2) The system needs to be squared and no missing data is allowed (then missing data is imputed with the median).
    The default is FALSE to avoid the user get into trouble but experimented users can take advantage from this feature to fit big models, i.e. 5000 individuals in 555 seconds = 9 minutes in a MacBook 4GB RAM.}
+      \item{Fishers}{a TRUE/FALSE value indicating if the program should calculate at the final step and return the inverse of the Fishers Information Matrix.}
 
 }
 \details{
@@ -136,37 +138,49 @@ Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear mixed mode
 
 }
 \examples{
-###################################################
-###################################################
-# IMPORT DATA FOR  ESTIMATING 3 VARIANCE COMPONENTS
-###################################################
-###################################################
-# Import phenotypic data on inbred performance
+####=========================================####
+#### For CRAN time limitations most lines in the 
+#### examples are silenced with one '#' mark, 
+#### remove them and run the examples
+####=========================================####
+
+####=========================================####
+#### breeding values with 3 variance components
+####=========================================####
+
+####=========================================####
+## Import phenotypic data on inbred performance
 ## Full data
+####=========================================####
 data(cornHybrid)
 hybrid2 <- cornHybrid$hybrid # extract cross data
 A <- cornHybrid$K # extract the var-cov K
-############################################
-############################################
-# breeding values with 3 variance components
-############################################
-############################################
+
 y <- hybrid2$Yield
 X1 <- model.matrix(~ Location, data = hybrid2);dim(X1)
 Z1 <- model.matrix(~ GCA1 -1, data = hybrid2);dim(Z1)
 Z2 <- model.matrix(~ GCA2 -1, data = hybrid2);dim(Z2)
 Z3 <- model.matrix(~ SCA -1, data = hybrid2);dim(Z3)
 
+####=========================================####
+#### Realized IBS relationships for set of parents 1
+####=========================================####
 K1 <- A[levels(hybrid2$GCA1), levels(hybrid2$GCA1)]; dim(K1)     
-# Realized IBS relationships for set of parents 1
+####=========================================####
+#### Realized IBS relationships for set of parents 2
+####=========================================####
 K2 <- A[levels(hybrid2$GCA2), levels(hybrid2$GCA2)]; dim(K2)     
-# Realized IBS relationships for set of parents 2
+####=========================================####
+#### Realized IBS relationships for cross 
+#### (as the Kronecker product of K1 and K2)
+####=========================================####
 S <- kronecker(K1, K2) ; dim(S)   
-# Realized IBS relationships for cross (as the Kronecker product of K1 and K2)
 rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 
 ETA <- list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=S))
-# run the next line, it was ommited for CRAN time limitations
+####=========================================####
+#### run the next line, it was ommited for CRAN time limitations
+####=========================================####
 #ans <- AI(y=y, ZETA=ETA)
 #ans$var.comp
 }

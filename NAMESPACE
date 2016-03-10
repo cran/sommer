@@ -1,7 +1,7 @@
 #############
 ## EXPORTS
 #############
-export(adiag1, A.mat, AI, AI2, AI3, atcg1234, D.mat, design.score, E.mat, EM, EMMA, fdr, hdm, map.plot2, mmer, mmer2, poe, score.calc, transp)
+export(adiag1, A.mat, AI, AI2, AI3, atcg1234, bag, bathy.colors, D.mat, design.score, E.mat, EM, EMMA, fdr, hdm, jet.colors, map.plot2, mmer, mmer2, poe, score.calc, transp)
 
 export(summary.mmer, residuals.mmer, fitted.mmer, plot.mmer, anova.mmer, coef.mmer, randef)
 
@@ -27,11 +27,12 @@ S3method(plot, mmer)
              "par", "grid", "plot.new", "polygon")
   importFrom("utils", "combn", "setTxtProgressBar", "txtProgressBar")
   importFrom("RColorBrewer", "brewer.pal")
-  importFrom("matrixcalc", "matrix.trace")
+  importFrom("matrixcalc", "matrix.trace","is.diagonal.matrix")
   importFrom("plotrix","draw.arc")
 ## FULL IMPORTS
   import("methods")
   import("Matrix")
+  import("MASS")
   
 ### extra suggested by CRAN
   importFrom("grDevices", "col2rgb", "colorRampPalette", "gray.colors",
@@ -39,7 +40,7 @@ S3method(plot, mmer)
   importFrom("stats", "as.formula", "cov", "density", "gaussian", "glm",
              "lm", "median", "optimize", "pbeta", "pchisq", "predict",
              "printCoefmat", "qqnorm", "smooth.spline", "var", "rnorm", 
-             "model.matrix","na.omit", "p.adjust")
+             "model.matrix","na.omit", "p.adjust", "kmeans")
 
   
   

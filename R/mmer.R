@@ -1,8 +1,9 @@
 mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI", 
-          REML = TRUE, iters = 50, draw = FALSE, init = NULL, n.PC = 0, 
+          REML = TRUE, iters = 40, draw = FALSE, init = NULL, n.PC = 0, 
           P3D = TRUE, models = "additive", ploidy = 2, min.MAF = 0.05, 
           silent = FALSE, family = NULL, constraint = TRUE, sherman = FALSE, 
-          MTG2 = FALSE){
+          MTG2 = FALSE, Fishers = FALSE) 
+{
   make.full <- function(X) {
     svd.X <- svd(X)
     r <- max(which(svd.X$d > 1e-08))
@@ -84,6 +85,7 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
   })
   if (is.list(Z)) {
     if (!is.null(Z) & !is.null(W)) {
+      y[which(is.na(y))] <- mean(y, na.rm = TRUE)
       misso <- which(is.na(y))
       if (length(misso) > 0) {
         y[misso] <- mean(y, na.rm = TRUE)
@@ -142,10 +144,34 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
                   iters = iters, REML = REML, draw = draw, silent = silent)
       }
       if (method == "AI") {
-        res <- AI(y = y, X = X, ZETA = Z, R = R, REML = REML, 
-                  draw = draw, silent = silent, iters = iters, 
-                  constraint = constraint, init = init, sherman = sherman, 
-                  che = FALSE, MTG2 = MTG2)
+        if (length(Z) == 1) {
+          dias <- unlist(lapply(Z[[1]], function(x) {
+            if (dim(x)[1] == dim(x)[2]) {
+              y <- is.diagonal.matrix(x)
+            }
+            else {
+              y <- FALSE
+            }
+            return(y)
+          }))
+          if (length(which(dias)) == 2) {
+            res <- EMMA(y = y, X = X, Z = Z[[random]][[1]], 
+                        K = Z[[random]][[2]], REML = REML)
+          }
+          else {
+            res <- AI(y = y, X = X, ZETA = Z, R = R, 
+                      REML = REML, draw = draw, silent = silent, 
+                      iters = iters, constraint = constraint, 
+                      init = init, sherman = sherman, che = FALSE, 
+                      MTG2 = MTG2, Fishers = Fishers)
+          }
+        }
+        else {
+          res <- AI(y = y, X = X, ZETA = Z, R = R, REML = REML, 
+                    draw = draw, silent = silent, iters = iters, 
+                    constraint = constraint, init = init, sherman = sherman, 
+                    che = FALSE, MTG2 = MTG2, Fishers = Fishers)
+        }
       }
       if (n.PC > 0) {
         X2 <- X
@@ -172,13 +198,15 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
                             Z = ZO, X = X2, K = res$K, M = W, Hinv = res$V.inv, 
                             ploidy = ploidy, model = model, min.MAF = min.MAF, 
                             max.geno.freq = max.geno.freq)
-        W.scores[[u]] <- step2$score
+        W.scores[[u]] <- as.matrix(step2$score)
+        rownames(W.scores[[u]]) <- colnames(W)
         plot(step2$score, col = transp("cadetblue", 0.6), 
              pch = 20, xlab = "Marker index", ylab = "-log10(p)", 
              main = paste(model, "model"), bty = "n", cex = 1.5)
       }
       names(W.scores) <- models
       res$W.scores <- W.scores
+      res$W <- W
       res$method <- method
     }
   }
@@ -212,13 +240,38 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
                   iters = iters, REML = REML, draw = draw, silent = silent)
       }
       if (method == "AI") {
-        res <- AI(y = y, X = X, ZETA = Z, R = R, REML = REML, 
-                  draw = draw, silent = silent, iters = iters, 
-                  constraint = constraint, init = init, sherman = sherman, 
-                  che = FALSE, MTG2 = MTG2)
+        if (length(Z) == 1) {
+          dias <- unlist(lapply(Z[[1]], function(x) {
+            if (dim(x)[1] == dim(x)[2]) {
+              y <- is.diagonal.matrix(x)
+            }
+            else {
+              y <- FALSE
+            }
+            return(y)
+          }))
+          if (length(which(dias)) == 2) {
+            res <- EMMA(y = y, X = X, Z = Z[[random]][[1]], 
+                        K = Z[[random]][[2]], REML = REML)
+          }
+          else {
+            res <- AI(y = y, X = X, ZETA = Z, R = R, 
+                      REML = REML, draw = draw, silent = silent, 
+                      iters = iters, constraint = constraint, 
+                      init = init, sherman = sherman, che = FALSE, 
+                      MTG2 = MTG2, Fishers = Fishers)
+          }
+        }
+        else {
+          res <- AI(y = y, X = X, ZETA = Z, R = R, REML = REML, 
+                    draw = draw, silent = silent, iters = iters, 
+                    constraint = constraint, init = init, sherman = sherman, 
+                    che = FALSE, MTG2 = MTG2, Fishers = Fishers)
+        }
       }
       res$method <- method
       res$maxim <- REML
+      res$W <- W
     }
   }
   if ((is.null(X) & is.null(Z) & is.null(W))) {
@@ -232,7 +285,9 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
   return(res)
 }
 
-
+#### =========== ####
+## SUMMARY FUNCTION #
+#### =========== ####
 "summary.mmer" <- function(object, ...) {
   digits = max(3, getOption("digits") - 3)
   groupss <- unlist(lapply(object$u.hat, function(y){dim(y)[1]}))
@@ -289,7 +344,7 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
   cat("\nInformation contained in this fitted model: \n* Variance components\n* Residuals and conditional residuals\n* BLUEs and BLUPs\n* Inverse phenotypic variance(V)\n* Variance-covariance matrix for fixed effects\n* Variance-covariance matrix for random effects\n* Predicted error variance (PEV)\n* LogLikelihood\n* AIC and BIC\n* Fitted values\nUse the 'str' function to access such information\n")
   cat("\n=======================================================")
   cat("\nLinear mixed model fit by restricted maximum likelihood\n")
-  cat("********************  sommer 1.2  *********************\n")
+  cat("********************  sommer 1.3  *********************\n")
   cat("=======================================================")
   cat("\nMethod:")
   print(x$method)
@@ -327,6 +382,9 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
   cat("\nUse the 'str' function to have access to all information\n\n")
 }
 
+#### =========== ######
+## RESIDUALS FUNCTION #
+#### =========== ######
 "residuals.mmer" <- function(object, type="conditional", ...) {
   digits = max(3, getOption("digits") - 3)
   if(type=="conditional"){
@@ -341,7 +399,9 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
   print((x))
 }
 
-
+#### =========== ######
+## RANEF FUNCTION #
+#### =========== ######
 
 "randef" <- function(object) {
   digits = max(3, getOption("digits") - 3)
@@ -349,6 +409,13 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
   return(output)
 }
 
+#"print.ranef.mmer"<- function(x, digits = max(3, getOption("digits") - 3), ...) {
+#  print((x))
+#}
+
+#### =========== ######
+## FIXEF FUNCTION #
+#### =========== ######
 "fixef.mmer" <- function(object, ...) {
   digits = max(3, getOption("digits") - 3)
   output <- object$beta.hat
@@ -359,7 +426,9 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
   print((x))
 }
 
-
+#### =========== ####
+## FITTED FUNCTION ##
+#### =========== ####
 "fitted.mmer" <- function(object, type="complete", ...) {
   #type="complete" 
   digits = max(3, getOption("digits") - 3)
@@ -374,7 +443,9 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
   print((x))
 } 
 
-
+#### =========== ####
+## COEF FUNCTION ####
+#### =========== ####
 "coef.mmer" <- function(object, ...){
   object$beta.hat
 }
@@ -383,7 +454,9 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
   print((x))
 } 
 
-
+#### =========== ####
+## ANOVA FUNCTION ###
+#### =========== ####
 anova.mmer <- function(object, object2=NULL, ...) {
   signifo <- function(x){
     if(x >= 0 & x < 0.001){y="***"}
@@ -433,7 +506,9 @@ anova.mmer <- function(object, object2=NULL, ...) {
   }
 }
 
-
+#### =========== ####
+## PLOTING FUNCTION #
+#### =========== ####
 plot.mmer <- function(x, ...) {
   digits = max(3, getOption("digits") - 3)
   transp <- function (col, alpha = 0.5){
@@ -452,7 +527,8 @@ plot.mmer <- function(x, ...) {
 }
 
 
-
+##################################################################################################
+#Startup function
 #this function is executed once the library is loaded
 .onAttach = function(library, pkg)
 {
@@ -461,7 +537,7 @@ plot.mmer <- function(x, ...) {
     stop("This package requires R 2.1 or later")
   assign(".sommer.home", file.path(library, pkg),
          pos=match("package:sommer", search()))
-  sommer.version = "1.2 (2016-03-01)"
+  sommer.version = "1.3 (2016-03-15)"
   assign(".sommer.version", sommer.version, pos=match("package:sommer", search()))
   if(interactive())
   {

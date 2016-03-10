@@ -2,13 +2,21 @@
 \alias{mmer}
 \title{Mixed Model Equations in R}
 \description{
-This function is the core of the package and solves the mixed model equations proposed by Henderson (1975). It has been implemented to work with incidence matrices and variance covariance matrices for each random effect. In the details we will explain the methods implemented by this function. Currently 3 methods are supported; "EMMA" efficient mixed model association (Kang et al. 2008), "AI" average information (Gilmour et al. 1995; Lee et al. 2015), and "EM" expectation maximization (Searle 1993; Bernardo 2010). The EMMA method is implemented when only one variance component other than the error variance component (Var(e)) is estimated, is based on optimizing the likelihood function (see details). On the other hand when more than one variance component needs to be estimated the "AI" and "EM"" methods should be used. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominant (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices that have been shown to increase prediction accuracy. The package provides flexibility to fit other genetic models such as full and half diallel models as well, see \code{\link{hdm}} function information to see how to fit those models using sommer. 
+This function is the core of the package and solves the mixed model equations proposed by Henderson (1975). It has been implemented to work with incidence matrices and variance covariance matrices for each random effect. In the details we will explain the methods implemented by this function. Currently 3 methods are supported; "EMMA" efficient mixed model association (Kang et al. 2008), "AI" average information (Gilmour et al. 1995; Lee et al. 2015), and "EM" expectation maximization (Searle 1993; Bernardo 2010). The EMMA method is implemented when only one variance component other than the error variance component (Var(e)) is estimated, is based on optimizing the likelihood function (see details). On the other hand when more than one variance component needs to be estimated the "AI" and "EM"" methods should be used. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominant (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices that have been shown to increase prediction accuracy. The package provides flexibility to fit other genetic models such as full and half diallel models as well, see \code{\link{hdm}} function information to see how to fit those models using sommer. The core algorithm in our mixed model solver is the Direct Average Information proposed by Lee et al. (2015) which surpasses in performance the MME-based Average Information (Gilmour et al. 1995) when dense covariance structures are present (GBLUP and GWAS case). When these matrices are sparse (no covariance structures), the MME-based is more effective and we recommend the user to use lme4 for such cases of NO covariance structures. 
+
+Finally, feel free to get in touch with me if you have any questions or suggestion at: 
+
+covarrubiasp@wisc.edu
+
+I'll be glad to help or answer any question. We have spend a valuable amount of time deveoping this package. Please cite us in your publication. Type 'citation("sommer")' to know how to cite it.
+
 }
 \usage{
 mmer(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
-     iters=50, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE,
+     iters=40, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE,
      models="additive", ploidy=2, min.MAF = 0.05, silent=FALSE, 
-     family=NULL, constraint=TRUE, sherman=FALSE, MTG2=FALSE)
+     family=NULL, constraint=TRUE, sherman=FALSE, MTG2=FALSE,
+     Fishers=FALSE)
 }
 \arguments{
   \item{y}{a numeric vector for the response variable}
@@ -17,49 +25,67 @@ mmer(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE,
   
   .
   
-  Z=list(list(Z=Z1, K=K1),list(Z=Z2, K=K2),list(Z=Z3, K=K3)) 
+  list(
+  
+  list(Z=Z1, K=K1),
+  
+  list(Z=Z2, K=K2),
+  
+  list(Z=Z3, K=K3)
+  
+  ) 
+  
   
   .
   
-  makes a 2 level list for 3 random effects. The general idea is that each random effect is a list, i.e. list(Z=Z1, K=K1) where Z is the incidence matrix and K the var-cov matrix for the random effect, if K is not provided is assumed an incidence matrix. 
+  makes a 2 level list for 3 random effects. The general idea is that each random effect is a list, i.e. list(Z=Z1, K=K1) where Z is the incidence matrix and K the var-cov matrix for the random effect, if K is not provided is assumed an identity matrix. 
   
   .
   
-  PLEASE remember to use the names Z and K FOR ANY RANDON EFFECT when you provide your matrices since that's the only way the program distinguishes between a Z or a K matrix. 
+  PLEASE remember to use the names Z and K FOR ALL RANDOM EFFECTS when you provide your matrices, that's the only way the program distinguishes between a Z or a K matrix. 
   
   .
   
-  To provide extra detail, rephrasing; when moving to more than one random effect we need to make a list for each random effect, and at the end everything goes in a list as well (BGLR type of format). We call it a 2-level list, i.e. list(Z=Z1, K=K1) and list(Z=Z2, K=K2) refers to 2 random effects and they should be put together in a list:
+  To provide extra detail, rephrasing; when moving to more than one random effect wants to be fitted, we need to make a list for each random effect, and at the end everything goes in a list as well (BGLR type of format). We call it a 2-level list, i.e. list(Z=Z1, K=K1) and list(Z=Z2, K=K2) refers to 2 random effects and they should be put together in a list:
+  
+  .
   
   ETA = list( list(Z=Z1, K=K1), list(Z=Z1, K=K1) )
   
+  .
+  
   Now you can fit your model as:
   
+  .
+  
   mod1 <- mmer(y=y, Z=ETA) 
+  
+  .
   
   You can see the examples at the bottom to have a clearer idea how to fit your models.
   
   }
   \item{W}{an incidence matrix for extra fixed effects and only to be used if GWAS will be performed and markers effects will be estimated as fixed effects according to Yu et al. (2006). Theorically X and W are both fixed effects, but they are separated to perform GWAS easier and allow the program to recognize the markers from other fixed factors such as environmental factors. This has to be provided as a matrix same than X.}
-  \item{R}{a matrix for variance-covariance structures for the residuals, i.e. for longitudinal data. if not passed is assumed an identity matrix.}
+  \item{R}{a matrix for variance-covariance structures for the residuals, i.e. for longitudinal data. if not passed is assumed an identity matrix. THIS PART STILLS IN DEVELOPMENT, NOT FUNCTIONAL YET, it is plan to be implemented in version 1.4.}
   \item{method}{this refers to the method or algorithm to be used for estimating variance components. The package currently is supported by 3 algorithms; "EMMA" efficient mixed model association (Kang et al. 2008), "AI" average information (Gilmour et al. 1995; Lee et al. 2015), and "EM" expectation maximization (Searle 1993; Bernardo 2010). The default method is average information "AI" because of its ability to handle multiple random effects and its greater speed compared to "EM" which can handle multiple random effects but it is much slower and is not based on REML. On the other hand the "EMMA" method has been implemented but the user needs to keep in mind that such algorithm is based on the theory of ridge regression and the ridge parameter allows the estimation of only a single variance component other than the error.}
   \item{REML}{a TRUE/FALSE value indicating if restricted maximum likelihood should be used instead of ML. The default is TRUE.}
-  \item{iters}{a scalar value indicating how many iterations have to be performed if the EM algorithm is selected. There is no rule of tumb for the number of iterations. The default value is 50 iterations or EM steps, but could take less or much longer than that.}
+  \item{iters}{a scalar value indicating how many iterations have to be performed if the EM or AI algorithms are selected. There is no rule of tumb for the number of iterations. The default value is 50 iterations or EM steps, but could take less or much longer than that. For the AI algorithm usually takes just a few iterations.}
   \item{draw}{a TRUE/FALSE value indicating if a plot of updated values for the variance components and the likelihood should be drawn or not. The default is FALSE. COMPUTATION TIME IS SMALLER IF YOU DON'T PLOT SETTING draw=FALSE}
   \item{init}{an vector of initial values for the EM algorithm if this is the method selected. If not provided the program uses a starting values the variance(y)/#random.eff which is usually a good starting value.}
   \item{n.PC}{Number of principal components to include as fixed effects. Default is 0 (equals K model).}
   \item{P3D}{When P3D=TRUE, variance components are estimated by REML only once, without any markers in the model. When P3D=FALSE, variance components are estimated by REML for each marker separately. The default is the first case.}
     \item{models}{The model to be used in GWAS. The default is the additive model which applies for diploids and polyploids but the model can be a vector with all possible models, i.e. "additive","1-dom-alt","1-dom-ref","2-dom-alt","2-dom-ref" models are supported for polyploids based on Rosyara (2016).}
-      \item{ploidy}{A numeric value indicating the ploidy level of the organism. The default is 2 which means diploid but higher ploidy levels are supported.}
+      \item{ploidy}{A numeric value indicating the ploidy level of the organism. The default is 2 which means diploid but higher ploidy levels are supported. This should only be modified if you are performing GWAS in polyploids.}
   \item{min.MAF}{a scalar value between 0-1 indicating what is theminor allele frequency to be allowed for a marker during a GWAS analysis when providing the matrix W of markers. In general is known that results for markers with alleles with MAF < 0.05 are not reliable unless sample size is big enough.}
   \item{silent}{a TRUE/FALSE value indicating if the function should draw the progress bar and poems (see \code{\link{poe}} function) while working or should not be displayed. The default is FALSE, which means is not silent and will display the progress bar and a short poem to help the scientist (and me haha) remember that life is more than analyzing data.}
   \item{family}{a family object to specify the distribution of the response variable. The program will only use the link function to transform the response. For details see \code{\link{family}} help page. The argument would look something like this; family=poisson(), or family=Gamma(), etc. For more sophisticated models please look at lme4 package from Douglas Bates. NOT IMPLEMENTED YET.}
       \item{constraint}{a TRUE/FALSE value indicating if the program should use the boundary constraint when one or more variance component is close to the zero boundary. The default is TRUE but needs to be used carefully. It works ideally when few variance components are close to the boundary but when there are too many variance components close to zero we highly recommend setting this parameter to FALSE since is more likely to get the right value of the variance components in this way.}
-      \item{sherman}{a TRUE/FALSE value indicating if Sherman-Morrison-Woodbury formula (Seber, 2003, p. 467) should be used when estimating variance components in order to perform faster when a mixed model with no covariance structure using the average information algorithm is fitted. The default is FALSE since this software was designed for unreplicated data (altough can fit models with replicated data but slower than lme4).}
-      \item{MTG2}{a TRUE/FALSE value indicating if an eigen decomposition for the additive relationship matrix should be performed or not. This is based on Lee (2015). The limitations of this methos are:
+      \item{sherman}{a TRUE/FALSE value indicating if Sherman-Morrison-Woodbury formula (Seber, 2003, p. 467) should be used when estimating variance components. This will perform faster when a mixed model with no covariance structures is fitted (only AI algorithm). The default is FALSE since this software was designed for unreplicated data (altough can fit models with replicated data but slower than lme4).}
+      \item{MTG2}{a TRUE/FALSE value indicating if an eigen decomposition for the additive relationship matrix should be performed or not. This is based on Lee (2015). The limitations of this method are:
       1) can only be applied to one relationship matrix
       2) The system needs to be squared and no missing data is allowed (then missing data is imputed with the median).
    The default is FALSE to avoid the user get into trouble but experimented users can take advantage from this feature to fit big models, i.e. 5000 individuals in 555 seconds = 9 minutes in a MacBook 4GB RAM.}
+      \item{Fishers}{a TRUE/FALSE value indicating if the program should calculate at the final step and return the inverse of the Fishers Information Matrix.}
 
 }
 \details{
@@ -183,19 +209,31 @@ Yu et al. 2006. A unified mixed-model method for association mapping that accoun
 Giovanny Covarrubias-Pazaran
 }
 \examples{
-############################################
-############################################
-# breeding values with 1 variance component
-############################################
-############################################
 
-##== simulate data
-##== random population of 200 lines with 1000 markers
+####=========================================####
+#### For CRAN time limitations most lines in the 
+#### examples are silenced with one '#' mark, 
+#### remove them and run the examples
+####=========================================####
+
+####=========================================####
+####=========================================####
+#### EXAMPLE 1
+#### breeding values with 1 variance component
+####=========================================####
+####=========================================####
+
+####=========================================####
+#### simulate genotypic data
+#### random population of 200 lines with 1000 markers
+####=========================================####
 M <- matrix(rep(0,200*1000),1000,200)
 for (i in 1:200) {
   M[,i] <- ifelse(runif(1000)<0.5,-1,1)
 }
-##== phenotypes
+####=========================================####
+#### simulate phenotypes
+####=========================================####
 QTL <- 100*(1:5) #pick 5 QTL
 u <- rep(0,1000) #marker effects
 u[QTL] <- 1
@@ -203,28 +241,36 @@ g <- as.vector(crossprod(M,u))
 h2 <- 0.5
 y <- g + rnorm(200,mean=0,sd=sqrt((1-h2)/h2*var(g)))
 M <- t(M)
-##== fit the model
+####=========================================####
+#### fit the model
+####=========================================####
 Z1 <- diag(length(y))
 ETA <- list( list(Z=Z1, K=A.mat(M)))
 ans <- mmer(y=y, Z=ETA, method="EMMA")
+summary(ans)
 
+####=========================================####
+#### run the same but as GWAS 
+#### just add the marker matrix in the argument W
+#### markers are fixed effects
+####=========================================####
+
+#ans <- mmer(y=y, Z=ETA, W=M, method="EMMA")
+#summary(ans)
 ############################################
 ############################################
-# GWAS with 1 variance component and one A matrix
+############################################
+############################################
 ############################################
 ############################################
 
-ETA <- list( list(Z=Z1, K=A.mat(M))) # random effects for genotypes
-ETA2 <- M # markers as fixed effects 
-# RUN IT:
-#ans <- mmer(y=y, Z=ETA, W=ETA2, method="EMMA")
-
-############################################
-############################################
-# breeding values with 3 variance components
-# hybrid prediction
-############################################
-############################################
+####=========================================####
+####=========================================####
+#### EXAMPLE 2
+#### breeding values with 3 variance components
+#### Hybrid prediction
+####=========================================####
+####=========================================####
 data(cornHybrid)
 hybrid2 <- cornHybrid$hybrid # extract cross data
 A <- cornHybrid$K
@@ -234,25 +280,43 @@ Z1 <- model.matrix(~ GCA1 -1, data = hybrid2);dim(Z1)
 Z2 <- model.matrix(~ GCA2 -1, data = hybrid2);dim(Z2)
 Z3 <- model.matrix(~ SCA -1, data = hybrid2);dim(Z3)
 
-K1 <- A[levels(hybrid2$GCA1), levels(hybrid2$GCA1)]; dim(K1)     
-# Realized IBS relationships for set of parents 1
-K2 <- A[levels(hybrid2$GCA2), levels(hybrid2$GCA2)]; dim(K2)     
-# Realized IBS relationships for set of parents 2
-S <- kronecker(K1, K2) ; dim(S)   
-rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
-# Realized IBS relationships for cross 
-#(as the Kronecker product of K1 and K2)
+####=========================================####
+#### Realized IBS relationships for set of parents 1
+####=========================================####
+#K1 <- A[levels(hybrid2$GCA1), levels(hybrid2$GCA1)]; dim(K1) 
+####=========================================####
+#### Realized IBS relationships for set of parents 2
+####=========================================####
+#K2 <- A[levels(hybrid2$GCA2), levels(hybrid2$GCA2)]; dim(K2)
+####=========================================####
+#### Realized IBS relationships for cross 
+#### (as the Kronecker product of K1 and K2)
+####=========================================####
+#S <- kronecker(K1, K2) ; dim(S)   
+#rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 
-ETA <- list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=S))
-# run the next line, ommited for CRAN time limitations
-# ans <- mmer(y=y, X=X1, Z=ETA)
-# ans$var.comp
-# summary(ans)
+#ETA <- list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=S))
+#ans <- mmer(y=y, X=X1, Z=ETA)
+#ans$var.comp
+#summary(ans)
 
-#############################
-##  COMPARE WITH MCMCglmm  ##
-#############################
-##== the same model run in MCMCglmm:
+############################################
+############################################
+############################################
+############################################
+############################################
+############################################
+
+####=========================================####
+####=========================================####
+#### EXAMPLE 3
+#### COMPARE WITH MCMCglmm
+####=========================================####
+####=========================================####
+
+####=========================================####
+#### the same model run in MCMCglmm:
+####=========================================####
 #library(MCMCglmm)
 # pro <- list(GCA1 = as(solve(K1), "sparseMatrix"), GCA2 = as(solve(K2),
 #      + "sparseMatrix"), SCA = as(solve(S), "sparseMatrix") )
@@ -260,24 +324,50 @@ ETA <- list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=S))
 #      + data = hybrid2, verbose = T, ginverse=pro))
 ## Takes 7:13 minutes in MCMCglmm, in sommer only takes 7 seconds
 
+####=========================================####
+#### it is also possible to do GWAS for hybrids, separatting 
+#### and accounting for effects of GCA1, GCA2, SCA
+####=========================================####
 
-## it is also possible to do GWAS for hybrids, separatting and accounting
-## for effects of GCA1, GCA2, SCA
+############################################
+############################################
+############################################
+############################################
+############################################
+############################################
 
-#############################
-##  COMPARE WITH cpgen     ##
-#############################
+####=========================================####
+####=========================================####
+#### EXAMPLE 4
+#### COMPARE WITH cpgen
+####=========================================####
+####=========================================####
+
 #Z_list = list(Z1,Z2,Z3)
 #G_list = list(solve(K1), solve(K2), solve(S))
 #fit <- clmm(y = y, Z = Z_list, ginverse=G_list, niter=15000, burnin=5000)
-### inspect results
+####=========================================####
+#### inspect results and notice that variance 
+#### components were NOT estimated correctly!!
+#### also takes longer and no user-friendly 
+####=========================================####
 #str(fit)
-### notice that variance components were not estimated correctly!!
 
-#############################
-## COMPARE WITH pedigreemm ##
-#############################
-# library(pedigreemm)
+############################################
+############################################
+############################################
+############################################
+############################################
+############################################
+
+####=========================================####
+####=========================================####
+#### EXAMPLE 5
+#### COMPARE WITH pedigreemm example
+####=========================================####
+####=========================================####
+
+#library(pedigreemm)
 #A <- as.matrix(getA(pedCowsR))
 #y <- milk$milk
 #Z1 <- model.matrix(~id-1, data=milk); dim(Z1)
@@ -285,21 +375,39 @@ ETA <- list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=S))
 #K1<- A[vv,vv]; dim(K1) 
 #Z2 <- model.matrix(~as.factor(herd)-1, data=milk); dim(Z2)
 #ETA<- list(list(Z=Z1, K=K1),list(Z=Z2))
-#fm3 <- mmer(y=y, Z=ETA) # or using mmer2 would look:
+#fm3 <- mmer(y=y, Z=ETA) 
+####=========================================####
+##### or using mmer2 would look:
+####=========================================####
 #fm3 <- mmer2(fixed=milk ~ 1, random = ~ id + herd, 
-#             G=list(id=K1), data=milk, draw=FALSE)
+#             G=list(id=K1), data=milk)
 #summary(fm3)
-# Try pedigreemm but takes longer, is an extension of lme4
+####=========================================####
+#### Try pedigreemm but takes longer, 
+#### is an extension of lme4
+####=========================================####
 #fm2 <- pedigreemm(milk ~ (1 | id) + (1 | herd),data = milk, pedigree = list(id= pedCowsR))
 #plot(fm3$u.hat[[1]], ranef(fm2)$id[,1])
 #plot(fm3$u.hat[[2]], ranef(fm2)$herd[,1])
-# a big data frame with 3397 rows and 1359 animals analyzed
-# pedigreemm takes 4 min, sommer takes 1 minute
+####=========================================####
+#### a big data frame with 3397 rows and 1359 animals analyzed
+#### pedigreemm takes 4 min, sommer takes 1 minute
+####=========================================####
 
-#####################################
-## PREDICTING SPECIFIC PERFORMANCE ##
-## within biparental population    ##
-#####################################
+############################################
+############################################
+############################################
+############################################
+############################################
+############################################
+
+####=========================================####
+####=========================================####
+#### EXAMPLE 6
+#### PREDICTING SPECIFIC PERFORMANCE 
+#### within biparental population    
+####=========================================####
+####=========================================####
 
 #data(CPdata)
 #CPpheno <- CPdata$pheno
@@ -307,7 +415,9 @@ ETA <- list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=S))
 ## look at the data
 #head(CPpheno)
 #CPgeno[1:5,1:5]
-## fit a model including additive and dominance effects
+####=========================================####
+#### fit a model including additive and dominance effects
+####=========================================####
 #y <- CPpheno$color
 #Za <- diag(length(y))
 #Zd <- diag(length(y))
@@ -318,15 +428,26 @@ ETA <- list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=S))
 #ww <- sample(c(1:dim(Za)[1]),72) # delete data for 1/5 of the population
 #y.trn[ww] <- NA
 
-### ADDITIVE MODEL ###
+####================####
+#### ADDITIVE MODEL ####
+####================####
 #ETA.A <- list(list(Z=Za,K=A))
 #ans.A <- mmer(y=y.trn, Z=ETA.A)
 #cor(ans.A$fitted.y[ww], y[ww], use="pairwise.complete.obs")
-### ADDITIVE-DOMINANT MODEL ###
+####=========================####
+#### ADDITIVE-DOMINANT MODEL ####
+####=========================####
 #ETA.AD <- list(list(Z=Za,K=A),list(Z=Zd,K=D))
 #ans.AD <- mmer(y=y.trn, Z=ETA.AD)
 #cor(ans.AD$fitted.y[ww], y[ww], use="pairwise.complete.obs")
-
-### 0.63 accuracy !!!! 4 percent increment!!
+### greater accuracy !!!! 4 percent increment!!
+### we run 100 iterations, 4 percent increment in general
+####===================================####
+#### ADDITIVE-DOMINANT-EPISTATIC MODEL ####
+####===================================####
+#ETA.ADE <- list(list(Z=Za,K=A),list(Z=Zd,K=D),list(Z=Ze,K=E))
+#ans.ADE <- mmer(y=y.trn, Z=ETA.ADE)
+#cor(ans.ADE$fitted.y[ww], y[ww], use="pairwise.complete.obs")
+#### adding more effects doesn't necessarily increase prediction accuracy!
 
 }

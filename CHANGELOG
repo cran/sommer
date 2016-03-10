@@ -5,7 +5,7 @@ version 1.1 (2016-01-24)
   Initial release
   
 ########################  
-version 1.2 (2016-03-01)
+version 1.2 (2016-02-07)
 ########################
 
   + 'fdr' function bug was fixed
@@ -24,6 +24,34 @@ version 1.2 (2016-03-01)
      - the models implemented are the same than Rosyara (2016):
      - "additive","1-dom-alt","1-dom-ref","2-dom-alt","2-dom-ref"
   + eigen decomposition to accelarate genomic prediction based on Lee (2015)
-    has been added in the argument 'MTG2' of the AI algorithm
+    has been added in the argument 'MTG2' of the AI, mmer and mmer2 algorithm
   
+########################  
+version 1.3 (2016-03-01)
+########################
 
+  + The 'bag' function for bagging-GBLUP from Abdollahi-Arpanahi et al. (2015) 
+    has been added:
+        - The function takes a model fitted and creates a bag matrix with 
+          the top markers (most significant) and creates a design matrix 
+          to be used as fixed effects in the GBLUP model to increase 
+          prediction accuracy.
+  + 'bag' function has been equiped with stepwise selection to make sure that markers
+    selected by "clustering" or "maximum" p.values methods provide at least a minimum
+    increase in the prediction accuracy.
+  + The Fisher Information matrix can be returned from the mmer function when 
+    the AI is used (default) but the argument 'Fishers' needs to be set to TRUE.
+  + The bug for the AI algorithm when one var.comp and K and Z are diagonal has been 
+    fixed by changing to EMMA in this naive situation.
+  + AI algorithm has been debuged to return the most likely variance components when the 
+    likelihood takes values around the maximum in a zig zag pattern. Just takes the value 
+    where the ML was found. When the likelihod follows a scale and dropping pattern
+    the program will do the same. A warning message is emmitted.
+  + GWAS modality of 'mmer' now adds the names of the markers of each score to keep track
+    the value for each marker.
+
+
+
+##pendings
++ multivariate version
++ residual structures

@@ -1,82 +1,77 @@
-mmer2 <-function (fixed = NULL, random = NULL, G = NULL, R = NULL, method = "AI", 
-          REML = TRUE, iters = 50, draw = FALSE, init = NULL, data = NULL, 
-          family = gaussian, silent = FALSE, constraint = TRUE, sherman = FALSE, 
-          MTG2 = FALSE){
+mmer2 <- function(fixed=NULL, random=NULL, G=NULL, R=NULL, method="AI", REML=TRUE, iters=50, draw=FALSE, init=NULL, data=NULL, family=gaussian, silent=FALSE, constraint=TRUE, sherman=FALSE, MTG2=FALSE){
+  ### Response "y"
   yvar <- gsub(" ", "", as.character(fixed[2]))
+  ### Xb in 'formula'
   xvar <- gsub(" ", "", strsplit(as.character(fixed[3]), split = "[+]")[[1]])
-  if (!is.null(random)) {
-    zvar <- gsub(" ", "", strsplit(as.character(random[2]), 
-                                   split = "[+]")[[1]])
-    varsss <- c(xvar, zvar)
-  }
-  else {
-    varsss <- xvar
-  }
+  ### Zu in formula
+  if(!is.null(random)){
+    zvar <- gsub(" ", "", strsplit(as.character(random[2]), split = "[+]")[[1]])
+    varsss <- c(xvar,zvar)
+  }else{varsss <- xvar}
   varsss <- varsss[which(varsss != "1")]
-  doto <- grep(":", varsss)
-  if (length(doto) > 0) {
-    varsss <- varsss[-doto]
-  }
+  doto <- grep(":",varsss)
+  if(length(doto) >0){varsss <- varsss[-doto]}
+  ### FIX THE DATA IF NA's EXIST
   good <- list()
-  for (i in 1:length(varsss)) {
-    xxx <- data[, varsss[i]]
+  for(i in 1:length(varsss)){
+    xxx <- data[,varsss[i]]
     good[[i]] <- which(!is.na(xxx))
   }
-  if (length(varsss) == 1) {
+  
+  if(length(varsss) == 1){
     keep <- as.vector(unlist(good))
-  }
-  else {
+  }else{
     keep <- good[[1]]
-    for (j in 1:length(good)) {
-      keep <- intersect(keep, good[[j]])
+    for(j in 1:length(good)){
+      keep <- intersect(keep,good[[j]])
     }
   }
-  data <- data[keep, ]
-  if (xvar %in% "1") {
-    X <- as.matrix(model.matrix(as.formula(paste("~ ", paste(c(xvar), 
-                                                             collapse = "+"))), data = data))
+  data <- data[keep,] # only good data in model
+  ##############################
+  if(xvar %in% "1"){
+    X <- as.matrix(model.matrix(as.formula(paste("~ ", paste(c(xvar), collapse="+"))), data=data))
+  }else{
+    X <- as.matrix(model.matrix(as.formula(paste("~ ", paste(c("1", xvar), collapse="+"))), data=data))
   }
-  else {
-    X <- as.matrix(model.matrix(as.formula(paste("~ ", paste(c("1", 
-                                                               xvar), collapse = "+"))), data = data))
-  }
-  if (!is.null(random)) {
-    yvars <- data[, yvar]
-    if (is.null(random)) {
-      Z = NULL
-    }
-    else {
+  
+  ### random and G
+  if(!is.null(random)){ # ============== MIXED MODEL =====================
+    #zvar <- gsub(" ", "", strsplit(as.character(random[2]), split = "[+]")[[1]])
+    # generalized mixed model, carefull, NA's dissapear
+    #mox <- glm(data[,yvar] ~ 1, family = family)
+    yvars <- data[,yvar] #mox$family$linkfun(mox$y)
+    #
+    if(is.null(random)){
+      Z=NULL
+    }else{
       Z <- list()
-      for (i in 1:length(zvar)) {
+      for(i in 1:length(zvar)){ # do it factor
+        ## incidence matrix
         vara <- zvar[i]
-        data2 <- data.frame(apply(data, 2, as.factor))
-        zi <- model.matrix((as.formula(paste("~ -1 + ", 
-                                             vara))), data = data2)
-        if (dim(zi)[2] == length(yvars)) {
+        data2 <- data.frame(apply(data,2,as.factor))
+        zi <- model.matrix((as.formula(paste("~ -1 + ", vara))), data=data2)
+        if(dim(zi)[2] == length(yvars)){ # lmer error
           stop("Error: number of levels of each grouping factor must be < number of observations")
-        }
-        else {
+        }else{ # right way to specify the random effects, keep going
+          ## var-cov matrix
           ww <- which(names(G) %in% vara)
-          if (length(ww) > 0) {
+          if(length(ww) > 0){# was provided
             ki <- G[[ww]]
-          }
-          else {
+          }else{ # was not provided, we create a diagonal
             ki <- diag(dim(zi)[2])
           }
-          elem <- list(Z = zi, K = ki)
+          elem <- list(Z=zi, K=ki)
           Z[[i]] <- elem
         }
       }
-      res <- mmer(y = yvars, X = X, Z = Z, R = R, method = method, 
-                  REML = REML, iters = iters, draw = draw, init = init, 
-                  silent = silent, constraint = constraint, sherman = sherman, 
-                  MTG2 = MTG2)
-      rownames(res$var.comp) <- c(zvar, "Error")
+      
+      ### fit the model using the real function mmer2 
+      res <- mmer(y=yvars, X=X, Z=Z, R=R, method=method, REML=REML, iters=iters, draw=draw, init=init, silent=silent, constraint=constraint, sherman=sherman, MTG2=MTG2)
+      rownames(res$var.comp) <- c(zvar,"Error")
     }
+  }else{ # ================== JUST FIXED =======================
+    res <- glm(yvars~X, family=family)
   }
-  else {
-    res <- glm(yvars ~ X, family = family)
-  }
-  class(res) <- c("mmer")
+  class(res)<-c("mmer")
   return(res)
 }

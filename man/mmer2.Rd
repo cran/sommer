@@ -16,7 +16,7 @@ mmer2(fixed=NULL, random=NULL, G=NULL, R=NULL, method="AI", REML=TRUE,
   \item{R}{a matrix for variance-covariance structures for the residuals, i.e. for longitudinal data. if not passed is assumed an identity matrix.}
   \item{method}{this refers to the method or algorithm to be used for estimating variance components. The package currently is supported by 3 algorithms; "EMMA" efficient mixed model association (Kang et al. 2008), "AI" average information (Gilmour et al. 1995; Lee et al. 2015), and "EM" expectation maximization (Searle 1993; Bernardo 2010). The default method is average information "AI" because of its ability to handle multiple random effects and its greater speed compared to "EM" which can handle multiple random effects but it is much slower and is not based on REML. On the other hand the "EMMA" method has been implemented but the user needs to keep in mind that such algorithm is based on the theory of ridge regression and the ridge parameter allows the estimation of only a single variance component other than the error.}
   \item{REML}{a TRUE/FALSE value indicating if restricted maximum likelihood should be used instead of ML. The default is TRUE.}
-  \item{iters}{a scalar value indicating how many iterations have to be performed if the EM algorithm is selected. There is no rule of tumb for the number of iterations. The default value is 50 iterations or EM steps, but could take less or much longer than that.}
+  \item{iters}{a scalar value indicating how many iterations have to be performed if the EM or AI algorithms are selected. There is no rule of tumb for the number of iterations. The default value is 50 iterations or EM steps, but could take less or much longer than that. For the AI algorithm usually takes just a few iterations.}
   \item{draw}{a TRUE/FALSE value indicating if a plot of updated values for the variance components and the likelihood should be drawn or not. The default is FALSE. COMPUTATION TIME IS SHORTER IF YOU DON'T PLOT SETTING draw=FALSE}
   \item{init}{an vector of initial values for the EM algorithm if this is the method selected. If not provided the program uses a starting values the variance(y)/#random.eff which is usually a good starting value.}
   \item{data}{a data frame containing the variables specified in the formulas for response, fixed, and random effects.}
@@ -125,64 +125,104 @@ Yu et al. 2006. A unified mixed-model method for association mapping that accoun
 Giovanny Covarrubias-Pazaran
 }
 \examples{
+####=========================================####
+#### For CRAN time limitations most lines in the 
+#### examples are silenced with one '#' mark, 
+#### remove them and run the examples
+####=========================================####
 
-############################################
-############################################
-# breeding values with 3 variance components
-# for hybrid prediction
-############################################
-############################################
+####=========================================####
+####=========================================####
+#### EXAMPLE 1
+#### breeding values with 3 variance components
+#### for hybrid prediction
+####=========================================####
+####=========================================####
 data(cornHybrid)
 hybrid2 <- cornHybrid$hybrid # extract cross data
 A <- cornHybrid$K
 y <- hybrid2$Yield
 
+####=========================================####
+#### Realized IBS relationships for set of parents 1
+####=========================================####
 K1 <- A[levels(hybrid2$GCA1), levels(hybrid2$GCA1)]; dim(K1)     
-# Realized IBS relationships for set of parents 1
+####=========================================####
+#### Realized IBS relationships for set of parents 2
+####=========================================####
 K2 <- A[levels(hybrid2$GCA2), levels(hybrid2$GCA2)]; dim(K2)     
-# Realized IBS relationships for set of parents 2
+####=========================================####
+#### SCA relationship matrix (kronecker)
+####=========================================####
 S <- kronecker(K1, K2) ; dim(S)   
 rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 
 #head(hybrid2)
 #ans <- mmer2(Yield ~ Location, random = ~ GCA1 + GCA2 + SCA, 
-#       G=list(GCA1=K1, GCA2=K2, SCA=S),data=hybrid2, method="AI" )
+#       G=list(GCA1=K1, GCA2=K2, SCA=S),data=hybrid2)
 #ans$var.comp
 #summary(ans)
 
-## please remember THIS FUNCTION IS LIMITED since the matrices for random 
-## effects are built based on a dataframe provided, for more general models 
-## including the genomic analysis please use the 'mmer' function which 
-## works directly with matrices and is more flexible
+####=========================================####
+#### please remember THIS FUNCTION IS LIMITED since the matrices for random 
+#### effects are built based on a dataframe provided, for more general models 
+#### including the genomic analysis please use the 'mmer' function which 
+#### works directly with matrices and is more flexible
+####=========================================####
 
-###############################################################
-## comparison with lmer, install 'lme4' and run the code below
-###############################################################
-# lmer cannot use var-cov matrices so we will not use them
-# in this comparison example
+########################################################
+########################################################
+########################################################
+########################################################
+########################################################
+########################################################
+
+####=========================================####
+#### EXAMPLE 2
+#### comparison with lmer, install 'lme4' 
+#### and run the code below
+####=========================================####
+
+#### lmer cannot use var-cov matrices so we will not 
+#### use them in this comparison example
+
 #library(lme4)
 #library(sommer)
+#data(cornHybrid)
+#hybrid2 <- cornHybrid$hybrid
 #fm1 <- lmer(Yield ~ Location + (1|GCA1) + (1|GCA2) + (1|SCA),
 #        data=hybrid2 )
 #out <- mmer2(Yield ~ Location, random = ~ GCA1 + GCA2 + SCA,
-#        data=hybrid2, method="AI", draw=FALSE )
+#        data=hybrid2)
 #summary(fm1)
 #summary(out)
+#### same BLUPs for GCA1, GCA2, SCA than lme4
 #plot(out$cond.residuals, residuals(fm1))
 #plot(out$u.hat[[1]], ranef(fm1)$GCA1[,1])
 #plot(out$u.hat[[2]], ranef(fm1)$GCA2[,1])
 #vv=which(abs(out$u.hat[[3]]) > 0)
 #plot(out$u.hat[[3]][vv,], ranef(fm1)$SCA[,1])
-###############################################################
-## second example against 'lme4', run the code below
-###############################################################
+
+########################################################
+########################################################
+########################################################
+########################################################
+########################################################
+########################################################
+
+####=========================================####
+#### EXAMPLE 3
+#### comparison with lmer, install 'lme4' 
+#### and run the code below
+####=========================================####
+
 #library(lme4)
 #data(sleepstudy)
 #fm1 <- lmer(Reaction ~ Days + (1 | Subject), sleepstudy)
 #summary(fm1)
 
-#out <- mmer2(Reaction ~ Days, random = ~ Subject, data=sleepstudy, draw=FALSE )
-#summary(out) #or summary.mmer(out)
+#out <- mmer2(Reaction ~ Days, random = ~ Subject, data=sleepstudy)
+#summary(out)
 
 # plot(out$cond.residuals, residuals(fm1))
 # plot(out$u.hat[[1]], ranef(fm1)[[1]][,1])

@@ -25,16 +25,28 @@ Giovanny Covarrubias-Pazaran
 }
 
 \examples{
+
+####=========================================####
+#### For CRAN time limitations most lines in the 
+#### examples are silenced with one '#' mark, 
+#### remove them and run the examples
+####=========================================####
 data(HDdata)
 head(HDdata)
+####=========================================####
 #### GCA matrix for half diallel using male and female columns
 #### use the 'hdm' function to create the half diallel matrix
-#Z1 <- hdm(HDdata[,c(3:4)])
-#### SCA matrix
-#Z2 <- model.matrix(~as.factor(geno)-1, data=HDdata)
-#### response variable
-#y <- HDdata$sugar
-#ETA <- list(list(Z=Z1), list(Z=Z2)) # Zu component
-#modHD <- mmer(y=y, Z=ETA, draw=FALSE, silent=TRUE)
-#summary(modHD)
+####=========================================####
+Z1 <- hdm(HDdata[,c(3:4)])
+####=========================================####
+#### Obtain the SCA matrix
+####=========================================####
+Z2 <- model.matrix(~as.factor(geno)-1, data=HDdata)
+####=========================================####
+#### Define the response variable and run
+####=========================================####
+y <- HDdata$sugar
+ETA <- list(list(Z=Z1), list(Z=Z2)) # Zu component
+modHD <- mmer(y=y, Z=ETA, draw=FALSE, silent=TRUE)
+summary(modHD)
 }

@@ -1,4 +1,5 @@
 score.calc <- function(marks,y,Z,X,K,M,Hinv,ploidy,model,min.MAF,max.geno.freq) {
+  # needs to be modified to work if Hinv is not provided, not in a hurry, normally wouldn't be possible
   #
   m <- length(marks)
   n <- nrow(Z)

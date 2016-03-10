@@ -46,36 +46,65 @@ McLaren, C. G., R. Bruskiewich, A.M. Portugal, and A.B. Cosico. 2005. The Intern
 A platform for meta-analysis of rice crop data. \emph{Plant Physiology} \bold{139}: 637-642.
 }
 \examples{
-#data(wheatLines)
-#X <- wheatLines$wheatGeno; X[1:5,1:5]; dim(X)
-#Y <- wheatLines$wheatPheno
-#rownames(X) <- rownames(Y)
-##========### select environment 1
+####=========================================####
+#### For CRAN time limitations most lines in the 
+#### examples are silenced with one '#' mark, 
+#### remove them and run the examples
+####=========================================####
+data(wheatLines)
+X <- wheatLines$wheatGeno; X[1:5,1:5]; dim(X)
+Y <- wheatLines$wheatPheno
+rownames(X) <- rownames(Y)
+
+####=========================================####
+#### select environment 1
+####=========================================####
 #y <- Y[,1] # response grain yield
 #Z1 <- diag(length(y)) # incidence matrix
 #K <- A.mat(X) # additive relationship matrix
-##========### GBLUP pedigree-based approach
+
+####=========================================####
+#### GBLUP pedigree-based approach
+####=========================================####
 #ETA <- list( list(Z=Z1, K=K))
 #ans <- mmer(y=y, Z=ETA, method="EMMA") # kinship based
-##========### GBLUP marker based approach
+#summary(ans)
+
+####=========================================####
+#### GBLUP marker based approach
+####=========================================####
 #ETA2 <- list( list(Z=X))
 #ans2 <- mmer(y=y, Z=ETA2, method="EMMA") # marker based
-##========### compare and check that is the same result
+#summary(ans2)
+
+####=========================================####
+#### compare and check that is the same result
+####=========================================####
 #plot(ans$u.hat, (X%*%ans2$u.hat), xaxt="n", yaxt="n", 
 #     ylab="Marker-based GBLUP", xlab="Pedigree-based GBLUP")
-#####################
-## PREDICT PROGENY ##
-#####################
+
+####=========================================####
+#### PREDICT PROGENY 
+####=========================================####
 #GEBV.pb <- ans$u.hat # this are the BV
 #rownames(GEBV.pb) <- rownames(Y)
-##========### all possible crosses = 179,101
+
+####=========================================####
+#### all possible crosses = 179,101
+####=========================================####
 #crosses <- do.call(expand.grid, list(rownames(Y),rownames(Y))); dim(crosses)
 #cross2 <- duplicated(t(apply(crosses, 1, sort)))
 #crosses2 <- crosses[cross2,]; head(crosses2); dim(crosses2)
-##========### match the possible crosses with the parental BV
+
+####=========================================####
+#### match the possible crosses with the parental BV
+####=========================================####
 #GCA1 = GEBV.pb[match(crosses2[,1], rownames(GEBV.pb))] # get GCA1 BLUP of each hybrid
 #GCA2 = GEBV.pb[match(crosses2[,2], rownames(GEBV.pb))] # get GCA1 BLUP of each hybrid
-##========### join everything
+
+####=========================================####
+#### join everything
+####=========================================####
 #BV <- data.frame(crosses2,GCA1,GCA2); head(BV)
 #BV$BVcross <- apply(BV[,c(3:4)],1,mean); head(BV)
 #plot(BV$BVcross)

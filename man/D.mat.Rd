@@ -9,7 +9,7 @@ Calculates the realized dominance relationship matrix.
 }
 \usage{
 D.mat(X,min.MAF=NULL,max.missing=NULL,impute.method="mean",tol=0.02,
-      n.core=1,shrink=FALSE,return.imputed=FALSE, ploidy=2)
+      n.core=1,shrink=FALSE,return.imputed=FALSE, ploidy=2, return.Xd=FALSE)
 }
 
 \arguments{
@@ -18,7 +18,7 @@ Matrix (\eqn{n \times m}) of unphased genotypes for \eqn{n} lines and \eqn{m} bi
 coded as \{-1,0,1\}. Fractional (imputed) and missing values (NA) are allowed.
 }
 \item{min.MAF}{
-Minimum minor allele frequency. The A matrix is not sensitive to rare alleles, so by default only monomorphic markers are removed.
+Minimum minor allele frequency. The D matrix is not sensitive to rare alleles, so by default only monomorphic markers are removed.
 }
 \item{max.missing}{
 Maximum proportion of missing data; default removes completely missing markers.
@@ -39,7 +39,10 @@ Set shrink=TRUE to use the shrinkage estimation procedure (see Details).
 When TRUE, the imputed marker matrix is returned.  
 }
 \item{ploidy}{
-The ploidy of the organism. The default is 2 which means diploid but higher ploidy levels are supported.} 
+The ploidy of the organism. The default is 2 which means diploid but higher ploidy levels are supported.}
+\item{return.Xd}{
+If TRUE, the function returns the marker matrix converted to a dominant matrix instead of the dominance relationship matrix. The -1 and 1 are converted to 0, and 0's are converted to 1's which is a common incidence matrix for dominance. By default the markers that did not have heterozygote calls are not returned which would mean returning columns of only zeros putting fresh users in a mathematical problem when trying to estimate the variance component. The default for this argument is FALSE, so the function returns a dominant relationship matrix instead of a marker matrix.}
+
 }
 \details{
 At high marker density, the relationship matrix is estimated as \eqn{D=W W'/c}, where \eqn{W_{ik} = X_{ik} + 1 - 2 p_k} and \eqn{p_k} is the frequency of the 1 allele at marker k.  By using a normalization constant of \eqn{c = 2 \sum_k {p_k (1-p_k)}}, the mean of the diagonal elements is \eqn{1 + f} (Endelman and Jannink 2012).
@@ -72,7 +75,10 @@ Poland, J., J. Endelman et al. 2012. Genomic selection in wheat breeding using g
 }
 
 \examples{
-#random population of 200 lines with 1000 markers
+####=========================================####
+#### EXAMPLE 1
+####=========================================####
+####random population of 200 lines with 1000 markers
 X <- matrix(rep(0,200*1000),200,1000)
 for (i in 1:200) {
   X[i,] <- sample(c(-1,0,0,1), size=1000, replace=TRUE)
@@ -80,6 +86,19 @@ for (i in 1:200) {
 
 D <- D.mat(X)
 
+########################################################
+########################################################
+########################################################
+########################################################
+########################################################
+########################################################
+
+####=========================================####
+#### EXAMPLE 2
+#### For CRAN time limitations most lines in the 
+#### examples are silenced with one '#' mark, 
+#### remove them and run the examples
+####=========================================####
 data(CPdata)
 CPpheno <- CPdata$pheno
 CPgeno <- CPdata$geno
@@ -90,22 +109,27 @@ CPgeno <- CPdata$geno
 y <- CPpheno$color
 Za <- diag(length(y))
 Zd <- diag(length(y))
-A <- A.mat(CPgeno)
-D <- D.mat(CPgeno)
+Ze <- diag(length(y))
+A <- A.mat(CPgeno) # additive relationship matrix
+D <- D.mat(CPgeno) # dominant relationship matrix
 
 y.trn <- y # for prediction accuracy
 ww <- sample(c(1:dim(Za)[1]),72) # delete data for 1/5 of the population
 y.trn[ww] <- NA
-
-### ADDITIVE MODEL ###
-#ETA.A <- list(list(Z=Za,K=A))
+####================####
+#### ADDITIVE MODEL ####
+####================####
+ETA.A <- list(list(Z=Za,K=A))
 #ans.A <- mmer(y=y.trn, Z=ETA.A)
 #cor(ans.A$fitted.y[ww], y[ww], use="pairwise.complete.obs")
-### ADDITIVE-DOMINANT MODEL ###
-#ETA.AD <- list(list(Z=Za,K=A),list(Z=Zd,K=D))
+####=========================####
+#### ADDITIVE-DOMINANT MODEL ####
+####=========================####
+ETA.AD <- list(list(Z=Za,K=A),list(Z=Zd,K=D))
 #ans.AD <- mmer(y=y.trn, Z=ETA.AD)
 #cor(ans.AD$fitted.y[ww], y[ww], use="pairwise.complete.obs")
+### greater accuracy !!!! 4 percent increment!!
+### we run 100 iterations, 4 percent increment in general
 
-### 0.63 accuracy !!!! 4 percent increment!!
 
 }

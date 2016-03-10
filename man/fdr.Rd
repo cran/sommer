@@ -30,16 +30,27 @@ Giovanny Covarrubias-Pazaran
 }
 
 \examples{
+####=========================================####
 #### generate your mickey mouse -log10(p-values)
+####=========================================####
 set.seed(1253)
 pp <- abs(rnorm(500,0,3));pp[23:34] <- abs(rnorm(12,0,20))
+
+####=========================================####
 #### see how they look like
+####=========================================####
 plot(pp, col=transp("cadetblue"), pch=20, cex=1.5)
+
+####=========================================####
 #### adjust the values for FDR and see how they look like
+####=========================================####
 new.pp <- fdr(pp)
 plot(new.pp$p.ad, col=transp("cadetblue"), pch=20, cex=1.5)
+
+####=========================================####
 #### or you may want to plot your original values 
 #### with the FDR line instead
+####=========================================####
 plot(pp, col=transp("cadetblue"), pch=20, cex=1.5)
 abline(h=new.pp$fdr.or, lty=3, col="red", lwd=2)
 }

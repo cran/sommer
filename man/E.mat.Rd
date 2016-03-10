@@ -67,7 +67,9 @@ Poland, J., J. Endelman et al. 2012. Genomic selection in wheat breeding using g
 }
 
 \examples{
-#random population of 200 lines with 1000 markers
+####=========================================####
+####random population of 200 lines with 1000 markers
+####=========================================####
 X <- matrix(rep(0,200*1000),200,1000)
 for (i in 1:200) {
   X[i,] <- sample(c(-1,0,0,1), size=1000, replace=TRUE)

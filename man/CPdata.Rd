@@ -20,12 +20,17 @@ This data was simulated for fruit breeding applications.
 Covarrubias-Pazaran G (2016) sommer: Genomic prediction. R package version 1.1. URL https://cran.r-project.org/web/packages/sommer/.
 }
 \examples{
+####=========================================####
+#### For CRAN time limitations most lines in the 
+#### examples are silenced with one '#' mark, 
+#### remove them and run the examples
+####=========================================####
 data(CPdata)
 CPpheno <- CPdata$pheno
 CPgeno <- CPdata$geno
-## look at the data
-#head(CPpheno)
-#CPgeno[1:5,1:5]
+### look at the data
+head(CPpheno)
+CPgeno[1:5,1:5]
 ## fit a model including additive and dominance effects
 y <- CPpheno$color
 Za <- diag(length(y))
@@ -38,26 +43,30 @@ E <- E.mat(CPgeno) # epistatic relationship matrix
 y.trn <- y # for prediction accuracy
 ww <- sample(c(1:dim(Za)[1]),72) # delete data for 1/5 of the population
 y.trn[ww] <- NA
-###================###
-### ADDITIVE MODEL ###
-###================###
-#ETA.A <- list(list(Z=Za,K=A))
+####================####
+#### ADDITIVE MODEL ####
+####================####
+ETA.A <- list(list(Z=Za,K=A))
 #ans.A <- mmer(y=y.trn, Z=ETA.A)
 #cor(ans.A$fitted.y[ww], y[ww], use="pairwise.complete.obs")
-###=========================###
-### ADDITIVE-DOMINANT MODEL ###
-###=========================###
-#ETA.AD <- list(list(Z=Za,K=A),list(Z=Zd,K=D))
+####=========================####
+#### ADDITIVE-DOMINANCE MODEL ####
+####=========================####
+ETA.AD <- list(list(Z=Za,K=A),list(Z=Zd,K=D))
 #ans.AD <- mmer(y=y.trn, Z=ETA.AD)
 #cor(ans.AD$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 ### greater accuracy !!!! 4 percent increment!!
 ### we run 100 iterations, 4 percent increment in general
-###===================================###
-### ADDITIVE-DOMINANT-EPISTATIC MODEL ###
-###===================================###
-#ETA.ADE <- list(list(Z=Za,K=A),list(Z=Zd,K=D),list(Z=Ze,K=E))
+####===================================####
+#### ADDITIVE-DOMINANCE-EPISTASIS MODEL ####
+####===================================####
+ETA.ADE <- list(list(Z=Za,K=A),list(Z=Zd,K=D),list(Z=Ze,K=E))
 #ans.ADE <- mmer(y=y.trn, Z=ETA.ADE)
 #cor(ans.ADE$fitted.y[ww], y[ww], use="pairwise.complete.obs")
-### adding more effects doesn't necessarily increase prediction accuracy!
+
+#summary(ans.A)
+#summary(ans.AD)
+#summary(ans.ADE)
+#### adding more effects doesn't necessarily increase prediction accuracy!
 }
 \keyword{datasets}

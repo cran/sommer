@@ -1,6 +1,7 @@
 AI <- function (y, X = NULL, ZETA = NULL, R = NULL, draw = TRUE, REML = TRUE, 
-                silent = FALSE, iters = 50, constraint = TRUE, init = NULL, 
-                sherman = FALSE, che = TRUE, MTG2 = FALSE) {
+          silent = FALSE, iters = 50, constraint = TRUE, init = NULL, 
+          sherman = FALSE, che = TRUE, MTG2 = FALSE, Fishers = FALSE) 
+{
   y.or <- y
   x.or <- X
   make.full <- function(X) {
@@ -267,11 +268,32 @@ AI <- function (y, X = NULL, ZETA = NULL, R = NULL, draw = TRUE, REML = TRUE,
           setTxtProgressBar(pb, (tot/tot))
         }
         if (wi == iters) {
-          cat("\nMaximum number of iterations reached with no convergence. Changing to EM algorithm\n")
-          LRes <- EM(y = y, X = X, ETA = ZETA, R = R, 
-                     iters = iters, REML = REML, draw = draw, 
-                     silent = silent)
-          logL <- LRes$LL
+          zig.zag <- function(zz) {
+            prove <- diff(zz)
+            res <- vector()
+            for (i in 2:length(prove)) {
+              if ((prove[i] < 0 & prove[i - 1] > 0) | 
+                  (prove[i] > 0 & prove[i - 1] < 0)) {
+                res[i] <- TRUE
+              }
+              else {
+                res[i] <- FALSE
+              }
+            }
+            res <- res[-1]
+            probab <- length(which(res))/length(res)
+            return(probab)
+          }
+          MLE <- which(logL2.stored == max(logL2.stored))[1]
+          last20 <- round(iters * 0.2)
+          best.try <- record[, (dim(record)[2] - last20):(dim(record)[2])]
+          zig <- length(which(apply(best.try, 1, zig.zag) == 
+                                1))
+          if (length(zig) > 0) {
+            cat("\nA weird likelihood shape has been encountered. \nBe careful with variance components returned\nFeel free to try other method such as EMMA or EM\nfor comparison purposes")
+          }
+          logL <- logL2.stored[which(logL2.stored == 
+                                       max(logL2.stored))]
           fail <- TRUE
         }
       }
@@ -350,7 +372,7 @@ AI <- function (y, X = NULL, ZETA = NULL, R = NULL, draw = TRUE, REML = TRUE,
       }
     }
     if (fail) {
-      var.com2 <- as.matrix(LRes$var.comp)
+      var.com2 <- as.matrix(record[, MLE])
     }
     else {
       var.com2 <- as.matrix(record[, dim(record)[2]])
@@ -358,15 +380,15 @@ AI <- function (y, X = NULL, ZETA = NULL, R = NULL, draw = TRUE, REML = TRUE,
     pushes <- apply(ups, 1, function(fg) {
       length(which(fg < 0))/length(fg)
     })
-    nnn <- length(which(pushes > 0.75))
+    nnn <- length(which(pushes > 0.85))
     if ((nnn >= 1 & nnn <= 4) & (nnn < (dim(var.com2)[1]) - 
                                  1) & (fail == FALSE) & (constraint == TRUE)) {
       cat("\nOne or more variance components close to zero.\nBoundary constraint applied\n")
-      zero <- which(pushes > 0.75)
+      zero <- which(pushes > 0.85)
       nonzero <- (1:dim(var.com2)[1])[-zero]
       boost <- AI2(y = y.or, X = x.or, ZETA = zeta.or[-zero], 
                    R = NULL, REML = REML, draw = draw, silent = silent, 
-                   iters = 10, init = as.vector(var.com2)[-zero], 
+                   iters = 20, init = as.vector(var.com2)[-zero], 
                    sherman = sherman)
       var.com2[nonzero, ] <- boost
       boost2 <- AI3(y = y.or, X = x.or, ZETA = zeta.or, 
@@ -444,6 +466,22 @@ AI <- function (y, X = NULL, ZETA = NULL, R = NULL, draw = TRUE, REML = TRUE,
   for (i in 1:length(ZETA)) {
     rownames(u[[i]]) <- colnames(ZETA[[i]][[1]])
   }
+  if (Fishers) {
+    fishers = matrix(0, nvarcom, nvarcom)
+    for (i in 1:nvarcom) {
+      for (j in 1:i) {
+        fishers[i, j] = as.numeric(0.5 * sum(diag((om[[i]] %*% 
+                                                     pm %*% om[[j]] %*% pm))))
+        if (i != j) {
+          fishers[j, i] <- fishers[i, j]
+        }
+      }
+    }
+    fishers.inv <- solve(fishers)
+  }
+  else {
+    fishers.inv = NULL
+  }
   out1 <- as.matrix(var.com2)
   rownames(out1) <- unlist(lege2)
   colnames(out1) <- "Variance Components"
@@ -451,7 +489,7 @@ AI <- function (y, X = NULL, ZETA = NULL, R = NULL, draw = TRUE, REML = TRUE,
               PEV.u.hat = PEV.u, beta.hat = beta, Var.beta.hat = xvxi, 
               LL = logL, AIC = AIC, BIC = BIC, X = xm, fitted.y = fitted.y, 
               fitted.u = fitted.u, residuals = ee, cond.residuals = residuals3, 
-              fitted.y.good = fitted.y.good, Z = Zsp, K = Ksp)
+              fitted.y.good = fitted.y.good, Z = Zsp, K = Ksp, fish.inv = fishers.inv)
   layout(matrix(1, 1, 1))
   return(res)
 }
