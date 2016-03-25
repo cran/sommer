@@ -1,4 +1,4 @@
-atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0){
+atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE){
   #### apply with progress bar ######
   apply_pb <- function(X, MARGIN, FUN, ...)
   {
@@ -73,7 +73,8 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0){
         length(grep(z, y, fixed = T))
       }, y)
       if (sum(ans) > 2) {
-        stop("Error in genotype matrix: More than 2 alleles")
+        ref.alt <- (bases[which(ans == 1)])[1:2]
+        #stop("Error in genotype matrix: More than 2 alleles")
       }
       if (sum(ans) == 2) {
         ref.alt <- bases[which(ans == 1)]
@@ -84,6 +85,32 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0){
     }
     return(ref.alt)
   }
+  
+  get.multi <- function(x, format) {
+    if (format == "numeric") {
+      ref.alt <- c(0, 1)
+    }
+    if (format == "AB") {
+      ref.alt <- c("A", "B")
+    }
+    if (format == "ATCG") {
+      y <- paste(na.omit(x), collapse = "")
+      ans <- apply(array(bases), 1, function(z, y) {
+        length(grep(z, y, fixed = T))
+      }, y)
+      if (sum(ans) > 2) {
+        ref.alt <- TRUE
+      }
+      if (sum(ans) == 2) {
+        ref.alt <- FALSE
+      }
+      if (sum(ans) == 1) {
+        ref.alt <- FALSE
+      }
+    }
+    return(ref.alt)
+  }
+  
   ####################################
   ## convert to matrix format
   ####################################
@@ -93,6 +120,15 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0){
   ####################################
   cat("Obtaining reference alleles\n")
   tmp <- apply_pb(markers, 1, get.ref, format=format)
+ 
+  if(multi){ # if markers with multiple alleles should be removed
+    cat("Checking for markers with more than 2 alleles. If found will be removed.\n")
+    tmpo <- apply_pb(markers, 1, get.multi, format = format)
+    multi.allelic <- which(!tmpo) # good markers
+    markers <- markers[multi.allelic,]
+    tmp <- tmp[, multi.allelic]
+  }
+  
   Ref <- tmp[1, ]
   Alt <- tmp[2, ]
   ####################################

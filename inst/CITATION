@@ -3,10 +3,10 @@ citHeader("To cite the sommer package in publications use:")
 citEntry(entry="Article",
 	title="Genomic prediction using the R package sommer",
 	author=as.person("Covarrubias-Pazaran G"),
-	journal="Genetics",
+	journal="CRAN",
 	year=2016,
 	volume="XXX",
 	pages="YYY-YYY",
 textVersion=paste("Covarrubias-Pazaran G. 2016. Genomic prediction using the R package sommer.",
-"Genetics xxxx:yyy-yyyy.")
+"CRAN:yyy-yyyy.")
 )

@@ -242,7 +242,7 @@ AI3 <- function (y, X = NULL, ZETA = NULL, R = NULL, draw = TRUE, REML = TRUE,
         }
         if (draw) {
           ylim <- max(unlist(record), na.rm = TRUE)
-          my.palette <- RColorBrewer::brewer.pal(7, "Accent")
+          my.palette <- brewer.pal(7, "Accent")
           layout(matrix(1:2, 2, 1))
           plot(logL2.stored[-1], type = "l", main = "logLikelihood", 
                col = my.palette[7], lwd = 3, las = 2, xaxt = "n", 

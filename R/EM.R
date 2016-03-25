@@ -1,4 +1,7 @@
-EM <- function(y, X=NULL, ETA=NULL, R=NULL, init=NULL, iters=50, REML=TRUE, draw=TRUE, silent=FALSE){
+EM <- function(y, X=NULL, ETA=NULL, R=NULL, init=NULL, iters=50, REML=TRUE, draw=TRUE, silent=FALSE, forced=NULL){
+  nanana <- names(ETA)
+  n.var.com <- length(ETA)
+  #ETA <- lapply(ETA, function(x){if(length(x) == 2){y <- list(Z=as(x[[1]],Class="sparseMatrix"), K=as(x[[2]],Class="sparseMatrix"))}else{y <- list(Z=as(x[[1]],Class="sparseMatrix"))}; return(y)})
   ### make sure fixed effects are there
   if(is.null(X) & is.null(ETA)){ # nothing in the model
     tn = length(y); xm <- matrix(1,tn,1) 
@@ -53,7 +56,8 @@ EM <- function(y, X=NULL, ETA=NULL, R=NULL, init=NULL, iters=50, REML=TRUE, draw
       ETA <- c(list(ETA0),ETA)
     }
     # add an identity matrix to all effects in ETA that did not provide a var-cov matrix
-    ETA <- lapply(ETA, function(x){if(length(x) == 1){x[[2]] <- diag(dim(x[[1]])[2])}else{x <- x}; return(x)})
+    ETA <- lapply(ETA, function(x){if(length(x) == 1){x[[2]] <- as(diag(dim(x[[1]])[2]), Class = "sparseMatrix")}else{x <- x}; return(x)})
+    # convert everything to sparse matrices
     ##
     eta.or <- ETA
     eta.or <- lapply(eta.or, function(x){lapply(x, as.matrix)}) # put back everything as matrices again
@@ -87,63 +91,152 @@ EM <- function(y, X=NULL, ETA=NULL, R=NULL, init=NULL, iters=50, REML=TRUE, draw
     wi=0
     change=1
     #ready=2
-    while (conv==0) { ## START!!!!! ===============================
-      wi=wi+1
-      ###################
-      if(!silent){
-        count <- count + 1
-      }
-      ###################
-      axs = lapply(var.com, function(x){varE/x}) #varE/varGCA1
-      CC = numeric()
-      ################### ROWS OF MME
-      for(j in 1:length(ETA)){ # for each variance component
-        prov <- numeric()
-        for(k in 1:length(ETA)){ #multiply it for all other variance components
-          if(j == k & names(ETA[[j]])[1] != "X"){ ## diagonal element of CC and not fixed
-            res <- crossprod(ETA[[j]][[1]], ETA[[k]][[1]]) + (as.vector(axs[[j-1]]) * solve(as.matrix(ETA[[j]][[2]]))) # var(e)/var(x) K-
-            ## we used j-1 because the 2nd element of ETA is the first var.component and the var(e) is never used in here
-          }else{
-            res <- crossprod(ETA[[j]][[1]], ETA[[k]][[1]])
-          }
-          prov <- cbind(prov,res) # C-BINDING
+    if(is.null(forced)){ # &&&&&&&&&&&&&&&&& IF NOT FORCED &&&&&&&&&&&&&&&&&&&&&
+      
+      while (conv==0) { ## START!!!!! ===============================
+        wi=wi+1
+        ###################
+        if(!silent){
+          count <- count + 1
         }
-        CC <- rbind(CC,prov) # R-BINDING
-      } # which((C == CC) == FALSE)
-      ##############################
-      l <- lapply(ETA, function(x,y){t(x[[1]])%*%y}, y=y)
-      l2 <- as.matrix(unlist(l))
-      #rownames(l2) <- c(unlist(lapply(ETA, function(x){colnames(x[[1]])})))
-      ## inverse C, which is the coefficient matrix
-      CInv<-solve(CC) 
-      thetaHat<-CInv%*%l2 
-      #Mstep 
-      nn <- lapply(ETA, function(x){dim(x[[1]])[2]}) # number of coefficients to estimate
-      nn <- lapply(nn, function(x){if(is.null(x)){x=1}else{x=x};return(x)}) # correct for vectors such as intercepts with only one column present as sinlge vectors sometime
-      pairs.a = list(NA)
-      for(h in 1:length(nn)){
-        pairs.a[[h]] <- ((sum(unlist(nn[1:h])) - (unlist(nn[h])-1) ) : sum(unlist(nn[1:h])))
-      }
-      ## ADJUST VARIANCE COMPONENTS FOR THIS ITERATION
-      # adjust error variance
-      now <- 0
-      for(f in 1:length(pairs.a)){now <- now + crossprod(as.matrix(ETA[[f]][[1]])%*%thetaHat[pairs.a[[f]],],y)}
-      varE = ( crossprod(y) - now ) / (length(y)-nn[[1]])
-      # adjust the rest
-      indexK <- which(unlist(lapply(ETA, function(x){names(x)[1]})) == "Z")
-      ##
-      track <- var.com ## keep track of old variance component before update
-      ##
-      for(k in 1:(length(var.com)-1)){ # adjust var comps except ERROR VARIANCE
-        rrr <- indexK[k]
-        Kinv <- solve(ETA[[rrr]][[2]])
-        var.com[[k]] = ( ( t(thetaHat[pairs.a[[rrr]],]) %*% Kinv  %*% thetaHat[pairs.a[[rrr]],] ) + matrixcalc::matrix.trace(Kinv%*%CInv[pairs.a[[rrr]],pairs.a[[rrr]]]*as.numeric(varE)))/nrow(ETA[[rrr]][[2]]) 
-      }
-      var.com[[length(var.com)]] = varE # last variance component
-      #######################################
-      ## store the results for each iteration
-      for(k in 1:length(var.com.sto)){var.com.sto[[k]] <- c(var.com.sto[[k]],var.com[[k]])}
-      ###
+        ###################
+        axs = lapply(var.com, function(x){varE/x}) #varE/varGCA1
+        CC = numeric()
+        ################### ROWS OF MME
+        for(j in 1:length(ETA)){ # for each variance component
+          prov <- numeric()
+          for(k in 1:length(ETA)){ #multiply it for all other variance components
+            if(j == k & names(ETA[[j]])[1] != "X"){ ## diagonal element of CC and not fixed
+              res <- crossprod(ETA[[j]][[1]], ETA[[k]][[1]]) + (as.vector(axs[[j-1]]) * solve(as.matrix(ETA[[j]][[2]]))) # var(e)/var(x) K-
+              ## we used j-1 because the 2nd element of ETA is the first var.component and the var(e) is never used in here
+            }else{
+              res <- crossprod(ETA[[j]][[1]], ETA[[k]][[1]])
+            }
+            prov <- cbind(prov,res) # C-BINDING
+          }
+          CC <- rbind(CC,prov) # R-BINDING
+        } # which((C == CC) == FALSE)
+        ##############################
+        l <- lapply(ETA, function(x,y){t(x[[1]])%*%y}, y=y)
+        l2 <- as.matrix(unlist(l))
+        #rownames(l2) <- c(unlist(lapply(ETA, function(x){colnames(x[[1]])})))
+        ## inverse C, which is the coefficient matrix
+        CInv<-solve(CC) 
+        thetaHat<-CInv%*%l2 
+        #Mstep 
+        nn <- lapply(ETA, function(x){dim(x[[1]])[2]}) # number of coefficients to estimate
+        nn <- lapply(nn, function(x){if(is.null(x)){x=1}else{x=x};return(x)}) # correct for vectors such as intercepts with only one column present as sinlge vectors sometime
+        pairs.a = list(NA)
+        for(h in 1:length(nn)){
+          pairs.a[[h]] <- ((sum(unlist(nn[1:h])) - (unlist(nn[h])-1) ) : sum(unlist(nn[1:h])))
+        }
+        ## ADJUST VARIANCE COMPONENTS FOR THIS ITERATION
+        # adjust error variance
+        now <- 0
+        for(f in 1:length(pairs.a)){now <- now + crossprod(as.matrix(ETA[[f]][[1]])%*%thetaHat[pairs.a[[f]],],y)}
+        varE = ( crossprod(y) - now ) / (length(y)-nn[[1]])
+        # adjust the rest
+        indexK <- which(unlist(lapply(ETA, function(x){names(x)[1]})) == "Z")
+        ##
+        track <- var.com ## keep track of old variance component before update
+        ##
+        for(k in 1:(length(var.com)-1)){ # adjust var comps except ERROR VARIANCE
+          rrr <- indexK[k]
+          Kinv <- solve(ETA[[rrr]][[2]])
+          var.com[[k]] = ( ( t(thetaHat[pairs.a[[rrr]],]) %*% Kinv  %*% thetaHat[pairs.a[[rrr]],] ) + matrixcalc::matrix.trace(Kinv%*%CInv[pairs.a[[rrr]],pairs.a[[rrr]]]*as.numeric(varE)))/nrow(ETA[[rrr]][[2]]) 
+        }
+        var.com[[length(var.com)]] = varE # last variance component
+        #######################################
+        ## store the results for each iteration
+        for(k in 1:length(var.com.sto)){var.com.sto[[k]] <- c(var.com.sto[[k]],var.com[[k]])}
+        ###
+        if(is.null(nanana)){
+          varosss <- c(paste("u.",1:n.var.com, sep=""))
+        }else{
+          varosss <- nanana
+        }
+        
+        lege2 <- list()
+        for(k in 1:length(var.com)){
+          if(k == length(var.com)){
+            lege2[[k]] <- paste("Var(Error):")
+          }else{
+            lege2[[k]] <- paste("Var(",varosss[k],"):",sep="")
+          }
+        }
+        ##
+        if(draw){
+          ylim <- max(unlist(var.com.sto), na.rm=TRUE)
+          my.palette <- brewer.pal(7,"Accent")
+          
+          layout(matrix(1,1,1))
+          plot(var.com.sto[[1]],ylim=c(0,ylim),type="l",col=my.palette[1],lwd=3, xlim=c(0,iters), xaxt="n", las=2, main="Expectation-Maximization algorithm results", ylab="Value of the variance component", xlab="Iteration to be processed to reach convergence", cex.axis=.8) 
+          axis(1, las=1, at=0:10000, labels=0:10000, cex.axis=.8)
+          for(t in 1:length(var.com)){lines(var.com.sto[[t]],col=my.palette[t],lwd=3)} 
+          ww <- length(var.com.sto[[1]])
+          lege <- list()
+          #lege2 <- list()
+          for(k in 1:length(var.com)){
+            if(k == length(var.com)){
+              lege[[k]] <- paste("Var(e):",round(var.com.sto[[k]][ww],4), sep="")
+              #lege2[[k]] <- paste("Var(e):")
+            }else{
+              lege[[k]] <- paste("Var(",varosss[k],"):",round(var.com.sto[[k]][ww],4), sep="")
+              #lege2[[k]] <- paste("Var(u",k,"):",sep="")
+            }
+          }
+          legend("topright",bty="n", col=my.palette, lty=1, legend=unlist(lege), cex=.75)
+        }
+        ################################
+        if(!silent){
+          setTxtProgressBar(pb, (count/tot))### keep filling the progress bar
+        }
+        ################################
+        if(wi > 1){
+          #change=abs(sum(unlist(var.com) - unlist(track)))
+          uuu1 <- cbind(unlist(var.com), unlist(track))
+          uuu2 <- apply(uuu1,1,function(x){if(abs(x[1] - x[2]) < 0.0001){y <- TRUE}else{y <- FALSE}; return(y)})
+          change <- length(which(uuu2))
+        }
+        ####
+        if (change == length(var.com)  | wi == iters ){ ## CONVERGENCE change < 0.000000001
+          conv=1
+          if(!silent){
+            setTxtProgressBar(pb, (tot/tot))### keep filling the progress bar
+          }
+          if(wi == iters){ # if we didn't reach convergence
+            if(!silent){
+              ylim <- max(unlist(var.com.sto), na.rm=TRUE)
+              my.palette <- brewer.pal(7,"Accent")
+              layout(matrix(1,1,1))
+              plot(var.com.sto[[1]],ylim=c(0,ylim),type="l",col=my.palette[1],lwd=3, xlim=c(0,iters), xaxt="n", las=2, main="Expectation-Maximization algorithm results", ylab="Value of the variance component", xlab="Iteration to be processed to reach convergence", cex.axis=.8, cex.main=.8) 
+              axis(1, las=1, at=0:10000, labels=0:10000, cex.axis=.8)
+              for(t in 1:length(var.com)){lines(var.com.sto[[t]],col=my.palette[t],lwd=3)}
+              ww <- length(var.com.sto[[1]])
+              lege <- list()
+              #lege2 <- list()
+              for(k in 1:length(var.com)){
+                if(k == length(var.com)){
+                  lege[[k]] <- paste("Var(e):",round(var.com.sto[[k]][ww],4), sep="")
+                  #lege2[[k]] <- paste("Var(e):")
+                }else{
+                  lege[[k]] <- paste("Var(",varosss[k],"):",round(var.com.sto[[k]][ww],4), sep="")
+                  #lege2[[k]] <- paste("Var(u",k,"):",sep="")
+                }
+              }
+              legend("topleft",bty="n", col=my.palette, lty=1, legend=unlist(lege), cex=.75)
+              cat("\nMaximum number of iterations reached with no convergence using the EM algorithm, look at the variance components change over iterations (plot) and be cautious using the variance components estimated if they don't look steady")
+            } 
+          }########### END of if we didn't reach convergence
+        }
+        ################################
+      } ### ======================= END while loop
+      
+    }else{ ## &&&&&&&&&&&&&&&&& IF FORCED &&&&&&&&&&&&&&&&&&&&&
+      setTxtProgressBar(pb, (tot/tot))
+      
+      cat("\nVariance components forced\n")
+      var.com <- as.vector(forced)
       lege2 <- list()
       for(k in 1:length(var.com)){
         if(k == length(var.com)){
@@ -153,47 +246,12 @@ EM <- function(y, X=NULL, ETA=NULL, R=NULL, init=NULL, iters=50, REML=TRUE, draw
         }
       }
       ##
-      if(draw){
-        ylim <- max(unlist(var.com.sto), na.rm=TRUE)
-        my.palette <- RColorBrewer::brewer.pal(7,"Accent")
-        
-        layout(matrix(1,1,1))
-        plot(var.com.sto[[1]],ylim=c(0,ylim),type="l",col=my.palette[1],lwd=3, xlim=c(0,iters), xaxt="n", las=2, main="Expectation-Maximization algorithm results", ylab="Value of the variance component", xlab="Iteration to be processed to reach convergence", cex.axis=.8) 
-        axis(1, las=1, at=0:10000, labels=0:10000, cex.axis=.8)
-        for(t in 1:length(var.com)){lines(var.com.sto[[t]],col=my.palette[t],lwd=3)} 
-        ww <- length(var.com.sto[[1]])
-        lege <- list()
-        #lege2 <- list()
-        for(k in 1:length(var.com)){
-          if(k == length(var.com)){
-            lege[[k]] <- paste("Var(e):",round(var.com.sto[[k]][ww],4), sep="")
-            #lege2[[k]] <- paste("Var(e):")
-          }else{
-            lege[[k]] <- paste("Var(u",k,"):",round(var.com.sto[[k]][ww],4), sep="")
-            #lege2[[k]] <- paste("Var(u",k,"):",sep="")
-          }
-        }
-        legend("topright",bty="n", col=my.palette, lty=1, legend=unlist(lege), cex=.75)
+      if(is.null(nanana)){
+        varosss <- c(paste("u.",1:n.var.com, sep=""))
+      }else{
+        varosss <- nanana
       }
-      ################################
-      if(!silent){
-        setTxtProgressBar(pb, (count/tot))### keep filling the progress bar
-      }
-      ################################
-      if(wi > 1){change=abs(sum(unlist(var.com) - unlist(track)))}
-      if (change < 0.000000001 | wi == iters ){ ## CONVERGENCE 
-        conv=1
-        if(!silent){
-          setTxtProgressBar(pb, (tot/tot))### keep filling the progress bar
-        }
-        if(wi == iters){
-          if(!silent){
-            cat("\nMaximum number of iterations reached with no convergence using the EM algorithm, look at the variance components change over iterations (plot) and be cautious using the variance components estimated if they don't look steady")
-          }
-        }
-      }
-      ################################
-    }
+    } ## &&&&&&&&&&&&&&&&& END OF FORCING &&&&&&&&&&&&&&&&&&&&&
     ################################
     ################################
     ################################
@@ -215,17 +273,19 @@ EM <- function(y, X=NULL, ETA=NULL, R=NULL, init=NULL, iters=50, REML=TRUE, draw
     }# then V is just the sum of all Z'KZ including the error
     # therefore V == ZGZ + IR
     # Inverse of total variance
-    Vinv <- solve(V)
-    Vinv2 <- solve(V2)
+    Vinv <- solve(as(V, Class = "sparseMatrix"))
+    Vinv2 <- solve(as(V2,Class = "sparseMatrix"))
     
     X <- ETA[[fixed]][[1]]
     xvx=t(X)%*%Vinv%*%X # X'V-X
     xvxi=solve(xvx) # (X'V-X)-
     pm=Vinv-Vinv%*%X%*%xvxi%*%t(X)%*%Vinv # P = Vinv - [Vinv X (X'V-X)- X Vinv]
     if(REML==TRUE){
-      logL=-0.5*(log(det(V))+log(det(xvx))+t(y)%*%pm%*%y) # log likelihood, problem
+      #logL=-0.5*(log(det(V))+log(det(xvx))+t(y)%*%pm%*%y) # log likelihood, problem
+      logL=as.numeric(-0.5*((determinant(V, logarithm = TRUE)$modulus[[1]])+determinant(xvx, logarithm = TRUE)$modulus[[1]]+t(y)%*%(pm%*%y)))
     }else{
-      logL=-0.5*(log(det(V)) + t(y)%*%pm%*%y ) # log likelihood, problem
+      #logL=-0.5*(log(det(V)) + t(y)%*%pm%*%y ) # log likelihood, problem
+      logL=as.numeric(-0.5*((determinant(V, logarithm = TRUE)$modulus[[1]]) + t(y)%*%(pm%*%y )))
     }
     #logL=NULL
     # Estimates of coefficients of the linear mixed model
@@ -280,8 +340,8 @@ EM <- function(y, X=NULL, ETA=NULL, R=NULL, init=NULL, iters=50, REML=TRUE, draw
     Var.beta.hat <- solve(crossprod(xm, Vinv2 %*% xm)) 
     #Var.beta.hat=NULL
     ###############
-    AIC = (-2 * logL ) + ( 2 * dim(X)[2])
-    BIC = (-2 * logL ) + ( log(length(y)) * dim(X)[2])
+    AIC = as.vector((-2 * logL ) + ( 2 * dim(X)[2]))
+    BIC = as.vector((-2 * logL ) + ( log(length(y)) * dim(X)[2]))
     
     fitted.y <- eta.or[[1]][[1]] %*% beta
     fitted.u <- 0
@@ -301,8 +361,16 @@ EM <- function(y, X=NULL, ETA=NULL, R=NULL, init=NULL, iters=50, REML=TRUE, draw
       rownames(u[[i-1]]) <- colnames(ETA[[i]][[1]])
     }
     #########################################
-    
-    output <- list(var.comp=(as.matrix(out1,ncol=1)), V.inv = Vinv, u.hat=u, Var.u.hat=Var.u.hat, 
+    if(!is.null(nanana)){
+      names(u) <- nanana
+      names(Var.u.hat) <- nanana
+      names(PEV.u.hat) <- nanana
+    }
+    logL <- as.vector(logL)
+    ##################################
+    VCC <- (as.matrix(out1,ncol=1))
+    rownames(VCC) <- c(paste("Var(",varosss,")",sep=""), "Var(Error)")
+    output <- list(var.comp=VCC, V.inv = Vinv, u.hat=u, Var.u.hat=Var.u.hat, 
                    PEV.u.hat=PEV.u.hat, beta.hat=beta, Var.beta.hat=Var.beta.hat,
                    LL=logL, AIC=AIC, BIC=BIC, X=ETA[[xvar]][[1]], 
                    fitted.y=fitted.y, fitted.u=fitted.u, residuals=residuals2, 

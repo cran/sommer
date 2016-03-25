@@ -2,8 +2,32 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
           REML = TRUE, iters = 40, draw = FALSE, init = NULL, n.PC = 0, 
           P3D = TRUE, models = "additive", ploidy = 2, min.MAF = 0.05, 
           silent = FALSE, family = NULL, constraint = TRUE, sherman = FALSE, 
-          MTG2 = FALSE, Fishers = FALSE) 
+          MTG2 = FALSE, Fishers = FALSE, gss = TRUE, forced = NULL, 
+          full.rank = TRUE) 
 {
+  if (!is.null(X)) {
+    case <- dim(X)[2]
+    case2 <- dim(X)[2]
+    xor <- X
+    p <- ncol(X)
+    not.NA <- which(!is.na(y))
+    X <- as.matrix(X[not.NA, ])
+    XtX <- crossprod(X, X)
+    rank.X <- qr(XtX)$rank
+    if (rank.X < p & full.rank) {
+      while (rank.X < p) {
+        case <- case - 1
+        XtX <- crossprod(X[, -c(case:case2)], X[, -c(case:case2)])
+        p <- ncol(X[, -c(case:case2)])
+        rank.X <- qr(XtX)$rank
+      }
+      X <- as.matrix(xor[, -c(case:case2)])
+      cat("\nYour X matrix is not full rank, deleting columns until full rank is achieved\n")
+    }
+    else {
+      X <- xor
+    }
+  }
   make.full <- function(X) {
     svd.X <- svd(X)
     r <- max(which(svd.X$d > 1e-08))
@@ -71,6 +95,43 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
     cat("\nThe parameter 'Z' needs to be provided in a 2-level list structure. \n\nPlease see help typing ?mmer and look at the 'Arguments' section\n")
     cat("\nIf no random effects provided, the model will be fitted using the 'lm' function\n\n")
   }
+  Z <- lapply(Z, function(x) {
+    if (length(x) > 1) {
+      if (length(x) > 1 | !is.diagonal.matrix(x[[2]])) {
+        if (!is.null(colnames(x[[1]])) & !is.null(colnames(x[[2]]))) {
+          if (length(which(colnames(x[[1]]) == colnames(x[[2]]))) != 
+              dim(x[[1]])[2]) {
+            y <- colnames(x[[1]])
+            y2 <- strsplit(y, split = "")
+            y3 <- y2[[1]]
+            for (i in 2:length(y2)) {
+              basd <- vector()
+              for (j in 1:length(y3)) {
+                good <- which(y3[j] == y2[[i]])
+                if (length(good) > 0) {
+                  basd[j] <- (y3[good])[1]
+                  y2[[i]][good] <- NA
+                }
+              }
+              y3 <- basd
+            }
+            extraname <- paste(na.omit(y3), collapse = "")
+            if (extraname != "") {
+              real1 <- match(colnames(x[[2]]), gsub(as.character(extraname), 
+                                                    "", as.character(colnames(x[[1]]))))
+              if (length(which(is.na(real1))) == 0) {
+                x[[1]] <- x[[1]][, real1]
+              }
+              else {
+                cat("\nWe found the column names of your Z matrix in different order than column names of K, \nwe were not able to fix it. The analysis will be performed but this could lead to wrong \nresults please take a look to make sure the levels of K and Z are in the same order.\n")
+              }
+            }
+          }
+        }
+      }
+    }
+    return(x)
+  })
   Z <- lapply(Z, function(x) {
     im <- x[[1]]
     im <- apply(im, 2, function(y) {
@@ -141,7 +202,8 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
       }
       if (method == "EM") {
         res <- EM(y = y, X = X, ETA = Z, R = R, init = init, 
-                  iters = iters, REML = REML, draw = draw, silent = silent)
+                  iters = iters, REML = REML, draw = draw, silent = silent, 
+                  forced = forced)
       }
       if (method == "AI") {
         if (length(Z) == 1) {
@@ -163,14 +225,15 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
                       REML = REML, draw = draw, silent = silent, 
                       iters = iters, constraint = constraint, 
                       init = init, sherman = sherman, che = FALSE, 
-                      MTG2 = MTG2, Fishers = Fishers)
+                      MTG2 = MTG2, Fishers = Fishers, forced = forced)
           }
         }
         else {
           res <- AI(y = y, X = X, ZETA = Z, R = R, REML = REML, 
                     draw = draw, silent = silent, iters = iters, 
                     constraint = constraint, init = init, sherman = sherman, 
-                    che = FALSE, MTG2 = MTG2, Fishers = Fishers)
+                    che = FALSE, MTG2 = MTG2, Fishers = Fishers, 
+                    forced = forced)
         }
       }
       if (n.PC > 0) {
@@ -237,7 +300,8 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
       }
       if (method == "EM") {
         res <- EM(y = y, X = X, ETA = Z, R = R, init = init, 
-                  iters = iters, REML = REML, draw = draw, silent = silent)
+                  iters = iters, REML = REML, draw = draw, silent = silent, 
+                  forced = forced)
       }
       if (method == "AI") {
         if (length(Z) == 1) {
@@ -259,14 +323,16 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
                       REML = REML, draw = draw, silent = silent, 
                       iters = iters, constraint = constraint, 
                       init = init, sherman = sherman, che = FALSE, 
-                      MTG2 = MTG2, Fishers = Fishers)
+                      MTG2 = MTG2, Fishers = Fishers, gss = gss, 
+                      forced = forced)
           }
         }
         else {
           res <- AI(y = y, X = X, ZETA = Z, R = R, REML = REML, 
                     draw = draw, silent = silent, iters = iters, 
                     constraint = constraint, init = init, sherman = sherman, 
-                    che = FALSE, MTG2 = MTG2, Fishers = Fishers)
+                    che = FALSE, MTG2 = MTG2, Fishers = Fishers, 
+                    gss = gss, forced = forced)
         }
       }
       res$method <- method
@@ -344,7 +410,7 @@ mmer <- function (y, X = NULL, Z = NULL, W = NULL, R = NULL, method = "AI",
   cat("\nInformation contained in this fitted model: \n* Variance components\n* Residuals and conditional residuals\n* BLUEs and BLUPs\n* Inverse phenotypic variance(V)\n* Variance-covariance matrix for fixed effects\n* Variance-covariance matrix for random effects\n* Predicted error variance (PEV)\n* LogLikelihood\n* AIC and BIC\n* Fitted values\nUse the 'str' function to access such information\n")
   cat("\n=======================================================")
   cat("\nLinear mixed model fit by restricted maximum likelihood\n")
-  cat("********************  sommer 1.3  *********************\n")
+  cat("********************  sommer 1.4  *********************\n")
   cat("=======================================================")
   cat("\nMethod:")
   print(x$method)
@@ -537,7 +603,7 @@ plot.mmer <- function(x, ...) {
     stop("This package requires R 2.1 or later")
   assign(".sommer.home", file.path(library, pkg),
          pos=match("package:sommer", search()))
-  sommer.version = "1.3 (2016-03-15)"
+  sommer.version = "1.4 (2016-04-15)"
   assign(".sommer.version", sommer.version, pos=match("package:sommer", search()))
   if(interactive())
   {

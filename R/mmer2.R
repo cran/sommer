@@ -1,4 +1,4 @@
-mmer2 <- function(fixed=NULL, random=NULL, G=NULL, R=NULL, method="AI", REML=TRUE, iters=50, draw=FALSE, init=NULL, data=NULL, family=gaussian, silent=FALSE, constraint=TRUE, sherman=FALSE, MTG2=FALSE){
+mmer2 <- function(fixed=NULL, random=NULL, G=NULL, R=NULL, method="AI", REML=TRUE, iters=50, draw=FALSE, init=NULL, data=NULL, family=gaussian, silent=FALSE, constraint=TRUE, sherman=FALSE, MTG2=FALSE, gss=FALSE){
   ### Response "y"
   yvar <- gsub(" ", "", as.character(fixed[2]))
   ### Xb in 'formula'
@@ -64,10 +64,10 @@ mmer2 <- function(fixed=NULL, random=NULL, G=NULL, R=NULL, method="AI", REML=TRU
           Z[[i]] <- elem
         }
       }
-      
+      names(Z) <- zvar
       ### fit the model using the real function mmer2 
-      res <- mmer(y=yvars, X=X, Z=Z, R=R, method=method, REML=REML, iters=iters, draw=draw, init=init, silent=silent, constraint=constraint, sherman=sherman, MTG2=MTG2)
-      rownames(res$var.comp) <- c(zvar,"Error")
+      res <- mmer(y=yvars, X=X, Z=Z, R=R, method=method, REML=REML, iters=iters, draw=draw, init=init, silent=silent, constraint=constraint, sherman=sherman, MTG2=MTG2, gss=gss)
+      #rownames(res$var.comp) <- c(zvar,"Error")
     }
   }else{ # ================== JUST FIXED =======================
     res <- glm(yvars~X, family=family)

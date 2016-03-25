@@ -1,12 +1,12 @@
-\name{EM}
-\alias{EM}
+\name{EM2}
+\alias{EM2}
 \title{Expectation Maximization Algorithm}
 \description{
 This function is used internally in the function \code{\link{mmer}} when MORE than 1 variance component needs to be estimated through the use of the expectation maximization (EM) algorithm.
 }
 \usage{
-EM(y, X=NULL, ETA=NULL, R=NULL, init=NULL, 
-   iters=50, REML=TRUE, draw=TRUE, silent=FALSE, forced=NULL)
+EM2(y, X=NULL, ETA=NULL, R=NULL, init=NULL, 
+   iters=50, REML=TRUE, draw=TRUE, silent=FALSE)
 }
 \arguments{
   \item{y}{a numeric vector for the response variable}
@@ -18,7 +18,6 @@ EM(y, X=NULL, ETA=NULL, R=NULL, init=NULL,
   \item{REML}{a TRUE/FALSE value indicating if restricted maximum likelihood should be used instead of ML. The default is TRUE.}
   \item{draw}{a TRUE/FALSE value indicating if a plot of updated values for the variance components should be drawn or not. The default is TRUE. COMPUTATION TIME IS SMALLER IF YOU DON'T PLOT SETTING draw=FALSE}
   \item{silent}{a TRUE/FALSE value indicating if the function should draw the progress bar or iterations performed while working or should not be displayed.}
-  \item{forced}{a vector of numeric values for variance components including error if the user wants to force the values of the variance components. On the meantime only works for forcing all of them and not a subset of them. The default is NULL, meaning that variance components will be estimated by REML/ML.}
 
 }
 \details{

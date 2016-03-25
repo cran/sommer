@@ -7,7 +7,7 @@ This function is used internally in the function \code{\link{mmer}} when MORE th
 \usage{
 AI(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, 
    iters=50, constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, 
-   MTG2=FALSE, Fishers=FALSE)
+   MTG2=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL)
 }
 \arguments{
   \item{y}{a numeric vector for the response variable}
@@ -27,6 +27,8 @@ AI(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
       2) The system needs to be squared and no missing data is allowed (then missing data is imputed with the median).
    The default is FALSE to avoid the user get into trouble but experimented users can take advantage from this feature to fit big models, i.e. 5000 individuals in 555 seconds = 9 minutes in a MacBook 4GB RAM.}
       \item{Fishers}{a TRUE/FALSE value indicating if the program should calculate at the final step and return the inverse of the Fishers Information Matrix.}
+      \item{gss}{a TRUE/FALSE value indicating if a genomic selection is being fitted just for using certain constraints. When is FALSE (default) the program can make some EM steps to find initial values for variance components when the starting values are to far from the real values causing the likelihood to have a strange behavior and dropping dramatically When TRUE the program does not try EM steps even when far away from the likelihood because in big marker-based models can make the process quite slow.}
+      \item{forced}{a vector of numeric values for variance components including error if the user wants to force the values of the variance components. On the meantime only works for forcing all of them and not a subset of them. The default is NULL, meaning that variance components will be estimated by REML/ML.}
 
 }
 \details{

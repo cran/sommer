@@ -49,7 +49,7 @@ bag <- function(gwasm, nmar=10, threshold=1, pick=FALSE, method="cluster"){
       #hh <- which(res$hei %in% sort(res$hei, decreasing=TRUE)[1:nmar])
       #res <- list(pos=res$pos[hh], hei=res$hei[hh])
       
-      res <- big.peaks.col(gwasm$W.scores$additive, tre=threshold)
+      res <- big.peaks.col(as.vector(gwasm$W.scores$additive), tre=threshold)
       
       if(length(res$pos) >= nmar){ # if enough markers significant
         ## build the number of cluster plus 5 to make sure you have repeatability

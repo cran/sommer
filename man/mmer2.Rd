@@ -7,7 +7,7 @@ This function solves the mixed model equations proposed by Henderson (1975). It 
 \usage{
 mmer2(fixed=NULL, random=NULL, G=NULL, R=NULL, method="AI", REML=TRUE, 
       iters=50, draw=FALSE, init=NULL, data=NULL, family=gaussian, 
-      silent=FALSE, constraint=TRUE, sherman=FALSE, MTG2=FALSE)
+      silent=FALSE, constraint=TRUE, sherman=FALSE, MTG2=FALSE, gss=FALSE)
 }
 \arguments{
   \item{fixed}{a formula specifying the response variable and the fixed effects, i.e. Yield ~ Location}
@@ -28,6 +28,7 @@ mmer2(fixed=NULL, random=NULL, G=NULL, R=NULL, method="AI", REML=TRUE,
       1) can only be applied to one relationship matrix
       2) The system needs to be squared and no missing data is allowed (then missing data is imputed with the median).
    The default is FALSE to avoid the user get into trouble but experimented users can take advantage from this feature to fit big models, i.e. 5000 individuals in 555 seconds = 9 minutes in a MacBook 4GB RAM.}
+     \item{gss}{a TRUE/FALSE value indicating if a genomic selection is being fitted just for using certain constraints. When is FALSE (default) the program can make some EM steps to find initial values for variance components when the starting values are to far from the real values causing the likelihood to have a strange behavior and dropping dramatically When TRUE the program does not try EM steps even when far away from the likelihood because in big marker-based models can make the process quite slow.}
     
 }
 \details{
@@ -35,43 +36,86 @@ The package has been developed to provide R users with code to understand how mo
 
 .
 
-y = Xb + Zu + e
+.............................    y = Xb + Zu + e   ........ with distributions:
+
+.
+
+y ~ N[Xb, var(Zu+e)]   ......where;
 
 .
 
 b ~ N[b.hat, 0]  ............zero variance because is a fixed term
 
-u ~ N[0, K*sigma(u)]  .......where: K*sigma(u) = G
-
-e ~ N[0, I*sigma(e)]  .......where: I*sigma(e) = R
-
-y ~ N[Xb, var(Zu+e)]   ......where;
-
-var(y) = var(Zu+e) = ZGZ+R = V which is the phenotypic variance
+u ~ N[0, G]  ....... where G is equal to:
 
 .
 
-The function allows the user to specify the incidence matrices with their respective variance-covariance matrix in a 2 level list structure. For example imagine a mixed model with the following design:
+|K1*sigma2(u1)......................0...........................0.........|
+    
+|.............0.............K2*sigma2(u2).......................0.........| = G
+
+|......................................................................................|
+
+|.............0....................0.........................Ki*sigma2(ui)...|
 
 .
 
-fixed = only intercept.....................b ~ N[b.hat, 0]
+for the i.th random effects, allowing the user to specify the variance covariance structures in the K matrices and
+
+.
+
+e ~ N[0, R]  .....................where: I*sigma(e) = R
+
+.
+
+also Var(y) = Var(Zu+e) = ZGZ+R = V which is the phenotypic variance
+
+-------------------------------------------------------------------------------
+
+The functions in the sommer packages allow the user to specify the incidence matrices with their respective variance-covariance matrix in a 2 level list structure. For example imagine a mixed model with three random effects:
+
+.
+
+fixed = only intercept...................................b ~ N[b.hat, 0]
 
 random = GCA1 + GCA2 + SCA.................u ~ N[0, G]       
 
 .
 
-where G is:
+then G takes the form:
 
 .
 
-|K*sigma2(gca1).....................0..........................0.........|
+|K1*sigma2(gca1).....................0..........................0.........|
     
-|.............0.............S*sigma2(gca2).....................0.........| = G
+|.............0.............K2*sigma2(gca2).....................0.........| = G
 
-|.............0....................0......................W*sigma2(sca)..|
+|.............0....................0......................K3*sigma2(sca)...|
 
 .
+
+This mixed model would be specified in the \code{\link{mmer}} function as:
+
+.
+
+X1 <- matrix(1,length(y),1)      incidence matrix for intercept only
+
+ETA <- list(gca1=list(Z=Z1, K=K1), gca2=list(Z=Z2, K=K2), sca=list(Z=Z3, K=K3))      for 3 random effects
+
+.
+
+where Z1, Z2, Z3 are incidence matrices for GCA1, GCA2, SCA respectively created using the \code{\link{model.matrix}} function and K1, K2, K3 are their var-cov matrices. Now the fitted model will be typed as:
+
+.
+
+ans <- mmer(y=y, X=X1, Z=ETA)
+
+or
+
+ans <- mmer2(y~1, random= ~ gca1 + gca2 + sca, G=list(gca1=K1, gca2=K2, sca=K3), data=yourdata)
+
+-------------------------------------------------------------------------------------
+
 
 PLEASE KEEP IN MIND THAT THIS VERSION NAMED 'mmer2' IS LIMITED compared with \code{\link{mmer}} since the matrices for random effects are built based on a dataframe provided, and genetic models sometimes require a matrix with markers (several columns) to count as single random effect. For fitting more general models please use the \code{\link{mmer}} function which works directly with the incidence matrices and variance covariance matrices for each random effect.
 
@@ -94,19 +138,34 @@ Other functions such as \code{\link{summary}}, \code{\link{fitted}}, \code{\link
 If all parameters are correctly indicated the program will return a list with the following information:
 \describe{
 
-\item{$var.com}{ a vector with the values of the variance components estimated}
+\item{$var.comp}{ a vector with the values of the variance components estimated}
 \item{$V.inv}{ a matrix with the inverse of the phenotypic variance V = ZGZ+R, V^-1}
 \item{$u.hat}{ a vector with BLUPs for random effects}
 \item{$Var.u.hat}{ a vector with variances for BLUPs}
 \item{$PEV.u.hat}{ a vector with predicted error variance for BLUPs}
 \item{$beta.hat}{ a vector for BLUEs of fixed effects}
 \item{$Var.beta.hat}{ a vector with variances for BLUEs}
+\item{$LL}{ LogLikelihood}
+\item{$AIC}{ Akaike information criterion}
+\item{$BIC}{ Bayesian information criterion}
 \item{$X}{ incidence matrix for fixed effects}
+\item{$fitted.y}{ Fitted values y.hat=XB+Zu}
+\item{$fitted.u}{ Fitted values only across random effects u.hat=Zu.1+....+Zu.i}
+\item{$residuals}{ Residual values e = y - XB or y - y.hat.fixed}
+\item{$cond.residuals}{ Conditional residual values e = y - (XB + Zu) or y - y.hat}
+\item{$fitted.y.good}{ Fitted values y.hat=XB+Zu only for data that had no missing data originally. Only used for my checks.}
+\item{$Z}{ incidence matrix for random effects. If more than one random effect this will be the column binding of individual Z matrices.}
+\item{$K}{ variance-covariance matrix for random effects. If more than one random effect this will be the diagonal binding of individual K matrices.}
+\item{$fish.inv}{ If was set to TRUE the Fishers information matrix will be in this slot.}
+\item{$method}{ The method for extimation of variance components specified by the user.}
+\item{$maxim}{ Maximization used. An argument for the program to know if REML or ML was used. If TRUE means that REML was used instead of ML.}
 \item{$score}{ the -log10(p-value) for each marker if a GWAS model is fitted by specifying the W parameter in the model.}
 
 }
 }
 \references{
+
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. https://cran.rstudio.com/web/packages/sommer/ 
 
 Bernardo Rex. 2010. Breeding for quantitative traits in plants. Second edition. Stemma Press. 390 pp.
 

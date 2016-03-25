@@ -50,7 +50,19 @@ version 1.3 (2016-03-01)
   + GWAS modality of 'mmer' now adds the names of the markers of each score to keep track
     the value for each marker.
 
+########################  
+version 1.4 (2016-04-15)
+########################
 
+  + The AI algorithm will take 5 EM steps if after 10 iterations (AI) the likelihood drops 
+    suddenly, indicating that initial values were too far from real values causing a bad 
+    behavior of the likelihood. The EM steps aim to provide initials values for those 
+    problematic variance components. ONLY mmer2!!!!!!
+  + The AI likelihood behaving in a zig zag pattern is detected only after 10 iterations 
+    and we opted for returning the ML estimators.
+  + Minor bugs have been fixed (names in random terms). In addition, ordering random effects
+    based on their degrees of freedom has been implemented to provide more stability to the 
+    AI algorithm.
 
 ##pendings
 + multivariate version

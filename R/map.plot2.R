@@ -10,6 +10,63 @@ map.plot2 <- function(data, trait=NULL, trait.scale="same", col.chr=NULL, col.tr
     res <- apply(col2rgb(col), 2, function(c) rgb(c[1]/255, c[2]/255, c[3]/255, alpha))
     return(res)
   }
+  #####
+  draw.arc <- function (x = 1, y = NULL, radius = 1, angle1 = deg1 * pi/180, 
+            angle2 = deg2 * pi/180, deg1 = 0, deg2 = 45, n = 0.05, col = NA, 
+            lwd = NA, ...) {
+    getYmult<-function () {
+      if (dev.cur() == 1) {
+        warning("No graphics device open.")
+        ymult <- 1
+      }
+      else {
+        xyasp <- par("pin")
+        xycr <- diff(par("usr"))[c(1, 3)]
+        ymult <- xyasp[1]/xyasp[2] * xycr[2]/xycr[1]
+      }
+      return(ymult)
+    }
+    if (all(is.na(col))) 
+      col <- par("col")
+    if (all(is.na(lwd))) 
+      lwd <- par("lwd")
+    xylim <- par("usr")
+    ymult <- getYmult()
+    devunits <- dev.size("px")
+    draw.arc.0 <- function(x, y, radius, angle1, angle2, n, col, 
+                           lwd, ...) {
+      delta.angle <- (angle2 - angle1)
+      if (n != as.integer(n)) 
+        n <- as.integer(1 + delta.angle/n)
+      delta.angle <- delta.angle/n
+      angleS <- angle1 + seq(0, length = n) * delta.angle
+      angleE <- c(angleS[-1], angle2)
+      if (n > 1) {
+        half.lwd.user <- (lwd/2) * (xylim[2] - xylim[1])/devunits[1]
+        adj.angle = delta.angle * half.lwd.user/(2 * (radius + 
+                                                        half.lwd.user))
+        angleS[2:n] = angleS[2:n] - adj.angle
+        angleE[1:(n - 1)] = angleE[1:(n - 1)] + adj.angle
+      }
+      p1x <- x + radius * cos(angleS)
+      p1y <- y + radius * sin(angleS) * ymult
+      p2x <- x + radius * cos(angleE)
+      p2y <- y + radius * sin(angleE) * ymult
+      segments(p1x, p1y, p2x, p2y, col = col, lwd = lwd, ...)
+    }
+    xy <- xy.coords(x, y)
+    x <- xy$x
+    y <- xy$y
+    a1 <- pmin(angle1, angle2)
+    a2 <- pmax(angle1, angle2)
+    angle1 <- a1
+    angle2 <- a2
+    args <- data.frame(x, y, radius, angle1, angle2, n, col, 
+                       lwd, stringsAsFactors = FALSE)
+    for (i in 1:nrow(args)) do.call("draw.arc.0", c(args[i, ], 
+                                                    ...))
+    invisible(args)
+  }
   ## this function takes a dataframe with 2 basic columns:
   ## LG containint the linkage group
   ## Position, the position in cM
@@ -80,8 +137,8 @@ map.plot2 <- function(data, trait=NULL, trait.scale="same", col.chr=NULL, col.tr
     axis(3,at=(sss-(fact/3)) , labels=paste("LG",j, sep=""), cex.axis=cex.axis, font=2) # cex of the name of LGs
     #axis(2,at=0.275, labels="Density")
     ## --------------------------------------------------------
-    plotrix::draw.arc((sss + sss-(fact/3))/2, 1- max(chr), (sss - (sss-(fact/3)))/2, deg1=180, deg2=360, col="black", lwd=2, lend=1)
-    plotrix::draw.arc((sss + sss-(fact/3))/2, 1, (sss - (sss-(fact/3)))/2, deg1=0, deg2=180, col="black", lwd=2, lend=1)
+    draw.arc((sss + sss-(fact/3))/2, 1- max(chr), (sss - (sss-(fact/3)))/2, deg1=180, deg2=360, col="black", lwd=2, lend=1)
+    draw.arc((sss + sss-(fact/3))/2, 1, (sss - (sss-(fact/3)))/2, deg1=0, deg2=180, col="black", lwd=2, lend=1)
     ## ----------------
     ## ----------------
     if(!is.null(trait)){

@@ -1,7 +1,7 @@
 #############
 ## EXPORTS
 #############
-export(adiag1, A.mat, AI, AI2, AI3, atcg1234, bag, bathy.colors, D.mat, design.score, E.mat, EM, EMMA, fdr, hdm, jet.colors, map.plot2, mmer, mmer2, poe, score.calc, transp)
+export(adiag1, A.mat, AI, AI2, AI3, atcg1234, bag, big.peaks.col, bathy.colors, brewer.pal, D.mat, design.score, E.mat, EM, EM2, EMMA, fdr, hdm, jet.colors, map.plot2, mmer, mmer2, poe, score.calc, transp)
 
 export(summary.mmer, residuals.mmer, fitted.mmer, plot.mmer, anova.mmer, coef.mmer, randef)
 
@@ -24,11 +24,9 @@ S3method(plot, mmer)
 ############
   importFrom("graphics", "abline", "axis", "image", "layout", "legend",
              "lines", "plot", "points", "rect", "text", "locator",
-             "par", "grid", "plot.new", "polygon")
+             "par", "grid", "plot.new", "polygon", "segments")
   importFrom("utils", "combn", "setTxtProgressBar", "txtProgressBar")
-  importFrom("RColorBrewer", "brewer.pal")
   importFrom("matrixcalc", "matrix.trace","is.diagonal.matrix")
-  importFrom("plotrix","draw.arc")
 ## FULL IMPORTS
   import("methods")
   import("Matrix")
@@ -36,11 +34,12 @@ S3method(plot, mmer)
   
 ### extra suggested by CRAN
   importFrom("grDevices", "col2rgb", "colorRampPalette", "gray.colors",
-             "rgb")
+             "rgb","dev.cur", "dev.size", "xy.coords")
   importFrom("stats", "as.formula", "cov", "density", "gaussian", "glm",
              "lm", "median", "optimize", "pbeta", "pchisq", "predict",
              "printCoefmat", "qqnorm", "smooth.spline", "var", "rnorm", 
-             "model.matrix","na.omit", "p.adjust", "kmeans")
+             "model.matrix","na.omit", "p.adjust","kmeans")
+
 
   
   

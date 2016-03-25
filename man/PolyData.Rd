@@ -5,7 +5,7 @@
 Genotypic and Phenotypic data for a potato polyploid population
 }
 \description{
-This dataset contains phenotpic data for 18 traits measured in 187 individuals from a potato diversity panel. In addition contains genotypic data for 221 individuals genotyped with 3522 SNP markers. Please if using this data cite Rosyara's (2015) publication (see References).
+This dataset contains phenotpic data for 18 traits measured in 187 individuals from a potato diversity panel. In addition contains genotypic data for 221 individuals genotyped with 3522 SNP markers. Please if using this data for your own research cite Rosyara's (2015) publication (see References).
 
 }
 \usage{data("PolyData")}
@@ -17,7 +17,7 @@ This dataset contains phenotpic data for 18 traits measured in 187 individuals f
 This data was extracted from Rosyara (2016).
 }
 \references{
-If using this data please cite:
+If using this data for your own research please cite:
 
 Rosyara Umesh R., Walter S. De Jong, David S. Douches, Jeffrey B. Endelman. Software for genome-wide association studies in autopolyploids and its application to potato. The Plant Genome 2015.
 

@@ -17,7 +17,7 @@ This dataset contains phenotpic data for 363 siblings for an F1 cross. These are
 This data was simulated for fruit breeding applications.
 }
 \references{
-Covarrubias-Pazaran G (2016) sommer: Genomic prediction. R package version 1.1. URL https://cran.r-project.org/web/packages/sommer/.
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. https://cran.rstudio.com/web/packages/sommer/ 
 }
 \examples{
 ####=========================================####
