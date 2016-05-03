@@ -107,7 +107,15 @@ EM <- function(y, X=NULL, ETA=NULL, R=NULL, init=NULL, iters=50, REML=TRUE, draw
           prov <- numeric()
           for(k in 1:length(ETA)){ #multiply it for all other variance components
             if(j == k & names(ETA[[j]])[1] != "X"){ ## diagonal element of CC and not fixed
-              res <- crossprod(ETA[[j]][[1]], ETA[[k]][[1]]) + (as.vector(axs[[j-1]]) * solve(as.matrix(ETA[[j]][[2]]))) # var(e)/var(x) K-
+              ranked <- rankMatrix(as.matrix(ETA[[j]][[2]]))[1]
+              #if(ranked == dim(as.matrix(ETA[[j]][[2]]))[2]){
+                solvedK <- solve(as.matrix(ETA[[j]][[2]]))
+              #}else{
+              #  stop(cat("\nYour covariance matrices are not full rank, please try the AI algorithm\n")
+              #       ,call. = FALSE)
+                #solvedK <- ginv(as.matrix(ETA[[j]][[2]]))
+              #}
+              res <- crossprod(ETA[[j]][[1]], ETA[[k]][[1]]) + (as.vector(axs[[j-1]]) * solvedK) # var(e)/var(x) K-
               ## we used j-1 because the 2nd element of ETA is the first var.component and the var(e) is never used in here
             }else{
               res <- crossprod(ETA[[j]][[1]], ETA[[k]][[1]])
@@ -142,7 +150,14 @@ EM <- function(y, X=NULL, ETA=NULL, R=NULL, init=NULL, iters=50, REML=TRUE, draw
         ##
         for(k in 1:(length(var.com)-1)){ # adjust var comps except ERROR VARIANCE
           rrr <- indexK[k]
-          Kinv <- solve(ETA[[rrr]][[2]])
+          
+          #ranked <- rankMatrix(ETA[[rrr]][[2]])
+          #if(ranked == dim(ETA[[rrr]][[2]])[2]){
+            Kinv <- solve(ETA[[rrr]][[2]])
+          #}else{
+          #  Kinv <- ginv(ETA[[rrr]][[2]])
+          #}
+          
           var.com[[k]] = ( ( t(thetaHat[pairs.a[[rrr]],]) %*% Kinv  %*% thetaHat[pairs.a[[rrr]],] ) + matrixcalc::matrix.trace(Kinv%*%CInv[pairs.a[[rrr]],pairs.a[[rrr]]]*as.numeric(varE)))/nrow(ETA[[rrr]][[2]]) 
         }
         var.com[[length(var.com)]] = varE # last variance component
@@ -195,7 +210,8 @@ EM <- function(y, X=NULL, ETA=NULL, R=NULL, init=NULL, iters=50, REML=TRUE, draw
         if(wi > 1){
           #change=abs(sum(unlist(var.com) - unlist(track)))
           uuu1 <- cbind(unlist(var.com), unlist(track))
-          uuu2 <- apply(uuu1,1,function(x){if(abs(x[1] - x[2]) < 0.0001){y <- TRUE}else{y <- FALSE}; return(y)})
+          #uuu2 <- apply(uuu1,1,function(x){if(abs(x[1] - x[2]) < 0.0001){y <- TRUE}else{y <- FALSE}; return(y)})
+          uuu2 <- apply(uuu1,1,function(x){if(abs(x[1] - x[2]) < x[1]/100){y <- TRUE}else{y <- FALSE}; return(y)})
           change <- length(which(uuu2))
         }
         ####

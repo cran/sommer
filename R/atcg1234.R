@@ -58,7 +58,7 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE){
   data <- as.data.frame(t(data))
   rownames(data) <- s2
   colnames(data) <- s1
-  bases <- c("A", "C", "G", "T","l","m","n","p","h","k")
+  bases <- c("A", "C", "G", "T","l","m","n","p","h","k","-","+")
   ## get reference allele function
   get.ref <- function(x, format) {
     if (format == "numeric") {

@@ -2,10 +2,10 @@
 \alias{bag}
 \title{Creating a fixed effect matrix with significant GWAS markers}
 \description{
-This function was designed to create a design matrix with the significant markers found by a GWAS analysis in order to use it in the GBLUP or genomic prediction analysis to increase the predction accuracy. The method is based on Abdollahi Arpanahi et al. (2015) paper were using the top 20 GWAS hits markers and using them as fixed effect, increases the prediction accuracy of the genomic prediction model and denominated bag GBLUP. This phenomena has been explained arguing that the mixed model shrinks too much the effect of markers with big effects and therefore using such markers as fixed effects causes a dramatic increase in the prediction accuracy of a model using them.
+This function was designed to create a design matrix with the significant markers found by a GWAS analysis in order to use it in the GBLUP or genomic prediction analysis to increase the predction accuracy. The method is based on Abdollahi Arpanahi et al. (2015) paper were using the top 20 GWAS hits markers and using them as fixed effect, increases the prediction accuracy of the genomic prediction model and denominated bag GBLUP. This phenomena has been explained arguing that the mixed model shrinks too much the effect of markers with big effects and therefore using such markers as fixed effects causes a dramatic increase in the prediction accuracy of a model using them. It has to be noted that for traits of low h2 or with a high number of QTL's with small effects the bagging method doesn't help but actually has a reducing effect in prediction accuracy.
 }
 \usage{
-bag(gwasm, nmar=10, threshold=1, pick=FALSE, method="cluster")
+bag(gwasm, nmar=10, threshold=1, pick=FALSE, method="cluster", only.mark=FALSE)
 }
 \arguments{
   \item{gwasm}{a GWAS model fitted using mmer}
@@ -13,6 +13,7 @@ bag(gwasm, nmar=10, threshold=1, pick=FALSE, method="cluster")
   \item{threshold}{a numeric value indicating the minimum significance value to be used for finding the significant markers. the dedault is 1.}
   \item{pick}{a TRUE/FALSE value indicating if the user prefers to pick the peaks by himself. The default is FALSE leaving the peak selection to one of the two methods available. If set to TRUE R will allow the user to pick the peaks by cliking over the peaks and typing 'Esc' when the user is done selecting the peaks.}
   \item{method}{one of the two methods available; "cluster" performs peak selection by making clusters using k-means (random clusters), whereas "maximum" takes the markers with highest log p.values and select those for designing the model matrix.}
+  \item{only.mark}{a TRUE/FALSE statement indicating if the only output should be the marker names or the incidence matrix. By default it returns the incidence matrix but if turned to TRUE will return only the marker names. Useful when want to identify significant markers in different populations.}
 
 }
 

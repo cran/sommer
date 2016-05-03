@@ -1,9 +1,10 @@
-mmer2 <- function(fixed=NULL, random=NULL, G=NULL, R=NULL, method="AI", REML=TRUE, iters=50, draw=FALSE, init=NULL, data=NULL, family=gaussian, silent=FALSE, constraint=TRUE, sherman=FALSE, MTG2=FALSE, gss=FALSE){
-  ### Response "y"
+mmer2 <- function(fixed=NULL, random=NULL, G=NULL, R=NULL, method="EM", REML=TRUE, iters=50, draw=FALSE, init=NULL, data=NULL, family=gaussian, silent=FALSE, constraint=TRUE, sherman=FALSE, MTG2=FALSE, gss=FALSE){
+  if(!is.null(G)){
+    cat("With var-cov structures (G) present you may want to try the AI algorithm.\n\n")
+  }
+
   yvar <- gsub(" ", "", as.character(fixed[2]))
-  ### Xb in 'formula'
   xvar <- gsub(" ", "", strsplit(as.character(fixed[3]), split = "[+]")[[1]])
-  ### Zu in formula
   if(!is.null(random)){
     zvar <- gsub(" ", "", strsplit(as.character(random[2]), split = "[+]")[[1]])
     varsss <- c(xvar,zvar)
@@ -11,7 +12,6 @@ mmer2 <- function(fixed=NULL, random=NULL, G=NULL, R=NULL, method="AI", REML=TRU
   varsss <- varsss[which(varsss != "1")]
   doto <- grep(":",varsss)
   if(length(doto) >0){varsss <- varsss[-doto]}
-  ### FIX THE DATA IF NA's EXIST
   good <- list()
   for(i in 1:length(varsss)){
     xxx <- data[,varsss[i]]
@@ -27,18 +27,16 @@ mmer2 <- function(fixed=NULL, random=NULL, G=NULL, R=NULL, method="AI", REML=TRU
     }
   }
   data <- data[keep,] # only good data in model
-  ##############################
-  if(xvar %in% "1"){
+  if(length(xvar %in% "1") == 1){
     X <- as.matrix(model.matrix(as.formula(paste("~ ", paste(c(xvar), collapse="+"))), data=data))
   }else{
     X <- as.matrix(model.matrix(as.formula(paste("~ ", paste(c("1", xvar), collapse="+"))), data=data))
   }
   
-  ### random and G
-  if(!is.null(random)){ # ============== MIXED MODEL =====================
-    #zvar <- gsub(" ", "", strsplit(as.character(random[2]), split = "[+]")[[1]])
-    # generalized mixed model, carefull, NA's dissapear
-    #mox <- glm(data[,yvar] ~ 1, family = family)
+
+  if(!is.null(random)){ # ===========
+
+    
     yvars <- data[,yvar] #mox$family$linkfun(mox$y)
     #
     if(is.null(random)){
@@ -46,18 +44,19 @@ mmer2 <- function(fixed=NULL, random=NULL, G=NULL, R=NULL, method="AI", REML=TRU
     }else{
       Z <- list()
       for(i in 1:length(zvar)){ # do it factor
-        ## incidence matrix
+        ## 
         vara <- zvar[i]
         data2 <- data.frame(apply(data,2,as.factor))
         zi <- model.matrix((as.formula(paste("~ -1 + ", vara))), data=data2)
         if(dim(zi)[2] == length(yvars)){ # lmer error
           stop("Error: number of levels of each grouping factor must be < number of observations")
-        }else{ # right way to specify the random effects, keep going
-          ## var-cov matrix
+        }else{ #
+          
+          ## 
           ww <- which(names(G) %in% vara)
-          if(length(ww) > 0){# was provided
+          if(length(ww) > 0){#
             ki <- G[[ww]]
-          }else{ # was not provided, we create a diagonal
+          }else{ # 
             ki <- diag(dim(zi)[2])
           }
           elem <- list(Z=zi, K=ki)
@@ -65,11 +64,11 @@ mmer2 <- function(fixed=NULL, random=NULL, G=NULL, R=NULL, method="AI", REML=TRU
         }
       }
       names(Z) <- zvar
-      ### fit the model using the real function mmer2 
+      ### 
       res <- mmer(y=yvars, X=X, Z=Z, R=R, method=method, REML=REML, iters=iters, draw=draw, init=init, silent=silent, constraint=constraint, sherman=sherman, MTG2=MTG2, gss=gss)
       #rownames(res$var.comp) <- c(zvar,"Error")
     }
-  }else{ # ================== JUST FIXED =======================
+  }else{ # =
     res <- glm(yvars~X, family=family)
   }
   class(res)<-c("mmer")

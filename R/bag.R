@@ -1,4 +1,4 @@
-bag <- function(gwasm, nmar=10, threshold=1, pick=FALSE, method="cluster"){
+bag <- function(gwasm, nmar=10, threshold=1, pick=FALSE, method="cluster", only.mark=FALSE){
   #####
   if(is.null(gwasm$W)){
     cat("A GWAS model is needed to create the design matrix for bagging")
@@ -74,7 +74,7 @@ bag <- function(gwasm, nmar=10, threshold=1, pick=FALSE, method="cluster"){
         marker <- as.numeric(na.omit(marker))
         #marker <- res$pos
         
-        plot(gwasm$W.scores$additive, col=transp("cadetblue"), pch=20)
+        plot(gwasm$W.scores$additive, col=transp("cadetblue"), pch=20, cex=1.3)
         abline(v=marker, lty=3, col="red")
         legend("topleft", bty="n", legend=c("Markers selected"), cex=.6, lty=3, lwd=2, col="red")
         
@@ -115,6 +115,9 @@ bag <- function(gwasm, nmar=10, threshold=1, pick=FALSE, method="cluster"){
       } #### end of if enough markers
       
     } ############# END OF 'PICK' ARGUMENT #################
+  }
+  if(only.mark){
+    X2 <- colnames(X1)
   }
   return(X2) #X2
 }

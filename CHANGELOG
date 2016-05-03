@@ -27,7 +27,7 @@ version 1.2 (2016-02-07)
     has been added in the argument 'MTG2' of the AI, mmer and mmer2 algorithm
   
 ########################  
-version 1.3 (2016-03-01)
+version 1.3 (2016-03-09)
 ########################
 
   + The 'bag' function for bagging-GBLUP from Abdollahi-Arpanahi et al. (2015) 
@@ -51,7 +51,7 @@ version 1.3 (2016-03-01)
     the value for each marker.
 
 ########################  
-version 1.4 (2016-04-15)
+version 1.4 (2016-03-25)
 ########################
 
   + The AI algorithm will take 5 EM steps if after 10 iterations (AI) the likelihood drops 
@@ -63,7 +63,23 @@ version 1.4 (2016-04-15)
   + Minor bugs have been fixed (names in random terms). In addition, ordering random effects
     based on their degrees of freedom has been implemented to provide more stability to the 
     AI algorithm.
+    
+########################  
+version 1.5 (2016-04-12)
+########################
+
+  + Problem of "not-full rank X matrix" has been solved by reducing the X matrix column by
+    column until is solved.
+  + New alleles for deletions "-" has been added to the atcg1234 function 
+  + More examples have been added to the software, including maize Technow et al. (2015) data 
+    and rice Zhao et al. (2011)
+  + We have opted for using the "EM" algorithm as default for the mmer2 function given the fact 
+    that most users using the mmer2 function would not use covariance structures. The mmer keeps
+    using the AI algorithm as default method.
+  + Implementation of the initial version of TP.prep function designed to select the best 
+    training population for genomic selection.
 
 ##pendings
-+ multivariate version
++ multivariate version almost done
 + residual structures
++ example of GWAS for single cross hybrids
