@@ -75,5 +75,62 @@ pheno$hy <- paste(pheno$dent, pheno$flint, sep=":");head(pheno);dim(pheno)
 #### try EM algorithm as well if only 2 variance components
 #### you can try adding SCA effects by adding SCA=list(Z=Z3, K=DD)
 #### to your Z parameter
+
+
+############################################
+############################################
+############################################
+############################################
+############################################
+############################################
+############################################
+############################################
+############################################
+############################################
+############################################
+############################################
+
+####=========================================####
+####=========================================####
+#### EXAMPLE 2
+#### GWAS in single cross hybrids
+####=========================================####
+####=========================================####
+data(Technow_data)
+
+####=========================================####
+#### RUN THE PREDICTION MODEL
+####=========================================####
+A.flint <- Technow_data$AF # Additive relationship matrix Flint
+A.dent <- Technow_data$AD # Additive relationship matrix Dent
+
+pheno <- Technow_data$pheno # phenotypes for 1254 single cross hybrids
+pheno$hy <- paste(pheno$dent, pheno$flint, sep=":");head(pheno);dim(pheno) 
+
+#DD <- kronecker(A.dent,A.flint,make.dimnames=TRUE)
+#hybs <- data.frame(sca=rownames(DD),yield=NA,matter=NA,gcad=NA, gcaf=NA)
+#hybs$yield[match(pheno$hy, hybs$sca)] <- pheno$GY
+#hybs$matter[match(pheno$hy, hybs$sca)] <- pheno$GM
+#hybs$gcad <- as.factor(gsub(":.*","",hybs$sca))
+#hybs$gcaf <- as.factor(gsub(".*:","",hybs$sca))
+#head(hybs)
+####=========================================####
+#### Get BLUPs for parental lines
+####=========================================####
+#mix3 <- mmer2(matter~1, random=~gcad + gcaf, method="EM", data=hybs)
+#matterBLUP <- rbind(mix3$u.hat$gcad, mix3$u.hat$gcaf) 
+####=========================================####
+#### RUN GWAS combining markers
+####=========================================####
+#M.dent <- Technow_data$MD # Marker matrix Dent
+#M.flint <- Technow_data$MF # Marker matrix Flint
+#Mall <- rbind(M.dent,M.flint)
+
+#AA <- A.mat(Mall) # Additive relationship matrix
+#ZZ <- diag(dim(AA)[1]) # incidence matrix
+#ETA <- list(sc=list(Z=ZZ, K=AA)) # Random component 
+#mix4 <- mmer(y=matterBLUP, Z=ETA, W=Mall, method = "AI") # mixed model
+#summary(mix4)
+
 }
 \keyword{datasets}

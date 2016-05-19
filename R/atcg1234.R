@@ -1,4 +1,9 @@
-atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE){
+atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FALSE){
+  n.g <- apply(data,2,function(x){length(table(x))})
+  bad <- which(n.g > 3)
+  if(length(bad) == dim(data)[2]){
+    cat("Error. All your markers are multiallelic. This function requires at least one bi-allelic marker\n")
+  }
   #### apply with progress bar ######
   apply_pb <- function(X, MARGIN, FUN, ...)
   {
@@ -47,8 +52,12 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE){
       return(y)
     }
     ##### END GBS.TO.BISNP DATA ######
-    cat("Converting GBS single-letter to biallelic code\n")
-    data <- apply_pb(data, 2,gbs.to.bisnp)
+    cat("Converting GBS or single-letter code to biallelic code\n")
+    if(silent){
+      data <- apply(data, 2,gbs.to.bisnp)
+    }else{
+      data <- apply_pb(data, 2,gbs.to.bisnp) 
+    }
     rownames(data) <- rrn
     data <- as.data.frame(data)
   }
@@ -58,7 +67,7 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE){
   data <- as.data.frame(t(data))
   rownames(data) <- s2
   colnames(data) <- s1
-  bases <- c("A", "C", "G", "T","l","m","n","p","h","k","-","+")
+  bases <- c("A", "C", "G", "T","l","m","n","p","h","k","-","+","e","f","g","a","b","c","d")
   ## get reference allele function
   get.ref <- function(x, format) {
     if (format == "numeric") {
@@ -119,11 +128,20 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE){
   # get reference alleles
   ####################################
   cat("Obtaining reference alleles\n")
-  tmp <- apply_pb(markers, 1, get.ref, format=format)
+  if(silent){
+    tmp <- apply(markers, 1, get.ref, format=format)
+  }else{
+    tmp <- apply_pb(markers, 1, get.ref, format=format) 
+  }
  
   if(multi){ # if markers with multiple alleles should be removed
     cat("Checking for markers with more than 2 alleles. If found will be removed.\n")
-    tmpo <- apply_pb(markers, 1, get.multi, format = format)
+    if(silent){
+      tmpo <- apply(markers, 1, get.multi, format = format)
+    }else{
+      tmpo <- apply_pb(markers, 1, get.multi, format = format) 
+    }
+###&&&&&&&&&&&& HERE WE MUST INSERT THE NEW FUNCTIONALITY, WHERE WE DETECTED MULTIPLE ALLELES
     multi.allelic <- which(!tmpo) # good markers
     markers <- markers[multi.allelic,]
     tmp <- tmp[, multi.allelic]
@@ -136,13 +154,24 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE){
   # reference/alternate allele found
   ####################################
   cat("Converting to numeric format\n")
-  M <- apply_pb(cbind(Ref, markers), 1, function(x) {
-    y <- gregexpr(pattern = x[1], text = x[-1], fixed = T)
-    ans <- as.integer(lapply(y, function(z) {
-      ifelse(z[1] < 0, ploidy, ploidy - length(z))
-    }))
-    return(ans)
-  })
+  if(silent){
+    M <- apply(cbind(Ref, markers), 1, function(x) {
+      y <- gregexpr(pattern = x[1], text = x[-1], fixed = T)
+      ans <- as.integer(lapply(y, function(z) {
+        ifelse(z[1] < 0, ploidy, ploidy - length(z))
+      }))
+      return(ans)
+    })
+  }else{
+    M <- apply_pb(cbind(Ref, markers), 1, function(x) {
+      y <- gregexpr(pattern = x[1], text = x[-1], fixed = T)
+      ans <- as.integer(lapply(y, function(z) {
+        ifelse(z[1] < 0, ploidy, ploidy - length(z))
+      }))
+      return(ans)
+    })
+  }
+
   gid.geno <- s1 #colnames(geno)
   rownames(M) <- gid.geno
   ####################################
@@ -156,10 +185,17 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE){
   # by column or markers calculate MAF
   ####################################
   cat("Calculating minor allele frequency (MAF)\n")
-  MAF <- apply_pb(M, 2, function(x) {
-    AF <- mean(x, na.rm = T)/ploidy
-    MAF <- ifelse(AF > 0.5, 1 - AF, AF)
-  })
+  if(silent){
+    MAF <- apply(M, 2, function(x) {
+      AF <- mean(x, na.rm = T)/ploidy
+      MAF <- ifelse(AF > 0.5, 1 - AF, AF)
+    })
+  }else{
+    MAF <- apply_pb(M, 2, function(x) {
+      AF <- mean(x, na.rm = T)/ploidy
+      MAF <- ifelse(AF > 0.5, 1 - AF, AF)
+    })
+  }
   ####################################
   # which markers have MAF > 0, JUST GET THOSE
   ####################################
@@ -179,7 +215,11 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE){
   missing <- which(is.na(M))
   if (length(missing) > 0) {
     cat("Imputing missing data with mode \n")
-    M <- apply_pb(M, 2, impute.mode)
+    if(silent){
+      M <- apply(M, 2, impute.mode)
+    }else{
+      M <- apply_pb(M, 2, impute.mode)
+    }
   }
   if(ploidy == 2){
     M <- M - 1

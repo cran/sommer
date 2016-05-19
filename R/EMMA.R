@@ -161,7 +161,7 @@ EMMA <- function (y, X=NULL, Z=NULL, K=NULL, REML=TRUE, silent=FALSE) {
     setTxtProgressBar(pb, (tot/tot))
   }
   return(list(var.comp=out, beta.hat = beta, 
-              u.hat = u, Var.u.hat = (Var.u), 
+              u.hat = list(u), Var.u.hat = (Var.u), 
               Var.beta.hat = var.beta, PEV.u.hat = (PEV.u), 
               LL = ll, AIC=AIC, BIC=BIC, V.inv=H.hat.inv, X=X, Z=Z, K=K, 
               fitted.y=fitted.y, fitted.u=fitted.u, residuals=error, 

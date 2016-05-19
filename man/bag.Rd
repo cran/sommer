@@ -78,5 +78,5 @@ ETA.A <- list(list(Z=Za,K=A))
 #ans.AF <- mmer(y=y.trn, X=X1, Z=ETA.A) # bagging-GBLUP
 #cor(ans.A$fitted.y[ww], y[ww], use="pairwise.complete.obs") # GBLUP
 #cor(ans.AF$fitted.y[ww], y[ww], use="pairwise.complete.obs") # bagging-GBLUP
-#### 11 percent increase in prediction accuracy
+#### ~10 percent increase in prediction accuracy
 }

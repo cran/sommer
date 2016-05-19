@@ -2,7 +2,7 @@
 \alias{mmer}
 \title{Mixed Model Equations in R}
 \description{
-This function is the core of the package and solves the mixed model equations proposed by Henderson (1975). It has been implemented to work with incidence matrices and variance covariance matrices for each random effect. In the details we will explain the methods implemented by this function. Currently 3 methods are supported; "EMMA" efficient mixed model association (Kang et al. 2008), "AI" average information (Gilmour et al. 1995; Lee et al. 2015), and "EM" expectation maximization (Searle 1993; Bernardo 2010). The EMMA method is implemented when only one variance component other than the error variance component (Var(e)) is estimated, is based on optimizing the likelihood function (see details). On the other hand when more than one variance component needs to be estimated the "AI" and "EM"" methods should be used. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominant (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices that have been shown to increase prediction accuracy. The package provides flexibility to fit other genetic models such as full and half diallel models as well, see \code{\link{hdm}} function information to see how to fit those models using sommer. The core algorithm in our mixed model solver is the Direct Average Information proposed by Lee et al. (2015) which surpasses in performance the MME-based Average Information (Gilmour et al. 1995) when dense covariance structures are present (GBLUP and GWAS case). When these matrices are sparse (no covariance structures), the MME-based is more effective and we recommend the user to use lme4 for such cases of NO covariance structures. 
+This function is the core of the package and solves the mixed model equations proposed by Henderson (1975). It has been implemented to work with incidence matrices and variance covariance matrices for each random effect. In the details we will explain the methods implemented by this function. Currently 4 methods are supported; "EMMA" efficient mixed model association (Kang et al. 2008), "AI" average information (Gilmour et al. 1995; Lee et al. 2015), "EM" expectation maximization (Searle 1993; Bernardo 2010), and "NR" Newton-Raphson (Tunnicliffe 1989). The EMMA method is implemented when only one variance component other than the error variance component (Var(e)) is estimated, is based on optimizing the likelihood function (see details). On the other hand when more than one variance component needs to be estimated the "AI", "EM" and "NR" methods should be used. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominant (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices that have been shown to increase prediction accuracy. The package provides flexibility to fit other genetic models such as full and half diallel models as well, see \code{\link{hdm}} function information to see how to fit those models using sommer. The core algorithm in our mixed model solver is the Direct Average Information proposed by Lee et al. (2015) which surpasses in performance the MME-based Average Information (Gilmour et al. 1995) when dense covariance structures are present (GBLUP and GWAS case). When these matrices are sparse (no covariance structures), the MME-based is more effective and we recommend the user to swith to the lme4 package for such cases of NO covariance structures. 
 
 Finally, feel free to get in touch with me if you have any questions or suggestion at: 
 
@@ -16,7 +16,8 @@ mmer(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE,
      iters=40, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE,
      models="additive", ploidy=2, min.MAF = 0.05, silent=FALSE, 
      family=NULL, constraint=TRUE, sherman=FALSE, MTG2=FALSE,
-     Fishers=FALSE, gss=TRUE, forced=NULL, full.rank=TRUE)
+     Fishers=FALSE, gss=TRUE, forced=NULL, full.rank=TRUE, 
+     beeping=2, map=NULL,fdr.level=0.05, manh.col=NULL)
 }
 \arguments{
   \item{y}{a numeric vector for the response variable}
@@ -67,11 +68,11 @@ mmer(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE,
   }
   \item{W}{an incidence matrix for extra fixed effects and only to be used if GWAS is desired and markers will be treated as fixed effects according to Yu et al. (2006) for diploids, and Rosyara et al (2016) for polyploids. Theoretically X and W are both fixed effects, but they are separated to perform GWAS in a model y = Xb + Zu + Wg, allowing the program to recognize the markers from other fixed factors such as environmental factors. This has to be provided as a matrix same than X.}
   \item{R}{a matrix for variance-covariance structures for the residuals, i.e. for longitudinal data. if not passed is assumed an identity matrix. THIS PART STILLS IN DEVELOPMENT, NOT FUNCTIONAL YET, it is plan to be implemented in version 1.6.}
-  \item{method}{this refers to the method or algorithm to be used for estimating variance components. The package currently is supported by 3 algorithms; "EMMA" efficient mixed model association (Kang et al. 2008), "AI" average information (Gilmour et al. 1995; Lee et al. 2015), and "EM" expectation maximization (Searle 1993; Bernardo 2010). The default method is average information "AI" because of its ability to handle multiple random effects and its greater speed compared to "EM" which can handle multiple random effects but it is much slower and is not based on REML. On the other hand the "EMMA" method has been implemented but the user needs to keep in mind that such algorithm is based on the theory of ridge regression and the ridge parameter allows the estimation of only a single variance component other than the error.}
+  \item{method}{this refers to the method or algorithm to be used for estimating variance components. The package currently is supported by 4 algorithms; "EMMA" efficient mixed model association (Kang et al. 2008), "AI" average information (Gilmour et al. 1995; Lee et al. 2015), "EM" expectation maximization (Searle 1993; Bernardo 2010), and Newton-Raphson "NR" (Tunnicliffe 1989). The default method is average information "AI" because of its ability to handle multiple random effects and its greater speed compared to "EM" and "NR" which can handle multiple random effects but it is slower. On the other hand the "EMMA" method has been implemented but the user needs to keep in mind that such algorithm is based on the theory of ridge regression and the ridge parameter allows the estimation of only a single variance component other than the error.}
   \item{REML}{a TRUE/FALSE value indicating if restricted maximum likelihood should be used instead of ML. The default is TRUE.}
   \item{iters}{a scalar value indicating how many iterations have to be performed if the EM or AI algorithms are selected. There is no rule of tumb for the number of iterations. The default value is 50 iterations or EM steps, but usually will take less than that stopping before reaching the maximum number of iterations. For the AI algorithm usually takes just a few iterations.}
   \item{draw}{a TRUE/FALSE value indicating if a plot of updated values for the variance components and the log-likelihood should be drawn or not during the optimization process. The default is FALSE. It's been set to FALSE because is less the computation time when the computer doesn't have to draw plots.}
-  \item{init}{an vector of initial values for the EM or AI algorithms. If not provided the program uses a starting values the variance(y)/#random.eff which are usually good starting values.}
+  \item{init}{an vector of initial values for the EM, NR or AI algorithms. If not provided the program uses a starting values the variance(y)/#random.eff which are usually good starting values.}
   \item{n.PC}{when the user performs GWAS this refers to the number of principal components to include as fixed effects for Q + K model. Default is 0 (equals K model).}
   \item{P3D}{when the user performs GWAS, P3D=TRUE means that the variance components are estimated by REML only once, without any markers in the model. When P3D=FALSE, variance components are estimated by REML for each marker separately. The default is the first case.}
     \item{models}{The model to be used in GWAS. The default is the additive model which applies for diploids and polyploids but the model can be a vector with all possible models, i.e. "additive","1-dom-alt","1-dom-ref","2-dom-alt","2-dom-ref" models are supported for polyploids based on Rosyara (2016).}
@@ -89,6 +90,10 @@ mmer(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE,
       \item{gss}{a TRUE/FALSE value indicating if a genomic selection is being fitted just for using certain constraints. When is FALSE the program can make some EM steps to find initial values for variance components when the starting values are to far from the real values causing the likelihood to have a strange behavior and dropping dramatically When TRUE (default) the program does not try EM steps even when far away from the likelihood because in big marker-based models can make the process quite slow.}
       \item{forced}{a vector of numeric values for variance components including error if the user wants to force the values of the variance components. On the meantime only works for forcing all of them and not a subset of them. The default is NULL, meaning that variance components will be estimated by REML/ML.}
       \item{full.rank}{a TRUE/FALSE value indicating if the program should investigate X'X to be full rank to avoid problems when solving the linear system. By default this is TRUE which will display a message in the console to le the user know if the X is full rank or not. and will remove extra columns until full rank condition is met. This could not like some users so it can be desactivated but will return an error anyways at some point due to the fact that X'X is not be invertible. This condition is analyzed once missing data in the response variable 'y' has been removed, not in the original X matrix.}
+      \item{beeping}{a numeric value between 1-11 indicating the sound you would like to hear everytime the mmer finishes a job. If you prefer to keep the program silenced set the parameter to NULL, i.e. beeping=NULL}
+      \item{map}{a data frame with 2 columns, 'Chrom', and 'Locus' not neccesarily with same dimensions that markers. The program will look for markers in common among the W matrix and the map provided. Although, the association tests are performed for all markers, only the markers in common will be plotted.}
+      \item{fdr.level}{a level of FDR to calculate and plot the line in the GWAS plot. Default is fdr.level=0.05}
+      \item{manh.col}{a vector with colors desired for the manhattan plot. Default are cadetblue and red alternated.}
 
 }
 \details{
@@ -179,7 +184,7 @@ ans <- mmer2(y~1, random= ~ gca1 + gca2 + sca, G=list(gca1=K1, gca2=K2, sca=K3),
 
 FOR DETAILS ON HOW THE "AI", EM" AND "EMMA" ALGORITHMS WORK PLEASE REFER TO \code{\link{AI}} , \code{\link{EM}} AND \code{\link{EMMA}}
 
-In addition, the package contains a very nice function to plot genetic maps with numeric variable or traits next to the LGs, see the \code{\link{map.plot2}} function to see how easy can be done. The package contains other functions:
+In addition, the package contains a very nice function to plot genetic maps with numeric variable or traits next to the LGs, see the \code{\link{map.plot}} function to see how easy can be done. The package contains other functions:
 
 \code{\link{transp}} function transform a vector of colors in transparent colors.
 
@@ -222,6 +227,7 @@ If all parameters are correctly indicated the program will return a list with th
 \item{$method}{ The method for extimation of variance components specified by the user.}
 \item{$maxim}{ Maximization used. An argument for the program to know if REML or ML was used. If TRUE means that REML was used instead of ML.}
 \item{$score}{ the -log10(p-value) for each marker if a GWAS model is fitted by specifying the W parameter in the model.}
+\item{$map}{ if GWAS is performed and a map is provided the program will return a new map of the markers in common among the map and the W matrix and the -log10(p.values) for such marker tests.}
 
 In addition, we have included a couple of random poems from Latin American writers to help the scientist (an me haha) remember from time to time that life is more than analyzing data. You can always silence this feature by setting the argument silent=TRUE, which will avoid the program to display the poems. If you want to contribute with a poem, phrase or short citation for future versions of sommer, feel free to send it to me to: 
 
@@ -246,6 +252,8 @@ Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear mixed mode
 Searle. 1993. Applying the EM algorithm to calculating ML and REML estimates of variance components. Paper invited for the 1993 American Statistical Association Meeting, San Francisco.
 
 Yu et al. 2006. A unified mixed-model method for association mapping that accounts for multiple levels of relatedness. Genetics 38:203-208.
+
+Tunnicliffe W. 1989. On the use of marginal likelihood in time series model estimation. JRSS 51(1):15-27.
 
 }
 \author{
@@ -492,5 +500,12 @@ Z3 <- model.matrix(~ SCA -1, data = hybrid2);dim(Z3)
 #ans.ADE <- mmer(y=y.trn, Z=ETA.ADE)
 #cor(ans.ADE$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 #### adding more effects doesn't necessarily increase prediction accuracy!
+
+########## NOTE
+## nesting in R is indicated as 
+## assume blocks nested in locations
+## Loc + Block/Loc
+## is the same than
+## Loc + Block + Loc:Block
 
 }

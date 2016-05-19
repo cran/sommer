@@ -8,6 +8,7 @@ D.mat <- function(X,min.MAF=NULL,max.missing=NULL,impute.method="mean",tol=0.02,
   X2 <- X[,vv]# only good markers with heterozygote plants
   # now transform 0 to 1's
   if(ploidy == 2){
+    # Aa = 1 and AA|aa = 0
     X3 <- apply(X2,2,function(x){y <- x; y[which(x == 1 | x==-1)] <- 0; y[which(x == 0)] <- 1; return(y)})
     if(return.Xd){
       X6 <- X3

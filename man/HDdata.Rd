@@ -43,7 +43,7 @@ Z2 <- model.matrix(~as.factor(geno)-1, data=HDdata)
 #### Define response variable and run
 ####=========================================####
 y <- HDdata$sugar
-ETA <- list(list(Z=Z1), list(Z=Z2)) # Zu component
+ETA <- list(GCA=list(Z=Z1), SCA=list(Z=Z2)) # Zu component
 modHD <- mmer(y=y, Z=ETA)
 summary(modHD)
 }

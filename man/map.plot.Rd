@@ -1,11 +1,11 @@
-\name{map.plot2}
-\alias{map.plot2}
+\name{map.plot}
+\alias{map.plot}
 \title{Creating a genetic map}
 \description{
 This function was designed to create a genetic map using a data frame indicating the Linkage Group (LG), Position and marker names (Locus). 
 }
 \usage{
-map.plot2(data, trait = NULL, trait.scale = "same", 
+map.plot(data, trait = NULL, trait.scale = "same", 
         col.chr = NULL, col.trait = NULL, type = "hist", cex = 0.4,
         lwd = 1, cex.axis = 0.4, cex.trait=0.8, jump = 5)
 }
@@ -46,15 +46,17 @@ for (i in 1:200) {
 }
 colnames(M) <- 1:200
 set.seed(1234)
-geno <- data.frame(Locus=1:500,LG=sort(rep(c(1:5),100)),
+geno <- data.frame(Locus=paste("m",1:500, sep="."),LG=sort(rep(c(1:5),100)),
                    Position=rep(seq(1,100,1),5),
                    X2=rnorm(500,10,4), check.names=FALSE)
+geno$Locus <- as.character(geno$Locus)
 ## look at the data, 5LGs, 100 markers in each
-## X2 value for segregation distortion available
+## X2 value for segregation distortion simulated
 head(geno)
 tail(geno)
-map.plot2(geno, trait="X2", type="line")
-map.plot2(geno, trait="X2", type="hist")
-map.plot2(geno, trait="X2", type="dot")
+table(geno$LG) # 5 LGs, 100 marks
+map.plot(geno, trait="X2", type="line")
+map.plot(geno, trait="X2", type="hist")
+map.plot(geno, trait="X2", type="dot")
 
 }

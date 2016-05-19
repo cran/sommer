@@ -378,12 +378,12 @@ AI <- function (y, X = NULL, ZETA = NULL, R = NULL, draw = TRUE, REML = TRUE,
           ups <- cbind(ups, var.com)
           fail <- which(var.com <= 0)
           if (length(fail) > 0) {
-            var.com[fail] <- 0.001
+            var.com[fail] <- 0.05
           }
-          extreme <- which(var.com > 1.5)
+          extreme <- which(as.vector(unlist(var.com)) > 
+                             1.5)
           if (length(extreme) > 0 & wi > 1) {
-            var.com[extreme] <- record[extreme, (wi - 
-                                                   1)]/var.y
+            var.com[extreme] <- 0.05
           }
           record <- cbind(record, var.com * as.numeric(var.y))
           if (draw) {
@@ -439,7 +439,7 @@ AI <- function (y, X = NULL, ZETA = NULL, R = NULL, draw = TRUE, REML = TRUE,
       nnn <- length(which(pushes > 0.5))
       if ((nnn >= 1 & nnn <= 4) & (nnn < (dim(var.com2)[1]) - 
                                    1) & (fail == FALSE) & (constraint == TRUE)) {
-        cat("\nOne or more variance components close to zero.\nBoundary constraint applied\n")
+        cat("\nOne or more variance components close to zero. Boundary constraint applied.\n")
         zero <- which(pushes > 0.5)
         nonzero <- (1:dim(var.com2)[1])[-zero]
         boost <- AI2(y = y.or, X = x.or, ZETA = zeta.or[-zero], 

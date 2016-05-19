@@ -65,7 +65,7 @@ version 1.4 (2016-03-25)
     AI algorithm.
     
 ########################  
-version 1.5 (2016-04-12)
+version 1.5 (2016-05-01)
 ########################
 
   + Problem of "not-full rank X matrix" has been solved by reducing the X matrix column by
@@ -78,8 +78,26 @@ version 1.5 (2016-04-12)
     using the AI algorithm as default method.
   + Implementation of the initial version of TP.prep function designed to select the best 
     training population for genomic selection.
-
+    
+########################  
+version 1.6 (2016-06-01)
+########################
+  + Addition of the Newton-Raphson algorithm to sommer.
+  + Vignettes with several examples available by typping vignette("sommer").
+  + Bug in Principal Components within the function TP.prep has been fixed.
+  + Example of GWAS for single cross hybrids has been added to the Technow data examples.
+  + Bug on map.plot function for genetic maps fixed when having a column "Locus" as factor
+  + Addition of winter bean data "FDdata" to exemplify the full diallel design calculation
+  + mmer2 function now is fully functional as mmer but using data frames. All parameters
+    can be manipulated as mmer except for the hdm function for half diallels.
+  + The program will subset W if some markers are not polymorphic
+  + beeper has beed added to the program to choose what sound to display when the program 
+    is don doing the calculations.
+  + Now genetic maps can be added for a better display of the manhattan plots.
+  + QQ plots are now displayed when doing GWAS for different models.
+  
+  
 ##pendings
-+ multivariate version almost done
++ multivariate version almost done (sorry I have spent more time including more algorithms and perfecting the current implementations)
 + residual structures
-+ example of GWAS for single cross hybrids
+

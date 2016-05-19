@@ -1,5 +1,5 @@
 
-TP.prep <- function(markers=NULL, vp.names=NULL, tp.size=seq(50,200,25), method="sim-dissim", npop=300, nelite=1, mutprob=.5, niterations=100){
+TP.prep <- function(markers=NULL, vp.names=NULL, tp.size=seq(50,200,25), method="sim-dissim", npop=300, nelite=1, mutprob=.5, niterations=100, lambda=NULL){
   
   if(!is.character(vp.names)){
     cat("'vp.names' argument needs to be a vector with names of the plants in character format\n")
@@ -25,12 +25,17 @@ TP.prep <- function(markers=NULL, vp.names=NULL, tp.size=seq(50,200,25), method=
   po <- mark.svd$d^2/sum(mark.svd$d^2)
   plot(po,ylab="Percent variation explained", xlab="Principal components", col="firebrick", pch=20, las=2, bty="n")#breaks=dim(po)[2]
   grid()
-  legend("topright", paste("Var explained 3 PCs = ",round(sum(po[1:3]),3)), bty="n", cex=.5)
+  legend("topright", paste("Var explained 3 PCs = ",round(sum(po[1:3]),3)), bty="n", cex=.6)
   ix <- which(mark.svd$d<1e-9)
   #Project markers onto the PCs
-  mark6.PCbasis <- mark6.centered %*% mark.svd$v[,-ix]
+  if(length(ix) > 0){
+    mark6.PCbasis <- mark6.centered %*% mark.svd$v[,-ix]
+  }else{
+    mark6.PCbasis <- mark6.centered %*% mark.svd$v
+  }
   #library(RColorBrewer)
   #col.scheme <- brewer.pal(6,"Set1")
+  plot(mark6.PCbasis[,1:2],col="cadetblue", pch=20, cex=1.3, xlab = "PC1", ylab="PC2", bty="n", las=2) #main=paste("TP size =",fff)
   ####
   
   VP <- which(rownames(markers) %in% vp.names)
@@ -50,15 +55,15 @@ TP.prep <- function(markers=NULL, vp.names=NULL, tp.size=seq(50,200,25), method=
   remove.list <- list(NA)
   
   for(k in 1:length(tp.size)){
-    
-    plot(mark6.PCbasis[,1:2],col="cadetblue", pch=20, cex=1.3, xlab = "PC1", ylab="PC2", bty="n", las=2, main=paste("TP size =",tp.size[k]))
+    fff <- tp.size[k]
+    plot(mark6.PCbasis[,1:2],col="cadetblue", pch=20, cex=1.3, xlab = "PC1", ylab="PC2", bty="n", las=2,main=paste("TP size =",fff)) #main=paste("TP size =",fff)
     
     remove <- 1
-    cat(paste("Looking for the best",tp.size[k],"individuals to form TP\n"))
+    cat(paste("Looking for the best",fff,"individuals to form TP\n"))
     
     starto <- 1
     is.even <- function(x){x %% 2 == 0}
-    while(length(remove) < tp.size[k]){
+    while(length(remove) < fff){
       potential <- apply(as.data.frame(VP),1, function(x,y,z){
         
         if(method=="sim"){
@@ -101,7 +106,8 @@ TP.prep <- function(markers=NULL, vp.names=NULL, tp.size=seq(50,200,25), method=
   tp.list <- remove.list
   }
   else if(method == "random"){
-    cat(paste("Picking randomly plants from population\n"))
+    
+    cat(paste("Picking randomly plants from population\nfor pop. sizes",paste(tp.size, collapse = ","),"\n"))
     rest <- (1:dim(markers)[1])[-which(rownames(markers) %in% vp.names)]
     tp.list <- apply(data.frame(tp.size), 1, function(x,y,z){z[sample(y, x)]}, y=rest, z=rownames(markers))
     if(length(tp.size) == 1){
@@ -127,6 +133,91 @@ TP.prep <- function(markers=NULL, vp.names=NULL, tp.size=seq(50,200,25), method=
     for(h in 1:length(tp.size)){
      cat(paste("Performing TP selection based in PEV for pop size=",tp.size[h],sep=""))
      tp.list[[h]] <- PEV(PCAs=mark6.PCbasis,candidates=candidates,Test=vp.names,ntoselect=tp.size[h], npop=npop, nelite=nelite, mutprob=mutprob, niterations=niterations, lambda=LambdaTrait)
+    }
+  }
+  else if(method == "CDmean"){
+    
+    contrasteNonPheno<-function(NotSampled){
+      mat<-matrix(-1/Nind,Nind,Nind-Nind_in_Sample)
+      for (i in 1:ncol(mat)) {
+        mat[NotSampled[i],i]=1-1/Nind
+      }
+      return(mat)
+    }
+    
+    matA1 <- A.mat(markers)
+    Nind=nrow(matA1) # total number of individuals
+
+    if(is.null(lambda)){
+      cat("lambda(varE/varG) parameter was not specified. Assuming h2=0.6 \nPlease try to calculate the real h2 using a mixed model with mmer.")
+      lambda <- 1.5
+    }else{
+      lambda <- lambda
+    }
+    invA1=solve(matA1) 
+    
+    tp.list <- list(NA)
+    for(r in 1:length(tp.size)){
+    nindrep <- tp.size[r]
+    Nind_in_Sample=nindrep
+    
+    #Design matrices
+    Ident<-diag(Nind_in_Sample)
+    X<-rep(1,Nind_in_Sample)
+    M<-Ident- (X%*%solve(t(X)%*%X) %*% t(X) )
+    
+    
+    NotSampled <- which(rownames(markers) %in% vp.names)
+    
+    bobo <- (seq(1:Nind))[-NotSampled]
+    Sample1<-sample(bobo,Nind_in_Sample) #Calibration set initialization, TP
+    #SaveSample=Sample1
+    NotSampled1<-seq(1:Nind)
+    #NotSampled<-NotSampled1[-Sample1] # Initial validation set, rest of inds not in TP
+    
+    Z=matrix(0,Nind_in_Sample,Nind)
+    for (i in 1:length(Sample1)) { Z[i,Sample1[i]]=1 } 
+    
+    T<-contrasteNonPheno(NotSampled)   # T matrice des contrastes
+    
+    # Calculate of CDmean of the initial set
+    matCD<-(t(T)%*%(matA1-lambda*solve(t(Z)%*%M%*%Z + lambda*invA1))%*%T)/(t(T)%*%matA1%*%T)
+    CD=diag(matCD)
+    CDmeanSave=mean(CD)
+    
+    CDmeanMax1=rep(NA,800)
+    
+    # Exchange algorithm (maximize CDmean)
+    cpt2=1
+    cpt=0
+    while (cpt2<800) {  # Make sure that 800 is enough in your case (that you reached a plateau), for this look at CDmeanMax1.
+      NotSampled=NotSampled1[-Sample1] 
+      cpt2=cpt2+1
+      # Remove one individual (randomly choosen) from the sample :
+      Sample2=sample(Sample1,1)
+      # Select one individual (randomly choosen) from the individuals that are not in the Calibration set :
+      Sample3=sample(NotSampled,1)
+      # New calibration set :
+      Sample4=c(Sample3,Sample1[Sample1!=Sample2])
+      # Calculate the mean CD of the new calibration set :
+      Z=matrix(0,Nind_in_Sample,Nind)
+      for (i in 1:length(Sample4)) { Z[i,Sample4[i]]=1 } 
+      NotSampled=NotSampled1[-Sample4] 
+      T<-contrasteNonPheno(NotSampled)
+      
+      matCD<-(t(T)%*%(matA1-lambda*solve(t(Z)%*%M%*%Z + lambda*invA1))%*%T)/(t(T)%*%matA1%*%T)
+      CD=diag(matCD)
+      
+      if (mean(CD)>CDmeanSave ) { Sample1=Sample4 # Accept the new Calibration set if CDmean is increased, reject otherwise.
+      CDmeanSave=mean(CD)  
+      cpt=0 } else { cpt=cpt+1 
+      }
+      CDmeanMax1[cpt2-1]=CDmeanSave
+    }  #Fin du while
+    
+    plot(CDmeanMax1)
+    SampleOptimiz=Sample1
+    tp.list[[r]] <- SampleOptimiz
     }
   }
   return(tp.list)

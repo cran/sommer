@@ -6,13 +6,17 @@ Giovanny Covarrubias-Pazaran
 }
 \title{Solving Mixed Model Equations in R}
 \description{
-The sommer package has been developed to provide R users with free code to understand how most common algorithms in mixed model analysis work related to genetic analysis and other general experiments, but at the same time allowing to perform their real analysis in diploid and polyploid organisms. This package allows the user to estimate variance components for a mixed model with the advantage of specifying the variance-covariance structure of the random effects and obtain other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc. The package is focused on genomic prediction (or genomic selection) and GWAS analysis although general mixed models can be fitted as well. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices that have been shown to increase prediction accuracy. The package provides flexibility to fit other genetic models such as full and half diallel models as well. 
+The sommer package has been developed to provide R users with open-source code to understand how most common algorithms in mixed model analysis work related to genetic analysis and other general experiments, but at the same time allowing to perform their real analysis in diploid and polyploid organisms with small and big data sets. This package allows the user to estimate variance components for a mixed model with the advantage of specifying the variance-covariance structure of the random effects and obtain other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc. The package is focused on genomic prediction (or genomic selection) and GWAS analysis although general mixed models can be fitted as well. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices that have been shown to increase prediction accuracy. The package provides flexibility to fit other genetic models such as full and half diallel models as well. 
 
-Several datasets for learning how to use the sommer package are available; the \code{\link{HDdata}} dataset will help users know how to fit half and full diallel designs. The \code{\link{cornHybrid}} and \code{\link{Technow_data}} datasets contain data to teach users how to perform genomic prediction in hybrid single crosses which display GCA and SCA effects. The \code{\link{wheatLines}} dataset contains data to teach how to fit genomic prediction in single crosses in species displaying only additive effects. The \code{\link{CPdata}} dataset contains data to teach users how to fit genomic prediction models within a biparental population coming from 2 highly heterozygous parents including additive, dominant and epistatic effects. The same data example shows how to do what has been denominated bagging GBLUP which increases prediction accuracy and can be found in the \code{\link{bag}} documentation.  The \code{\link{PolyData}} dataset shows how to fit genomic prediction and GWAS analysis in polyploids. A good converter from letter code to numeric format is implemented in the function \code{\link{atcg1234}}, which supports higher ploidy levels than diploid. The \code{\link{RICE}} dataset can teach users how to select the best training population in an applied breeding program, and we show comparison some comparison with other methods. Additional examples for fitting mixed models, such as GWAS and others, can be found in the example section of the \code{\link{mmer}} and \code{\link{mmer2}} functions. 
+Several datasets for learning how to use the sommer package are available; the \code{\link{HDdata}} and \code{\link{FDdata}} datasets will help users know how to fit half and full diallel designs respectively. The \code{\link{h2}} dataset shows how to calculate heritability. The \code{\link{cornHybrid}} and \code{\link{Technow_data}} datasets contain data to teach users how to perform genomic prediction in hybrid single crosses which display GCA and SCA effects. The \code{\link{wheatLines}} dataset contains data to teach how to fit genomic prediction in single crosses in species displaying only additive effects. The \code{\link{CPdata}} dataset contains data to teach users how to fit genomic prediction models within a biparental population coming from 2 highly heterozygous parents including additive, dominant and epistatic effects. The same data example shows how to do what has been denominated bagging GBLUP which increases prediction accuracy and examples can be found in the \code{\link{bag}} documentation.  The \code{\link{PolyData}} dataset shows how to fit genomic prediction and GWAS analysis in polyploids. The second example in \code{\link{Technow_data}} data shows how to perform GWAS in single cross hybrids. A good converter from letter code to numeric format is implemented in the function \code{\link{atcg1234}}, which supports higher ploidy levels than diploid. The \code{\link{RICE}} dataset can teach users how to select the best training population using the \code{\link{TP.prep}} function in an applied breeding program, and we show comparison some comparison with other methods. Additional examples for fitting mixed models, such as GWAS and others, can be found in the example section of the \code{\link{mmer}} and \code{\link{mmer2}} functions. 
 
-Other functions such as \code{\link{summary}}, \code{\link{fitted}}, \code{\link{randef}} (notice here is randef not ranef), \code{\link{anova}}, \code{\link{residuals}}, \code{\link{coef}} and \code{\link{plot}} applicable to typical linear models can also be applied to models fitted using the \code{\link{mmer}} function which is the core of the sommer package. The core algorithm in our mixed model solver is the Direct Average Information proposed by Lee et al. (2015) which surpasses in performance the MME-based Average Information (Gilmour et al. 1995) when dense covariance structures are present (GBLUP and GWAS case). When these matrices are sparse (no covariance structures), the EM algorithm or the MME-based is more effective and we recommend to use the lme4 package for such cases of NO covariance structures. 
+For a short tutorial of how to perform different genetic analysis in sommer please type:
 
-The core of the package is the function \code{\link{mmer}}, and the more user-friendly (asreml coding type) but less flexible \code{\link{mmer2}}, both focused in solving mixed models of the form:
+vignette("sommer")
+
+Other functions such as \code{\link{summary}}, \code{\link{fitted}}, \code{\link{randef}} (notice here is randef not ranef), \code{\link{anova}}, \code{\link{residuals}}, \code{\link{coef}} and \code{\link{plot}} applicable to typical linear models can also be applied to models fitted using the \code{\link{mmer}} function which is the core of the sommer package. The core algorithm in our mixed model solver is the Direct Average Information proposed by Lee et al. (2015) which surpasses in performance the MME-based Average Information (Gilmour et al. 1995) when dense covariance structures are present (GBLUP and GWAS case). In addition the Expectation-Maximization and Newton-Raphson algorithms are also available and can deal with multiple variance components with var-cov structures. When the variance covariance matrices are identity matrices (sparse), or longitudinal data is being analyzed we recommend shifting to use the lme4 package for such cases of NO covariance structures. 
+
+The core of the package is the function \code{\link{mmer}}, and the more user-friendly (asreml sintax type) but less flexible \code{\link{mmer2}}, both focused in solving mixed models of the form:
 
 .
 
@@ -96,9 +100,9 @@ ans <- mmer2(y~1, random= ~ gca1 + gca2 + sca, G=list(gca1=K1, gca2=K2, sca=K3),
 
 -------------------------------------------------------------------------------------
 
-FOR DETAILS ON HOW THE "AI", EM" AND "EMMA" ALGORITHMS WORK PLEASE REFER TO \code{\link{AI}} , \code{\link{EM}} AND \code{\link{EMMA}} help pages.
+The package uses Average Information \code{\link{AI}} , Expectation Maximization \code{\link{EM}}, Newton-Raphson \code{\link{NR}}, or Efficient Mixed Model Association \code{\link{EMMA}} algorithms. I have included those functions as independent in case you want to check how they work internally.
 
-In addition, the package contains a very nice function to plot genetic maps with numeric variable or traits next to the LGs, see the \code{\link{map.plot2}} function to see how easy can be done. The package contains other functions:
+In addition, the package contains a very nice function to plot genetic maps with numeric variable or traits next to the LGs, see the \code{\link{map.plot}} function to see how easy can be done. The package contains other functions:
 
 \code{\link{transp}} function transform a vector of colors in transparent colors.
 
@@ -110,7 +114,7 @@ Finally, feel free to get in touch with me if you have any questions or suggesti
 
 covarrubiasp@wisc.edu
 
-I'll be glad to help or answer any question. We have spend a valuable amount of time deveoping this package. Please cite us in your publication. Type 'citation("sommer")' to know how to cite it.
+I'll be glad to help or answer any question. We have spent a valuable amount of time developing this package. Please cite us in your publication. Type 'citation("sommer")' to know how to cite it.
 
 
 }
@@ -133,6 +137,8 @@ Searle. 1993. Applying the EM algorithm to calculating ML and REML estimates of 
 Yu et al. 2006. A unified mixed-model method for association mapping that accounts for multiple levels of relatedness. Genetics 38:203-208.
 
 Abdollahi Arpanahi R, Morota G, Valente BD, Kranis A, Rosa GJM, Gianola D. 2015. Assessment of bagging GBLUP for whole genome prediction of broiler chicken traits. Journal of Animal Breeding and Genetics 132:218-228.
+
+Tunnicliffe W. 1989. On the use of marginal likelihood in time series model estimation. JRSS 51(1):15-27.
 
 }
 \keyword{ R package }

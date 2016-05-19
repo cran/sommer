@@ -46,13 +46,13 @@ y.trn[ww] <- NA
 ####================####
 #### ADDITIVE MODEL ####
 ####================####
-ETA.A <- list(list(Z=Za,K=A))
+ETA.A <- list(add=list(Z=Za,K=A))
 #ans.A <- mmer(y=y.trn, Z=ETA.A)
 #cor(ans.A$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 ####=========================####
 #### ADDITIVE-DOMINANCE MODEL ####
 ####=========================####
-ETA.AD <- list(list(Z=Za,K=A),list(Z=Zd,K=D))
+ETA.AD <- list(add=list(Z=Za,K=A),dom=list(Z=Zd,K=D))
 #ans.AD <- mmer(y=y.trn, Z=ETA.AD)
 #cor(ans.AD$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 ### greater accuracy !!!! 4 percent increment!!
@@ -60,7 +60,7 @@ ETA.AD <- list(list(Z=Za,K=A),list(Z=Zd,K=D))
 ####===================================####
 #### ADDITIVE-DOMINANCE-EPISTASIS MODEL ####
 ####===================================####
-ETA.ADE <- list(list(Z=Za,K=A),list(Z=Zd,K=D),list(Z=Ze,K=E))
+ETA.ADE <- list(add=list(Z=Za,K=A),dom=list(Z=Zd,K=D),epi=list(Z=Ze,K=E))
 #ans.ADE <- mmer(y=y.trn, Z=ETA.ADE)
 #cor(ans.ADE$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 
@@ -68,5 +68,14 @@ ETA.ADE <- list(list(Z=Za,K=A),list(Z=Zd,K=D),list(Z=Ze,K=E))
 #summary(ans.AD)
 #summary(ans.ADE)
 #### adding more effects doesn't necessarily increase prediction accuracy!
+
+####===================================####
+####         RUN A GWAS MODEL          ####
+####===================================####
+#ans.GWAS <- mmer(y=y, Z=ETA.A, W=CPgeno)
+#### or if you have a map
+#my.map <- CPdata$map
+#ans.GWAS <- mmer(y=y, Z=ETA.A, W=CPgeno, map=my.map)
+
 }
 \keyword{datasets}

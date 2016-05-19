@@ -1,4 +1,8 @@
-map.plot2 <- function(data, trait=NULL, trait.scale="same", col.chr=NULL, col.trait=NULL, type="hist", cex=0.4, lwd=1, cex.axis=0.4, cex.trait=0.8, jump=5 ){
+map.plot <- function(data, trait=NULL, trait.scale="same", col.chr=NULL, col.trait=NULL, type="hist", cex=0.4, lwd=1, cex.axis=0.4, cex.trait=0.8, jump=5 ){
+  sasa <- which(colnames(data) == "Locus")
+  if(length(sasa) > 0){
+    data$Locus <- as.character(data$Locus) 
+  }
   ## transparent function
   ## data needs to have 2 columns; LG and Position
   ## trait needs to indicate the name to plot in the chromosome

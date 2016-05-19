@@ -5,7 +5,7 @@
 Dominance relationship matrix
 }
 \description{
-Calculates the realized dominance relationship matrix.
+Calculates the realized dominance relationship matrix. It is important to increase the prediction accuracy when 2 conditions are met; 1) The trait has intermediate to high heritability, 2) The population contains a big number of individuals that are full sibs (FS).
 }
 \usage{
 D.mat(X,min.MAF=NULL,max.missing=NULL,impute.method="mean",tol=0.02,

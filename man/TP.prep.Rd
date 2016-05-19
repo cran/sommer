@@ -9,18 +9,19 @@ My recomendation would be to randomly choose the TP and predict the performance 
 }
 \usage{
 TP.prep(markers=NULL, vp.names=NULL, tp.size=seq(50,200,25), method="sim-dissim", 
-        npop=300, nelite=1, mutprob=.5, niterations=100)
+        npop=300, nelite=1, mutprob=.5, niterations=100, lambda=NULL)
 
 }
 \arguments{
   \item{markers}{a marker matrix in numeric format but any numeric matrix can be used in this argument. No extra columns should be in this matrix. ROWNAMES SHOOULD BE THE NAMES OF THE INDIVIDUALSIN THE POPULATION.}
   \item{vp.names}{a character vector with the names of the validaton population. The marker matrix should have rownames with the individuals so the program can find them and identify the most suitable training population.}
   \item{tp.size}{a numeric vector indicating the population sizes desired for the training population.}
-  \item{method}{a method among "similar", "sim-dissim", "random" or "PEV", indicating if the program should look for similar plants (based on the PCA of the marker matrix) or a mixture of similar and constrasting individuals, select plants at random, or minimize the PEV. The default is "sim-dissim", meaning will make a mixture.}
+  \item{method}{a method among "similar", "sim-dissim", "random", "PEV", or "CDmean" indicating if the program should look for similar plants (based on the PCA of the marker matrix) or a mixture of similar and constrasting individuals, select plants at random, minimize the PEV, or calculate the CD mean. The default is "sim-dissim", meaning will make a mixture.}
   \item{npop}{genetic algorithm parameter, number of solutions at each iteration.}
   \item{nelite}{genetic algorithm parameter, number of solutions selected as elite parents which will generate the next set of solutions.}
   \item{mutprob}{genetic algorithm parameter, probability of mutation for each generated solution.}
   \item{niterations}{genetic algorithm parameter, number of iterations.}
+  \item{lambda}{a value for the CDmean algorithm where lambda=Var(e)/Var(g).}
 
 }
 

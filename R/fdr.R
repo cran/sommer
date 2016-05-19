@@ -1,6 +1,12 @@
 fdr <- function(p, fdr.level=0.05){
   ##### transform to real p-values
-  pval <- 10^-p
+  # if maximum value is grater than 1 means that is in -log10 or LOD scale
+  # if maximum value is less than one means that the user is using already raw  p.values
+  if(max(p) > 1){
+    pval <- 10^-p
+  }else{
+    pval <- p
+  }
   ##### adjust for FDR
   pvalA <- p.adjust(pval, method="fdr")
   #plot(pvalA)

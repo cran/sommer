@@ -1,4 +1,4 @@
-score.calc <- function(marks,y,Z,X,K,M,Hinv,ploidy,model,min.MAF,max.geno.freq) {
+score.calc <- function(marks,y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,max.geno.freq,silent=FALSE,P3D=TRUE) {
   # needs to be modified to work if Hinv is not provided, not in a hurry, normally wouldn't be possible
   #
   m <- length(marks)
@@ -8,14 +8,18 @@ score.calc <- function(marks,y,Z,X,K,M,Hinv,ploidy,model,min.MAF,max.geno.freq) 
   general <- length(grep("general",model,fixed=T))>0 
   ####################
   ## initialize the progress bar
-  count <- 0
-  tot <- m
-  pb <- txtProgressBar(style = 3)
-  setTxtProgressBar(pb, 0)
+  if(!silent){
+    count <- 0
+    tot <- m
+    pb <- txtProgressBar(style = 3)
+    setTxtProgressBar(pb, 0)
+  }
   #####################
   for (i in 1:m) {
     ###################
-    count <- count + 1
+    if(!silent){
+      count <- count + 1
+    }
     ###################
     if(ploidy == 2){
       S <- as.matrix(M[,marks[i]])
@@ -28,11 +32,12 @@ score.calc <- function(marks,y,Z,X,K,M,Hinv,ploidy,model,min.MAF,max.geno.freq) 
       X2 <- cbind(X,Z%*%S)
       p <- ncol(X2)
       v2 <- n - p                 
-      if (is.null(Hinv)) {			
-        out <- try(mmer(y=y,X=X2,Z=list(list(Z=Z,K=K))),silent=TRUE)
-        if (class(out)!="try-error") { 
-          Hinv <- out$Hinv 
-        }
+      if (is.null(Hinv) | P3D == FALSE) {	# ZZ and K are only for y with no missing data
+        yytt <- y[which(!is.na(y))]
+        out <- try(EMMA(y=yytt,X=X2,Z=ZZ,K=K,silent=TRUE)) #Z=list(list(Z=ZZ,K=K)))
+        #if (class(out)!="try-error") { 
+        Hinv <- out$V.inv
+        #}
       } 
       W <- crossprod(X2, Hinv %*% X2) 
       Winv <- try(solve(W),silent=TRUE)
@@ -52,7 +57,9 @@ score.calc <- function(marks,y,Z,X,K,M,Hinv,ploidy,model,min.MAF,max.geno.freq) 
       }
     }
     ################################
-    setTxtProgressBar(pb, (count/tot))### keep filling the progress bar
+    if(!silent){
+      setTxtProgressBar(pb, (count/tot))### keep filling the progress bar
+    }
     ################################
   }
   return(list(score=scores,beta=beta.out))			

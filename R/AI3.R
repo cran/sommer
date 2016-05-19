@@ -1,4 +1,4 @@
-AI3 <-function (y, X = NULL, ZETA = NULL, R = NULL, draw = TRUE, REML = TRUE, 
+AI3 <- function (y, X = NULL, ZETA = NULL, R = NULL, draw = TRUE, REML = TRUE, 
           silent = FALSE, init = NULL, iters = 50, forced = NULL, sherman = FALSE) 
 {
   y.or <- y
