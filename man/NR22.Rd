@@ -1,11 +1,11 @@
-\name{NR}
-\alias{NR}
+\name{NR22}
+\alias{NR22}
 \title{Newton-Raphson Algorithm}
 \description{
-This function is used internally in the function \code{\link{mmer}} when MORE than 1 variance component needs to be estimated through the use of the Newton-Raphson (NR) algorithm.
+This function is used internally in the function \code{\link{mmer}} when MORE than 1 variance component needs to be estimated through the use of the Newton-Raphson (NR22) algorithm.
 }
 \usage{
-NR(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, 
+NR22(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, 
    iters=50, constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, 
    MTG2=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL, identity=TRUE, 
    kernel=NULL, start=NULL, taper=NULL, verbose=0, gamVals=NULL, 
@@ -190,6 +190,6 @@ ETA <- list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=S))
 ####=========================================####
 #### run the next line, it was ommited for CRAN time limitations
 ####=========================================####
-#ans <- NR(y=y, ZETA=ETA)
+#ans <- NR22(y=y, ZETA=ETA)
 #ans$var.comp
 }

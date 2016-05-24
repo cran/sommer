@@ -1,4 +1,4 @@
-mmer2 <- function(fixed=NULL, random=NULL, G=NULL, R=NULL, W=NULL, method="NR", REML=TRUE, iters=50, draw=FALSE, init=NULL, data=NULL, family=gaussian, silent=FALSE, constraint=TRUE, sherman=FALSE, MTG2=FALSE, gss=FALSE, forced=NULL, beeping=2, map=NULL, fdr.level=0.05, manh.col=NULL, min.n=TRUE){
+mmer2 <- function(fixed=NULL, random=NULL, G=NULL, R=NULL, W=NULL, method="NR", REML=TRUE, iters=50, draw=FALSE, init=NULL, data=NULL, family=gaussian, silent=FALSE, constraint=TRUE, sherman=FALSE, MTG2=FALSE, gss=FALSE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, min.n=TRUE, gwas.plots=TRUE){
   if(!is.null(G) & method == "EM"){
     cat("With var-cov structures (G) present you may want to try the AI algorithm.\n\n")
   }
@@ -70,7 +70,7 @@ mmer2 <- function(fixed=NULL, random=NULL, G=NULL, R=NULL, W=NULL, method="NR", 
       }
       names(Z) <- zvar
       ### fit the model using the real function mmer2 
-      res <- mmer(y=yvars, X=X, Z=Z, R=R, W=W, method=method, REML=REML, iters=iters, draw=draw, init=init, silent=silent, constraint=constraint, sherman=sherman, MTG2=MTG2, gss=gss, forced=forced, beeping=beeping, map=map, fdr.level=fdr.level, manh.col=manh.col)
+      res <- mmer(y=yvars, X=X, Z=Z, R=R, W=W, method=method, REML=REML, iters=iters, draw=draw, init=init, silent=silent, constraint=constraint, sherman=sherman, MTG2=MTG2, gss=gss, forced=forced, map=map, fdr.level=fdr.level, manh.col=manh.col,gwas.plots=gwas.plots)
       #rownames(res$var.comp) <- c(zvar,"Error")
     }
   }else{ # ================== JUST FIXED =======================

@@ -1,72 +1,8 @@
-NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=50, 
-               constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, MTG2=FALSE, Fishers=FALSE, 
-               gss=TRUE, forced=NULL, identity=TRUE, kernel=NULL, start=NULL, taper=NULL,
-               verbose=0, gamVals=NULL, maxcyc=50, tol=1e-4){
+NR22 <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=50, 
+                constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, MTG2=FALSE, Fishers=FALSE, 
+                gss=TRUE, forced=NULL, identity=TRUE, kernel=NULL, start=NULL, taper=NULL,
+                verbose=0, gamVals=NULL, maxcyc=50, tol=1e-4){
   
-  ###########################
-  ## y is a vector for the response variable
-  ## X is an incidence matrix for fixed effects
-  ## Z is a list of lists for each random effect
-  # the list of Z can or cannot include the covariance matrix for such random effect
-  # if provided must be provided as Z=list(list(Z=Z1,K=K1),list(Z=Z2,K=K2), etc) 
-  ############################
-  if(che){ # if coming from mmer don't check
-    if(is.list(ZETA)){
-      if(is.list(ZETA[[1]])){ # if was provided as a two level list
-        ZETA=ZETA
-      }else{ # if was provided as a one level list
-        ZETA=list(ZETA)
-      }
-    }else{
-      #stop;
-      cat("\nThe random effects need to be provided in a list format, please see examples")
-    }
-  }
-  ###########################
-  # if X matrix is not present
-  if(is.null(X) & is.null(ZETA)){ # nothing in the model
-    cat("No random effects specified. please use lm function.\n")
-    stop()
-  }else{
-    if(is.null(X) & !is.null(ZETA)){ # only random effects present
-      tn = length(y); xm <- matrix(1,tn,1)
-    }
-    if(!is.null(X) & !is.null(ZETA)){ # both present, extract xm from X, check double list
-      if(is.list(X)){
-        if(is.list(X[[1]])){
-          xm=X[[1]][[1]]
-        }else{
-          xm=X[[1]]
-        }
-      }else{
-        xm=as.matrix(X) 
-      }
-    }
-    ############################################
-    ## if K matrices are not present in ZETA
-    # add an identity matrix to all effects in ETA that did not provide a var-cov matrix
-    if(is.null(R)){R <- diag(length(y))} # dim(x[[1]])[2]
-    
-    if(che){ # if needs to be checked, else just skip
-      ZETA <- lapply(ZETA, function(x){
-        if(length(x) == 1){
-          provided <- names(x)
-          if(provided == "Z"){
-            y <- list(Z=x[[1]],K=diag(dim(x[[1]])[2]))
-          }
-          else if(provided == "K"){
-            y <- list(Z=diag(length(y)),K=x[[1]])
-          }else{
-            stop()
-            cat("Names of matrices provided can only be 'Z' or 'K', the names you provided don't match the arguments required")
-          }
-        }else{y <- x}; 
-        return(y)
-      })
-    }
-  }
-  ###%%%%%%%%%%%%%%%%%%%%%%%%
-  nanod <- colnames(X)
   ## when two matrices are passed to regress this is also called
   ## to evaluate the REML at certain values of gamma and find a
   ## good place to start the regress algorithm
@@ -126,6 +62,7 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
     if(!missing(b)) Dinv <- Dinv %*% b
     return(Dinv)
   }
+  
   reml <- function(lambda, y, X, V0, V1,verbose=0){
     
     if(is.null(dim(y)))
@@ -280,26 +217,13 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
   }
   
   
-  
-  ####%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  y.or <- y
-  ZETA.or <-ZETA
-  x.or <- X
+  ##$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+  #ZETA.or <-ZETA
   if(is.null(names(ZETA))){
     varosss <- c(paste("u.",1:length(ZETA), sep=""))
   }else{
     varosss <- as.character(names(ZETA))
   }
-  
-  good <- which(!is.na(y))
-  xoxo <- lapply(ZETA.or, function(x,good){x[[1]] <- x[[1]][good,]; x[[2]]<- x[[2]]; return(x)}, good=good)
-  Zs <- lapply(xoxo, function(x){x[[1]]})
-  Gs <- lapply(xoxo, function(x){x[[2]]})
-  Zsp <- as(do.call("cbind", Zs),Class="sparseMatrix") # column bind Z=[Z1 Z2 Z3]
-  tZsp <- t(Zsp)
-  Ksp <- as(do.call("adiag1", Gs),Class="sparseMatrix") # G as diagonal
-  R <- diag(length(good))
-  xoxo <- NULL
   
   # model has fixed and random effects
   if(!is.null(X) & !is.null(ZETA)){ 
@@ -340,7 +264,7 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
   }else{
     x.or <- matrix(rep(1,length(y)))
   }
-  x.full <- matrix(rep(1,length(y)))
+  
   
   ## Vformula can just be something like ~ V0 + V1
   ## or leave it out or Vformula=NULL
@@ -461,10 +385,6 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
   delta <- 1
   
   if(verbose>9) cat("Removing parts of random effects corresponding to missing values\n")
-  
-  #########
-  #V.or <- V
-  
   ## remove missing values
   for(i in 1:k){
     if(is.matrix(V[[i]]))
@@ -859,173 +779,6 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
   ############### ========================= ========================= ========================= 
   ############### ========================= ========================= ========================= 
   
-  if(sigma[length(sigma)] < 0 & constraint){
-    cat("\nModel is overspecified. A model with no error variance is not reliable.\nPlease remove some random effects or try a different algorithm.")
-    stop()
-  }
   
-  badd <- which(sigma[1:(length(sigma)-1)] < 0 )
-  goodd <- which(sigma > 0 )
-  ###*****************************************************************************************
-  ###*****************************************************************************************
-  ###*****************************************************************************************
-  ###*****************************************************************************************
-  if(constraint & length(badd) > 0){ # if a variance component was negative and constraint was activated
-    # recalculate variance components removing such variance component
-    
-    cat("\nOne or more variance components close to zero. Boundary constraint applied.\n")
-    ZETAXXX <- ZETA.or[-badd]
-    sigmaxxx <- NR22(y.or, X=x.or, ZETA=ZETAXXX, init=sigma[goodd],draw=draw,silent=silent)
-    sigma[goodd] <- sigmaxxx
-    sigma[badd] <- 0
-    
-  }### END OF RECALCULATING VAR.COMP WHEN NEGATIVE
-  ###*****************************************************************************************
-  ###*****************************************************************************************
-  ###*****************************************************************************************
-  
-  xm <- X
-  txm <- t(xm)
-  zvar <- 1:length(ZETA)
-  var.com2 <- as.matrix(sigma)
-  ################################
-  ################################
-  # RANDOM VARIABLES
-  ### Coeficcient matrix
-  ################################
-  AIC = as.vector((-2 * llik ) + ( 2 * dim(X)[2]))
-  BIC = as.vector((-2 * llik ) + ( log(length(y)) * dim(X)[2]))
-  
-  #zvar <- which(unlist(lapply(ZETA, function(x){names(x)[1]})) == "Z")
-  #print(X)
-  #####################
-  
-  
-  
-  #############
-  varo <- as.list(var.com2)  # variance components for random, no error
-  Gspo <- lapply(as.list(c(1:length(ZETA))),function(x,K,v){
-    oo=K[[x]]*as.numeric((v[[x]])); return(oo)
-  }, K=Gs, v=varo) ##
-  Gsp <- as(do.call("adiag1", Gspo),Class="sparseMatrix") # in diagonal
-  Rsp <- as(R*as.numeric(var.com2[length(var.com2)]),Class="sparseMatrix")
-  varo=NULL
-  Gspo=NULL
-  #########################################################
-  # Sherman-Morrison-Woodbury formula (Seber, 2003, p. 467)
-  # R-  --  [R-Z[Z'R-Z+G-]-Z'R-]  #-- means minus
-  vm <- Zsp%*%crossprod(Gsp,tZsp) + Rsp # ZGZ+R
-  Vinv <- solve(vm,sparse=TRUE, tol = 1e-19)
-  #################
-  #Vinv2 <- Vinv
-  ## Fixed effects
-  # B=(X'X V- XVy)-
-  xvx <- crossprod(xm, Vinv %*% xm)
-  xvxi <- solve(xvx) # variance of fixed effects
-  beta <- xvxi %*% crossprod(xm, Vinv %*% y)
-  #################
-  Var.u <- vector(mode="list", length = length(zvar))
-  PEV.u <- Var.u
-  u <- Var.u
-  #xvx=t(xm)%*%Vinv%*%xm # X'V-X
-  #xvxi=solve(xvx) # (X'V-X)-
-  #Vinv.xm <- Vinv%*%xm
-  #xvx=txm%*%Vinv.xm # X'V-X
-  #xvxi=solve(xvx, sparse=TRUE, tol = 1e-19) # (X'V-X)-
-  #s1=Vinv%*%xm # in steps to make computations faster
-  #s2=xvxi%*%txm%*%Vinv 
-  #pm=Vinv-crossprod(t(Vinv.xm),s2) #Vinv-s1%*%s2#
-  
-  pm=Vinv-Vinv%*%xm%*%(xvxi%*%txm%*%(Vinv))
-  ZETA2 <- lapply(ZETA, function(x,good){x[[1]] <- x[[1]][good,]; x[[2]]<- x[[2]]; return(x)}, good=good)
-  ZETA3 <- lapply(ZETA2, function(x){y=list(Z=as(x[[1]],Class="sparseMatrix"),K=as(x[[2]],Class="sparseMatrix"))})
-  for(h in zvar){
-    Var.u[[h]] <- (as.numeric(var.com2[h,1])^2) *  ( crossprod(ZETA3[[h]][[1]]%*%ZETA3[[h]][[2]], pm)  %*%  (ZETA3[[h]][[1]]%*%ZETA3[[h]][[2]])   ) # sigma^4 ZKP ZK
-    PEV.u[[h]] <- as.numeric(var.com2[h,1]) * ZETA3[[h]][[2]] - Var.u[[h]]  # standard errors (SE) for each individual
-  } #(sigma2.u^2) *  ( crossprod(Z%*%K, P)  %*%  (Z%*%K)   )
-  #################
-  ## Random effects
-  #u <- list() # we put it up
-  ee <-  (y - (xm %*% beta))
-  
-  
-  for (aaa in zvar) { # u = KZ'V- (y- XB)
-    u[[aaa]] <- ( (ZETA3[[aaa]][[2]]*as.numeric(var.com2[aaa,1])) %*% t(ZETA3[[aaa]][[1]]) %*% Vinv %*% ee )
-  }
-  
-  u <- u[zvar]
-  ###############
-  #residuals2 <- (y - (xm %*% beta))
-  
-  
-  fitted.u <- 0
-  for(h in 1:length(ZETA.or)){
-    #fitted.y <- fitted.y + (zeta.or[[h]][[1]] %*% u[[h]])
-    fitted.u <- fitted.u + (ZETA.or[[h]][[1]] %*% u[[h]])
-  }
-  fitted.y <- (x.or %*% beta) + fitted.u
-  fitted.y.good <- fitted.y[good]
-  residuals3 <- y - fitted.y[good] # conditional residuals
-  ###################
-  rownames(beta) <- colnames(xm)
-  for(i in 1:length(ZETA)){
-    rownames(u[[i]]) <- colnames(ZETA[[i]][[1]])
-  }
-  ###################
-  ####### FISHER's INFORMATION 
-  sigma.cov <- (A.svd[1:k, 1:k] * 2)
-  ####################
-  ###################
-  ###################
-  if(!is.null(names(ZETA))){
-    names(u) <- names(ZETA)
-    names(Var.u) <- names(ZETA)
-    names(PEV.u) <- names(ZETA)
-  }
-  logL <- as.vector(llik)
-  ###################
-  
-  FI <- A/2
-  
-  ## convert FI using pos
-  FI.c <- matrix(0,dim(FI)[1],dim(FI)[2])
-  FI.c <- FI / tcrossprod((sigma-1)*pos+1)
-  ##for(i in 1:dim(FI)[1])
-  ##  for(j in 1:dim(FI)[2])
-  ##    FI.c[i,j] <- FI[i,j]/(((sigma[i]-1)*pos[i]+1)*((sigma[j]-1)*pos[j]+1))
-  
-  names(sigma) <- Vcoef.names
-  sigma.cov <- try(ginv(FI.c),silent=TRUE)
-  error1 <- (class(sigma.cov)=="try-error")
-  if(error1) {
-    cat("Warning: solution lies on the boundary; check sigma & pos\nNo standard errors for variance components returned\n")
-    sigma.cov <- matrix(NA,k,k)
-  }
-  rownames(sigma.cov) <- colnames(sigma.cov) <- Vcoef.names
-  ## Additional warning if any pos entries are TRUE and the corresponding term is close to zero
-  ## Only give this warning it I haven't given the previous one.
-  if(!error1) {
-    if(any(sigma[pos]^2 < 1e-4)) cat("Warning: solution lies close to zero for some positive variance components, their standard errors may not be valid\n")
-  }
-  #######
-  #if(is.null(nanod)){
-  #  nanod <- paste("x",1:dim(xm)[1],sep=".")
-  #}
-  colnames(xm) <- nanod
-  rownames(beta) <- nanod
-  rownames(xvxi) <- nanod
-  colnames(xvxi) <- nanod
-  
-  
-  out1 <- as.matrix(var.com2, ncol=1); colnames(out1) <- "Variance Components" # variance components
-  rownames(out1) <- c(paste("Var(",varosss,")",sep=""), "Var(Error)")
-  res <- list(var.comp=out1, V.inv = Vinv, u.hat=u, Var.u.hat=Var.u, 
-              PEV.u.hat=PEV.u, beta.hat=beta, Var.beta.hat=xvxi, 
-              LL=logL, AIC=AIC, BIC=BIC, X=xm, fitted.y=fitted.y, 
-              fitted.u=fitted.u, residuals=ee, cond.residuals=residuals3,
-              fitted.y.good=fitted.y.good, Z=Zsp, K=Ksp, fish.inv=sigma.cov)
-  
-  layout(matrix(1,1,1))
-  
-  return(res)
+  return(sigma)
 }

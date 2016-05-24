@@ -8,7 +8,8 @@ This function solves the mixed model equations proposed by Henderson (1975). It 
 mmer2(fixed=NULL, random=NULL, G=NULL, R=NULL, W=NULL, method="NR", REML=TRUE, 
       iters=50, draw=FALSE, init=NULL, data=NULL, family=gaussian, 
       silent=FALSE, constraint=TRUE, sherman=FALSE, MTG2=FALSE, gss=FALSE,
-      forced=NULL, beeping=2, map=NULL, fdr.level=0.05, manh.col=NULL, min.n=TRUE)
+      forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, min.n=TRUE,
+      gwas.plots=TRUE)
 }
 \arguments{
   \item{fixed}{a formula specifying the response variable and the fixed effects, i.e. Yield ~ Location}
@@ -32,11 +33,11 @@ mmer2(fixed=NULL, random=NULL, G=NULL, R=NULL, W=NULL, method="NR", REML=TRUE,
    The default is FALSE to avoid the user get into trouble but experimented users can take advantage from this feature to fit big models, i.e. 5000 individuals in 555 seconds = 9 minutes in a MacBook 4GB RAM.}
      \item{gss}{a TRUE/FALSE value indicating if a genomic selection is being fitted just for using certain constraints. When is FALSE (default) the program can make some EM steps to find initial values for variance components when the starting values are to far from the real values causing the likelihood to have a strange behavior and dropping dramatically When TRUE the program does not try EM steps even when far away from the likelihood because in big marker-based models can make the process quite slow.}
     \item{forced}{a vector of numeric values for variance components including error if the user wants to force the values of the variance components. On the meantime only works for forcing all of them and not a subset of them. The default is NULL, meaning that variance components will be estimated by REML/ML.}
-    \item{beeping}{a numeric value between 1-11 indicating the sound you would like to hear everytime the mmer finishes a job. If you prefer to keep the program silenced set the parameter to NULL, i.e. beeping=NULL}
     \item{map}{a data frame with 2 columns, 'Chrom', and 'Locus' not neccesarily with same dimensions that markers. The program will look for markers in common among the W matrix and the map provided. Although, the association tests are performed for all markers, only the markers in common will be plotted.}
     \item{fdr.level}{a level of FDR to calculate and plot the line in the GWAS plot. Default is fdr.level=0.05}
     \item{manh.col}{a vector with colors desired for the manhattan plot. Default are cadetblue and red alternated.}
     \item{min.n}{a TRUE/FALSE statement indicating if the constraint of number of levels of each grouping factor must be < number of observations. This is a constrained usually find in lme4 and has been added and set to TRUE but can be set to FALSE when only one measure per plant is available and the user wants to perform GWAS or genomic selection with limited data.}
+    \item{gwas.plots}{a TRUE/FALSE statement indicating if the GWAS and qq plot should be drawn or not. The default is TRUE but you may want to avoid it.}
     
 }
 \details{

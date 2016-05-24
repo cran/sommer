@@ -164,7 +164,7 @@ data(cornHybrid)
 hybrid2 <- cornHybrid$hybrid # extract cross data
 head(hybrid2)
 
-modFD <- mmer2(Yield~Location, random=~GCA1+GCA2+SCA, data=hybrid2,silent = TRUE)
+modFD <- mmer2(Yield~Location, random=~GCA1+GCA2+SCA, data=hybrid2,silent = TRUE, draw=FALSE)
 summary(modFD)
 Vgca <- sum(modFD$var.comp[1:2,1])
 Vsca <- modFD$var.comp[3,1]

@@ -1,7 +1,7 @@
 #############
 ## EXPORTS
 #############
-export(adiag1, A.mat, AI, AI2, AI3, atcg1234, bag, big.peaks.col, bathy.colors, brewer.pal, D.mat, design.score, E.mat, EM, EM2, EMMA, fdr, hdm, jet.colors, map.plot, mmer, mmer2, NR, poe, score.calc, transp, TP.prep)
+export(adiag1, A.mat, AI, AI2, AI3, atcg1234, bag, big.peaks.col, bathy.colors, brewer.pal, D.mat, design.score, E.mat, EM, EM2, EMMA, fdr, hdm, jet.colors, map.plot, mmer, mmer2, NR, NR22, poe, R.mat, score.calc, transp, TP.prep)
 
 export(summary.mmer, residuals.mmer, fitted.mmer, plot.mmer, anova.mmer, coef.mmer, randef)
 
@@ -27,8 +27,8 @@ S3method(plot, mmer)
              "par", "grid", "plot.new", "polygon","segments")
   importFrom("utils", "combn", "setTxtProgressBar", "txtProgressBar",
              "available.packages", "contrib.url")
-  importFrom("matrixcalc", "matrix.trace","is.diagonal.matrix")
-  importFrom("beepr", "beep")
+  importFrom("matrixcalc", "matrix.trace","is.diagonal.matrix", "is.square.matrix")
+#  importFrom("beepr", "beep")
 ## FULL IMPORTS
   import("methods")
   import("Matrix")
@@ -43,7 +43,7 @@ S3method(plot, mmer)
              "lm", "median", "optimize", "pbeta", "pchisq", "predict",
              "printCoefmat", "qqnorm", "smooth.spline", "var", "rnorm", 
              "model.matrix","na.omit", "p.adjust","kmeans","dist", "runif",
-             "nobs", "ppoints", "sd")
+             "nobs", "ppoints", "sd", "model.frame", "model.response", "na.pass")
 
 
   

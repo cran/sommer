@@ -80,8 +80,9 @@ version 1.5 (2016-05-01)
     training population for genomic selection.
     
 ########################  
-version 1.6 (2016-06-01)
+version 1.6 (2016-05-19)
 ########################
+
   + Addition of the Newton-Raphson algorithm to sommer.
   + Vignettes with several examples available by typping vignette("sommer").
   + Bug in Principal Components within the function TP.prep has been fixed.
@@ -96,8 +97,21 @@ version 1.6 (2016-06-01)
   + Now genetic maps can be added for a better display of the manhattan plots.
   + QQ plots are now displayed when doing GWAS for different models.
   
+########################  
+version 1.7 (2016-06-05)
+########################
+
+  + Now the AI algorithm checks the situation when there are random effects with n < p 
+    (less observations than parameters to estimate) to take the right values in AI 
+    when extreme variance components values are found.
+  + Bug in eigen decomposition of AI has been fixed by providing smaller starting values for
+    the variance components
+  + In addition, when n < p is present the initial values of the variance components are 
+    reduced significantly to provide better starting values.
+  + New bug in the FDR function fixed. Now GWAS with or without map displais the FDR line.
   
 ##pendings
 + multivariate version almost done (sorry I have spent more time including more algorithms and perfecting the current implementations)
 + residual structures
++eigen decomposition in EMMA algorithm
 

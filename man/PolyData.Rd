@@ -83,9 +83,20 @@ phenotypes <- PolyData$PPheno
 ####=========================================####
 #### run it as GWAS model
 ####=========================================####
+#my.map <- PolyData$map
 #models <- c("additive","1-dom-alt","1-dom-ref","2-dom-alt","2-dom-ref")
 #ans2 <- mmer(y=yy, Z=ETA, W=marks, method="EMMA", 
-#              ploidy=4, models=models[1])
+#              ploidy=4, models=models[1], map=my.map)
+#summary(ans2)
+
+####=========================================####
+#### compare to GWAS including dominance and epistasis
+####=========================================####
+#D <- D.mat(marks)
+#E <- E.mat(marks)
+#ETA <- list( list(Z=Z1, K=K1),list(Z=Z1, K=D),list(Z=Z1, K=E))
+#ans3 <- mmer(y=yy, Z=ETA.ADE, W=marks, method="EMMA", 
+#              ploidy=4, models=models[1], map=my.map)
 #summary(ans2)
 }
 \keyword{datasets}

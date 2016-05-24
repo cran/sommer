@@ -52,5 +52,5 @@ plot(new.pp$p.ad, col=transp("cadetblue"), pch=20, cex=1.5)
 #### with the FDR line instead
 ####=========================================####
 plot(pp, col=transp("cadetblue"), pch=20, cex=1.5)
-abline(h=new.pp$fdr.or, lty=3, col="red", lwd=2)
+abline(h=new.pp$fdr.10, lty=3, col="red", lwd=2)
 }

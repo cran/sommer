@@ -9,16 +9,16 @@ score.calc <- function(marks,y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,max.geno.fre
   ####################
   ## initialize the progress bar
   if(!silent){
-    count <- 0
-    tot <- m
-    pb <- txtProgressBar(style = 3)
-    setTxtProgressBar(pb, 0)
+  count <- 0
+  tot <- m
+  pb <- txtProgressBar(style = 3)
+  setTxtProgressBar(pb, 0)
   }
   #####################
   for (i in 1:m) {
     ###################
     if(!silent){
-      count <- count + 1
+    count <- count + 1
     }
     ###################
     if(ploidy == 2){
@@ -36,7 +36,7 @@ score.calc <- function(marks,y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,max.geno.fre
         yytt <- y[which(!is.na(y))]
         out <- try(EMMA(y=yytt,X=X2,Z=ZZ,K=K,silent=TRUE)) #Z=list(list(Z=ZZ,K=K)))
         #if (class(out)!="try-error") { 
-        Hinv <- out$V.inv
+          Hinv <- out$V.inv
         #}
       } 
       W <- crossprod(X2, Hinv %*% X2) 
@@ -58,7 +58,7 @@ score.calc <- function(marks,y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,max.geno.fre
     }
     ################################
     if(!silent){
-      setTxtProgressBar(pb, (count/tot))### keep filling the progress bar
+    setTxtProgressBar(pb, (count/tot))### keep filling the progress bar
     }
     ################################
   }

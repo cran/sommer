@@ -17,7 +17,7 @@ mmer(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE,
      models="additive", ploidy=2, min.MAF = 0.05, silent=FALSE, 
      family=NULL, constraint=TRUE, sherman=FALSE, MTG2=FALSE,
      Fishers=FALSE, gss=TRUE, forced=NULL, full.rank=TRUE, 
-     beeping=2, map=NULL,fdr.level=0.05, manh.col=NULL)
+     map=NULL,fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE)
 }
 \arguments{
   \item{y}{a numeric vector for the response variable}
@@ -90,10 +90,10 @@ mmer(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE,
       \item{gss}{a TRUE/FALSE value indicating if a genomic selection is being fitted just for using certain constraints. When is FALSE the program can make some EM steps to find initial values for variance components when the starting values are to far from the real values causing the likelihood to have a strange behavior and dropping dramatically When TRUE (default) the program does not try EM steps even when far away from the likelihood because in big marker-based models can make the process quite slow.}
       \item{forced}{a vector of numeric values for variance components including error if the user wants to force the values of the variance components. On the meantime only works for forcing all of them and not a subset of them. The default is NULL, meaning that variance components will be estimated by REML/ML.}
       \item{full.rank}{a TRUE/FALSE value indicating if the program should investigate X'X to be full rank to avoid problems when solving the linear system. By default this is TRUE which will display a message in the console to le the user know if the X is full rank or not. and will remove extra columns until full rank condition is met. This could not like some users so it can be desactivated but will return an error anyways at some point due to the fact that X'X is not be invertible. This condition is analyzed once missing data in the response variable 'y' has been removed, not in the original X matrix.}
-      \item{beeping}{a numeric value between 1-11 indicating the sound you would like to hear everytime the mmer finishes a job. If you prefer to keep the program silenced set the parameter to NULL, i.e. beeping=NULL}
       \item{map}{a data frame with 2 columns, 'Chrom', and 'Locus' not neccesarily with same dimensions that markers. The program will look for markers in common among the W matrix and the map provided. Although, the association tests are performed for all markers, only the markers in common will be plotted.}
       \item{fdr.level}{a level of FDR to calculate and plot the line in the GWAS plot. Default is fdr.level=0.05}
       \item{manh.col}{a vector with colors desired for the manhattan plot. Default are cadetblue and red alternated.}
+      \item{gwas.plots}{a TRUE/FALSE statement indicating if the GWAS and qq plot should be drawn or not. The default is TRUE but you may want to avoid it.}
 
 }
 \details{
