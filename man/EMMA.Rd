@@ -5,7 +5,7 @@
 This function is used internally in the function \code{\link{mmer}} when ONLY ONE variance component other than the error needs to be estimated through the use of the efficient mixed model association (EMMA) algorithm.
 }
 \usage{
-EMMA(y, X=NULL, Z=NULL, K=NULL, REML=TRUE, silent=FALSE)
+EMMA(y, X=NULL, Z=NULL, K=NULL, REML=TRUE, silent=FALSE,EIGEND=FALSE)
 }
 \arguments{
   \item{y}{a numeric vector for the response variable}
@@ -13,7 +13,9 @@ EMMA(y, X=NULL, Z=NULL, K=NULL, REML=TRUE, silent=FALSE)
   \item{Z}{an incidence matrix for the random effect fitted other than the error variance component.}
   \item{K}{a var-cov matrix for the random effect fitted in Z.}
   \item{REML}{a TRUE/FALSE value indicating if restricted maximum likelihood should be used instead of ML. The default is TRUE.}
-    \item{silent}{a TRUE/FALSE value indicating if the function should draw the progress bar or iterations performed while working or should not be displayed.}
+  \item{silent}{a TRUE/FALSE value indicating if the function should draw the progress bar or iterations performed while working or should not be displayed.}
+  \item{EIGEND}{a TRUE/FALSE value indicating if the function should perform the eigen decomposition of the K matrix for square problems to accelerate inversion and estimate parameters faster. Is 2 to 3 times faster than regular EMMA but only works for square problems.}
+  
 }
 \details{
 This algorithm is based on Kang et al. (2008), it is based on REML using the ridge regression parameter lambda as the ration of Var(e)/Var(u). This handles models of the form:
@@ -98,6 +100,8 @@ If all parameters are correctly indicated the program will return a list with th
 
 Kang et al. 2008. Efficient control of population structure in model organism association mapping. Genetics 178:1709-1723.
 
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744 
+
 }
 \examples{
 ####=========================================####
@@ -122,3 +126,4 @@ y <- g + rnorm(200,mean=0,sd=sqrt((1-h2)/h2*var(g)))
 
 ans <- EMMA(y=y, K=A.mat(M))
 }
+\seealso{The core function of the package \code{\link{mmer}}}

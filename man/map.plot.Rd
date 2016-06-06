@@ -33,7 +33,9 @@ If all parameters are correctly indicated the program will return:
 }
 }
 \references{
-Kang et al. 2008. Efficient control of population structure in model organism association mapping. Genetics 178:1709-1723.
+
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744 
+
 }
 \author{
 Giovanny Covarrubias-Pazaran
@@ -60,3 +62,4 @@ map.plot(geno, trait="X2", type="hist")
 map.plot(geno, trait="X2", type="dot")
 
 }
+\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

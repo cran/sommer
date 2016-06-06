@@ -7,12 +7,12 @@ This function solves the mixed model equations proposed by Henderson (1975). It 
 \usage{
 mmer2(fixed=NULL, random=NULL, G=NULL, R=NULL, W=NULL, method="NR", REML=TRUE, 
       iters=50, draw=FALSE, init=NULL, data=NULL, family=gaussian, 
-      silent=FALSE, constraint=TRUE, sherman=FALSE, MTG2=FALSE, gss=FALSE,
-      forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, min.n=TRUE,
-      gwas.plots=TRUE)
+      silent=FALSE, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, gss=TRUE,
+      forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, min.n=FALSE,
+      gwas.plots=TRUE,n.cores=1,lmerHELP=FALSE)
 }
 \arguments{
-  \item{fixed}{a formula specifying the response variable and the fixed effects, i.e. Yield ~ Location}
+  \item{fixed}{a formula specifying the response variable and the fixed effects, i.e. Yield ~ Location, You can run several responses in parallel by setting fixed=cbind(y1,y2,...)~ 1 +...,}
   \item{random}{a formula specifying the name of the random effects related to environmental effects, i.e. random= ~ genotype + year. }
   \item{G}{a list containing the variance-covariance matrices for the random effects, i.e. G=list(genotype=M1, year=M2), where M1 and M2 are the variance-covariance matrices. if not passed is assumed an identity matrix.}
   \item{R}{a matrix for variance-covariance structures for the residuals, i.e. for longitudinal data. if not passed is assumed an identity matrix. NOT FUNCTIONAL YET.}
@@ -27,7 +27,7 @@ mmer2(fixed=NULL, random=NULL, G=NULL, R=NULL, W=NULL, method="NR", REML=TRUE,
   \item{silent}{a TRUE/FALSE value indicating if the function should draw the progress bar and poems (see \code{\link{poe}} function) while working or should not be displayed. The default is FALSE, which means is not silent and will display the progress bar and a short poem to help the scientist (and me haha) remember that life is more than analyzing data.}
       \item{constraint}{a TRUE/FALSE value indicating if the program should use the boundary constraint when one or more variance component is close to the zero boundary. The default is TRUE but needs to be used carefully. It works ideally when few variance components are close to the boundary but when there are too many variance components close to zero we highly recommend setting this parameter to FALSE since is more likely to get the right value of the variance components in this way.}
       \item{sherman}{a TRUE/FALSE value indicating if Sherman-Morrison-Woodbury formula (Seber, 2003, p. 467) should be used when estimating variance components in order to perform faster when a mixed model with no covariance structure using the average information algorithm is fitted. The default is FALSE since this software was designed for unreplicated data (altough can fit models with replicated data but slower than lme4).}
-      \item{MTG2}{a TRUE/FALSE value indicating if an eigen decomposition for the additive relationship matrix should be performed or not. This is based on Lee (2015). The limitations of this methos are:
+      \item{EIGEND}{a TRUE/FALSE value indicating if an eigen decomposition for the additive relationship matrix should be performed or not. This is based on Lee (2015). The limitations of this methos are:
       1) can only be applied to one relationship matrix
       2) The system needs to be squared and no missing data is allowed (then missing data is imputed with the median).
    The default is FALSE to avoid the user get into trouble but experimented users can take advantage from this feature to fit big models, i.e. 5000 individuals in 555 seconds = 9 minutes in a MacBook 4GB RAM.}
@@ -38,6 +38,8 @@ mmer2(fixed=NULL, random=NULL, G=NULL, R=NULL, W=NULL, method="NR", REML=TRUE,
     \item{manh.col}{a vector with colors desired for the manhattan plot. Default are cadetblue and red alternated.}
     \item{min.n}{a TRUE/FALSE statement indicating if the constraint of number of levels of each grouping factor must be < number of observations. This is a constrained usually find in lme4 and has been added and set to TRUE but can be set to FALSE when only one measure per plant is available and the user wants to perform GWAS or genomic selection with limited data.}
     \item{gwas.plots}{a TRUE/FALSE statement indicating if the GWAS and qq plot should be drawn or not. The default is TRUE but you may want to avoid it.}
+    \item{n.cores}{number of cores to use when the user passes multiple responses in the model for a faster execution. The default is 1.}
+    \item{lmerHELP}{a TRUE/FALSE statement indicating if the program should run lmer function in this model to provide initial values for the random effects and be passed to the 'init' argument. This could be useful to find the real values under no covariance structure and then use them as initial values to run the structured model.}
     
 }
 \details{
@@ -174,7 +176,7 @@ If all parameters are correctly indicated the program will return a list with th
 }
 \references{
 
-Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. https://cran.rstudio.com/web/packages/sommer/ 
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744  
 
 Bernardo Rex. 2010. Breeding for quantitative traits in plants. Second edition. Stemma Press. 390 pp.
 
@@ -182,7 +184,7 @@ Gilmour et al. 1995. Average Information REML: An efficient algorithm for varian
 
 Kang et al. 2008. Efficient control of population structure in model organism association mapping. Genetics 178:1709-1723.
 
-Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: http://dx.doi.org/10.1101/027201.
+Lee et al. 2015. EIGEND: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: http://dx.doi.org/10.1101/027201.
 
 Searle. 1993. Applying the EM algorithm to calculating ML and REML estimates of variance components. Paper invited for the 1993 American Statistical Association Meeting, San Francisco.
 

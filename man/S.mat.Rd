@@ -1,14 +1,14 @@
-\name{R.mat}
-\alias{R.mat}
+\name{S.mat}
+\alias{S.mat}
 
 \title{
-Residual relationship matrix
+Spatial relationship matrix
 }
 \description{
 Creates covariance matrices. Creates 3 types of matrices. 1) spatial correlation with no particular direction other than distance, 2) spatial correlation with one direction, 3) spatial correlation with 2 directions. 
 }
 \usage{
-R.mat(dims, rhor=.95, rhoc=.95, method="SIM")
+S.mat(dims, rhor=.95, rhoc=.95, method="SIM")
 }
 
 \arguments{
@@ -37,13 +37,14 @@ If everything is defined correctly the function returns:
 
 \references{
 
-Covarrubias-Pazaran G. 2016. Genomic prediction using the R package sommer. Genetics X:yyy-yyy.
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744 
 
 }
 
 \examples{
-R1 <- R.mat(10, method="SIM")
-R2 <- R.mat(10, method="AR2")
+R1 <- S.mat(10, method="SIM")
+R2 <- S.mat(10, method="AR2")
 layout(matrix(1:2,1,2))
 image(R1);image(R2)
 }
+\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

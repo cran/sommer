@@ -1,4 +1,4 @@
-R.mat <- function(dims, rhor=.95, rhoc=.95, method="SIM"){
+S.mat <- function(dims, rhor=.95, rhoc=.95, method="SIM"){
   car2 = function(dim, rhor, rhoc) {
     M = diag(dim)
     rhor^(row(M) - 1) * rhoc^(col(M) - 1)

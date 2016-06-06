@@ -7,7 +7,7 @@ This function is used internally in the function \code{\link{mmer}} when MORE th
 \usage{
 AI(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, 
    iters=50, constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, 
-   MTG2=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL)
+   EIGEND=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL)
 }
 \arguments{
   \item{y}{a numeric vector for the response variable}
@@ -22,7 +22,7 @@ AI(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
       \item{init}{vector of initial values for the variance components. By default this is NULL and variance components are estimated by the method selected, but in case the user want to provide initial values this argument is functional.}
       \item{sherman}{a TRUE/FALSE value indicating if Sherman-Morrison-Woodbury formula (Seber, 2003, p. 467) should be used when estimating variance components in order to perform faster when a mixed model with no covariance structure using the average information algorithm is fitted. The default is FALSE since this software was designed for unreplicated data (altough can fit models with replicated data but slower than lme4).}
       \item{che}{a TRUE/FALSE value indicating if list structure provided by the user is correct to fix it. The default is TRUE but is turned off to FALSE within the mmer function which would imply a double check.}
-      \item{MTG2}{a TRUE/FALSE value indicating if an eigen decomposition for the additive relationship matrix should be performed or not. This is based on Lee (2015). The limitations of this methos are:
+      \item{EIGEND}{a TRUE/FALSE value indicating if an eigen decomposition for the additive relationship matrix should be performed or not. This is based on Lee (2015). The limitations of this methos are:
       1) can only be applied to one relationship matrix
       2) The system needs to be squared and no missing data is allowed (then missing data is imputed with the median).
    The default is FALSE to avoid the user get into trouble but experimented users can take advantage from this feature to fit big models, i.e. 5000 individuals in 555 seconds = 9 minutes in a MacBook 4GB RAM.}
@@ -117,15 +117,15 @@ k(i+1) = k(i) + [ B(i) * AI.inv ]
 If all parameters are correctly indicated the program will return a list with the following information:
 \describe{
 
-\item{$Vu}{ a scalar value for the variance component estimated}
-\item{$Ve}{ a scalar value for the error variance estimated}
-\item{$V.inv}{ a matrix with the inverse of the phenotypic variance V = ZGZ+R, V^-1}
-\item{$u.hat}{ a vector with BLUPs for random effects}
-\item{$Var.u.hat}{ a vector with variances for BLUPs}
-\item{$PEV.u.hat}{ a vector with predicted error variance for BLUPs}
-\item{$beta.hat}{ a vector for BLUEs of fixed effects}
-\item{$Var.beta.hat}{ a vector with variances for BLUEs}
-\item{$X}{ incidence matrix for fixed effects, if not passed is assumed to only include the intercept}
+\item{$Vu}{a scalar value for the variance component estimated}
+\item{$Ve}{a scalar value for the error variance estimated}
+\item{$V.inv}{a matrix with the inverse of the phenotypic variance V = ZGZ+R, V^-1}
+\item{$u.hat}{a vector with BLUPs for random effects}
+\item{$Var.u.hat}{a vector with variances for BLUPs}
+\item{$PEV.u.hat}{a vector with predicted error variance for BLUPs}
+\item{$beta.hat}{a vector for BLUEs of fixed effects}
+\item{$Var.beta.hat}{a vector with variances for BLUEs}
+\item{$X}{incidence matrix for fixed effects, if not passed is assumed to only include the intercept}
 \item{$Z}{ incidence matrix for random effects, if not passed is assumed to be a diagonal matrix}
 \item{$K}{ the var-cov matrix for the random effect fitted in Z}
 \item{$ll}{ the log-likelihood value for obtained when optimizing the likelihood function when using ML or REML}
@@ -134,9 +134,11 @@ If all parameters are correctly indicated the program will return a list with th
 }
 \references{
 
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744 
+
 Gilmour et al. 1995. Average Information REML: An efficient algorithm for variance parameter estimation in linear mixed models. Biometrics 51(4):1440-1450.
 
-Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: http://dx.doi.org/10.1101/027201.
+Lee et al. 2015. EIGEND: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: http://dx.doi.org/10.1101/027201.
 
 }
 \examples{
@@ -186,3 +188,4 @@ ETA <- list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=S))
 #ans <- AI(y=y, ZETA=ETA)
 #ans$var.comp
 }
+\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

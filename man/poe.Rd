@@ -32,3 +32,4 @@ Giovanny Covarrubias-Pazaran
 \examples{
 poe(sample(1:8,1))
 }
+\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

@@ -193,3 +193,4 @@ ETA <- list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=S))
 #ans <- NR22(y=y, ZETA=ETA)
 #ans$var.comp
 }
+\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

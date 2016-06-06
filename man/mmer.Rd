@@ -8,19 +8,23 @@ Finally, feel free to get in touch with me if you have any questions or suggesti
 
 covarrubiasp@wisc.edu
 
-I'll be glad to help or answer any question. We have spend a valuable amount of time deveoping this package. Please cite us in your publication. Type 'citation("sommer")' to know how to cite it.
+PLEASE UPDATE 'sommer' EVERY MONTH USING: 
+install.packages("sommer")
+
+I'll be glad to help or answer any question. We have spent valuable time developing this package. Please cite us in your publication. Type 'citation("sommer")' to know how to cite it. Please report bugs and provide data to recreate the problem. The only way to improve open-source software is with the scientific community help.
 
 }
 \usage{
-mmer(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
-     iters=40, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE,
+mmer(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
+     iters=30, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE,
      models="additive", ploidy=2, min.MAF = 0.05, silent=FALSE, 
-     family=NULL, constraint=TRUE, sherman=FALSE, MTG2=FALSE,
+     family=NULL, constraint=TRUE, sherman=FALSE, EIGEND=FALSE,
      Fishers=FALSE, gss=TRUE, forced=NULL, full.rank=TRUE, 
-     map=NULL,fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE)
+     map=NULL,fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE,
+     n.cores=1,lmerHELP=FALSE)
 }
 \arguments{
-  \item{y}{a numeric vector for the response variable}
+  \item{Y}{a numeric vector for the response variable or a data frame of multiple responses (it doesn't run multivariate but runs univariate in parallel).}
   \item{X}{an incidence matrix for fixed effects related to environmental effects or experimental design. This has to be provided as a matrix, NOT in a list structure.}
   \item{Z}{incidence matrices and var-cov matrices for random effects. This works for ONE OR MORE random effects. THIS NEEDS TO BE PROVIDED AS A 2-LEVEL LIST STRUCTURE. For example:
   
@@ -82,7 +86,7 @@ mmer(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE,
   \item{family}{a family object to specify the distribution of the response variable. The program will only use the link function to transform the response. For details see \code{\link{family}} help page. The argument would look something like this; family=poisson(), or family=Gamma(), etc. For more sophisticated models please look at lme4 package from Douglas Bates. NOT IMPLEMENTED YET. Planned for ~ v1.8}
       \item{constraint}{a TRUE/FALSE value indicating if the program should use the boundary constraint when one or more variance component is close to the zero boundary. The default is TRUE but needs to be used carefully. It works ideally when few variance components are close to the boundary but when there are too many variance components close to zero we highly recommend setting this parameter to FALSE since is more likely to get the right value of the variance components in this way.}
       \item{sherman}{a TRUE/FALSE value indicating if Sherman-Morrison-Woodbury formula (Seber, 2003, p. 467) should be used when estimating variance components. This will perform faster when a mixed model with no covariance structures is fitted (only AI algorithm). The default is FALSE since this software was designed for unreplicated data (altough can fit models with replicated data but slower than lme4).}
-      \item{MTG2}{a TRUE/FALSE value indicating if an eigen decomposition for the additive relationship matrix should be performed or not. This is based on Lee (2015). The limitations of this method are:
+      \item{EIGEND}{a TRUE/FALSE value indicating if an eigen decomposition for the additive relationship matrix should be performed or not. This is based on Lee (2015). The limitations of this method are:
       1) can only be applied to one relationship matrix
       2) The system needs to be squared and no missing data is allowed (then missing data is imputed with the median).
    The default is FALSE to avoid the user get into trouble but experimented users can take advantage from this feature to fit big models, i.e. 5000 individuals in 555 seconds = 9 minutes in a MacBook 4GB RAM.}
@@ -94,6 +98,8 @@ mmer(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE,
       \item{fdr.level}{a level of FDR to calculate and plot the line in the GWAS plot. Default is fdr.level=0.05}
       \item{manh.col}{a vector with colors desired for the manhattan plot. Default are cadetblue and red alternated.}
       \item{gwas.plots}{a TRUE/FALSE statement indicating if the GWAS and qq plot should be drawn or not. The default is TRUE but you may want to avoid it.}
+      \item{n.cores}{number of cores to use when the user passes multiple responses in the model for a faster execution. The default is 1.}
+      \item{lmerHELP}{a TRUE/FALSE statement indicating if the program should run lmer function in this model to provide initial values for the random effects and be passed to the 'init' argument. This could be useful to find the real values under no covariance structure and then use them as initial values to run the structured model.}
 
 }
 \details{
@@ -163,9 +169,17 @@ This mixed model would be specified in the \code{\link{mmer}} function as:
 
 .
 
-X1 <- matrix(1,length(y),1)      incidence matrix for intercept only
+X1 <- matrix(1,length(y),1)     # incidence matrix for intercept only
 
-ETA <- list(gca1=list(Z=Z1, K=K1), gca2=list(Z=Z2, K=K2), sca=list(Z=Z3, K=K3))      for 3 random effects
+ETA <- list(
+
+gca1=list(Z=Z1, K=K1), 
+
+gca2=list(Z=Z2, K=K2), 
+
+sca=list(Z=Z3, K=K3)
+
+)      #for 3 random effects
 
 .
 
@@ -239,7 +253,7 @@ Please share your ideas and code, future generations of scientists can be better
 }
 \references{
 
-Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. https://cran.rstudio.com/web/packages/sommer/ 
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744 
 
 Bernardo Rex. 2010. Breeding for quantitative traits in plants. Second edition. Stemma Press. 390 pp.
 
@@ -247,7 +261,7 @@ Gilmour et al. 1995. Average Information REML: An efficient algorithm for varian
 
 Kang et al. 2008. Efficient control of population structure in model organism association mapping. Genetics 178:1709-1723.
 
-Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: http://dx.doi.org/10.1101/027201.
+Lee et al. 2015. EIGEND: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: http://dx.doi.org/10.1101/027201.
 
 Searle. 1993. Applying the EM algorithm to calculating ML and REML estimates of variance components. Paper invited for the 1993 American Statistical Association Meeting, San Francisco.
 
@@ -297,7 +311,7 @@ M <- t(M)
 ####=========================================####
 Z1 <- diag(length(y))
 ETA <- list( list(Z=Z1, K=A.mat(M)))
-ans <- mmer(y=y, Z=ETA, method="EMMA")
+ans <- mmer(Y=y, Z=ETA, method="EMMA")
 summary(ans)
 
 ####=========================================####
@@ -306,7 +320,7 @@ summary(ans)
 #### markers are fixed effects
 ####=========================================####
 
-#ans <- mmer(y=y, Z=ETA, W=M, method="EMMA")
+#ans <- mmer(Y=y, Z=ETA, W=M, method="EMMA")
 #summary(ans)
 ############################################
 ############################################
@@ -347,7 +361,7 @@ Z3 <- model.matrix(~ SCA -1, data = hybrid2);dim(Z3)
 #rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 
 #ETA <- list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=S))
-#ans <- mmer(y=y, X=X1, Z=ETA)
+#ans <- mmer(Y=y, X=X1, Z=ETA)
 #ans$var.comp
 #summary(ans)
 
@@ -426,7 +440,7 @@ Z3 <- model.matrix(~ SCA -1, data = hybrid2);dim(Z3)
 #K1<- A[vv,vv]; dim(K1) 
 #Z2 <- model.matrix(~as.factor(herd)-1, data=milk); dim(Z2)
 #ETA<- list(list(Z=Z1, K=K1),list(Z=Z2))
-#fm3 <- mmer(y=y, Z=ETA) 
+#fm3 <- mmer(Y=y, Z=ETA) 
 ####=========================================####
 ##### or using mmer2 would look:
 ####=========================================####
@@ -483,13 +497,13 @@ Z3 <- model.matrix(~ SCA -1, data = hybrid2);dim(Z3)
 #### ADDITIVE MODEL ####
 ####================####
 #ETA.A <- list(list(Z=Za,K=A))
-#ans.A <- mmer(y=y.trn, Z=ETA.A)
+#ans.A <- mmer(Y=y.trn, Z=ETA.A)
 #cor(ans.A$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 ####=========================####
 #### ADDITIVE-DOMINANT MODEL ####
 ####=========================####
 #ETA.AD <- list(list(Z=Za,K=A),list(Z=Zd,K=D))
-#ans.AD <- mmer(y=y.trn, Z=ETA.AD)
+#ans.AD <- mmer(Y=y.trn, Z=ETA.AD)
 #cor(ans.AD$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 ### greater accuracy !!!! 4 percent increment!!
 ### we run 100 iterations, 4 percent increment in general
@@ -497,7 +511,7 @@ Z3 <- model.matrix(~ SCA -1, data = hybrid2);dim(Z3)
 #### ADDITIVE-DOMINANT-EPISTATIC MODEL ####
 ####===================================####
 #ETA.ADE <- list(list(Z=Za,K=A),list(Z=Zd,K=D),list(Z=Ze,K=E))
-#ans.ADE <- mmer(y=y.trn, Z=ETA.ADE)
+#ans.ADE <- mmer(Y=y.trn, Z=ETA.ADE)
 #cor(ans.ADE$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 #### adding more effects doesn't necessarily increase prediction accuracy!
 

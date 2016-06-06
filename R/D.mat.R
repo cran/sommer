@@ -5,6 +5,12 @@ D.mat <- function(X,min.MAF=NULL,max.missing=NULL,impute.method="mean",tol=0.02,
   
   ty <- apply(X, 2, function(x){length(table(x))})
   vv <- which(ty > 2)
+  
+  if(length(vv)==0){
+    cat("No heterozygous markers detected in the data. You might be using inbred lines.\nIf so, divide the markers in heterotic groups and do the kronecker product \namong A.mat's of the 2 groups to obtain a dominance relationship matrix\n")
+    stop()
+  }
+  
   X2 <- X[,vv]# only good markers with heterozygote plants
   # now transform 0 to 1's
   if(ploidy == 2){

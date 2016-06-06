@@ -24,3 +24,4 @@ design.score(Mi,model,ploidy,min.MAF,max.geno.freq)
 \examples{
 # it works internally in the \code{\link{mmer}} function
 }
+\seealso{The core function of the package \code{\link{mmer}}}

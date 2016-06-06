@@ -17,7 +17,9 @@ This dataset contains phenotpic data for 363 siblings for an F1 cross. These are
 This data was simulated for fruit breeding applications.
 }
 \references{
-Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. https://cran.rstudio.com/web/packages/sommer/ 
+
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744 
+ 
 }
 \examples{
 ####=========================================####
@@ -47,13 +49,13 @@ y.trn[ww] <- NA
 #### ADDITIVE MODEL ####
 ####================####
 ETA.A <- list(add=list(Z=Za,K=A))
-#ans.A <- mmer(y=y.trn, Z=ETA.A)
+#ans.A <- mmer(Y=y.trn, Z=ETA.A)
 #cor(ans.A$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 ####=========================####
 #### ADDITIVE-DOMINANCE MODEL ####
 ####=========================####
 ETA.AD <- list(add=list(Z=Za,K=A),dom=list(Z=Zd,K=D))
-#ans.AD <- mmer(y=y.trn, Z=ETA.AD)
+#ans.AD <- mmer(Y=y.trn, Z=ETA.AD)
 #cor(ans.AD$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 ### greater accuracy !!!! 4 percent increment!!
 ### we run 100 iterations, 4 percent increment in general
@@ -61,7 +63,7 @@ ETA.AD <- list(add=list(Z=Za,K=A),dom=list(Z=Zd,K=D))
 #### ADDITIVE-DOMINANCE-EPISTASIS MODEL ####
 ####===================================####
 ETA.ADE <- list(add=list(Z=Za,K=A),dom=list(Z=Zd,K=D),epi=list(Z=Ze,K=E))
-#ans.ADE <- mmer(y=y.trn, Z=ETA.ADE)
+#ans.ADE <- mmer(Y=y.trn, Z=ETA.ADE)
 #cor(ans.ADE$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 
 #summary(ans.A)
@@ -75,7 +77,8 @@ ETA.ADE <- list(add=list(Z=Za,K=A),dom=list(Z=Zd,K=D),epi=list(Z=Ze,K=E))
 #ans.GWAS <- mmer(y=y, Z=ETA.A, W=CPgeno)
 #### or if you have a map
 #my.map <- CPdata$map
-#ans.GWAS <- mmer(y=y, Z=ETA.A, W=CPgeno, map=my.map)
+#ans.GWAS <- mmer(Y=y, Z=ETA.A, W=CPgeno, map=my.map)
 
 }
 \keyword{datasets}
+\seealso{The core function of the package \code{\link{mmer}}}

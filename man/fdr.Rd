@@ -2,7 +2,7 @@
 \alias{fdr}
 \title{False Discovery Rate calculation}
 \description{
-This function calculates the false discovery rate (FDR) at a certain value specified by the user. Is a wrapper of the p.adjust function from the stats package. It has been adjusted to facilitate the user to find the FDR value for a vector of values in scale minus log10.
+This function calculates the false discovery rate (FDR) at a certain value specified by the user. Is a wrapper of the p.adjust function from the stats package. It has been adjusted to facilitate the user to find the FDR value for a vector of values in scale minus log10. It is used internally of the \code{\link{mmer}} function when the argument W is used to perform GWAS.
 }
 \usage{
 fdr(p, fdr.level = 0.05)
@@ -24,6 +24,9 @@ fdr(p, fdr.level = 0.05)
 }
 \references{
 Benjamini, Y., and Yekutieli, D. 2001. The control of the false discovery rate in multiple testing under dependency. Annals of Statistics 29, 1165-1188.
+
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744 
+
 }
 \author{
 Giovanny Covarrubias-Pazaran
@@ -54,3 +57,4 @@ plot(new.pp$p.ad, col=transp("cadetblue"), pch=20, cex=1.5)
 plot(pp, col=transp("cadetblue"), pch=20, cex=1.5)
 abline(h=new.pp$fdr.10, lty=3, col="red", lwd=2)
 }
+\seealso{The core function of the package \code{\link{mmer}}}

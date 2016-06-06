@@ -67,6 +67,8 @@ If return.imputed = TRUE, the function returns a list containing
 
 \references{
 
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744 
+
 Su G, Christensen OF, Ostersen T, Henryon M, Lund MS. 2012. Estimating Additive and Non-Additive Genetic Variances and Predicting Genetic Merits Using Genome-Wide Dense Single Nucleotide Polymorphism Markers. PLoS ONE 7(9): e45293. doi:10.1371/journal.pone.0045293
 
 Endelman, J.B., and J.-L. Jannink. 2012. Shrinkage estimation of the realized relationship matrix. G3:Genes, Genomes, Genetics. 2:1405-1413. doi: 10.1534/g3.112.004259
@@ -120,16 +122,17 @@ y.trn[ww] <- NA
 #### ADDITIVE MODEL ####
 ####================####
 ETA.A <- list(list(Z=Za,K=A))
-#ans.A <- mmer(y=y.trn, Z=ETA.A)
+#ans.A <- mmer(Y=y.trn, Z=ETA.A)
 #cor(ans.A$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 ####=========================####
 #### ADDITIVE-DOMINANT MODEL ####
 ####=========================####
 ETA.AD <- list(list(Z=Za,K=A),list(Z=Zd,K=D))
-#ans.AD <- mmer(y=y.trn, Z=ETA.AD)
+#ans.AD <- mmer(Y=y.trn, Z=ETA.AD)
 #cor(ans.AD$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 ### greater accuracy !!!! 4 percent increment!!
 ### we run 100 iterations, 4 percent increment in general
 
 
 }
+\seealso{The core function of the package \code{\link{mmer}}}

@@ -1,6 +1,6 @@
 \name{RICE}
 \alias{RICE}
-\title{wheat lines dataset}
+\title{Rice lines dataset}
 \description{
 
 Information from a collection of 413 rice lines.  The RICE data set is from 
@@ -67,7 +67,7 @@ bases <- seq(50,200,25) # TP sizes required
 #image(K1)
 #ETA1 <- list(list(Z=Z1,K=K1))
 #YY <- Y; YY[vp.str,] <- NA
-#ans.GWAS <- mmer(y=YY$Protein.content, Z=ETA1, W=W)
+#ans.GWAS <- mmer(Y=YY$Protein.content, Z=ETA1, W=W)
 #(h2 <- sqrt(ans.GWAS$var.comp[1,]/sum(ans.GWAS$var.comp)))
 #X <- bag(ans.GWAS, nmar = 25); head(X); dim(X)
 
@@ -104,3 +104,4 @@ bases <- seq(50,200,25) # TP sizes required
 ### this is just to give an idea to users.
 }
 \keyword{datasets}
+\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

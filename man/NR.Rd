@@ -145,6 +145,8 @@ If all parameters are correctly indicated the program will return a list with th
 
 Tunnicliffe W. 1989. On the use of marginal likelihood in time series model estimation. JRSS 51(1):15-27.
 
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744 
+
 }
 \examples{
 ####=========================================####
@@ -193,3 +195,4 @@ ETA <- list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=S))
 #ans <- NR(y=y, ZETA=ETA)
 #ans$var.comp
 }
+\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

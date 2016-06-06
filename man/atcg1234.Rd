@@ -50,3 +50,4 @@ genotypes[1:5,1:5] # look the original format
 #numo2 <- atcg1234(data=X, ploidy=2)
 #numo2[1:5,1:5]; dim(numo2)
 }
+\seealso{The core function of the package \code{\link{mmer}}}

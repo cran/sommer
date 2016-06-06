@@ -6,9 +6,10 @@ Giovanny Covarrubias-Pazaran
 }
 \title{Solving Mixed Model Equations in R}
 \description{
-The sommer package has been developed to provide R users with open-source code to understand how most common algorithms in mixed model analysis work related to genetic analysis and other general experiments, but at the same time allowing to perform their real analysis in diploid and polyploid organisms with small and big data sets. This package allows the user to estimate variance components for a mixed model with the advantage of specifying the variance-covariance structure of the random effects and obtain other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc. The package is focused on genomic prediction (or genomic selection) and GWAS analysis although general mixed models can be fitted as well. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices that have been shown to increase prediction accuracy. The package provides flexibility to fit other genetic models such as full and half diallel models as well. 
 
-Several datasets for learning how to use the sommer package are available; the \code{\link{HDdata}} and \code{\link{FDdata}} datasets will help users know how to fit half and full diallel designs respectively. The \code{\link{h2}} dataset shows how to calculate heritability. The \code{\link{cornHybrid}} and \code{\link{Technow_data}} datasets contain data to teach users how to perform genomic prediction in hybrid single crosses which display GCA and SCA effects. The \code{\link{wheatLines}} dataset contains data to teach how to fit genomic prediction in single crosses in species displaying only additive effects. The \code{\link{CPdata}} dataset contains data to teach users how to fit genomic prediction models within a biparental population coming from 2 highly heterozygous parents including additive, dominant and epistatic effects. The same data example shows how to do what has been denominated bagging GBLUP which increases prediction accuracy and examples can be found in the \code{\link{bag}} documentation.  The \code{\link{PolyData}} dataset shows how to fit genomic prediction and GWAS analysis in polyploids. The second example in \code{\link{Technow_data}} data shows how to perform GWAS in single cross hybrids. A good converter from letter code to numeric format is implemented in the function \code{\link{atcg1234}}, which supports higher ploidy levels than diploid. The \code{\link{RICE}} dataset can teach users how to select the best training population using the \code{\link{TP.prep}} function in an applied breeding program, and we show comparison some comparison with other methods. Additional examples for fitting mixed models, such as GWAS and others, can be found in the example section of the \code{\link{mmer}} and \code{\link{mmer2}} functions. 
+The sommer package has been developed to provide R users with open-source code to understand how most popular likelihood algorithms in mixed model analysis work, related to genetic analysis and other general experiments, but at the same time allowing to perform their real analysis in diploid and polyploid organisms with small and big data sets. The core of the package is the function \code{\link{mmer}}, and the more user-friendly, \code{\link{mmer2}}, both focused in solving linear mixed models by likelihood methods. This package allows the user to estimate variance components for a mixed model with the advantage of specifying the variance-covariance structure of the random effects and obtain other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc. The package is focused on genomic prediction (or genomic selection) and GWAS analysis, although general mixed models can be fitted as well. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices that have been shown to increase prediction accuracy under certain scenarios. The package provides flexibility to fit other genetic models such as full and half diallel models as well. 
+
+The package has been equiped with several datasets to learn how to use the sommer package; the \code{\link{HDdata}} and \code{\link{FDdata}} datasets will introduce users to fit half and full diallel designs respectively. The \code{\link{h2}} dataset shows how to calculate heritability (non-marker based). The \code{\link{cornHybrid}} and \code{\link{Technow_data}} datasets contain data to teach users how to perform genomic prediction in hybrid single crosses which display GCA and SCA effects. The \code{\link{wheatLines}} dataset teaches how to do genomic prediction in single crosses in species displaying only additive effects. The \code{\link{CPdata}} dataset contains data to teach users how to fit genomic prediction models within a biparental population coming from 2 highly heterozygous parents including additive, dominance and epistatic effects. The same data example is used to show how to do what has been denominated bagging GBLUP which increases prediction accuracy, the examples can be found in the \code{\link{bag}} documentation.  The \code{\link{PolyData}} dataset shows how to fit genomic prediction and GWAS analysis in polyploids. The second example in \code{\link{Technow_data}} data shows how to perform GWAS in single cross hybrids. A good converter from letter code to numeric format is implemented in the function \code{\link{atcg1234}}, which supports higher ploidy levels than diploid. The \code{\link{RICE}} dataset can teach users how to select the best training population using the \code{\link{TP.prep}} function in an applied breeding program, and we show comparison some comparison with other methods. Additional examples for fitting mixed models, such as GWAS and others, can be found in the example section of the \code{\link{mmer}} and \code{\link{mmer2}} functions. 
 
 For a short tutorial of how to perform different genetic analysis in sommer please type:
 
@@ -16,89 +17,109 @@ vignette("sommer")
 
 Other functions such as \code{\link{summary}}, \code{\link{fitted}}, \code{\link{randef}} (notice here is randef not ranef), \code{\link{anova}}, \code{\link{residuals}}, \code{\link{coef}} and \code{\link{plot}} applicable to typical linear models can also be applied to models fitted using the \code{\link{mmer}} function which is the core of the sommer package. The core algorithm in our mixed model solver is the Direct Average Information proposed by Lee et al. (2015) which surpasses in performance the MME-based Average Information (Gilmour et al. 1995) when dense covariance structures are present (GBLUP and GWAS case). In addition the Expectation-Maximization and Newton-Raphson algorithms are also available and can deal with multiple variance components with var-cov structures. When the variance covariance matrices are identity matrices (sparse), or longitudinal data is being analyzed we recommend shifting to use the lme4 package for such cases of NO covariance structures. 
 
-The core of the package is the function \code{\link{mmer}}, and the more user-friendly (asreml sintax type) but less flexible \code{\link{mmer2}}, both focused in solving mixed models of the form:
+PLEASE UPDATE 'sommer' EVERY MONTH USING: 
+install.packages("sommer")
 
-.
+The core of the package is the function \code{\link{mmer}}, and the more user-friendly (asreml sintax type) \code{\link{mmer2}}, both focused in solving mixed models of the form:
 
-.............................    y = Xb + Zu + e   ........ with distributions:
+\deqn{y = X \beta + Z u + \varepsilon}  with distributions:
 
-.
 
-y ~ N[Xb, var(Zu+e)]   ......where;
+\deqn{y - MVN(X \beta, Var(Z u + \varepsilon))}
 
-.
 
-b ~ N[b.hat, 0]  ............zero variance because is a fixed term
+where;
 
-u ~ N[0, G]  ....... where G is equal to:
 
-.
+\deqn{u - MVN(0, G)}
 
-|K1*sigma2(u1)......................0...........................0.........|
-    
-|.............0.............K2*sigma2(u2).......................0.........| = G
 
-|..........................................................................................|
+where G is equal to:
 
-|.............0....................0.........................Ki*sigma2(ui)...|
 
-.
+\deqn{K_1 \sigma^2_1 --- 0 --- 0}
+\deqn{0 ---- K_2 \sigma^2_2 -- 0}
+\deqn{...................................}
+\deqn{0 ---- 0 -- K_i \sigma^2_i}
+
 
 for the i.th random effects, allowing the user to specify the variance covariance structures in the K matrices and
 
-.
 
-e ~ N[0, R]  .....................where: I*sigma(e) = R
+\deqn{\epsilon - MVN(0, R)}  
 
-.
+where:
 
-also Var(y) = Var(Zu+e) = ZGZ+R = V which is the phenotypic variance
+\deqn{R = I \sigma^2_e}
 
--------------------------------------------------------------------------------
+also
+
+\deqn{Var(y) = Var(Zu + \epsilon) = ZGZ' + R = V}  
+
+which is the phenotypic variance
+
+
+'
 
 The functions in the sommer packages allow the user to specify the incidence matrices with their respective variance-covariance matrix in a 2 level list structure. For example imagine a mixed model with three random effects:
 
-.
 
-fixed = only intercept...................................b ~ N[b.hat, 0]
 
-random = GCA1 + GCA2 + SCA.................u ~ N[0, G]       
+fixed = only intercept  
 
-.
+\deqn{\beta - MVN(\beta, 0)}
+
+
+random = GCA1 + GCA2 + SCA  
+
+\deqn{u - MVN(0, G)}       
+
+
 
 then G takes the form:
 
-.
 
-|K1*sigma2(gca1).....................0..........................0.........|
-    
-|.............0.............K2*sigma2(gca2).....................0.........| = G
 
-|.............0....................0......................K3*sigma2(sca)...|
+\deqn{K_1 \sigma^2_1 --- 0 --- 0}
+\deqn{0 ---- K_2 \sigma^2_2 -- 0}
+\deqn{0 ----- 0 -- K_3 \sigma^2_3}
 
-.
 
 This mixed model would be specified in the \code{\link{mmer}} function as:
 
-.
+# incidence matrix for intercept only
 
-X1 <- matrix(1,length(y),1)      incidence matrix for intercept only
 
-ETA <- list(gca1=list(Z=Z1, K=K1), gca2=list(Z=Z2, K=K2), sca=list(Z=Z3, K=K3))      for 3 random effects
+X1 <- matrix(1,length(y),1)     
 
-.
+
+# for 3 random effects
+
+
+ETA <- list(gca1=list(Z=Z1, K=K1),
+            gca2=list(Z=Z2, K=K2),
+            sca=list(Z=Z3, K=K3))      
+
 
 where Z1, Z2, Z3 are incidence matrices for GCA1, GCA2, SCA respectively created using the \code{\link{model.matrix}} function and K1, K2, K3 are their var-cov matrices. Now the fitted model will be typed as:
 
-.
+'
 
 ans <- mmer(y=y, X=X1, Z=ETA)
 
-or
+'
 
-ans <- mmer2(y~1, random= ~ gca1 + gca2 + sca, G=list(gca1=K1, gca2=K2, sca=K3), data=yourdata)
+or if a data frame is available:
 
--------------------------------------------------------------------------------------
+'
+
+ans <- mmer2(y~1, random= ~ gca1 + gca2 + sca, 
+             G=list(gca1=K1, gca2=K2, sca=K3), 
+             data=yourdata)
+
+
+'
+
 
 The package uses Average Information \code{\link{AI}} , Expectation Maximization \code{\link{EM}}, Newton-Raphson \code{\link{NR}}, or Efficient Mixed Model Association \code{\link{EMMA}} algorithms. I have included those functions as independent in case you want to check how they work internally.
 
@@ -108,11 +129,12 @@ In addition, the package contains a very nice function to plot genetic maps with
 
 \code{\link{fdr}} calculates the false discovery rate for a vector of p-values.
 
-The mmer function has been enhanced by adding the argument MTG2 which allows an eigen decomposition of the additive relationship matrix to accelerate genomic prediction models in the order of tens of thousands of individuals.
+The mmer function has been enhanced by adding the argument MTG2 which allows an eigen decomposition of the additive relationship matrix to accelerate genomic prediction models in the order of hundreds of times compared to classical EMMA or AI.
 
 Finally, feel free to get in touch with me if you have any questions or suggestions at: 
 
 covarrubiasp@wisc.edu
+
 
 I'll be glad to help or answer any question. We have spent a valuable amount of time developing this package. Please cite us in your publication. Type 'citation("sommer")' to know how to cite it.
 
@@ -120,7 +142,7 @@ I'll be glad to help or answer any question. We have spent a valuable amount of 
 }
 \references{
 
-Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. https://cran.rstudio.com/web/packages/sommer/ 
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744 
 
 Bernardo Rex. 2010. Breeding for quantitative traits in plants. Second edition. Stemma Press. 390 pp.
 
@@ -183,7 +205,7 @@ M <- t(M)
 ####=========================================####
 Z1 <- diag(length(y))
 ETA <- list( list(Z=Z1, K=A.mat(M)))
-#ans <- mmer(y=y, Z=ETA, method="EMMA")
+#ans <- mmer(Y=y, Z=ETA, method="EMMA")
 #summary(ans)
 
 ####=========================================####
@@ -192,7 +214,7 @@ ETA <- list( list(Z=Z1, K=A.mat(M)))
 #### markers are fixed effects
 ####=========================================####
 
-#ans <- mmer(y=y, Z=ETA, W=M, method="EMMA")
+#ans <- mmer(Y=y, Z=ETA, W=M, method="EMMA")
 #summary(ans)
 
 ############################################
@@ -236,7 +258,7 @@ Z3 <- model.matrix(~ SCA -1, data = hybrid2);dim(Z3)
 #rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 
 #ETA <- list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=S))
-#ans <- mmer(y=y, X=X1, Z=ETA)
+#ans <- mmer(Y=y, X=X1, Z=ETA)
 #ans$var.comp
 #summary(ans)
 
@@ -280,13 +302,13 @@ Z3 <- model.matrix(~ SCA -1, data = hybrid2);dim(Z3)
 #### ADDITIVE MODEL
 ####=========================================####
 #ETA.A <- list(list(Z=Za,K=A))
-#ans.A <- mmer(y=y.trn, Z=ETA.A)
+#ans.A <- mmer(Y=y.trn, Z=ETA.A)
 #cor(ans.A$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 ####=========================================####
 #### ADDITIVE-DOMINANCE MODEL 
 ####=========================================####
 #ETA.AD <- list(list(Z=Za,K=A),list(Z=Zd,K=D))
-#ans.AD <- mmer(y=y.trn, Z=ETA.AD)
+#ans.AD <- mmer(Y=y.trn, Z=ETA.AD)
 #cor(ans.AD$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 #summary(ans.A)
 #summary(ans.AD)

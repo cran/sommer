@@ -21,6 +21,8 @@ If using this data for your own research please cite:
 
 Rosyara Umesh R., Walter S. De Jong, David S. Douches, Jeffrey B. Endelman. Software for genome-wide association studies in autopolyploids and its application to potato. The Plant Genome 2015.
 
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744 
+
 }
 \examples{
 ####=========================================####
@@ -71,7 +73,7 @@ phenotypes <- PolyData$PPheno
 #### double check all dimensions
 ####=========================================####
 #dim(Z1); dim(K1); length(yy)
-#ETA <- list( list(Z=Z1, K=K1)) # random effects for genotypes
+#ETA <- list(add=list(Z=Z1, K=K1)) # random effects for genotypes
 
 ####=========================================####
 #### run the genomic selection model
@@ -90,13 +92,14 @@ phenotypes <- PolyData$PPheno
 #summary(ans2)
 
 ####=========================================####
-#### compare to GWAS including dominance and epistasis
+#### compare to GWAS including dominance
 ####=========================================####
 #D <- D.mat(marks)
 #E <- E.mat(marks)
-#ETA <- list( list(Z=Z1, K=K1),list(Z=Z1, K=D),list(Z=Z1, K=E))
-#ans3 <- mmer(y=yy, Z=ETA.ADE, W=marks, method="EMMA", 
+#ETA.AD <- list(add=list(Z=Z1, K=K1),dom=list(Z=Z1, K=D))
+#ans3 <- mmer(y=yy, Z=ETA.AD, W=marks, method="AI", 
 #              ploidy=4, models=models[1], map=my.map)
 #summary(ans2)
 }
 \keyword{datasets}
+\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

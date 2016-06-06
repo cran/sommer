@@ -110,8 +110,21 @@ version 1.7 (2016-06-05)
     reduced significantly to provide better starting values.
   + New bug in the FDR function fixed. Now GWAS with or without map displais the FDR line.
   
+########################  
+version 1.8 (2016-06-05)
+########################
+  
+  + Minor changes, mainly in plotting defaults, warning messages, etc.
+  + Addition of the phase.F1 function to create parental maps for F1(CP) crosses.
+  + Addition of F1geno data accompaning phase.F1 function.
+  + Argument MTG2 has been renamed as EIGEND.
+  + EIGEND feature added to EMMA algorithm.
+  + Bugs for errors when V(e) tends to zero have been fixed for all algorithms, warning
+    messages have changed.
+  + The function for finding biggest peaks "max.qtl" has been added.
+  
 ##pendings
-+ multivariate version almost done (sorry I have spent more time including more algorithms and perfecting the current implementations)
-+ residual structures
-+eigen decomposition in EMMA algorithm
++ multivariate version (GEMMA and MAI) almost done (sorry I have spent more time including more algorithms and perfecting the current implementations)
++ add LD calculation with LD decay regression
++ link to structure
 

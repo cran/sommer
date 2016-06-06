@@ -1,9 +1,9 @@
 #############
 ## EXPORTS
 #############
-export(adiag1, A.mat, AI, AI2, AI3, atcg1234, bag, big.peaks.col, bathy.colors, brewer.pal, D.mat, design.score, E.mat, EM, EM2, EMMA, fdr, hdm, jet.colors, map.plot, mmer, mmer2, NR, NR22, poe, R.mat, score.calc, transp, TP.prep)
+export(adiag1, A.mat, AI, AI2, AI3, atcg1234, bag, big.peaks.col, bathy.colors, brewer.pal, D.mat, design.score, E.mat, EM, EM2, EMMA, fdr, hadamard.prod, hdm, is.diagonal.matrix, is.square.matrix, jet.colors, matrix.trace, map.plot, maxi.qtl, mmer, mmerSNOW, mmer2, NR, NR22, phase.F1, poe, S.mat, score.calc, transp, TP.prep)
 
-export(summary.mmer, residuals.mmer, fitted.mmer, plot.mmer, anova.mmer, coef.mmer, randef)
+export(summary.mmer, summary.mmerM, residuals.mmer, residuals.mmerM, fitted.mmer, fitted.mmerM, plot.mmer, plot.mmerM, anova.mmer, anova.mmerM, coef.mmer, coef.mmerM, randef)
 
 # S3 METHODS
 #S3method(ranef, mmer)
@@ -19,6 +19,18 @@ S3method(print, coef.mmer)
 S3method(anova, mmer)
 S3method(plot, mmer)
 
+## for multiple
+S3method(summary, mmerM)
+S3method(print, summary.mmerM)
+S3method(residuals, mmerM)
+S3method(print, residuals.mmerM)
+S3method(fitted, mmerM)
+S3method(print, fitted.mmerM)
+S3method(coef, mmerM)
+S3method(print, coef.mmerM)
+S3method(anova, mmerM)
+S3method(plot, mmerM)
+
 ############
 # IMPORTS
 ############
@@ -27,12 +39,18 @@ S3method(plot, mmer)
              "par", "grid", "plot.new", "polygon","segments")
   importFrom("utils", "combn", "setTxtProgressBar", "txtProgressBar",
              "available.packages", "contrib.url")
-  importFrom("matrixcalc", "matrix.trace","is.diagonal.matrix", "is.square.matrix")
+  #importFrom("matrixcalc", "matrix.trace","is.diagonal.matrix", "is.square.matrix")
+  importFrom("parallel", "detectCores","makeCluster","stopCluster")
+  importFrom("lme4","lmer","VarCorr")
+  #importFrom("foreach", "%dopar%")
+  
+  
 #  importFrom("beepr", "beep")
 ## FULL IMPORTS
   import("methods")
   import("Matrix")
   import("MASS")
+  import("foreach")
 
 #  import("audio","play")
   

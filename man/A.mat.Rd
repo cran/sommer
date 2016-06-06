@@ -67,7 +67,7 @@ If return.imputed = TRUE, the function returns a list containing
 
 Endelman, J.B., and J.-L. Jannink. 2012. Shrinkage estimation of the realized relationship matrix. G3:Genes, Genomes, Genetics. 2:1405-1413. doi: 10.1534/g3.112.004259
 
-Covarrubias-Pazaran G. 2016. Genomic prediction using the R package sommer. Genetics X:yyy-yyy.
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744 
 
 Poland, J., J. Endelman et al. 2012. Genomic selection in wheat breeding using genotyping-by-sequencing. Plant Genome 5:103-113. doi: 10.3835/plantgenome2012.06.0006
 }
@@ -83,3 +83,4 @@ for (i in 1:200) {
 
 A <- A.mat(X)
 }
+\seealso{\code{\link{mmer}} -- the core function of the package }

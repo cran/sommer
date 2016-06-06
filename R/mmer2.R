@@ -1,4 +1,4 @@
-mmer2 <- function(fixed=NULL, random=NULL, G=NULL, R=NULL, W=NULL, method="NR", REML=TRUE, iters=50, draw=FALSE, init=NULL, data=NULL, family=gaussian, silent=FALSE, constraint=TRUE, sherman=FALSE, MTG2=FALSE, gss=FALSE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, min.n=TRUE, gwas.plots=TRUE){
+mmer2 <- function(fixed=NULL, random=NULL, G=NULL, R=NULL, W=NULL, method="NR", REML=TRUE, iters=50, draw=FALSE, init=NULL, data=NULL, family=gaussian, silent=FALSE, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, gss=TRUE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, min.n=FALSE, gwas.plots=TRUE, n.cores=1, lmerHELP=FALSE){
   if(!is.null(G) & method == "EM"){
     cat("With var-cov structures (G) present you may want to try the AI algorithm.\n\n")
   }
@@ -42,6 +42,14 @@ mmer2 <- function(fixed=NULL, random=NULL, G=NULL, R=NULL, W=NULL, method="NR", 
     #zvar <- gsub(" ", "", strsplit(as.character(random[2]), split = "[+]")[[1]])
     # generalized mixed model, carefull, NA's dissapear
     #mox <- glm(data[,yvar] ~ 1, family = family)
+    multicheck <- grep("cbind",yvar)
+    # if user has indicated multiple responses
+    if(length(multicheck)>0){
+      ui <- gsub("cbind\\(","",yvar)
+      uii <- gsub("\\)","",ui)
+      yvar <- strsplit(uii,",")[[1]]
+    }
+    
     yvars <- data[,yvar] #mox$family$linkfun(mox$y)
     #
     if(is.null(random)){
@@ -54,28 +62,30 @@ mmer2 <- function(fixed=NULL, random=NULL, G=NULL, R=NULL, W=NULL, method="NR", 
         data2 <- data.frame(apply(data,2,as.factor))
         zi <- model.matrix((as.formula(paste("~ -1 + ", vara))), data=data2)
         colnames(zi) <- gsub(vara,"",colnames(zi))
-        if(dim(zi)[2] == length(yvars) & min.n == TRUE){ # lmer error
+        if(dim(zi)[2] == dim(as.data.frame(yvars))[1] & min.n == TRUE){ # lmer error
           stop("Error: number of levels of each grouping factor must be < number of observations")
         }else{ # right way to specify the random effects, keep going
           ## var-cov matrix
           ww <- which(names(G) %in% vara)
           if(length(ww) > 0){# was provided
-            ki <- G[[ww]]
+            uuuy <- levels(as.factor(colnames(zi))) # to order
+            ki <- G[[ww]][uuuy,uuuy]
           }else{ # was not provided, we create a diagonal
             ki <- diag(dim(zi)[2])
           }
           elem <- list(Z=zi, K=ki)
           Z[[i]] <- elem
         }
+        #print(zi[1:5,1:5]); print(ki[1:5,1:5])
       }
       names(Z) <- zvar
       ### fit the model using the real function mmer2 
-      res <- mmer(y=yvars, X=X, Z=Z, R=R, W=W, method=method, REML=REML, iters=iters, draw=draw, init=init, silent=silent, constraint=constraint, sherman=sherman, MTG2=MTG2, gss=gss, forced=forced, map=map, fdr.level=fdr.level, manh.col=manh.col,gwas.plots=gwas.plots)
+      res <- mmer(Y=yvars, X=X, Z=Z, R=R, W=W, method=method, REML=REML, iters=iters, draw=draw, init=init, silent=silent, constraint=constraint, sherman=sherman, EIGEND=EIGEND, gss=gss, forced=forced, map=map, fdr.level=fdr.level, manh.col=manh.col,gwas.plots=gwas.plots,n.cores=n.cores,lmerHELP=lmerHELP)
       #rownames(res$var.comp) <- c(zvar,"Error")
     }
   }else{ # ================== JUST FIXED =======================
     res <- glm(yvars~X, family=family)
   }
-  class(res)<-c("mmer")
+  #class(res)<-c("mmer")
   return(res)
 }

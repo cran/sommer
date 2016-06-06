@@ -38,6 +38,9 @@ MMs after edition was 1279.
 }
 
 \references{
+
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744 
+
 McLaren, C. G., L. Ramos, C. Lopez, and W. Eusebio. 2000. ``Applications of the geneaology manegment system.'' 
 In \emph{International Crop Information System. Technical  Development Manual, version VI}, edited by McLaren, C. G., J.W. White 
 and P.N. Fox. pp. 5.8-5.13. CIMMyT, Mexico: CIMMyT and IRRI. 
@@ -66,27 +69,27 @@ rownames(X) <- rownames(Y)
 ####=========================================####
 #### GBLUP pedigree-based approach
 ####=========================================####
-#ETA <- list( list(Z=Z1, K=K))
-#ans <- mmer(y=y, Z=ETA, method="EMMA") # kinship based
+#ETA <- list(line=list(Z=Z1, K=K))
+#ans <- mmer(Y=y, Z=ETA, method="EMMA") # kinship based
 #summary(ans)
 
 ####=========================================####
 #### GBLUP marker based approach
 ####=========================================####
-#ETA2 <- list( list(Z=X))
-#ans2 <- mmer(y=y, Z=ETA2, method="EMMA") # marker based
+#ETA2 <- list(mar=list(Z=X))
+#ans2 <- mmer(Y=y, Z=ETA2, method="EMMA") # marker based
 #summary(ans2)
 
 ####=========================================####
 #### compare and check that is the same result
 ####=========================================####
-#plot(ans$u.hat, (X%*%ans2$u.hat), xaxt="n", yaxt="n", 
+#plot(ans$u.hat$line, (X%*%ans2$u.hat$mar), xaxt="n", yaxt="n", 
 #     ylab="Marker-based GBLUP", xlab="Pedigree-based GBLUP")
 
 ####=========================================####
 #### PREDICT PROGENY 
 ####=========================================####
-#GEBV.pb <- ans$u.hat # this are the BV
+#GEBV.pb <- ans$u.hat$line # this are the BV
 #rownames(GEBV.pb) <- rownames(Y)
 
 ####=========================================####
@@ -111,3 +114,4 @@ rownames(X) <- rownames(Y)
 
 }
 \keyword{datasets}
+\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

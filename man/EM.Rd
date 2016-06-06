@@ -137,6 +137,8 @@ If all parameters are correctly indicated the program will return a list with th
 }
 \references{
 
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744 
+
 Bernardo Rex. 2010. Breeding for quantitative traits in plants. Second edition. Stemma Press. 390 pp.
 
 Searle. 1993. Applying the EM algorithm to calculating ML and REML estimates of variance components. Paper invited for the 1993 American Statistical Association Meeting, San Francisco.
@@ -181,3 +183,4 @@ rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 ETA <- list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=S))
 #ans <- EM(y=y, ETA=ETA, iters=3)
 }
+\seealso{The core function of the package \code{\link{mmer}}}

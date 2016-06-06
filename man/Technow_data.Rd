@@ -21,6 +21,8 @@ If using this data for your own research please cite:
 
 Technow et al. 2014. Genome properties and prospects of genomic predictions of hybrid performance in a Breeding program of maize. Genetics 197:1343-1355.
 
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744 
+
 }
 \examples{
 ####=========================================####
@@ -70,7 +72,7 @@ pheno$hy <- paste(pheno$dent, pheno$flint, sep=":");head(pheno);dim(pheno)
 #### RUN THE PREDICTION MODEL
 ####=========================================####
 #ETA2 <- list(GCA1=list(Z=Z1, K=A.dent), GCA2=list(Z=Z2, K=A.flint)) 
-#anss2 <- mmer(y=hybs$yield, Z=ETA2, method="AI") 
+#anss2 <- mmer(Y=hybs$yield, Z=ETA2, method="AI") 
 #summary(anss2)
 #### try EM algorithm as well if only 2 variance components
 #### you can try adding SCA effects by adding SCA=list(Z=Z3, K=DD)
@@ -129,8 +131,9 @@ pheno$hy <- paste(pheno$dent, pheno$flint, sep=":");head(pheno);dim(pheno)
 #AA <- A.mat(Mall) # Additive relationship matrix
 #ZZ <- diag(dim(AA)[1]) # incidence matrix
 #ETA <- list(sc=list(Z=ZZ, K=AA)) # Random component 
-#mix4 <- mmer(y=matterBLUP, Z=ETA, W=Mall, method = "AI") # mixed model
+#mix4 <- mmer(Y=matterBLUP, Z=ETA, W=Mall, method = "AI") # mixed model
 #summary(mix4)
 
 }
 \keyword{datasets}
+\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

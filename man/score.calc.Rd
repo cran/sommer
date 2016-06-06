@@ -35,3 +35,4 @@ score.calc(marks,y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,
 \examples{
 # it works internally in the \code{\link{mmer}} function
 }
+\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

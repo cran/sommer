@@ -36,6 +36,8 @@ If all parameters are correctly indicated the program will return:
 \references{
 Keyan Zhao, Chih-Wei Tung, Georgia C. Eizenga, Mark H. Wright, M. Liakat Ali, Adam H. Price, Gareth J. Norton, M. Rafiqul Islam, Andy Reynolds, Jason Mezey, Anna M. McClung, Carlos D. Bustamante & Susan R. McCouch (2011). Genome-wide association mapping reveals a rich genetic architecture of complex traits in Oryza sativa. Nat Comm 2:467 DOI: 10.1038/ncomms1467, Published Online 13 Sep 2011.
 
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744 
+
 }
 \author{
 Giovanny Covarrubias-Pazaran
@@ -78,7 +80,7 @@ rest <- (1:dim(W)[1])[-which(rownames(W) \%in\% vp.str)]
 #image(K1)
 #ETA1 <- list(list(Z=Z1,K=K1))
 #YY <- Y; YY[vp.str,] <- NA
-#ans.GWAS <- mmer(y=YY$Protein.content, Z=ETA1, W=W)
+#ans.GWAS <- mmer(Y=YY$Protein.content, Z=ETA1, W=W)
 #(h2 <- sqrt(ans.GWAS$var.comp[1,]/sum(ans.GWAS$var.comp)))
 #X <- bag(ans.GWAS, nmar = 25); head(X); dim(X)
 
@@ -104,7 +106,7 @@ rest <- (1:dim(W)[1])[-which(rownames(W) \%in\% vp.str)]
 #  Ypgi[vp.str,] <- NA
 #  yt <- Ypgi$Protein.content
 #  ETAg <- list(list(Z=Zpgi, K=Kpgi))
-#  mixg <- mmer(y=yt, X=Xpgi, Z=ETAg, method="EMMA") #X=Xpgi,
+#  mixg <- mmer(Y=yt, X=Xpgi, Z=ETAg, method="EMMA") #X=Xpgi,
 #  resos[i] <- cor(Y[vp.str,"Protein.content"], 
 #                   fitted(mixg)[(1:length(vp.str)),], 
 #                   use="complete")
@@ -114,3 +116,4 @@ rest <- (1:dim(W)[1])[-which(rownames(W) \%in\% vp.str)]
 ### would be the predictive ability of using plants at random,
 ### this is just to give an idea to users.
 }
+\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

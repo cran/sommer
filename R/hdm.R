@@ -41,5 +41,6 @@ hdm <- function(data){
   if(factoro){
   colnames(Z) <- vnames
   }
+  attributes(Z)$hdm <- TRUE
   return(Z)
 }

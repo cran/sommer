@@ -1,448 +1,61 @@
-mmer <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, iters=40, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, silent=FALSE, family=NULL, constraint=TRUE, sherman=FALSE, MTG2=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL, full.rank=TRUE, map=NULL, fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE){
-  #if(is.null(Zi)){
-  #  stop()
-  #}
-  #Z <- Zi
-  ## convert to family function
-  #if(!is.null(family)){
-  # mox <- glm(y ~ 1, family = family)
-  #mox$family[[1]]
-  #y <- mox$family$linkfun(mox$y)
-  #}
-  # BLUPs for marker effects or BLUPs for breeding values are always specified in Z
-  # extra function
-  # needs: insert R matrices in EM and EMMA, AI??, correct var.beta.hat of fixed effects and PEV
-  ### make sure X matrix from user is full rank when we remove the missing data
-  if(!is.null(X)){
-    case <- dim(X)[2]
-    case2 <- dim(X)[2]
-    xor <- X
-    p <- ncol(X)
-    not.NA <- which(!is.na(y))
-    X <- as.matrix(X[not.NA, ])
-    XtX <- crossprod(X, X)
-    rank.X <- qr(XtX)$rank
-    if(rank.X < p & full.rank){
-      while(rank.X < p){ # remove columns as X is not full matrix
-        case <- case - 1
-        XtX <- crossprod(X[,-c(case:case2)], X[,-c(case:case2)])
-        p <- ncol(X[,-c(case:case2)])
-        rank.X <- qr(XtX)$rank
-      }
-      X <- as.matrix(xor[,-c(case:case2)])
-      cat("\nYour X matrix is not full rank, deleting columns until full rank is achieved\n")
-    }else{
-      X <- xor
-    }
-  }
-  ###
-  make.full <- function(X) {
-    svd.X <- svd(X)
-    r <- max(which(svd.X$d > 1e-08))
-    return(as.matrix(svd.X$u[, 1:r]))
-  }
-  ### fix the input of the user
-  if(is.list(Z)){
-    if(is.list(Z[[1]])){ ### -- if is a 2 level list -- ##
-      provided <- lapply(Z, names)
-      for(s in 1:length(provided)){ #for each random effect =============================
-        provided2 <- names(Z[[s]])
-        if(length(provided2) ==1){ #----the 's' random effect has one matrix only----
-          if(provided2 == "K"){ #user only provided K
-            zz <- diag(length(y))#model.matrix(~rownames(Z[[s]][[1]]))
-            #colnames(zz) <- rownames(Z[[s]][[1]])
-            Z[[s]] <- list(Z=zz, K=Z[[s]][[1]])
-          }
-          if(provided2 == "Z"){ # user only provided Z
-            kk <- diag(dim(Z[[s]][[1]])[2])
-            #rownames(kk) <- colnames(Z[[s]][[1]]); colnames(kk) <- rownames(kk)
-            Z[[s]] <- list(Z=Z[[s]][[1]],K=kk) 
-          }
-        }else{ #----the 's' random effect has two matrices----
-          dido<-lapply(Z[[s]], dim) # dimensions of Z and K
-          condi<-(dido$Z[2] == dido$K[1] & dido$Z[2] == dido$K[2]) 
-          # condition, column size on Z matches with a square matrix K
-          if(!condi){
-            cat(paste("ERROR! In the",s,"th random effect you have provided or created an incidence \nmatrix with dimensions:",dido$Z[1],"rows and",dido$Z[2],"columns. Therefore the \nvariance-covariance matrix(K) for this random effect expected was a \nsquare matrix with dimensions",dido$Z[2],"x",dido$Z[2]),", but you provided a",dido$K[1],"x",dido$K[2]," matrix \nas a variance-covariance matrix. Please double check your matrices.")
-            stop()
-          }
-        }#---------------------------------------------------------------------------
-      } #for each random effect end =================================================
-    }else{ # if is a one-level list !!!!!!!!!!!!!
-      if(length(Z) == 1){ ## -- if the user only provided one matrix -- ##
-        provided <- names(Z)
-        if(provided == "K"){
-          zz <- diag(length(y))
-          Z <- list(Z=zz, K=Z[[1]])
-        }
-        if(provided == "Z"){
-          kk <- diag(dim(Z[[1]])[2])
-          #rownames(kk) <- colnames(Z[[1]]); colnames(kk) <- rownames(kk)
-          Z <- list(Z=Z[[1]],K=kk) 
-        }
-      }else{ # there's 2 matrices in Z
-        dido<-lapply(Z, dim) # dimensions of Z and K
-        condi<-(dido$Z[2] == dido$K[1] & dido$Z[2] == dido$K[2]) 
-        # condition, column size on Z matches with a square matrix K
-        if(!condi){
-          cat(paste("ERROR! In the",s,"th random effect you have provided or created an incidence \nmatrix with dimensions:",dido$Z[1],"rows and",dido$Z[2],"columns. Therefore the \nvariance-covariance matrix(K) for this random effect expected was a \nsquare matrix with dimensions",dido$Z[2],"x",dido$Z[2]),", but you provided a",dido$K[1],"x",dido$K[2]," matrix \nas a variance-covariance matrix. Please double check your matrices.")
-          stop()
-        }else{Z=list(Z=Z)}
-      }
-    }
-  }else{
-    if(is.null(Z)){ # the user is not using the random part
-      cat("Error. No random effects specified in the model. \nPlease use 'lm' or provide a diagonal matrix in Z\ni.e. Zu = list(A=list(Z=diag(length(y))))\n")
-      stop()
-    }else{
-      #stop;
-      cat("\nThe parameter 'Z' needs to be provided in a 2-level list structure. \n\nPlease see help typing ?mmer and look at the 'Arguments' section\n")
-      cat("\nIf no random effects provided, the model will be fitted using the 'lm' function\n\n")
-    }
-  }
-  ###**********************************
-  ##### FIX RANDOM EFFECTS FROM THE BEGGINING TO MAKE SURE LEVELS OF Z AND K ARE ORDERED
-  Z <- lapply(Z, function(x){ # ====START.1====order the Z matrices according to the K matrix if K is not diagonal
-    ## if K exist and is not a diagonal
-    if(length(x) > 1){
-      if(length(x) > 1 | !is.diagonal.matrix(x[[2]])){ #do something
-        if(!is.null(colnames(x[[1]])) & !is.null(colnames(x[[2]]))){ # =====START.2======both Z and K matrices have column names
-          if(length(which(colnames(x[[1]]) == colnames(x[[2]]))) != dim(x[[1]])[2]){
-            y <- colnames(x[[1]])
-            y2 <- strsplit(y, split="")
-            y3 <- y2[[1]]
-            ## &&&&&&&&&&&&&&&&&&&
-            for(i in 2:length(y2)){ # find the common name added when creating the design matrix
-              #y3 <- y3[match(y3, y2[[i]])]
-              basd <- vector()
-              for(j in 1:length(y3)){ # for each letter
-                good <- which(y3[j] == y2[[i]])
-                if(length(good) > 0){
-                  basd[j] <- (y3[good])[1]
-                  y2[[i]][good] <- NA
-                }
-              }
-              y3 <- basd
-            }# end of getting common name
-            ## &&&&&&&&&&&&&&&&&&&
-            extraname <- paste(na.omit(y3), collapse = "")
-            if(extraname != ""){ # =====START.3=====the names did have extra text
-              
-              real1 <- match(  colnames(x[[2]]), gsub(as.character(extraname),"",as.character(colnames(x[[1]]))))
-              
-              if(length(which(is.na(real1))) == 0){ # just fix it if all levels were there, 
-                x[[1]] <- x[[1]][,real1] # reorder Z !!!!! and put it back
-              }else{ # otherwise do not fix it but let the user know that Z colnames should be the same than K colnames
-                cat("\nWe found the column names of your Z matrix in different order than column names of K, \nwe were not able to fix it. The analysis will be performed but this could lead to wrong \nresults please take a look to make sure the levels of K and Z are in the same order.\n")
-              }##### end of real order search
-              
-            }### =======END.3=========else the colnames of Z did not have extra text 
-            
-          }### ===========END.2======of Z and K have colnames
-        }
-      } # =======END.1=======else there's no problem, K did not exist or was a diagonal (do not affect calculations)
-    }
-    return(x)
-  })
-  ###**********************************
-  ## impute missing data in incidence matrices with median of the vector
-  Z <- lapply(Z, function(x){
-    im <- x[[1]] 
-    im <- apply(im,2,function(y){qq <- which(is.na(y)); if(length(qq)>0){y[qq] <- median(y,na.rm=TRUE)}; return(y)})
-    z=list(Z=im,K=x[[2]])
-    return(z)
-  })
-  ######## WRITE A POEM
-  #if(!silent){
-  #  poe(sample(1:9,1))
-  #}
-  ######## LET USER KNOW IF HE USED THE RIGHT PLOIDY LEVEL
-  #if(!is.null(W)){
-  #  ploidy.detected <- max(unlist(apply(W,2,function(x){abs(min(x)) + abs(max(x))})))
-  #  if(ploidy != ploidy.detected){
-  #    cat(paste("Please check the ploidy level selected, data indicates you may have\na ploidy level of",ploidy.detected,"and you specified a ploidy level:",ploidy,"\n\n"))
-  #  }
-  #}
-  # X is fixed effects due to environmental factors
-  # Z is random effects due to marker effects or genotype effects
-  # W is an additional fixed effect due to markers if we have both experimental design 
-  #    and markers and want to be estimated separately
-  ## ------------------------------
-  ## ------------------------------
-  # if GWAS
-  if(is.list(Z)){
-    if(!is.null(Z) & !is.null(W)){
-      #### impute response for GWAS in case will be used for bagging
-      y[which(is.na(y))] <- mean(y, na.rm=TRUE)
-      ####
-      misso <- which(is.na(y))
-      if(length(misso)>0){y[misso] <- mean(y,na.rm=TRUE)}
-      #Wcnames <- colnames(W); Wrnames <- rownames(W)
-      if(is.null(colnames(W))){colnames(W) <- paste("M",1:dim(W)[2],sep="-")}
-      W <- apply(W, 2, function(x){vv<- which(is.na(x)); if(length(vv) > 0){mu<- mean(x, na.rm = TRUE); x[vv] <- mu}else{x<-x}})
-      #colnames(W) <- Wcnames;rownames(W) <- Wrnames
-      cat("Estimating variance components\n")
-      fixed <- which(unlist(lapply(Z, function(x){names(x)[1]})) == "X") # elements of Z that are FIXED
-      random <- which(unlist(lapply(Z, function(x){names(x)[1]})) == "Z") # elements of Z that are RANDOM
-      random2 <- which(names(Z) == "Z")
-      ## if P+K model wants to be implemented
-      if (n.PC > 0) {
-        KK <- A.mat(W, shrink = FALSE)
-        eig.vec <- eigen(KK)$vectors
-        if(is.null(X)){X <- as.matrix(rep(1,dim(KK)[1]))}
-        ZZ.comp <- list()
-        for(i in 1:length(Z)){
-          X <- cbind(X, Z[[i]][[1]] %*% (1 + as.matrix(eig.vec[,1:n.PC]))) #plus 1 to ensure X is positive definite
-        }
-        X <- make.full(X)
-      }
-      ## EMMA, EM, AI
-      if(length(random) > 1 & method == "EMMA"){
-        stop;cat("\nError. The EMMA and GEMMA methods were design to only deal with a single variance component other than error, please select method='AI', method='NR', or method='EM' which can estimate more than one variance component\n\n")
-      }
-      if((length(random) == 1 | length(random2) == 1) & method == "EMMA"){
-        if(length(random) > 0){# EMMA buth in 2-level list provided
-          res <- EMMA(y=y, X=X, Z=Z[[random]][[1]], K=Z[[random]][[2]],  REML=REML,silent=silent) 
-          names(res$u.hat) <- names(Z)
-        }else{
-          res <- EMMA(y=y, X=X, Z=Z[[1]], K=Z[[2]],REML=REML,silent=silent)
-          names(res$u.hat) <- names(Z)
-        }
-      }
-      if(method == "EM"){
-        res <- EM(y=y, X=X, ETA=Z, R=R, init=init, iters = iters, REML=REML, draw=draw, silent=silent, forced=forced)
-      }
-      if(method == "AI"){
-        #res <- AI(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, MTG2=MTG2,Fishers=Fishers)
-        if(length(Z) == 1){ # if only one variance component, make sure is not Z and K both diags
-          dias <- unlist(lapply(Z[[1]], function(x){if(dim(x)[1] == dim(x)[2]){y <- is.diagonal.matrix(x)}else{y <- FALSE};return(y)}))
-          if(length(which(dias)) == 2){ # if K and Z are diagonals do EMMA
-            res <- EMMA(y=y, X=X, Z=Z[[random]][[1]], K=Z[[random]][[2]],REML=REML,silent=silent)
-            names(res$u.hat) <- names(Z)
-          }else{
-            res <- AI(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, MTG2=MTG2,Fishers=Fishers, forced=forced)
-          }
-        }else{ # if multiple variance components
-          res <- AI(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, MTG2=MTG2,Fishers=Fishers,forced=forced) 
-        }
-      }
-      if(method == "NR"){
-        if(length(Z) == 1){ # if only one variance component, make sure is not Z and K both diags
-          dias <- unlist(lapply(Z[[1]], function(x){if(dim(x)[1] == dim(x)[2]){y <- is.diagonal.matrix(x)}else{y <- FALSE};return(y)}))
-          if(length(which(dias)) == 2){ # if K and Z are diagonals do EMMA
-            res <- EMMA(y=y, X=X, Z=Z[[random]][[1]], K=Z[[random]][[2]],REML=REML,silent=silent)
-            names(res$u.hat) <- names(Z)
-          }else{
-            res <- NR(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, MTG2=MTG2,Fishers=Fishers, forced=forced)
-          }
-        }else{ # if multiple variance components
-          res <- NR(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, MTG2=MTG2,Fishers=Fishers, forced=forced) 
-        }
-      }
-      #estimate variance components using G
-      ##########################################
-      #NANA <- which(!is.na(y))
-      #y <- y[NANA]
-      #if(length(NANA) > 0){y[NANA] <- mean(y, na.rm=TRUE)}
-      #if(n.PC > 0){X2 <- X}else{ X2 <- make.full(res$X)}
-      X2 <- res$X
-      min.MAF = min.MAF; n <- length(y)
-      # score calculation uses the H- matrix from the mixedmodel based on the A or G matrix
-      # and H = Z K Z' + lambda*I. 
-      # then it calculates beta = [XH-X']- XH-y, the residuals: e = y - XB
-      # then the V(e) =  eH-e/(n-p) = SSe/(n-p), 
-      # Var-Cov(Beta) =  Var(e) * [XH-X']-
-      # then the F statistic as Beta^2/Var(Beta),,, x = (n-p) / (n-p + 1 * F)
-      # and finally the -log10 of beta distribution [-log10(pbeta(x, v2/2, v1/2))]
-      cat("\nPerforming GWAS")
-      max.geno.freq= 1 - min.MAF
-      #n <- dim(W)[1]
-      #badMAF <- apply(W,2,function(x, max.geno.freq,n){geno.freq <- table(x)/n; if((max(geno.freq) <= max.geno.freq) &  (min(geno.freq) >= min.MAF)){y <- 1}else{y<-0};return(y)}, max.geno.freq=max.geno.freq, n=n)
-      #goodM <- which(badMAF==1)
-      #W <- W[,goodM]
-      W.scores <- list(NA)
-      # draw layout
-      if(length(models) > 2){layout(matrix(1:4,2,2))}else{layout(matrix(1:length(models),1,length(models)))}
-      # run the different models
-      ### QQ function
-      qq <- function(scores) {
-        remove <- which(scores == 0)
-        if (length(remove) > 0) {
-          x <- sort(scores[-remove], decreasing = TRUE)
-        }
-        else {
-          x <- sort(scores, decreasing = TRUE)
-        }
-        n <- length(x)
-        unif.p <- -log10(ppoints(n))
-        plot(unif.p, x, pch = 16, xlab=expression(paste("Expected ",-log[10],"(p.value)")),
-             ylab = expression(paste("Observed ",-log[10],"(p.value)")), col=transp("cadetblue"), main="QQ-plot")
-        lines(c(0, max(unif.p, na.rm=TRUE)), c(0, max(unif.p, na.rm=TRUE)), lty = 2, lwd=2, col="blue")
-      }
-      ### END QQ FUNCTION
+mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, iters=30, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, silent=FALSE, family=NULL, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL, full.rank=TRUE, map=NULL, fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE, n.cores=1,lmerHELP=FALSE){
+  diso <- dim(as.data.frame(Y))[2]
+  
+  #########*****************************
+  #########*****************************
+  if(diso > 1){ # IF MULTIPLE RESPONSES
+    NC <- detectCores() #parallel package
+    
+    #######$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    #######$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    if(n.cores > NC){ # USER USE MORE CORES THAN AVAILABLE
+      stop(paste("You are selecting more cores than the",NC,"available in your computer"),call.=FALSE)
+    }else{ # USER SELECTS LESS OR ENOUGH CORES THAN AVAILABLE
       
-      deviations <- apply(W,2,sd) # sd of markers
-      dev.no0 <- which(deviations > 0) # markers that are not singlular
-      W <- W[,dev.no0] # only good markers will be tested
-      
-      for(u in 1:length(models)){ #### GWAS for all models specified ####
-       
-        model <- models[u]
-        cat(paste("\nRunning",model,"model"))
-        ZO <- diag(dim(W)[1])
-        step2 <- score.calc(marks=colnames(W),y=y,Z=ZO,X=X2,K=res$K, ZZ= res$Z, M=W,Hinv=res$V.inv,ploidy=ploidy,model=model,min.MAF=min.MAF,max.geno.freq=max.geno.freq, silent=silent, P3D=P3D)
-        W.scores[[u]] <- as.matrix(step2$score)
-        rownames(W.scores[[u]]) <- colnames(W)
+      ######^^^^^^^^^^^^^^^^^^^^^^^
+      ######^^^^^^^^^^^^^^^^^^^^^^^
+      if(NC >= n.cores){ # there's still more cores available than selected or enough
         
-        
-        ####
-        if(!is.null(map) ){ ########### MAP PRESENT ##################
-          dd <- W.scores[[u]]#matrix(step2$score)
-          ffr <- fdr(dd, fdr.level=fdr.level)$fdr.10
-          #rownames(dd) <- colnames(W)
-          ## make sure map doesn't have duplicated markers
-          non.dup <- which(!duplicated(map$Locus))
-          map2 <- map[non.dup,]
-          rownames(map2) <- map2$Locus
-          ##get marker in common between GWAS and map 
-          intro <- intersect(rownames(map2),rownames(dd))
-          choco <- which(colnames(map2) == "Chrom")
-          if(length(intro) > 0 & length(choco) > 0){ ####$$$$$ MARKERS IN COMMON  $$$$$$$$#######
-            ## map adjusted and log p.values adjusted
-            map3 <- map2[intro,]
-            dd2 <- as.matrix(dd[intro,])
-            map3$p.val <- dd[intro,]
-            ## make plot
-            if(is.null(manh.col)){
-              col.scheme <- rep((transp(c("cadetblue","red"))),30)#heat.colors(12)#brewer.pal(12,"Accent")#
-            }else{
-              col.scheme <- rep(manh.col,30)#heat.colors(12)#brewer.pal(12,"Accent")#
-            }
-            layout(matrix(1:2,1,2))
-            
-            if(gwas.plots){ # user gave map, wants map, BUT WANTS PLOT??
-            qq(step2$score)
-            plot(dd2, bty="n", col=col.scheme[factor(map3$Chrom, levels = unique(map3$Chrom, na.rm=TRUE))], xaxt="n", xlab="Chromosome", ylab=expression(paste(-log[10],"(p.value)")), pch=20, cex=1, las=2)
-            ## make axis
-            init.mrks <- apply(data.frame(unique(map3$Chrom)),1,function(x,y){z <- which(y == x)[1]; return(z)}, y=map3$Chrom)
-            fin.mrks <- apply(data.frame(unique(map3$Chrom)),1,function(x,y){z <- which(y == x);z2 <- z[length(z)]; return(z2)}, y=map3$Chrom)
-            inter.mrks <- init.mrks + ((fin.mrks - init.mrks)/2)
-            
-            axis(side=1, at=inter.mrks, labels=paste("Chr",unique(map3$Chrom),sep=""), cex.axis=.5)
-            abline(h=ffr, col="slateblue4", lty=3, lwd=2)
-            legend("topright", legend=paste("FDR(",fdr.level,")=",round(ffr,2), sep=""), 
-                   bty="n", lty=3, lwd=2, col="slateblue4", cex=0.8)
-            }
-            
-          }else{####$$$$$ NO MARKERS IN COMMON EXIST $$$$$$$$#######
-            cat("\nError found! There was no markers in common between the column names of the W matrix \nand the map you provided. Please make sure that your data frame has names \n'Chrom' and 'Locus' to match correctly your map and markers tested. Plotting all markers.\n")
-            map3 <- NULL
-            layout(matrix(1:2,1,2))
-            qq(step2$score)
-            plot(step2$score, col=transp("cadetblue", 0.6), pch=20, xlab="Marker index", 
-                 ylab=expression(paste(-log[10],"(p.value)")), main=paste(model,"model"), bty="n", cex=1.5)
-          }
+        if(diso > n.cores){ # and user has more responses than cores used
+          cat(paste("Cores used in your computer:",n.cores, "of", NC,"\nFeel free to modify the 'n.core' argument to run each response in parallel.\nArguments 'draw', 'gwas.plots' will be set to FALSE")) 
           
-        }
-        else if (is.null(map) & gwas.plots){ ############ NO MAP PROVIDED #############
+          i=NULL
+          cl <- makeCluster(n.cores) # Make clusters registerDoSNOW(cl)
+          RES <- foreach (i=1:diso) %dopar% mmerSNOW(y=Y[,i], X=X, Z=Z, R=R, W=W, method=method, REML=REML, iters=iters, draw=FALSE, init=init, silent=TRUE, constraint=constraint, sherman=sherman, EIGEND=EIGEND, gss=gss, forced=forced, map=map, fdr.level=fdr.level, manh.col=manh.col,gwas.plots=FALSE,lmerHELP=lmerHELP)
+          stopCluster(cl)
+          names(RES) <- colnames(Y)
+          class(RES)<-c("mmerM")
           
-          ffr <- fdr(step2$score, fdr.level=fdr.level)$fdr.10
-          layout(matrix(1:2,1,2))
-          qq(step2$score)
-          map3 <-NULL
-          plot(step2$score, col=transp("cadetblue", 0.6), pch=20, xlab="Marker index", 
-               ylab=expression(paste(-log[10],"(p.value)")), main=paste(model,"model"), bty="n", cex=1.5)
-          abline(h=ffr, col="slateblue4", lty=3, lwd=2)
-        }
-        ####
-        
-      }
-      names(W.scores) <- models
-      #cat("\nMarker(s):\n")
-      #anounce <- which(badMAF==0)
-      #if(length(anounce)>0){print(colnames(W)[anounce])}
-      #cat(paste("have been discarded. MAF was too low according to the threshold specified:",min.MAF))
-      res$W.scores <- W.scores
-      res$W <- W
-      if(!is.null(map)){
-        res$map <- map3
-      }
-      res$method <- method
-    } # end of GWAS 
-  }
-  ## -------------------------------
-  ## -------------------------------
-  # if GENOMIC PREDICTION
-  if(is.list(Z)){
-    if((!is.null(Z) & is.null(W)) ) {
-      cat("Estimating variance components\n")
-      fixed <- which(unlist(lapply(Z, function(x){names(x)[1]})) == "X") # elements of Z that are FIXED
-      random <- which(unlist(lapply(Z, function(x){names(x)[1]})) == "Z") # elements of Z that are RANDOM
-      random2 <- which(names(Z) == "Z")
-      ## EMMA, EM, AI
-      if(length(random) > 1 & method == "EMMA"){
-        stop;cat("\nError, The EMMA and GEMMA methods were design to only deal with a single variance component other than error, please select method='AI', method='NR', or method='EM' which can estimate more than one variance component\n\n")
-      }
-      if((length(random) == 1 | length(random2) == 1) & method == "EMMA"){
-        if(length(random) > 0){# EMMA buth in 2-level list provided
-          res <- EMMA(y=y, X=X, Z=Z[[random]][[1]], K=Z[[random]][[2]],REML=REML, silent=silent) 
-          names(res$u.hat) <- names(Z)
-        }else{
-          res <- EMMA(y=y, X=X, Z=Z[[1]], K=Z[[2]], REML=REML,silent=silent)
-          names(res$u.hat) <- names(Z)
+        }else{ # user has the same or less responses that the #of cores he is using
+          
+          cat(paste("Cores used in your computer:",n.cores, "for", diso,"responses.\nArguments 'draw', 'gwas.plots' will be set to FALSE"))
+          i=NULL
+          cl <- makeCluster(n.cores) # Make clusters registerDoSNOW(cl)
+          RES <- foreach (i=1:diso) %dopar% mmerSNOW(y=Y[,i], X=X, Z=Z, R=R, W=W, method=method, REML=REML, iters=iters, draw=FALSE, init=init, silent=TRUE, constraint=constraint, sherman=sherman, EIGEND=EIGEND, gss=gss, forced=forced, map=map, fdr.level=fdr.level, manh.col=manh.col,gwas.plots=FALSE,lmerHELP=lmerHELP)
+          stopCluster(cl)
+          names(RES) <- colnames(Y)
+          class(RES)<-c("mmerM")
+          #RES$multi <- "M2"
         }
       }
-      if(method == "EM"){
-        res <- EM(y=y, X=X, ETA=Z, R=R, init=init, iters = iters, REML=REML, draw=draw, silent=silent, forced=forced)
-      }
-      if(method == "AI"){
-        if(length(Z) == 1){ # if only one variance component, make sure is not Z and K both diags
-          dias <- unlist(lapply(Z[[1]], function(x){if(dim(x)[1] == dim(x)[2]){y <- is.diagonal.matrix(x)}else{y <- FALSE};return(y)}))
-          if(length(which(dias)) == 2){ # if K and Z are diagonals do EMMA
-            res <- EMMA(y=y, X=X, Z=Z[[random]][[1]], K=Z[[random]][[2]],REML=REML,silent=silent)
-            names(res$u.hat) <- names(Z)
-          }else{
-            res <- AI(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, MTG2=MTG2,Fishers=Fishers, gss=gss, forced=forced)
-          }
-        }else{ # if multivariance components
-          res <- AI(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, MTG2=MTG2,Fishers=Fishers, gss=gss, forced=forced) 
-        }
-      }
-      if(method == "NR"){
-        if(length(Z) == 1){ # if only one variance component, make sure is not Z and K both diags
-          dias <- unlist(lapply(Z[[1]], function(x){if(dim(x)[1] == dim(x)[2]){y <- is.diagonal.matrix(x)}else{y <- FALSE};return(y)}))
-          if(length(which(dias)) == 2){ # if K and Z are diagonals do EMMA
-            res <- EMMA(y=y, X=X, Z=Z[[random]][[1]], K=Z[[random]][[2]],REML=REML,silent=silent)
-            names(res$u.hat) <- names(Z)
-          }else{
-            res <- NR(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, MTG2=MTG2,Fishers=Fishers, forced=forced)
-          }
-        }else{ # if multiple variance components
-          res <- NR(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, MTG2=MTG2,Fishers=Fishers, forced=forced) 
-        }
-      }
-      res$method <- method
-      res$maxim <- REML
-      res$W <- W
     }
+    #######$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    #######$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    
+    
+  }else{ ## ONE RESPONSE
+    RES <- mmerSNOW(y=Y, X=X, Z=Z, R=R, W=W, method=method, REML=REML, iters=iters, draw=draw, init=init, silent=silent, constraint=constraint, sherman=sherman, EIGEND=EIGEND, gss=gss, forced=forced, map=map, fdr.level=fdr.level, manh.col=manh.col,gwas.plots=gwas.plots,lmerHELP=lmerHELP)
+    #RES$multi <- "M1"
   }
-  ## -------------------------------
-  ## -------------------------------
-  # if NULL MODEL or ONLY FIXED EFFECTS
-  if((is.null(X) & is.null(Z) & is.null(W)) ) {
-    res <- lm(y~1)
-  }
-  if((!is.null(X) & is.null(Z) & is.null(W)) ) {
-    res <- lm(y~ X-1)
-  }
-  class(res)<-c("mmer")
-  #res$u.hat <- lapply(res$u.hat, function(x,y){rownames(x) <- colnames(y); return(x)}, y=Z)
-  layout(matrix(1,1,1))
-  #if(!is.null(beeping)){
-  #  beep(sound = beeping, expr = NULL) 
-  #}
-  return(res)
+  #########*****************************
+  #########*****************************
+  
+  ### "M1" is univariate
+  ### "M2" is univariate run in parallel
+  ### "M3" is multivariate run
+  return(RES)
 }
+
 
 #### =========== ####
 ## SUMMARY FUNCTION #
@@ -503,7 +116,7 @@ mmer <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, iter
   cat("\nInformation contained in this fitted model: \n* Variance components\n* Residuals and conditional residuals\n* BLUEs and BLUPs\n* Inverse phenotypic variance(V)\n* Variance-covariance matrix for fixed effects\n* Variance-covariance matrix for random effects\n* Predicted error variance (PEV)\n* LogLikelihood\n* AIC and BIC\n* Fitted values\nUse the 'str' function to access such information\n")
   cat("\n=======================================================")
   cat("\nLinear mixed model fit by restricted maximum likelihood\n")
-  cat("********************  sommer 1.7  *********************\n")
+  cat("********************  sommer 1.8  *********************\n")
   cat("=======================================================")
   cat("\nMethod:")
   print(x$method)
@@ -540,6 +153,68 @@ mmer <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, iter
   cat("=======================================================")
   cat("\nUse the 'str' function to access all information\n\n")
 }
+#### =========== ####
+## SUMMARY FUNCTION 222222222222223 #
+#### =========== ####
+"summary.mmerM" <- function(object, ...) {
+  
+  
+    digits = max(3, getOption("digits") - 3)
+    #forget <- length(object)
+    
+    groupss.nn <- cbind(
+      do.call("rbind",lapply(object,function(x){lapply(x$u.hat, function(y){dim(y)[1]})})),
+      do.call("rbind",lapply(object,function(x){length(unlist(x$residuals))}))
+    ); 
+    groupss.nn <- t(groupss.nn);
+    
+    if(is.null(rownames(groupss.nn))){
+      re <- 1:(dim(groupss.nn)[1] - 1) # random effects
+      rownames(groupss.nn) <- c(paste("Groups.u",re,sep="."),"No.obs")
+    }else{
+      rownames(groupss.nn)[dim(groupss.nn)[1]] <- c("No.obs")
+    }
+    
+    
+    
+    method=object[[1]]$method
+    #cat("\n")
+    
+    LLAIC <- rbind(do.call("cbind",lapply(object,function(x){x$LL})),
+    do.call("cbind",lapply(object,function(x){x$AIC})),
+    do.call("cbind",lapply(object,function(x){x$BIC}))
+    )
+    
+    rownames(LLAIC) = c("logLik","AIC","BIC")
+    
+    w <- do.call("cbind",lapply(object,function(x){x$var.comp}))
+    colnames(w) <- names(object)
+    output <- list(groupss=groupss.nn, logo=LLAIC, w=w, method=method)
+    attr(output, "class")<-c("summary.mmerM", "list")
+  return(output)
+}
+
+"print.summary.mmerM"<-function (x, digits = max(3, getOption("digits") - 3),  ...){
+  
+    digits = max(3, getOption("digits") - 3)
+    cat("Information contained in this structure: \n* Individual results for each response model\nDisplayed: \n* AIC and BIC summaries\n* Variance component summaries\nUse the '$' sign to access individual models\n")
+    cat("=======================================================")
+    cat("\nLinear mixed model fit by restricted maximum likelihood\n")
+    cat("********************  sommer 1.8  *********************\n")
+    cat("=======================================================")
+    cat("\nMethod:")
+    print(x$method)
+    cat("")
+    print(x$logo)#, digits = digits)
+    cat("=======================================================")
+    cat("\nVariance components:\n")
+    print(x$w, digits = digits)
+    cat("=======================================================")
+    cat("\nGroups and observations\n")
+    print(x$groupss, digits = digits)
+    cat("=======================================================")
+    cat("\nUse the '$' sign to access individual models\nYou can use 'summary' on individual models\nArguments set to FALSE for multiple models:\n'draw' and 'gwas.plots'\n")
+}
 
 #### =========== ######
 ## RESIDUALS FUNCTION #
@@ -558,13 +233,38 @@ mmer <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, iter
   print((x))
 }
 
+
+"residuals.mmerM" <- function(object, type="conditional", ...) {
+  digits = max(3, getOption("digits") - 3)
+
+  if(type=="conditional"){
+    output<-do.call("cbind",lapply(object,function(x){x$cond.residuals}))
+    colnames(output) <- names(object)
+  }else{
+    output<-do.call("cbind",lapply(object,function(x){x$residuals}))
+    colnames(output) <- names(object)
+  }
+  return(output)
+}
+
+"print.residuals.mmerM"<- function(x, digits = max(3, getOption("digits") - 3), ...) {
+  print((x))
+}
+
 #### =========== ######
 ## RANEF FUNCTION #
 #### =========== ######
 
 "randef" <- function(object) {
-  digits = max(3, getOption("digits") - 3)
-  output <- object$u.hat
+  if(class(object)=="mmerM"){
+    digits = max(3, getOption("digits") - 3)
+    output<-do.call("cbind",lapply(object,function(x){do.call("rbind",x$u.hat)}))
+    colnames(output) <- names(object)
+  }else if(class(object)=="mmer"){
+    digits = max(3, getOption("digits") - 3)
+    output <- object$u.hat
+  }
+
   return(output)
 }
 
@@ -585,6 +285,17 @@ mmer <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, iter
   print((x))
 }
 
+"fixef.mmerM" <- function(object, ...) {
+  digits = max(3, getOption("digits") - 3)
+  output<-do.call("cbind",lapply(object,function(x){x$beta.hat}))
+  colnames(output) <- names(object)
+  return(output)
+}
+
+"print.fixef.mmerM"<- function(x, digits = max(3, getOption("digits") - 3), ...) {
+  print((x))
+}
+
 #### =========== ####
 ## FITTED FUNCTION ##
 #### =========== ####
@@ -602,6 +313,22 @@ mmer <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, iter
   print((x))
 } 
 
+"fitted.mmerM" <- function(object, type="complete", ...) {
+  #type="complete" 
+  digits = max(3, getOption("digits") - 3)
+  if(type=="complete"){
+    output<-do.call("cbind",lapply(object,function(x){x$fitted.y}))
+    colnames(output) <- names(object)
+  }else{
+    output<-do.call("cbind",lapply(object,function(x){x$fitted.u}))
+    colnames(output) <- names(object)
+  }
+  return(output)
+}
+
+"print.fitted.mmerM"<- function(x, digits = max(3, getOption("digits") - 3), ...) {
+  print((x))
+} 
 #### =========== ####
 ## COEF FUNCTION ####
 #### =========== ####
@@ -610,6 +337,22 @@ mmer <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, iter
 }
 
 "print.coef.mmer"<- function(x, digits = max(3, getOption("digits") - 3), ...) {
+  print((x))
+} 
+
+"coef.mmerM" <- function(object, ...){
+  output<-do.call("cbind",lapply(object,function(x){x$beta.hat}))
+  colnames(output) <- names(object)
+  nana <- colnames(object[[1]]$X)
+  if(is.null(nana) & (dim(object[[1]]$X)[2] == 1)){
+    rownames(output) <- "Intercept"
+  }else{
+    rownames(output) <- nana
+  }
+  return(output)
+}
+
+"print.coef.mmerM"<- function(x, digits = max(3, getOption("digits") - 3), ...) {
   print((x))
 } 
 
@@ -630,41 +373,44 @@ anova.mmer <- function(object, object2=NULL, ...) {
   if(is.null(object2)){
     stop("The 'anova' function for the sommer package only works to compare mixed models by likelihood ratio tests (LRT), was not intended to provide regular sum of squares output.")
   }else{
-    if(object$maxim){ # user used REML=TRUE, not possible to do LRT
-      stop("Please fit the models using ML instead of REML by setting the argument REML=FALSE and try again")
-    }else{ #if user used REML=FALSE, then proceed
-      if(object$method != object2$method){
-        stop("Error! When comparing models please use the same method for the fitted models.")
-      }else{
-        dis=c(dim(as.matrix(object$var.comp))[1]+dim(object$beta.hat)[1],
-              dim(as.matrix(object2$var.comp))[1]+dim(object2$beta.hat)[1]) # dimensions
-        mods=c("mod1","mod2")
-        lls=c(object$LL, object2$LL) # likelihoods
-        aics=c(object$AIC, object2$AIC) # AIC's
-        bics=c(object$BIC, object2$BIC) # AIC's
-        vv=which(dis == max(dis))[1] # which has more variance components BIGGER
-        vv2=c(1:2)[which(c(1:2)!= vv)] # SMALLER
-        LR = (lls[vv] - lls[vv2])
-        r.stat= abs(-2*((LR))) # -2(LL1 - LL2)
-        df=dis[vv]-dis[vv2]
-        chichi=round(pchisq((r.stat), df, lower.tail=FALSE),16)
-        chichi2=paste(as.character((chichi)),signifo(chichi), sep=" ")
-        ### construct the table
-        cat("Likelihood ratio test for mixed models\n")
-        cat("==============================================================\n")
-        result=data.frame(Df=c(dis[vv],dis[vv2]), AIC=c(aics[vv],aics[vv2]), 
-                          BIC=c(bics[vv],bics[vv2]), loLik=c(lls[vv],lls[vv2]), 
-                          Chisq=c("",as.character(round(r.stat,5))), 
-                          ChiDf=c("",as.character(df)), PrChisq=c("",as.character(chichi2 )))
-        rownames(result) <- c(mods[vv],mods[vv2])
-        print(result)
-        cat("==============================================================\n")
-        cat("Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1")
-      }
+    #if(object$maxim){ # user used REML=TRUE, not possible to do LRT
+    #  stop("Please fit the models using ML instead of REML by setting the argument REML=FALSE and try again")
+    #}else{ #if user used REML=FALSE, then proceed
+    if(object$method != object2$method){
+      stop("Error! When comparing models please use the same method for the fitted models.")
+    }else{
+      dis=c(dim(as.matrix(object$var.comp))[1]+dim(object$beta.hat)[1],
+            dim(as.matrix(object2$var.comp))[1]+dim(object2$beta.hat)[1]) # dimensions
+      mods=c("mod1","mod2")
+      lls=c(object$LL, object2$LL) # likelihoods
+      aics=c(object$AIC, object2$AIC) # AIC's
+      bics=c(object$BIC, object2$BIC) # AIC's
+      vv=which(dis == max(dis))[1] # which has more variance components BIGGER
+      vv2=c(1:2)[which(c(1:2)!= vv)] # SMALLER
+      LR = (lls[vv] - lls[vv2])
+      r.stat= abs(-2*((LR))) # -2(LL1 - LL2)
+      df=dis[vv]-dis[vv2]
+      chichi=round(pchisq((r.stat), df, lower.tail=FALSE),16)
+      chichi2=paste(as.character((chichi)),signifo(chichi), sep=" ")
+      ### construct the table
+      cat("Likelihood ratio test for mixed models\n")
+      cat("==============================================================\n")
+      result=data.frame(Df=c(dis[vv],dis[vv2]), AIC=c(aics[vv],aics[vv2]), 
+                        BIC=c(bics[vv],bics[vv2]), loLik=c(lls[vv],lls[vv2]), 
+                        Chisq=c("",as.character(round(r.stat,5))), 
+                        ChiDf=c("",as.character(df)), PrChisq=c("",as.character(chichi2 )))
+      rownames(result) <- c(mods[vv],mods[vv2])
+      print(result)
+      cat("==============================================================\n")
+      cat("Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1")
     }
+    #}
   }
 }
 
+anova.mmerM <- function(object, object2=NULL, ...) {
+  cat("'anova' function only works for individual models to perform likelihood ratio tests (LRT).\nYou can access individuals models using the '$' sign and then use 'anova'.")
+}
 #### =========== ####
 ## PLOTING FUNCTION #
 #### =========== ####
@@ -685,7 +431,9 @@ plot.mmer <- function(x, ...) {
   layout(matrix(1,1,1))
 }
 
-
+plot.mmerM <- function(x, ...) {
+  cat("'plot' function only works for individual models to check diagnostic plots.\nYou can access individuals models using the '$' sign and then use 'plot'.")
+}
 ##################################################################################################
 #Startup function
 #this function is executed once the library is loaded
@@ -696,13 +444,15 @@ plot.mmer <- function(x, ...) {
     stop("This package requires R 2.1 or later")
   assign(".sommer.home", file.path(library, pkg),
          pos=match("package:sommer", search()))
-  sommer.version = "1.7 (2016-06-05)"
+  sommer.version = "1.8 (2016-06-06)"
   
   ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ### check which version is more recent
-  #yyy <- 1.7
+  #yyy <- 1.8
   #chooseCRANmirror(ind=114)
   #xxx <- available.packages(contriburl = contrib.url(repos="http://mirror.las.iastate.edu/CRAN/", type = getOption("pkgType")))
+  
+  #xxx <- available.packages()
   #current <- as.numeric(xxx["sommer","Version"])
   ### final check
   ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -714,11 +464,16 @@ plot.mmer <- function(x, ...) {
     packageStartupMessage(paste("# Solving Mixed Model Equations in R (sommer) ", sommer.version, ". ",sep=""),appendLF=TRUE)
     packageStartupMessage(paste("# Mixed models allowing covariance structures in random effects"),appendLF=TRUE)
     packageStartupMessage("# Author: Giovanny Covarrubias-Pazaran",appendLF=TRUE)
+    packageStartupMessage("# Published: PLOS ONE",appendLF=TRUE)
     packageStartupMessage("# Supported by the Council of Science and Technology (CONACYT)", appendLF=TRUE)
     packageStartupMessage("# Type 'help(sommer)' for summary information",appendLF=TRUE)
+    packageStartupMessage("# Type 'vignette('sommer')' for a short tutorial",appendLF=TRUE)
+    packageStartupMessage("# Type 'citation('sommer')' to know how to cite sommer",appendLF=TRUE)
     packageStartupMessage(paste("## ========================================================= ## "),appendLF=TRUE)
+    packageStartupMessage("PLEASE UPDATE 'sommer' EVERY MONTH FOR NEW FEATURES USING",appendLF=TRUE)
+    packageStartupMessage(paste("install.packages('sommer') -- your version: ", sommer.version, ". ",sep=""),appendLF=TRUE)
     
-    #if(yyy < current){ # yyy < current in CRAN
+    #if(yyy > current){ # yyy < current in CRAN
     #  packageStartupMessage(paste("Version",current,"is now available."),appendLF=TRUE) # version current
     #  packageStartupMessage(paste("Please update 'sommer' installing the new version."),appendLF=TRUE) # version current
     #}

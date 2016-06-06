@@ -26,7 +26,11 @@ If all parameters are correctly indicated the program will return:
 }
 }
 \references{
+
 Abdollahi Arpanahi R, Morota G, Valente BD, Kranis A, Rosa GJM, Gianola D. 2015. Assessment of bagging GBLUP for whole genome prediction of broiler chicken traits. Journal of Animal Breeding and Genetics 132:218-228.
+
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744 
+
 }
 \author{
 Giovanny Covarrubias-Pazaran
@@ -54,7 +58,7 @@ A <- A.mat(CPgeno) # additive relationship matrix
 ####=========================================####
 
 ETA.A <- list(list(Z=Za,K=A))
-#ans.GWAS <- mmer(y=y, Z=ETA.A, W=CPgeno)
+#ans.GWAS <- mmer(Y=y, Z=ETA.A, W=CPgeno)
 #summary(ans.GWAS)
 
 ####=========================================####
@@ -74,9 +78,10 @@ ww <- sample(c(1:dim(Za)[1]),72) # delete data for one fifth of the population
 y.trn[ww] <- NA
 
 ETA.A <- list(list(Z=Za,K=A))
-#ans.A <- mmer(y=y.trn, Z=ETA.A) # GBLUP
-#ans.AF <- mmer(y=y.trn, X=X1, Z=ETA.A) # bagging-GBLUP
+#ans.A <- mmer(Y=y.trn, Z=ETA.A) # GBLUP
+#ans.AF <- mmer(Y=y.trn, X=X1, Z=ETA.A) # bagging-GBLUP
 #cor(ans.A$fitted.y[ww], y[ww], use="pairwise.complete.obs") # GBLUP
 #cor(ans.AF$fitted.y[ww], y[ww], use="pairwise.complete.obs") # bagging-GBLUP
 #### ~10 percent increase in prediction accuracy
 }
+\seealso{The core function of the package \code{\link{mmer}}}

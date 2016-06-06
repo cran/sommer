@@ -19,6 +19,9 @@ hdm(data)
 }
 \references{
 Fikret Isik. 2009. Analysis of Diallel Mating Designs. North Carolina State University, Raleigh, USA.
+
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744 
+
 }
 \author{
 Giovanny Covarrubias-Pazaran
@@ -47,6 +50,7 @@ Z2 <- model.matrix(~as.factor(geno)-1, data=HDdata)
 ####=========================================####
 y <- HDdata$sugar
 ETA <- list(list(Z=Z1), list(Z=Z2)) # Zu component
-modHD <- mmer(y=y, Z=ETA, draw=FALSE, silent=TRUE)
+modHD <- mmer(Y=y, Z=ETA, draw=FALSE, silent=TRUE)
 summary(modHD)
 }
+\seealso{The core function of the package \code{\link{mmer}}}
