@@ -1,6 +1,12 @@
-mmer2 <- function(fixed=NULL, random=NULL, G=NULL, R=NULL, W=NULL, method="NR", REML=TRUE, iters=50, draw=FALSE, init=NULL, data=NULL, family=gaussian, silent=FALSE, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, gss=TRUE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, min.n=FALSE, gwas.plots=TRUE, n.cores=1, lmerHELP=FALSE){
+mmer2 <- function(fixed=NULL, random=NULL, G=NULL, R=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, iters=50, draw=FALSE, init=NULL, data=NULL, family=gaussian, silent=FALSE, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, gss=TRUE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, min.n=FALSE, gwas.plots=TRUE, n.cores=1, lmerHELP=FALSE, tolpar = 1e-06, tolparinv = 1e-06){
+  if(is.null(data)){
+    stop("Please provide the dataframe for your specified variables", call. = FALSE)
+  }
+  if(is.null(random)){
+    stop("Please use 'lm' for fixed effect models", call. = FALSE)
+  }
   if(!is.null(G) & method == "EM"){
-    cat("With var-cov structures (G) present you may want to try the AI algorithm.\n\n")
+    cat("With var-cov structures (G) present you may want to try the AI or NR algorithm.\n\n")
   }
   ### Response "y"
   yvar <- gsub(" ", "", as.character(fixed[2]))
@@ -80,7 +86,7 @@ mmer2 <- function(fixed=NULL, random=NULL, G=NULL, R=NULL, W=NULL, method="NR", 
       }
       names(Z) <- zvar
       ### fit the model using the real function mmer2 
-      res <- mmer(Y=yvars, X=X, Z=Z, R=R, W=W, method=method, REML=REML, iters=iters, draw=draw, init=init, silent=silent, constraint=constraint, sherman=sherman, EIGEND=EIGEND, gss=gss, forced=forced, map=map, fdr.level=fdr.level, manh.col=manh.col,gwas.plots=gwas.plots,n.cores=n.cores,lmerHELP=lmerHELP)
+      res <- mmer(Y=yvars, X=X, Z=Z, R=R, W=W, method=method, REML=REML, iters=iters, draw=draw, init=init, silent=silent, constraint=constraint, sherman=sherman, EIGEND=EIGEND, gss=gss, forced=forced, map=map, fdr.level=fdr.level, manh.col=manh.col,gwas.plots=gwas.plots,n.cores=n.cores,lmerHELP=lmerHELP, MVM=MVM,tolpar = tolpar, tolparinv = tolparinv)
       #rownames(res$var.comp) <- c(zvar,"Error")
     }
   }else{ # ================== JUST FIXED =======================

@@ -34,7 +34,8 @@ score.calc <- function(marks,y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,max.geno.fre
       v2 <- n - p                 
       if (is.null(Hinv) | P3D == FALSE) {	# ZZ and K are only for y with no missing data
         yytt <- y[which(!is.na(y))]
-        out <- try(EMMA(y=yytt,X=X2,Z=ZZ,K=K,silent=TRUE)) #Z=list(list(Z=ZZ,K=K)))
+        ETA <- list(Z=ZZ,K=K)
+        out <- try(EMMA(y=yytt,X=X2,ZETA=ETA,silent=TRUE)) #Z=list(list(Z=ZZ,K=K)))
         #if (class(out)!="try-error") { 
           Hinv <- out$V.inv
         #}

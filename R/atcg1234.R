@@ -1,4 +1,11 @@
 atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FALSE){
+  ## remove all markers or columns that are all missing data
+  all.na <- apply(data,2,function(x){length(which(is.na(x)))/length(x)})
+  bad.na <- which(all.na==1)
+  if(length(bad.na) > 0){
+    data <- data[,-bad.na]
+  }
+  #############################
   n.g <- apply(data,2,function(x){length(table(x))})
   bad <- which(n.g > 3)
   if(length(bad) == dim(data)[2]){

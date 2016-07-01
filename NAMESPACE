@@ -1,9 +1,11 @@
 #############
 ## EXPORTS
 #############
-export(adiag1, A.mat, AI, AI2, AI3, atcg1234, bag, big.peaks.col, bathy.colors, brewer.pal, D.mat, design.score, E.mat, EM, EM2, EMMA, fdr, hadamard.prod, hdm, is.diagonal.matrix, is.square.matrix, jet.colors, matrix.trace, map.plot, maxi.qtl, mmer, mmerSNOW, mmer2, NR, NR22, phase.F1, poe, S.mat, score.calc, transp, TP.prep)
+export(adiag1, A.mat, AI, AI2, AI3, atcg1234, hits, big.peaks.col, bathy.colors, brewer.pal, D.mat, design.score, eigenGWAS, E.mat, EM, EM2, EMMA, EMMAM, fdr, hadamard.prod, hdm, is.diagonal.matrix, is.square.matrix, jet.colors, manhattan, matrix.trace, map.plot, maxi.qtl, mmer, mmerSNOW, MMERM, mmer2, NR, NR22, phase.F1, PEV, poe, S.mat, score.calc, transp, TP.prep)
 
-export(summary.mmer, summary.mmerM, residuals.mmer, residuals.mmerM, fitted.mmer, fitted.mmerM, plot.mmer, plot.mmerM, anova.mmer, anova.mmerM, coef.mmer, coef.mmerM, randef)
+export(summary.mmer, summary.mmerM, summary.MMERM, residuals.mmer, residuals.mmerM, residuals.MMERM, fitted.mmer, fitted.mmerM, fitted.MMERM, plot.mmer, plot.mmerM, plot.MMERM, anova.mmer, anova.mmerM, anova.MMERM, coef.mmer, coef.mmerM, coef.MMERM, randef)
+
+# fixef.mmer, fixef.mmerM, fixef.MMERM
 
 # S3 METHODS
 #S3method(ranef, mmer)
@@ -19,6 +21,9 @@ S3method(print, coef.mmer)
 S3method(anova, mmer)
 S3method(plot, mmer)
 
+#S3method(fixef, mmer)
+#S3method(print, fixef.mmer)
+
 ## for multiple
 S3method(summary, mmerM)
 S3method(print, summary.mmerM)
@@ -31,17 +36,36 @@ S3method(print, coef.mmerM)
 S3method(anova, mmerM)
 S3method(plot, mmerM)
 
+#S3method(fixef, mmerM)
+#S3method(print, fixef.mmerM)
+
+## for multivariate
+S3method(summary, MMERM)
+S3method(print, summary.MMERM)
+S3method(residuals, MMERM)
+S3method(print, residuals.MMERM)
+S3method(fitted, MMERM)
+S3method(print, fitted.MMERM)
+S3method(coef, MMERM)
+S3method(print, coef.MMERM)
+S3method(anova, MMERM)
+S3method(plot, MMERM)
+
+#S3method(fixef, MMERM)
+#S3method(print, fixef.MMERM)
+
 ############
 # IMPORTS
 ############
   importFrom("graphics", "abline", "axis", "image", "layout", "legend",
              "lines", "plot", "points", "rect", "text", "locator",
-             "par", "grid", "plot.new", "polygon","segments")
+             "par", "grid", "plot.new", "polygon","segments", "title")
   importFrom("utils", "combn", "setTxtProgressBar", "txtProgressBar",
              "available.packages", "contrib.url")
   #importFrom("matrixcalc", "matrix.trace","is.diagonal.matrix", "is.square.matrix")
-  importFrom("parallel", "detectCores","makeCluster","stopCluster")
   importFrom("lme4","lmer","VarCorr")
+  importFrom("parallel", "detectCores","mclapply") #"detectCores","makeCluster","stopCluster",
+  #importFrom("doParallel","registerDoParallel")
   #importFrom("foreach", "%dopar%")
   
   
@@ -50,7 +74,9 @@ S3method(plot, mmerM)
   import("methods")
   import("Matrix")
   import("MASS")
-  import("foreach")
+  #import("foreach")
+  #import("doParallel")
+
 
 #  import("audio","play")
   
@@ -61,7 +87,8 @@ S3method(plot, mmerM)
              "lm", "median", "optimize", "pbeta", "pchisq", "predict",
              "printCoefmat", "qqnorm", "smooth.spline", "var", "rnorm", 
              "model.matrix","na.omit", "p.adjust","kmeans","dist", "runif",
-             "nobs", "ppoints", "sd", "model.frame", "model.response", "na.pass")
+             "nobs", "ppoints", "sd", "model.frame", "model.response", "na.pass",
+             "cor", "optim", "rchisq")
 
 
   

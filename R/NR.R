@@ -26,6 +26,8 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
   # if X matrix is not present
   if(is.null(X) & is.null(ZETA)){ # nothing in the model
     cat("No random effects specified. please use lm function.\n")
+    jkl <- c(23,18,9,20,20,5,14, NA,2,25,NA,7,9,15,22,1,14,14,25,NA,3,15,22,1,18,18,21,2,9,1,19)
+    oh.yeah <- paste(letters[jkl],collapse = "")
     stop(call.=FALSE)
   }else{
     if(is.null(X) & !is.null(ZETA)){ # only random effects present
@@ -713,10 +715,14 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
       eig <- sort(eigen(WQK,symmetric=TRUE,only.values=TRUE)$values, decreasing=TRUE)[1:rankQK]
       if(any(eig < 0)){
         cat("error: Sigma is not positive definite on contrasts: range(eig)=", range(eig), "\n")
-        WQK <- WQK + (tol - min(eig))*diag(nobs)
+        #eig[which(eig<0)]<-0.001
+        #print(eig)
+        WQK <- WQK + (tol - min(eig))*diag(dim(WQK)[1])
         eig <- eig + tol - min(eig)
+        #print(eig)
       }
       ldet <- sum(log(eig))
+      
       llik <- ldet/2 - rss/2
       if(cycle == 1) llik0 <- llik
       delta.llik <- llik - llik0
@@ -733,7 +739,7 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
       
       ## now the fun starts, derivative and expected fisher info
       ## the 0.5 multiple is ignored, it is in both and they cancel
-      
+      #print("yyooyo")
       ##T <- list(NULL)
       x <- NULL
       
@@ -898,7 +904,7 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
     ###*****************************************************************************************
     ###*****************************************************************************************
     ###*****************************************************************************************
-  }## END OF FORCED
+  } #enf of forced
   
   if(is.null(X)){ #when forced this would be true
     tn = length(y); X <- matrix(1,tn,1)
@@ -936,8 +942,18 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
   #########################################################
   # Sherman-Morrison-Woodbury formula (Seber, 2003, p. 467)
   # R-  --  [R-Z[Z'R-Z+G-]-Z'R-]  #-- means minus
-  vm <- Zsp%*%crossprod(Gsp,tZsp) + Rsp # ZGZ+R
-  Vinv <- solve(vm,sparse=TRUE, tol = 1e-19)
+
+  if(is.null(forced)){ #NOT FORCED
+    Vinv <- W
+  }else{#FORCED
+    good <- which(!is.na(y))
+    xm <- matrix(xm[good,])
+    txm <- t(xm)
+    y <- y[good]
+    vm <- Zsp%*%crossprod(Gsp,tZsp) + Rsp # ZGZ+R
+    Vinv <- solve(vm,sparse=TRUE, tol = 1e-19)
+  }
+  
   #################
   #Vinv2 <- Vinv
   ## Fixed effects

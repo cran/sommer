@@ -1,21 +1,21 @@
-\name{EMMA}
-\alias{EMMA}
-\title{Efficient Mixed Model Association Algorithm}
+\name{EMMAM}
+\alias{EMMAM}
+\title{Multivariate Efficient Mixed Model Association Algorithm}
 \description{
-This function is used internally in the function \code{\link{mmer}} when one or more variance component other than the error needs to be estimated through the use of the efficient mixed model association (EMMA) algorithm. When multiple random effects are fitted the function internally create weight for each random effect first and then does all calculations.
+This function is used internally in the function \code{\link{mmer}} when multiple responses are selected for a single variance component other than the error. It uses the efficient mixed model association (EMMAM) algorithm. 
 }
 \usage{
-EMMA(y, X=NULL, ZETA=NULL, REML=TRUE, silent=FALSE, che=TRUE, forced=NULL, EIGEND=FALSE)
+EMMAM(Y, X=NULL, ZETA=NULL, tolpar = 1e-06, tolparinv = 1e-06, che=TRUE,
+      silent=TRUE)
 }
 \arguments{
-  \item{y}{a numeric vector for the response variable}
+  \item{Y}{a numeric vector for the response variable}
   \item{X}{an incidence matrix for fixed effects.}
   \item{ZETA}{an incidence matrix for random effects. This can be for one or more random effects. This NEEDS TO BE PROVIDED AS A LIST STRUCTURE. For example Z=list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=K3)) makes a 2 level list for 3 random effects. The general idea is that each random effect with or without its variance-covariance structure is a list, i.e. list(Z=Z1, K=K1) where Z is the incidence matrix and K the var-cov matrix. When moving to more than one random effect we need to make several lists that need to be inside another list. What we call a 2-level list, i.e. list(Z=Z1, K=K1) and list(Z=Z2, K=K2) would need to be put in the form; list(list(Z=Z1, K=K1),list(Z=Z1, K=K1)), which as can be seen, is a list of lists (2-level list). }
-  \item{REML}{a TRUE/FALSE value indicating if restricted maximum likelihood should be used instead of ML. The default is TRUE.}
-  \item{silent}{a TRUE/FALSE value indicating if the function should draw the progress bar or iterations performed while working or should not be displayed.}
+  \item{tolpar}{tolerance parameter for convergence}
+  \item{tolparinv}{tolerance parameter for matrix inverse}
   \item{che}{a TRUE/FALSE value indicating if list structure provided by the user is correct to fix it. The default is TRUE but is turned off to FALSE within the mmer function which would imply a double check.}
-  \item{forced}{a vector of numeric values for variance components including error if the user wants to force the values of the variance components. On the meantime only works for forcing all of them and not a subset of them. The default is NULL, meaning that variance components will be estimated by REML/ML.}
-  \item{EIGEND}{a TRUE/FALSE value indicating if the function should perform the eigen decomposition of the K matrix for square problems to accelerate inversion and estimate parameters faster. Is 2 to 3 times faster than regular EMMA but only works for square problems.}
+  \item{silent}{a TRUE/FALSE value indicating if the function should draw the progress bar or iterations performed while working or should not be displayed.}
   
 }
 \details{
@@ -105,27 +105,27 @@ Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits u
 
 }
 \examples{
-####=========================================####
-#### breeding values with 1 variance component
-#### using EMMA algorithm
-####=========================================####
 
 ####=========================================####
-#### random population of 200 lines with 1000 markers
+#### For CRAN time limitations most lines in the 
+#### examples are silenced with one '#' mark, 
+#### remove them and run the examples
 ####=========================================####
-M <- matrix(rep(0,200*1000),200,1000)
-for (i in 1:200) {
-  M[i,] <- ifelse(runif(1000)<0.5,-1,1)
-}
-####=========================================####
-#### Simulate random phenotypes
-####=========================================####
-u <- rnorm(1000)
-g <- as.vector(crossprod(t(M),u))
-h2 <- 0.5  #heritability
-y <- g + rnorm(200,mean=0,sd=sqrt((1-h2)/h2*var(g)))
-A <- A.mat(M)
-ETA <- list(add=list(K=A))
-ans <- EMMA(y=y, ZETA=ETA)
+data(CPdata)
+CPpheno <- CPdata$pheno
+CPgeno <- CPdata$geno
+### look at the data
+head(CPpheno)
+CPgeno[1:5,1:5]
+## fit a model including additive and dominance effects
+Y <- CPpheno
+Za <- diag(dim(Y)[1])
+A <- A.mat(CPgeno) # additive relationship matrix
+####================####
+#### ADDITIVE MODEL ####
+####================####
+ETA.A <- list(add=list(Z=Za,K=A))
+#ans.A <- EMMAM(Y=Y, ZETA=ETA.A)
+#ans.A$var.comp
 }
 \seealso{The core function of the package \code{\link{mmer}}}

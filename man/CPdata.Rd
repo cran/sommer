@@ -2,9 +2,11 @@
 \alias{CPdata}
 \docType{data}
 \title{
-Genotypic and Phenotypic data for a CP population (F1; cross between 2 highly heterozygote individuals; i.e. humans, fruit crops, bredding populations in recurrent selection).
+Genotypic and Phenotypic data for a CP population
 }
 \description{
+A CP population or F1 cross is the designation for a cross between 2 highly heterozygote individuals; i.e. humans, fruit crops, bredding populations in recurrent selection.
+
 This dataset contains phenotpic data for 363 siblings for an F1 cross. These are averages over 2 environments evaluated for 4 traits; color, yield, fruit average weight, and firmness. The columns in the CPgeno file are the markers whereas the rows are the individuals. The CPpheno data frame contains the measurements for the 363 siblings, and as mentioned before are averages over 2 environments.
 
 }
@@ -71,13 +73,95 @@ ETA.ADE <- list(add=list(Z=Za,K=A),dom=list(Z=Zd,K=D),epi=list(Z=Ze,K=E))
 #summary(ans.ADE)
 #### adding more effects doesn't necessarily increase prediction accuracy!
 
-####===================================####
-####         RUN A GWAS MODEL          ####
-####===================================####
+####=========================================####
+#### RUN AS GWAS MODEL         
+####=========================================####
 #ans.GWAS <- mmer(y=y, Z=ETA.A, W=CPgeno)
 #### or if you have a map
 #my.map <- CPdata$map
 #ans.GWAS <- mmer(Y=y, Z=ETA.A, W=CPgeno, map=my.map)
+
+
+############################################
+############################################
+############################################
+############################################
+############################################
+############################################
+
+
+####=========================================####
+####=========================================####
+#### Example 2
+#### GENOMIC PREDICTION
+#### using multiple responses in parallel
+####=========================================####
+####=========================================####
+#data(CPdata)
+#CPpheno <- CPdata$pheno
+#CPgeno <- CPdata$geno
+### look at the data
+#head(CPpheno)
+#CPgeno[1:5,1:5]
+
+#### fit a model including additive effects
+#y <- CPpheno$color
+#Za <- diag(length(y))
+#A <- A.mat(CPgeno) # additive relationship matrix
+
+#y.trn <- CPpheno # for prediction accuracy
+#ww <- sample(c(1:dim(Za)[1]),72) # delete data for 1/5 of the population
+#y.trn[ww,] <- NA
+#ETA.A <- list(add=list(Z=Za,K=A))
+#ans.A <- mmer(Y=y.trn, Z=ETA.A, method="EMMA",n.cores=4)
+
+### 1) Extract the fitted values for the simulated data
+#fitt <- as.matrix(do.call("cbind",lapply(ans.A, function(x,w){x$fitted.y[w]},w=ww)))
+### 2) See the correlation with the original data masked
+#res <- apply(data.frame(1:4),1,function(x,y,z){
+#  cor(y[,x],z[,x],use="pairwise.complete.obs")},
+#             y=fitt,z=CPpheno[ww,])
+
+
+############################################
+############################################
+############################################
+############################################
+############################################
+############################################
+
+####=========================================####
+####=========================================####
+#### EXAMPLE 3
+#### Genomic prediction
+#### Univariate vs Multivariate models
+####=========================================####
+####=========================================####
+#data(CPdata)
+#CPpheno <- CPdata$pheno
+#CPgeno <- CPdata$geno
+### look at the data
+#head(CPpheno)
+#CPgeno[1:5,1:5]
+## fit a model including additive and dominance effects
+#Za <- diag(length(y))
+#A <- A.mat(CPgeno) # additive relationship matrix
+
+#CPpheno2 <- CPpheno
+#ww <- sample(c(1:dim(Za)[1]),72) # delete data for 1/5 of the population
+#CPpheno2[ww,"color"] <- NA
+####==================####
+#### univariate model ####
+####==================####
+#ETA.A <- list(add=list(Z=Za,K=A))
+#ans.A <- mmer(Y=CPpheno2$color, Z=ETA.A, method="EMMA")
+#cor(ans.A$fitted.y[ww], y[ww], use="pairwise.complete.obs")
+####====================####
+#### multivariate model ####
+####====================####
+#ETA.B <- list(add=list(Z=Za,K=A))
+#ans.B <- mmer(Y=CPpheno2, Z=ETA.B, MVM=TRUE)
+#cor(ans.B$fitted.y[ww,"color"], y[ww], use="pairwise.complete.obs")
 
 }
 \keyword{datasets}

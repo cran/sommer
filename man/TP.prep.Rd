@@ -8,19 +8,19 @@ My recomendation would be to randomly choose the TP and predict the performance 
 
 }
 \usage{
-TP.prep(markers=NULL, vp.names=NULL, tp.size=seq(50,200,25), method="sim-dissim", 
+TP.prep(markers=NULL, vp.names=NULL, tp.size=NULL, method="random", 
         npop=300, nelite=1, mutprob=.5, niterations=100, lambda=NULL)
 
 }
 \arguments{
   \item{markers}{a marker matrix in numeric format but any numeric matrix can be used in this argument. No extra columns should be in this matrix. ROWNAMES SHOOULD BE THE NAMES OF THE INDIVIDUALSIN THE POPULATION.}
-  \item{vp.names}{a character vector with the names of the validaton population. The marker matrix should have rownames with the individuals so the program can find them and identify the most suitable training population.}
-  \item{tp.size}{a numeric vector indicating the population sizes desired for the training population.}
+  \item{vp.names}{a character vector with the names of the validaton population. Make sure that the marker matrix has rownames with the individuals so the program can find them and identify the most suitable training population.}
+  \item{tp.size}{a numeric vector indicating the population sizes desired for the training population. By default is NULL which will make the program select in steps of 20 until reach the population size (number of rows in the marker matrix).}
   \item{method}{a method among "similar", "sim-dissim", "random", "PEV", or "CDmean" indicating if the program should look for similar plants (based on the PCA of the marker matrix) or a mixture of similar and constrasting individuals, select plants at random, minimize the PEV, or calculate the CD mean. The default is "sim-dissim", meaning will make a mixture.}
-  \item{npop}{genetic algorithm parameter, number of solutions at each iteration.}
-  \item{nelite}{genetic algorithm parameter, number of solutions selected as elite parents which will generate the next set of solutions.}
-  \item{mutprob}{genetic algorithm parameter, probability of mutation for each generated solution.}
-  \item{niterations}{genetic algorithm parameter, number of iterations.}
+  \item{npop}{genetic algorithm parameter, number of solutions at each iteration. Only for the CDmean algorithm.}
+  \item{nelite}{genetic algorithm parameter, number of solutions selected as elite parents which will generate the next set of solutions. Only for the CDmean algorithm.}
+  \item{mutprob}{genetic algorithm parameter, probability of mutation for each generated solution. Only for the CDmean algorithm.}
+  \item{niterations}{genetic algorithm parameter, number of iterations.Only for the CDmean algorithm.}
   \item{lambda}{a value for the CDmean algorithm where lambda=Var(e)/Var(g).}
 
 }
@@ -55,9 +55,14 @@ Y <- RICE$RicePheno; Y[1:5,1:5]; dim(Y)
 bases <- seq(50,200,25) # TP sizes required
 
 ####=========================================####
+####=========================================####
 #### a) Random sample based
 ####=========================================####
+####=========================================####
+#### rest of the plants not in the validation population (VP)
 rest <- (1:dim(W)[1])[-which(rownames(W) \%in\% vp.str)]
+#### select the best TP for the VP, provide:
+#### markers, names of VP, size of the TP desired, method
 #tp.plant.strR <- TP.prep(markers=W, vp.names = vp.str, 
 #                         tp.size = bases, method="random")
 
@@ -71,24 +76,34 @@ rest <- (1:dim(W)[1])[-which(rownames(W) \%in\% vp.str)]
 #                         tp.size = bases, method="sim")
                        
 ####=========================================####
+####=========================================####
 #### c) QTL based
 #### we assume real situation that VP 
 #### wouldn't be phenotyped for GWAS
+####=========================================####
 ####=========================================####
 #K1 <- A.mat(W)
 #Z1 <- diag(dim(K1)[1])
 #image(K1)
 #ETA1 <- list(list(Z=Z1,K=K1))
 #YY <- Y; YY[vp.str,] <- NA
+####=========================================####
+#### be patient, the GWAS is for >36,000 SNPs
+####=========================================####
 #ans.GWAS <- mmer(Y=YY$Protein.content, Z=ETA1, W=W)
 #(h2 <- sqrt(ans.GWAS$var.comp[1,]/sum(ans.GWAS$var.comp)))
+####=========================================####
+#### get marker matrix for the most significant QTLs
+#### and do the TP selection using only those markers
+####=========================================####
 #X <- bag(ans.GWAS, nmar = 25); head(X); dim(X)
-
 #tp.plant.strG3 <- TP.prep(markers=X, vp.names = vp.str, 
 #                      tp.size = bases, method="sim-dissim")
 
 ####=========================================####
+####=========================================####
 #### COMPARE METHODS with 50 plants
+####=========================================####
 ####=========================================####
 #metho <- list(a=tp.plant.strR[[1]], b=tp.plant.strG1[[1]],
 #      c=tp.plant.strG2[[1]], d=tp.plant.strG3[[1]])

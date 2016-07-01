@@ -1,5 +1,5 @@
 
-TP.prep <- function(markers=NULL, vp.names=NULL, tp.size=seq(50,200,25), method="sim-dissim", npop=300, nelite=1, mutprob=.5, niterations=100, lambda=NULL){
+TP.prep <- function(markers=NULL, vp.names=NULL, tp.size=NULL, method="random", npop=300, nelite=1, mutprob=.5, niterations=100, lambda=NULL){
   
   if(!is.character(vp.names)){
     cat("'vp.names' argument needs to be a vector with names of the plants in character format\n")
@@ -9,6 +9,12 @@ TP.prep <- function(markers=NULL, vp.names=NULL, tp.size=seq(50,200,25), method=
     cat("'markers' argument is neccesary to create the TP\n")
     stop()
   }
+  
+  if(is.null(tp.size)){
+    NNN <- dim(markers)[1] - length(vp.names)
+    tp.size <- seq(20,NNN,40)
+  }
+  
   #if(length(vp.names) > min(tp.size)){
   #  cat("The size of the TP size has to be greater than the VP size\n")
   #  stop()
@@ -131,7 +137,7 @@ TP.prep <- function(markers=NULL, vp.names=NULL, tp.size=seq(50,200,25), method=
     LambdaTrait<-1/ncol(markers)
     tp.list <-list(NA)
     for(h in 1:length(tp.size)){
-     cat(paste("Performing TP selection based in PEV for pop size=",tp.size[h],sep=""))
+     cat(paste("Performing TP selection based in PEV for pop size=",tp.size[h],"\n",sep=""))
      tp.list[[h]] <- PEV(PCAs=mark6.PCbasis,candidates=candidates,Test=vp.names,ntoselect=tp.size[h], npop=npop, nelite=nelite, mutprob=mutprob, niterations=niterations, lambda=LambdaTrait)
     }
   }

@@ -51,7 +51,7 @@ version 1.3 (2016-03-09)
     the value for each marker.
 
 ########################  
-version 1.4 (2016-03-25)
+version 1.4 (2016-03-24)
 ########################
 
   + The AI algorithm will take 5 EM steps if after 10 iterations (AI) the likelihood drops 
@@ -65,7 +65,7 @@ version 1.4 (2016-03-25)
     AI algorithm.
     
 ########################  
-version 1.5 (2016-05-01)
+version 1.5 (2016-05-03)
 ########################
 
   + Problem of "not-full rank X matrix" has been solved by reducing the X matrix column by
@@ -98,7 +98,7 @@ version 1.6 (2016-05-19)
   + QQ plots are now displayed when doing GWAS for different models.
   
 ########################  
-version 1.7 (2016-06-05)
+version 1.7 (2016-05-23)
 ########################
 
   + Now the AI algorithm checks the situation when there are random effects with n < p 
@@ -111,7 +111,7 @@ version 1.7 (2016-06-05)
   + New bug in the FDR function fixed. Now GWAS with or without map displais the FDR line.
   
 ########################  
-version 1.8 (2016-06-05)
+version 1.8 (2016-06-06)
 ########################
   
   + Minor changes, mainly in plotting defaults, warning messages, etc.
@@ -121,10 +121,31 @@ version 1.8 (2016-06-05)
   + EIGEND feature added to EMMA algorithm.
   + Bugs for errors when V(e) tends to zero have been fixed for all algorithms, warning
     messages have changed.
-  + The function for finding biggest peaks "max.qtl" has been added.
+  + The function for finding biggest peaks "maxi.qtl" has been added.
+  + Multiple responses can be fit using parallelization with the 'n.cores' argument
+  
+########################  
+version 1.9 (2016-07-01)
+########################
+
+  + lmerHELP has been slightly modified. Now only uses lmer initial values when required
+    and only used for non-square random effects.
+  + AI has been modified to dimminish updates values when they scalate to quickly.
+  + zig zag detection in AI2 has been implemented, now even when boundary constraint is
+    applied there should not be any problem.
+  + Now 'bag' function respects if a map is available and does the bagging based on the map.
+  + 'manhattan' function added to the package.
+  + 'eigenGWAS' function included based on Chen et al. (2016) in Heredity.
+  + Bug in AI failing when only one variance compnent was present and was zero, making the 
+    program collapse when trying to recalculate has been fixed.
+  + Bugs in 'TP.prep' function fixed.
+  + Now 'EMMA' algorithm handles multiple random effects.
+  + The first multivariate algorithm "EMMAM" has been added to sommer (a single random effect).
+  + Vignettes have examples for multi-response model and parallel univariate models.
   
 ##pendings
-+ multivariate version (GEMMA and MAI) almost done (sorry I have spent more time including more algorithms and perfecting the current implementations)
++ multivariate version (MAI) almost done (sorry I have spent more time including more algorithms and perfecting the current implementations)
 + add LD calculation with LD decay regression
 + link to structure
++ get incidence matrix from vcf file directly with probabilities instead of 0,1,2
 

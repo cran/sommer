@@ -5,7 +5,7 @@
 Epistatic relationship matrix
 }
 \description{
-Calculates the realized epistatic relationship matrix of second order (additive x additive).
+Calculates the realized epistatic relationship matrix of second order (additive x additive, additive x dominance, or dominance x dominance).
 }
 \usage{
 E.mat(X,min.MAF=NULL,max.missing=NULL,impute.method="mean",tol=0.02,
@@ -77,6 +77,7 @@ for (i in 1:200) {
   X[i,] <- sample(c(-1,0,0,1), size=1000, replace=TRUE)
 }
 
-E <- E.mat(X)
+E <- E.mat(X, type="A#A") 
+# if heterozygote markers are present can be used "A#D" or "D#D"
 }
 \seealso{The core function of the package \code{\link{mmer}}}

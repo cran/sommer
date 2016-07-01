@@ -624,9 +624,12 @@ NR22 <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALS
     rss <- rankQK ## looks bad but the rss is absorbed into WQK so the rss term comes out of eig below
     
     eig <- sort(eigen(WQK,symmetric=TRUE,only.values=TRUE)$values, decreasing=TRUE)[1:rankQK]
+    
     if(any(eig < 0)){
       cat("error: Sigma is not positive definite on contrasts: range(eig)=", range(eig), "\n")
-      WQK <- WQK + (tol - min(eig))*diag(nobs)
+      
+     
+      WQK <- WQK + (tol - min(eig))*diag(dim(WQK)[1])
       eig <- eig + tol - min(eig)
     }
     ldet <- sum(log(eig))

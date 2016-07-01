@@ -1,18 +1,18 @@
 Package: sommer
 Type: Package
 Title: Solving Mixed Model Equations in R
-Version: 1.8
+Version: 1.9
 Date: 2016-06-06
 Author: Giovanny Covarrubias-Pazaran
 Maintainer: Giovanny Covarrubias-Pazaran <covarrubiasp@wisc.edu>
-Description: Mixed model equation solver allowing the specification of variance covariance structures for random effects. ML/REML estimates are obtained using the Average Information, Expectation-Maximization, Newton-Raphson, or Efficient Mixed Model Association algorithms. Designed for genomic prediction and genome wide association studies (GWAS) to include additive, dominance and epistatic relationship structures or other covariance structures in R, but also functional as a regular mixed model program. 
-Depends: R (>= 2.10), Matrix (>= 1.1.1), methods, stats, MASS, lme4,
-        foreach,
+Description: Mixed model equation solver allowing the specification of variance covariance structures for random effects. ML/REML estimates are obtained using the Average Information, Expectation-Maximization, Newton-Raphson, or Efficient Mixed Model Association algorithms. Designed for genomic prediction and genome wide association studies (GWAS) to include additive, dominance and epistatic relationship structures or other covariance structures in R, but also functional as a regular mixed model program. Multivariate models can be fitted for mixed models with a single random effect. 
+Depends: R (>= 2.10), Matrix (>= 1.1.1), methods, stats, MASS,
+        parallel, lme4
 License: GPL-3
 URL: http://www.wisc.edu
-Packaged: 2016-06-06 19:06:48 UTC; cova_ruber
+Packaged: 2016-07-01 01:51:08 UTC; cova_ruber
 NeedsCompilation: no
 Repository: CRAN
-Date/Publication: 2016-06-06 23:47:34
+Date/Publication: 2016-07-01 10:57:36
 Suggests: knitr
 VignetteBuilder: knitr
