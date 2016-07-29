@@ -1,97 +1,115 @@
-mmer2 <- function(fixed=NULL, random=NULL, G=NULL, R=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, iters=50, draw=FALSE, init=NULL, data=NULL, family=gaussian, silent=FALSE, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, gss=TRUE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, min.n=FALSE, gwas.plots=TRUE, n.cores=1, lmerHELP=FALSE, tolpar = 1e-06, tolparinv = 1e-06){
-  if(is.null(data)){
-    stop("Please provide the dataframe for your specified variables", call. = FALSE)
-  }
-  if(is.null(random)){
+mmer2 <- function(fixed, random, G=NULL, R=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, iters=20, draw=FALSE, init=NULL, data, family=gaussian, silent=FALSE, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, gss=TRUE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, min.n=FALSE, gwas.plots=TRUE, n.cores=1, tolpar = 1e-06, tolparinv = 1e-06){
+  if(missing(data)){
+    data <- environment(fixed)
+    data2 <- environment(random)
+    nodata <-TRUE
+  }else{nodata=FALSE} 
+  
+  if(missing(random)){
     stop("Please use 'lm' for fixed effect models", call. = FALSE)
   }
   if(!is.null(G) & method == "EM"){
     cat("With var-cov structures (G) present you may want to try the AI or NR algorithm.\n\n")
   }
-  ### Response "y"
-  yvar <- gsub(" ", "", as.character(fixed[2]))
-  ### Xb in 'formula'
-  xvar <- gsub(" ", "", strsplit(as.character(fixed[3]), split = "[+]")[[1]])
-  ### Zu in formula
-  if(!is.null(random)){
-    zvar <- gsub(" ", "", strsplit(as.character(random[2]), split = "[+]")[[1]])
-    varsss <- c(xvar,zvar)
-  }else{varsss <- xvar}
-  varsss <- varsss[which(varsss != "1")]
-  doto <- grep(":",varsss)
-  if(length(doto) >0){varsss <- varsss[-doto]}
-  ### FIX THE DATA IF NA's EXIST
-  good <- list()
-  for(i in 1:length(varsss)){
-    xxx <- data[,varsss[i]]
-    good[[i]] <- which(!is.na(xxx))
-  }
-  
-  if(length(varsss) == 1){
-    keep <- as.vector(unlist(good))
-  }else{
-    keep <- good[[1]]
-    for(j in 1:length(good)){
-      keep <- intersect(keep,good[[j]])
+  ############## impute data
+  data2 <- data
+  for(i in 1:dim(data2)[2]){
+    x <- data2[,i]
+    if(is.numeric(x)){
+      isNA <- which(is.na(x))
+      if(length(isNA) >0){x[isNA] <- mean(x,na.rm=TRUE)}
+    }else if(is.factor(x)){
+      isNA <- which(is.na(x))
+      if(length(isNA) >0){x[isNA] <- as.factor(names(which(table(x) == max(table(x)))[1]))}
+    }else if(is.character(x)){
+      isNA <- which(is.na(x))
+      if(length(isNA) >0){x[isNA] <- as.character(names(which(table(x) == max(table(x)))[1]))}
     }
+    data2[,i] <- x
   }
-  data <- data[keep,] # only good data in model
-  ##############################
-  if(length(xvar %in% "1") == 1){
-    X <- as.matrix(model.matrix(as.formula(paste("~ ", paste(c(xvar), collapse="+"))), data=data))
-  }else{
-    X <- as.matrix(model.matrix(as.formula(paste("~ ", paste(c("1", xvar), collapse="+"))), data=data))
-  }
+  ######################
   
-  ### random and G
-  if(!is.null(random)){ # ============== MIXED MODEL =====================
-    #zvar <- gsub(" ", "", strsplit(as.character(random[2]), split = "[+]")[[1]])
-    # generalized mixed model, carefull, NA's dissapear
-    #mox <- glm(data[,yvar] ~ 1, family = family)
-    multicheck <- grep("cbind",yvar)
-    # if user has indicated multiple responses
-    if(length(multicheck)>0){
-      ui <- gsub("cbind\\(","",yvar)
-      uii <- gsub("\\)","",ui)
-      yvar <- strsplit(uii,",")[[1]]
+  mf <- try(model.frame(fixed, data = data2, na.action = na.pass), silent = TRUE)
+  mfna <- try(model.frame(fixed, data = data, na.action = na.pass), silent = TRUE)
+  if (class(mf) == "try-error") {
+    stop("Please provide the 'data' argument for your specified variables", call. = FALSE)
+  }
+  mf <- eval(mf, parent.frame())
+  mfna <- eval(mfna, parent.frame())
+  
+  #which(!duplicated(t(mfna)))
+  # response Y
+  yvar <- model.response(mfna)
+  
+  #yvar <- gsub(" ", "", as.character(fixed[2]))
+  ### Xb in 'formula'
+  X <- model.matrix(fixed, mf)
+
+  #xvar <- gsub(" ", "", strsplit(as.character(fixed[3]), split = "[+]")[[1]])
+  ### Zu in formula
+  
+  if(!is.null(random)){
+    if(nodata){
+      V <- try(model.frame(random, data = data2, na.action = na.pass), silent = TRUE)
+      if (class(V) == "try-error") {
+        stop("Please provide the 'data' argument for your specified variables", call. = FALSE)
+      }#V <- model.frame(random, data = data2, na.action = na.pass)
+      V <- eval(V, parent.frame())
+    }else{
+      V <- try(model.frame(random, data = data, na.action = na.pass), silent = TRUE)
+      if (class(V) == "try-error") {
+        stop("Please provide the 'data' argument for your specified variables", call. = FALSE)
+      }#V <- model.frame(random, data = data, na.action = na.pass)
+      V <- eval(V, parent.frame()) 
     }
     
-    yvars <- data[,yvar] #mox$family$linkfun(mox$y)
-    #
-    if(is.null(random)){
-      Z=NULL
-    }else{
-      Z <- list()
-      for(i in 1:length(zvar)){ # do it factor
-        ## incidence matrix
-        vara <- zvar[i]
-        data2 <- data.frame(apply(data,2,as.factor))
-        zi <- model.matrix((as.formula(paste("~ -1 + ", vara))), data=data2)
-        colnames(zi) <- gsub(vara,"",colnames(zi))
-        if(dim(zi)[2] == dim(as.data.frame(yvars))[1] & min.n == TRUE){ # lmer error
-          stop("Error: number of levels of each grouping factor must be < number of observations")
-        }else{ # right way to specify the random effects, keep going
-          ## var-cov matrix
-          ww <- which(names(G) %in% vara)
-          if(length(ww) > 0){# was provided
-            uuuy <- levels(as.factor(colnames(zi))) # to order
-            ki <- G[[ww]][uuuy,uuuy]
-          }else{ # was not provided, we create a diagonal
-            ki <- diag(dim(zi)[2])
-          }
-          elem <- list(Z=zi, K=ki)
-          Z[[i]] <- elem
-        }
-        #print(zi[1:5,1:5]); print(ki[1:5,1:5])
-      }
-      names(Z) <- zvar
-      ### fit the model using the real function mmer2 
-      res <- mmer(Y=yvars, X=X, Z=Z, R=R, W=W, method=method, REML=REML, iters=iters, draw=draw, init=init, silent=silent, constraint=constraint, sherman=sherman, EIGEND=EIGEND, gss=gss, forced=forced, map=map, fdr.level=fdr.level, manh.col=manh.col,gwas.plots=gwas.plots,n.cores=n.cores,lmerHELP=lmerHELP, MVM=MVM,tolpar = tolpar, tolparinv = tolparinv)
-      #rownames(res$var.comp) <- c(zvar,"Error")
+    zvar.names <- gsub(" ", "", strsplit(as.character(random[2]), split = "[+]")[[1]])
+    #zvar.names <- zvar.names[which(!duplicated(zvar.names))]
+    #print(zvar.names)
+    zvar <- V #names(V)
+    for(i in 1:dim(zvar)[2]){
+      zvar[,i] <- as.factor(zvar[,i])
     }
-  }else{ # ================== JUST FIXED =======================
+    #zvar <- apply(zvar,2,as.factor)
+    #zvar.names <- names(V)
+    #zvar <- gsub(" ", "", strsplit(as.character(random[2]), split = "[+]")[[1]])
+    #varsss <- c(xvar,zvar)
+    Z <- list()
+    for(i in 1:length(zvar.names)){
+      ## incidence matrix
+      vara <- zvar.names[i]
+      # data.frame(factor(V[,vara],levels=V[,vara],ordered=T))
+      zi <- model.matrix(as.formula(paste("~",vara,"-1")),zvar)
+
+      ## var-cov matrix
+      ww <- which(names(G) %in% vara)
+      if(length(ww) > 0){# K was provided
+        ## just if there's a K matrix we make sure to be using the real names and no the model.matrix ones
+        colnames(zi) <- levels(V[,vara])
+        #########
+        uuuz <- levels(as.factor(colnames(zi))) # order of Z
+        uuuk <- attr(G[[ww]],"dimnames")[[1]] # order of K
+        inte <- intersect(uuuz,uuuk)
+        if(length(inte)==length(uuuz)){ # the names were the same in Z and K
+          ki <- G[[ww]][uuuz,uuuz]
+        }else{ # no intersection between z and k names
+          cat(paste("\nNames of Z and K for random effect",vara,"are not the same. \nMake sure they are in the correct order."))
+          ki <- G[[ww]] 
+        }
+        
+      }else{ # was not provided, we create a diagonal
+        ki <- diag(dim(zi)[2])
+      }
+      elem <- list(Z=zi, K=ki)
+      Z[[i]] <- elem
+    }
+    names(Z) <- zvar.names
+    
+    res <- mmer(Y=yvar, X=X, Z=Z, R=R, W=W, method=method, REML=REML, iters=iters, draw=draw, init=init, silent=silent, constraint=constraint, sherman=sherman, EIGEND=EIGEND, gss=gss, forced=forced, map=map, fdr.level=fdr.level, manh.col=manh.col,gwas.plots=gwas.plots,n.cores=n.cores, MVM=MVM,tolpar = tolpar, tolparinv = tolparinv)
+    
+  }else{###only fixed effects
     res <- glm(yvars~X, family=family)
   }
-  #class(res)<-c("mmer")
+  #########
   return(res)
 }

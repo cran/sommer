@@ -36,6 +36,7 @@ score.calc <- function(marks,y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,max.geno.fre
         yytt <- y[which(!is.na(y))]
         ETA <- list(Z=ZZ,K=K)
         out <- try(EMMA(y=yytt,X=X2,ZETA=ETA,silent=TRUE)) #Z=list(list(Z=ZZ,K=K)))
+        #print("yes")
         #if (class(out)!="try-error") { 
           Hinv <- out$V.inv
         #}

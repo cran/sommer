@@ -84,8 +84,8 @@ EMMA <- function (y, X=NULL, ZETA=NULL, REML=TRUE, silent=FALSE, che=TRUE, force
           if(provided == "K"){
             y <- list(Z=diag(length(y)),K=x[[1]])
           }else{
-            stop(call.=FALSE)
-            cat("Names of matrices provided can only be 'Z' or 'K', the names you provided don't match the arguments required")
+            stop("Names of matrices provided can only be 'Z' or 'K', the names you provided don't match the arguments required",call.=FALSE)
+            
           }
         }else{y <- x}; 
         return(y)
@@ -103,6 +103,8 @@ EMMA <- function (y, X=NULL, ZETA=NULL, REML=TRUE, silent=FALSE, che=TRUE, force
     }
     ZETA <- ZETA[df.ord]
     names(ZETA) <- tokeep[df.ord]
+    #nano <- tokeep[df.ord]
+    #print(tokeep[df.ord])
     if(!is.null(forced)){forced <- forced[c(df.ord, (length(forced)))]}
     #####################################################
     ## to use later for fitted values
@@ -217,13 +219,13 @@ EMMA <- function (y, X=NULL, ZETA=NULL, REML=TRUE, silent=FALSE, che=TRUE, force
       weights <- optim(par = rep(1/lz, lz), fn = minimfunctionouter, 
                        method = "L-BFGS-B", lower = rep(0, lz), upper = rep(1,lz))$par
       
-      
+      #weights <- weights#/length(weights)
       
       zero.comp <- which(weights==0)
       no.zero.comp <- which(weights!=0)
       lz2 <- length(no.zero.comp)
       if(length(zero.comp)>0){
-        cat("One or more variance components pushing to be zero. Boundary constraint applied.\n")
+        cat("\nOne or more variance components pushing to be zero. Boundary constraint applied.\n")
         ####========MIN.FUNCTION===========####
         minimfunctionouter2 <- function(weights = rep(1/lz2, lz2)) {
           weights = weights/sum(weights)
@@ -250,7 +252,15 @@ EMMA <- function (y, X=NULL, ZETA=NULL, REML=TRUE, silent=FALSE, che=TRUE, force
         weights2 <- optim(par = rep(1/lz2, lz2), fn = minimfunctionouter2, 
                           method = "L-BFGS-B", lower = rep(0, lz2), upper = rep(1,lz2))$par
         weights[zero.comp] <- 0
-        weights[no.zero.comp] <- weights2
+        
+        ## when multiple random effects and some var.comp are zero
+        #if((length(weights2)==1) & (weights2 == 1)){
+        #  print("oh")
+        #  dddd <- EMMA(y, X=X, ZETA=ZETA[-zero.comp])$var.comp
+        #  weights[no.zero.comp] <- dddd[-length(dddd),]
+        #}else{
+          weights[no.zero.comp] <- weights2#/length(weights)
+        #}
         
       }# end of variance components being zero
       
@@ -387,6 +397,7 @@ EMMA <- function (y, X=NULL, ZETA=NULL, REML=TRUE, silent=FALSE, che=TRUE, force
     ## VAR(U.hat) and PEV(u.hat)
     
     if(EIGEND){ # sigma^4  Ui' (ZKP ZK) Ui
+      P <- Vinv - Vinv %*% X %*% solve(crossprod(X, Vinv %*% X), crossprod(X, Vinv))
       Var.u <-   (sigmausqhat^2) *  Usi  %*% tcrossprod( crossprod(ZK, P)  %*%  (ZK),Usi  )
       PEV.u <-  sigmausqhat * K - varuhat  # standard errors (SE) for each individual
     }else{
@@ -427,6 +438,31 @@ EMMA <- function (y, X=NULL, ZETA=NULL, REML=TRUE, silent=FALSE, che=TRUE, force
     uhat <- as.numeric(uhat)
     names(uhat) <- namesuhat
     
+    u.hatl <- list()
+    varuhatl <- list()
+    PEVuhatl <- list()
+    levo <- c(unlist(lapply(ZETA,function(x){dim(x$Z)[2]})))
+    for(ss in 1:length(levo)){
+      u.hatl[[ss]] <- as.matrix(uhat[1:levo[ss]])
+      rownames(u.hatl[[ss]]) <- colnames(ZETA[[ss]]$Z)
+      ## var.uhat
+      varuhatl[[ss]] <- varuhat[1:levo[ss],1:levo[ss]]
+      rownames(varuhatl[[ss]]) <- colnames(ZETA[[ss]]$Z)
+      colnames(varuhatl[[ss]]) <- rownames(varuhatl[[ss]])
+      ##pev
+      PEVuhatl[[ss]] <- PEVuhat[1:levo[ss],1:levo[ss]]
+      rownames(PEVuhatl[[ss]]) <- colnames(ZETA[[ss]]$Z)
+      colnames(PEVuhatl[[ss]]) <- rownames(PEVuhatl[[ss]])
+      ## clean data
+      varuhat <- varuhat[-c(1:levo[ss]),-c(1:levo[ss])]
+      PEVuhat <- PEVuhat[-c(1:levo[ss]),-c(1:levo[ss])]
+      uhat <- uhat[-c(1:levo[ss])]
+    }
+    #print(tokeep[df.ord])
+    #print(length(u.hatl))
+    names(u.hatl) <- c(tokeep[df.ord])
+    #print(names(u.hatl))
+    
     if(EIGEND){
       ehat <- Usi %*% ehat
       #H.hat.inv <- Usi  %*% H.hat.inv %*% t(Usi)
@@ -435,8 +471,8 @@ EMMA <- function (y, X=NULL, ZETA=NULL, REML=TRUE, silent=FALSE, che=TRUE, force
     sigma <- matrix(sigma)
     rownames(sigma) <- c(paste("V(u.",1:length(ZETA),")",sep=""),"V(Error)")
     res <- list(var.comp=sigma, beta.hat = betahat, 
-                u.hat = list(uhat), Var.u.hat = varuhat, 
-                Var.beta.hat = var.beta, PEV.u.hat = PEVuhat, 
+                u.hat = u.hatl, Var.u.hat = varuhatl, 
+                Var.beta.hat = var.beta, PEV.u.hat = PEVuhatl, 
                 LL = loglik, AIC=AIC, BIC=BIC, V.inv=Hinvhat, X=X, Z=Z, K=K, 
                 fitted.y=fitted.y, fitted.u=fitted.u, residuals=ehat, 
                 cond.residuals=residuals2, fitted.y.good=fitted.y.good)

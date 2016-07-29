@@ -226,5 +226,6 @@ TP.prep <- function(markers=NULL, vp.names=NULL, tp.size=NULL, method="random", 
     tp.list[[r]] <- SampleOptimiz
     }
   }
+  layout(matrix(1,1,1))
   return(tp.list)
 }

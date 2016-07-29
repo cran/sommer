@@ -78,7 +78,7 @@ phenotypes <- PolyData$PPheno
 ####=========================================####
 #### run the genomic selection model
 ####=========================================####
-#ans <- mmer(y=yy.trn, Z=ETA, method="EMMA")
+#ans <- mmer(Y=yy.trn, Z=ETA)
 #cor(yy[ww],ans$fitted.y[ww])
 #summary(ans)
 
@@ -87,7 +87,7 @@ phenotypes <- PolyData$PPheno
 ####=========================================####
 #my.map <- PolyData$map
 #models <- c("additive","1-dom-alt","1-dom-ref","2-dom-alt","2-dom-ref")
-#ans2 <- mmer(y=yy, Z=ETA, W=marks, method="EMMA", 
+#ans2 <- mmer(Y=yy.trn, Z=ETA, W=marks,  
 #              ploidy=4, models=models[1], map=my.map)
 #summary(ans2)
 
@@ -97,9 +97,9 @@ phenotypes <- PolyData$PPheno
 #D <- D.mat(marks)
 #E <- E.mat(marks)
 #ETA.AD <- list(add=list(Z=Z1, K=K1),dom=list(Z=Z1, K=D))
-#ans3 <- mmer(y=yy, Z=ETA.AD, W=marks, method="AI", 
+#ans3 <- mmer(Y=yy.trn, Z=ETA.AD, W=marks, 
 #              ploidy=4, models=models[1], map=my.map)
-#summary(ans2)
+#summary(ans3)
 }
 \keyword{datasets}
 \seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

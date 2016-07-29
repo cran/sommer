@@ -15,12 +15,11 @@ Please report bugs and provide data to recreate the problem. The only way to imp
 }
 \usage{
 mmerSNOW(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
-     iters=30, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE,
+     iters=20, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE,
      models="additive", ploidy=2, min.MAF = 0.05, silent=FALSE, 
      family=NULL, constraint=TRUE, sherman=FALSE, EIGEND=FALSE,
      Fishers=FALSE, gss=TRUE, forced=NULL, full.rank=TRUE, 
-     map=NULL,fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE,
-     lmerHELP=FALSE)
+     map=NULL,fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE)
 }
 \arguments{
   \item{y}{a numeric vector for the response variable}
@@ -97,7 +96,6 @@ mmerSNOW(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE,
       \item{fdr.level}{a level of FDR to calculate and plot the line in the GWAS plot. Default is fdr.level=0.05}
       \item{manh.col}{a vector with colors desired for the manhattan plot. Default are cadetblue and red alternated.}
       \item{gwas.plots}{a TRUE/FALSE statement indicating if the GWAS and qq plot should be drawn or not. The default is TRUE but you may want to avoid it.}
-      \item{lmerHELP}{a TRUE/FALSE statement indicating if the program should run lmer function in this model to provide initial values for the random effects and be passed to the 'init' argument. This could be useful to find the real values under no covariance structure and then use them as initial values to run the structured model.}
 
 }
 \details{

@@ -1,12 +1,12 @@
 citHeader("To cite the sommer package in publications use:")
 
 citEntry(entry="Article",
-	title="Genome assisted prediction using the R package sommer",
+	title="Genome assisted prediction of quantitative traits using the R package sommer",
 	author=as.person("Covarrubias-Pazaran G"),
 	journal="PLoS ONE",
 	year=2016,
 	volume="11",
 	pages="1-15",
-textVersion=paste("Covarrubias-Pazaran G. 2016. Genome assisted prediction using the R package sommer.",
+textVersion=paste("Covarrubias-Pazaran G. 2016. Genome assisted prediction of quantitative traits using the R package sommer.",
 "PLoS ONE 11(6):1-15.")
 )

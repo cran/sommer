@@ -146,6 +146,8 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
     xm <- as.matrix(xm[good,])
     txm <- t(xm)
     R <- R[good,good]
+    qr <- qr(xm)
+    rankX <- length(good)-qr$rank
     ###########################
     #### BECOME SPARSE
     #R=as(R,Class="sparseMatrix")
@@ -184,13 +186,13 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
     var.y <- var(y, na.rm=TRUE)
     yv <- scale(y)
     nvarcom <- length(ZETA) + 1
-    base.var <- var(yv, na.rm = TRUE)/nvarcom
+    base.var <- var(yv, na.rm = TRUE)#/nvarcom
     ### EIGEND requires very small initial var.comp compared to regular models
     if(length(ZETA)==1 & EIGEND==TRUE & (dim(ZETA[[1]][[1]])[1] == dim(ZETA[[1]][[2]])[2])){
       if(is.null(init)){var.com <- c(rep(.0001, nvarcom))}else{var.com <- init/var.y} # at the end error variance
       #print(var.com)
-    }else{
-      if(is.null(init)){var.com <- c(rep(.01, nvarcom))}else{var.com <- init/var.y} # at the end error variance
+    }else{ # before instead of base.var was .01
+      if(is.null(init)){var.com <- c(rep(base.var, nvarcom))}else{var.com <- init/var.y} # at the end error variance
     }
     weird=FALSE
     tn = length(yv)
@@ -199,6 +201,8 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
     conv=0 # convergence
     wi=0 # counter
     record<- matrix(var.com*var.y, ncol=1)
+    taper <- rep(0.9, iters) # weighting parameter for updates
+    taper[1:2] <- c(0.5, 0.7)
     #var.com <- rep(var(yy2, na.rm = TRUE)/nvarcom, nvarcom) ### NEW at the end error variance
     ##################
     if(is.null(names(ZETA))){
@@ -283,12 +287,21 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
         # P matrix (page 290 in AJHG 96:283-294), projection matrix
         ### ----------------------------------------------------------------- ###
         ### ----------------------------------------------------------------- ###
-        vmi.xm <- vmi%*%xm
-        xvx=txm%*%vmi.xm # X'V-X
-        xvxi=solve(xvx, sparse=TRUE, tol = 1e-19) # (X'V-X)-
+        xvx <- crossprod(xm, vmi %*% xm)
+        pm <- vmi - vmi %*% xm %*% solve(xvx, crossprod(xm, vmi))
+        ytPy <- t(yv)%*%(pm%*%yv)
+        
+        ## regress tricks!!!!!!!!!
+        var.com <- var.com * (as.numeric(ytPy)/as.numeric(rankX))
+        pm <- pm * (as.numeric(rankX)/as.numeric(ytPy))
+        #print(pm[1:5,1:5])
+        #print(var.com)
+        #vmi.xm <- vmi%*%xm
+        #xvx=txm%*%vmi.xm # X'V-X
+        #xvxi=solve(xvx, sparse=TRUE, tol = 1e-19) # (X'V-X)-
         #s1=vmi%*%xm # in steps to make computations faster
-        s2=xvxi%*%txm%*%vmi 
-        pm=vmi-crossprod(t(vmi.xm),s2) #vmi-s1%*%s2#
+        #s2=xvxi%*%txm%*%vmi 
+        #pm=vmi-crossprod(t(vmi.xm),s2) #vmi-s1%*%s2#
         vmi=NULL
         ### ----------------------------------------------------------------- ###
         ### ----------------------------------------------------------------- ###
@@ -301,14 +314,14 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
           if(is.infinite(ddv)){ # ======= IF DETERMINANT IS INFINITE(REML) =======
             stop("Infinite values found in the determinant, please make sure your variance-covariance matrices K's, are scaled matrices as regularly should be.",call.=FALSE)
           }else{ # ======= IF EVERYTHING GOES WELL =========
-            logL=as.numeric(-0.5*((ddv)+determinant(xvx, logarithm = TRUE)$modulus[[1]]+t(yv)%*%(pm%*%yv))) # log likelihood, problem
+            logL=as.numeric(-0.5*((ddv)+determinant(xvx, logarithm = TRUE)$modulus[[1]]+ytPy)) # log likelihood, problem
           }
         }else{ # ======= ********* WHEN ML ************ ==================
           ddv <- determinant(vm, logarithm = TRUE)$modulus[[1]]
           if(is.infinite(ddv)){ # ======= IF DETERMINANT IS INFINITE (ML) =======
             stop("Infinite values found in the determinant, please make sure your variance-covariance matrices K's, are scaled matrices as regularly should be.",call.=FALSE)
           }else{ # ======= IF EVERYTHING GOES WELL(ML) =========
-            logL=as.numeric(-0.5*((ddv) + t(yv)%*%(pm%*%yv ))) # log likelihood, problem
+            logL=as.numeric(-0.5*((ddv) + ytPy)) # log likelihood, problem
           }
         }
         #################################
@@ -382,6 +395,7 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
               }
             }
           }
+          #print(aim)
           
           if(rankMatrix(aim)[1] == dim(aim)[2]){
             aimi=solve(aim) # solve?? (AI)- # Average Information Matrix Inverse (aimi)
@@ -407,6 +421,7 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
             # fill the first derivative matrix
             dldv[k,1]=-0.5*tr1+0.5*as.numeric(t(yv)%*%prm%*%py) # -.5 * [ tr(PHi)+0.5 * y' %*% PHi %*% Py ]        ## fill 1st derivative matrix 1,1
           }
+          #print(dldv)
           ### ----------------------------------------------------------------- ###
           ### ----------------------------------------------------------------- ###
           # AI update (page 290 in AJHG 96:283-294 or Eq.7 in GSE 38: 25-43)
@@ -422,7 +437,8 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
           }
           #print(up)
           
-          var.com <- as.matrix(var.com) + as.matrix(up)
+          #var.com <- as.matrix(var.com) + as.matrix(up)
+          var.com <- as.matrix(var.com) + (taper[wi]*as.matrix(up))# taper is a regress trick
           #var.como <- var.com;
           #colnames(var.como)<-"A"
           #print(var.como)
@@ -578,7 +594,10 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
         if(length(ZETA) != nnn){
           
           if(((nnn >= 1 & nnn <= 4) & (nnn < (dim(var.com2)[1])-1) & (fail == FALSE) & (constraint == TRUE) & (abnormalVE)) | abnormal ){
+            
+            if(!silent){
             cat("\nOne or more variance components pushing to be zero. Boundary constraint applied.\n")
+            }
             zero <- which(pushes >= 0.4 ) # find zero var.comp and remove
             if(abnormal){
               zero <- badbad
@@ -586,9 +605,18 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
             nonzero <- (1:dim(var.com2)[1])[-zero]
             #print(zero);print(nonzero);print(abnormal)
             ## estimate accurately the good variance components
-            boost <- AI2(y=y.or, X=x.or, ZETA=zeta.or[-zero], R=NULL, REML=REML, draw=draw, silent=silent, iters=20, init=as.vector(var.com2)[-zero], sherman=sherman)
-            var.com2[nonzero,] <- boost
-            var.com2[zero,] <- 0
+            allfailed <- zero==1:(length(ZETA))
+            if(length(which(allfailed)) == length(ZETA)){ # if all var.comp are zero start all over again with a different algorithm
+              ##sometimes imputing the missing data when GWAS leads to very few information causing all variance
+              ## components to be zero and AI cannot do anything, we change to NR
+              boost <- NR22(y=y.or, X=x.or, ZETA=zeta.or, R=NULL, REML=REML, draw=draw, silent=silent, iters=20, sherman=sherman)
+              var.com2[,1] <- boost
+            }else{
+              boost <- ai2help(y=y.or, X=x.or, ZETA=zeta.or[-zero], R=NULL, REML=REML, draw=draw, silent=silent, iters=20, init=as.vector(var.com2)[-zero], sherman=sherman)
+              var.com2[nonzero,] <- boost
+              var.com2[zero,] <- 0
+            }
+            
             #var.com2[zero,] <- 5e-5
             ## force found values and get the EM closest to those values
             #boost2 <- AI3(y=y.or, X=x.or, ZETA=zeta.or, R=NULL, REML=REML, draw=draw, forced=nonzero, silent=silent, iters=15, init=as.vector(var.com2/var.y),sherman=sherman)
@@ -601,7 +629,7 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
           if(abnormal){
             zero <- badbad
           }
-          var.com2[zero,] <- 0  
+          var.com2[zero,] <- 1e-7  
         }
         
       }else{ #only one var.comp but there was a zero
@@ -681,7 +709,7 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
   # B=(X'X V- XVy)-
   xvx <- crossprod(xm, Vinv %*% xm)
   xvxi <- solve(xvx) # variance of fixed effects
-  beta <- xvxi %*% crossprod(xm, Vinv %*% y)
+  beta <- xvxi %*% crossprod(xm, Vinv %*% y) # (XVX)-XV-y
   #################
   Var.u <- vector(mode="list", length = length(zvar))
   PEV.u <- Var.u
@@ -722,7 +750,7 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
       PEV.u[[k]] <- as.numeric(var.com2[k,1]) * ZETA3[[k]][[2]] - Var.u[[k]]  # standard errors (SE) for each individual
     }
   }else{
-    for (k in zvar) { # u = KZ'V- (y- XB)
+    for (k in zvar) { # u = GZ'V- (y- XB)
       u[[k]] <- ( (ZETA3[[k]][[2]]*as.numeric(var.com2[k,1])) %*% t(ZETA3[[k]][[1]]) %*% Vinv %*% ee )
       Var.u[[k]] <- (as.numeric(var.com2[k,1])^2) *  ( crossprod(ZETA3[[k]][[1]]%*%ZETA3[[k]][[2]], pm)  %*%  (ZETA3[[k]][[1]]%*%ZETA3[[k]][[2]])   ) # sigma^4 ZKP ZK
       PEV.u[[k]] <- as.numeric(var.com2[k,1]) * ZETA3[[k]][[2]] - Var.u[[k]]  # standard errors (SE) for each individual
@@ -748,19 +776,6 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
   }
   ###################
   ####### FISHER's INFORMATION 
-  if(Fishers){
-    fishers=matrix(0,nvarcom,nvarcom) # average information matrix
-    for(i in 1:nvarcom){ ### (A9) equation in Lee (2015) 
-      for(j in 1:i){
-        fishers[i,j]=as.numeric(0.5*sum(diag((om[[i]]%*%pm%*%om[[j]]%*%pm)))) # .5 * y' Hi %*% P %*% Hj %*% P %*% P %*% y
-        # where Hi=ZKZ, here om[[i]]
-        if(i != j){
-          fishers[j,i] <- fishers[i,j]
-        }
-      }
-    }
-    fishers.inv <- solve(fishers)
-  }else{fishers.inv=NULL}
   ####################
   ###################
   ###################
@@ -775,7 +790,7 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
   if(!abnormal & !abnormalVE){
     jkl <- c(23,18,9,20,20,5,14, NA,2,25,NA,7,9,15,22,1,14,14,25,NA,3,15,22,1,18,18,21,2,9,1,19)
     oh.yeah <- paste(letters[jkl],collapse = "")
-    cat("\nError variance (Ve) was pushing to be negative. Be careful, model might be overspecified.\n")
+    cat("\nError variance (Ve) was pushing to be negative. Be careful, your model might be overspecified.\nPlease check and delete random effects if neccesary.\n")
   }
   ####
   if(EIGEND){
@@ -792,7 +807,7 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
               PEV.u.hat=PEV.u, beta.hat=beta, Var.beta.hat=xvxi, 
               LL=logL, AIC=AIC, BIC=BIC, X=xm, fitted.y=fitted.y, 
               fitted.u=fitted.u, residuals=ee, cond.residuals=residuals3,
-              fitted.y.good=fitted.y.good, Z=Zsp, K=Ksp, fish.inv=fishers.inv)
+              fitted.y.good=fitted.y.good, Z=Zsp, K=Ksp, fish.inv=aimi)
   
   layout(matrix(1,1,1))
   #print(big.peaks.col(logL2.stored, -100000))

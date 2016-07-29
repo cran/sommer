@@ -146,6 +146,9 @@ map.plot <- function(data, trait=NULL, trait.scale="same", col.chr=NULL, col.tra
     ## ----------------
     ## ----------------
     if(!is.null(trait)){
+      
+      chuy <- which(colnames(prov) %in% trait)
+      if(length(chuy)==0){stop("The column indicated as trait is not present in the data provided\nPlease double check your data\n",call. = FALSE)}
       ## ---------------------------
       ## IF TRAIT IS A NUMERIC TRAIT
       ## ---------------------------

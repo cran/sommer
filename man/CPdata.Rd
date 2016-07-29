@@ -56,7 +56,7 @@ ETA.A <- list(add=list(Z=Za,K=A))
 ####=========================####
 #### ADDITIVE-DOMINANCE MODEL ####
 ####=========================####
-ETA.AD <- list(add=list(Z=Za,K=A),dom=list(Z=Zd,K=D))
+ETA.AD <- list(add=list(Z=Za,K=A), dom=list(Z=Zd,K=D))
 #ans.AD <- mmer(Y=y.trn, Z=ETA.AD)
 #cor(ans.AD$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 ### greater accuracy !!!! 4 percent increment!!
@@ -64,7 +64,7 @@ ETA.AD <- list(add=list(Z=Za,K=A),dom=list(Z=Zd,K=D))
 ####===================================####
 #### ADDITIVE-DOMINANCE-EPISTASIS MODEL ####
 ####===================================####
-ETA.ADE <- list(add=list(Z=Za,K=A),dom=list(Z=Zd,K=D),epi=list(Z=Ze,K=E))
+ETA.ADE <- list(add=list(Z=Za,K=A), dom=list(Z=Zd,K=D), epi=list(Z=Ze,K=E))
 #ans.ADE <- mmer(Y=y.trn, Z=ETA.ADE)
 #cor(ans.ADE$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 
@@ -76,7 +76,7 @@ ETA.ADE <- list(add=list(Z=Za,K=A),dom=list(Z=Zd,K=D),epi=list(Z=Ze,K=E))
 ####=========================================####
 #### RUN AS GWAS MODEL         
 ####=========================================####
-#ans.GWAS <- mmer(y=y, Z=ETA.A, W=CPgeno)
+#ans.GWAS <- mmer(Y=y, Z=ETA.A, W=CPgeno)
 #### or if you have a map
 #my.map <- CPdata$map
 #ans.GWAS <- mmer(Y=y, Z=ETA.A, W=CPgeno, map=my.map)
@@ -92,8 +92,8 @@ ETA.ADE <- list(add=list(Z=Za,K=A),dom=list(Z=Zd,K=D),epi=list(Z=Ze,K=E))
 
 ####=========================================####
 ####=========================================####
-#### Example 2
-#### GENOMIC PREDICTION
+#### EXAMPLE 2
+#### Genomic prediction
 #### using multiple responses in parallel
 ####=========================================####
 ####=========================================####
@@ -113,7 +113,12 @@ ETA.ADE <- list(add=list(Z=Za,K=A),dom=list(Z=Zd,K=D),epi=list(Z=Ze,K=E))
 #ww <- sample(c(1:dim(Za)[1]),72) # delete data for 1/5 of the population
 #y.trn[ww,] <- NA
 #ETA.A <- list(add=list(Z=Za,K=A))
+#********************************************************
+#### WINDOWS
+#ans.A <- mmer(Y=y.trn, Z=ETA.A, method="EMMA")
+#### MAC
 #ans.A <- mmer(Y=y.trn, Z=ETA.A, method="EMMA",n.cores=4)
+#********************************************************
 
 ### 1) Extract the fitted values for the simulated data
 #fitt <- as.matrix(do.call("cbind",lapply(ans.A, function(x,w){x$fitted.y[w]},w=ww)))
@@ -121,7 +126,7 @@ ETA.ADE <- list(add=list(Z=Za,K=A),dom=list(Z=Zd,K=D),epi=list(Z=Ze,K=E))
 #res <- apply(data.frame(1:4),1,function(x,y,z){
 #  cor(y[,x],z[,x],use="pairwise.complete.obs")},
 #             y=fitt,z=CPpheno[ww,])
-
+#res
 
 ############################################
 ############################################
@@ -144,7 +149,7 @@ ETA.ADE <- list(add=list(Z=Za,K=A),dom=list(Z=Zd,K=D),epi=list(Z=Ze,K=E))
 #head(CPpheno)
 #CPgeno[1:5,1:5]
 ## fit a model including additive and dominance effects
-#Za <- diag(length(y))
+#Za <- diag(dim(CPpheno)[1])
 #A <- A.mat(CPgeno) # additive relationship matrix
 
 #CPpheno2 <- CPpheno
@@ -154,14 +159,16 @@ ETA.ADE <- list(add=list(Z=Za,K=A),dom=list(Z=Zd,K=D),epi=list(Z=Ze,K=E))
 #### univariate model ####
 ####==================####
 #ETA.A <- list(add=list(Z=Za,K=A))
-#ans.A <- mmer(Y=CPpheno2$color, Z=ETA.A, method="EMMA")
-#cor(ans.A$fitted.y[ww], y[ww], use="pairwise.complete.obs")
+#ans.A <- mmer(Y=CPpheno2$color, Z=ETA.A)
+#cor(ans.A$fitted.y[ww], CPpheno[ww,"color"], use="pairwise.complete.obs")
 ####====================####
 #### multivariate model ####
+####     4 traits       #### 
 ####====================####
+#### be patient take some time
 #ETA.B <- list(add=list(Z=Za,K=A))
 #ans.B <- mmer(Y=CPpheno2, Z=ETA.B, MVM=TRUE)
-#cor(ans.B$fitted.y[ww,"color"], y[ww], use="pairwise.complete.obs")
+#cor(ans.B$fitted.y[ww,"color"], CPpheno[ww,"color"], use="pairwise.complete.obs")
 
 }
 \keyword{datasets}

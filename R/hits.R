@@ -62,7 +62,16 @@ hits <- function(gwasm, nmar=10, threshold=1, pick=FALSE, method="cluster", only
         
         if(length(res$pos) >= nmar){ # if enough markers significant
           ## build the number of cluster plus 5 to make sure you have repeatability
-          res$clus <- kmeans(res$pos,nmar+15)$cluster 
+          if(length(res$pos) <= nmar+15){
+            if(length(res$pos) < nmar){
+              res$clus <- kmeans(res$pos,length(res$pos))$cluster 
+            }else{
+              res$clus <- kmeans(res$pos,nmar-1)$cluster 
+            }
+            
+          }else{
+            res$clus <- kmeans(res$pos,nmar+15)$cluster 
+          }
           
           heights <- numeric()
           for(i in 1:max(res$clus)){
@@ -87,21 +96,21 @@ hits <- function(gwasm, nmar=10, threshold=1, pick=FALSE, method="cluster", only
           
           if(!is.null(condicion)){ #if map was present
             if(plotting){
-            col.scheme <- rep((transp(c("cadetblue","red"))),30)
-            plot(gwasm$map$p.val, bty="n", col=col.scheme[factor(gwasm$map$Chrom, levels = unique(gwasm$map$Chrom, na.rm=TRUE))], xaxt="n", xlab="Chromosome", ylab=expression(paste(-log[10],"(p.value)")), pch=20, cex=2, las=2)
-            init.mrks <- apply(data.frame(unique(gwasm$map$Chrom)),1,function(x,y){z <- which(y == x)[1]; return(z)}, y=gwasm$map$Chrom)
-            fin.mrks <- apply(data.frame(unique(gwasm$map$Chrom)),1,function(x,y){z <- which(y == x);z2 <- z[length(z)]; return(z2)}, y=gwasm$map$Chrom)
-            inter.mrks <- init.mrks + ((fin.mrks - init.mrks)/2)
-            axis(side=1, at=inter.mrks, labels=paste("Chr",unique(gwasm$map$Chrom),sep=""), cex.axis=.5)
-            abline(v=marker, lty=3, col="red")
-            legend("topleft", bty="n", legend=c("Markers selected"), cex=.6, lty=3, lwd=2, col="red")
+              col.scheme <- rep((transp(c("cadetblue","red"))),30)
+              plot(gwasm$map$p.val, bty="n", col=col.scheme[factor(gwasm$map$Chrom, levels = unique(gwasm$map$Chrom, na.rm=TRUE))], xaxt="n", xlab="Chromosome", ylab=expression(paste(-log[10],"(p.value)")), pch=20, cex=2, las=2)
+              init.mrks <- apply(data.frame(unique(gwasm$map$Chrom)),1,function(x,y){z <- which(y == x)[1]; return(z)}, y=gwasm$map$Chrom)
+              fin.mrks <- apply(data.frame(unique(gwasm$map$Chrom)),1,function(x,y){z <- which(y == x);z2 <- z[length(z)]; return(z2)}, y=gwasm$map$Chrom)
+              inter.mrks <- init.mrks + ((fin.mrks - init.mrks)/2)
+              axis(side=1, at=inter.mrks, labels=paste("Chr",unique(gwasm$map$Chrom),sep=""), cex.axis=.5)
+              abline(v=marker, lty=3, col="red")
+              legend("topleft", bty="n", legend=c("Markers selected"), cex=.6, lty=3, lwd=2, col="red")
             }
             marker <- as.character(gwasm$map$Locus[marker])
           }else{ # if map was not present
             if(plotting){
-            plot(gwasm$W.scores$additive, col=transp("cadetblue"), pch=20, cex=1.3)
-            abline(v=marker, lty=3, col="red")
-            legend("topleft", bty="n", legend=c("Markers selected"), cex=.6, lty=3, lwd=2, col="red")
+              plot(gwasm$W.scores$additive, col=transp("cadetblue"), pch=20, cex=1.3)
+              abline(v=marker, lty=3, col="red")
+              legend("topleft", bty="n", legend=c("Markers selected"), cex=.6, lty=3, lwd=2, col="red")
             }
           }
           

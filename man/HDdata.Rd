@@ -34,7 +34,7 @@ head(HDdata)
 #### GCA matrix for half diallel using male and female columns
 #### use the 'hdm' function to create the half diallel matrix
 ####=========================================####
-Z1 <- hdm(HDdata[,c(3:4)])
+Z1 <- hdm(HDdata[,c("male","female")])
 
 ####=========================================####
 #### SCA matrix

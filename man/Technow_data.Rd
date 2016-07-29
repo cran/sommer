@@ -59,24 +59,18 @@ pheno$hy <- paste(pheno$dent, pheno$flint, sep=":");head(pheno);dim(pheno)
 #Z1 <- model.matrix(~gcad-1, data=hybs); dim(Z1)
 #Z2 <- model.matrix(~gcaf-1, data=hybs); dim(Z2)
 #Z3 <- model.matrix(~sca-1, data=hybs); dim(Z3) #only full model
-####=========================================####
-#### SORT INCIDENCE MATRICES ACCORDING TO RELATIONSHIP MATRICES, REAL ORDERS
-####=========================================####
-#real1 <- match(  colnames(A.dent), gsub("gcad","",colnames(Z1)))
-#real2 <- match(  colnames(A.flint), gsub("gcaf","",colnames(Z2)))
-#real3 <- match(  colnames(DD), gsub("sca","",colnames(Z3)))
-#Z1 <- Z1[,real1]
-#Z2 <- Z2[,real2]
-#Z3 <- Z3[,real3]
+#colnames(Z1) <- levels(hybs$gcad)
+#colnames(Z2) <- levels(hybs$gcaf)
+#colnames(Z3) <- levels(hybs$sca)
 ####=========================================####
 #### RUN THE PREDICTION MODEL
 ####=========================================####
 #ETA2 <- list(GCA1=list(Z=Z1, K=A.dent), GCA2=list(Z=Z2, K=A.flint)) 
-#anss2 <- mmer(Y=hybs$yield, Z=ETA2, method="AI") 
+#anss2 <- mmer(Y=hybs$yield, Z=ETA2) 
 #summary(anss2)
 #### try EM algorithm as well if only 2 variance components
 #### you can try adding SCA effects by adding SCA=list(Z=Z3, K=DD)
-#### to your Z parameter
+#### to the random effects but will slow down the model a lot
 
 
 ############################################
@@ -131,7 +125,7 @@ pheno$hy <- paste(pheno$dent, pheno$flint, sep=":");head(pheno);dim(pheno)
 #AA <- A.mat(Mall) # Additive relationship matrix
 #ZZ <- diag(dim(AA)[1]) # incidence matrix
 #ETA <- list(sc=list(Z=ZZ, K=AA)) # Random component 
-#mix4 <- mmer(Y=matterBLUP, Z=ETA, W=Mall, method = "AI") # mixed model
+#mix4 <- mmer(Y=as.matrix(matterBLUP), Z=ETA, W=Mall) # mixed model
 #summary(mix4)
 
 }

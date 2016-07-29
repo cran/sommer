@@ -2,9 +2,9 @@
 \alias{eigenGWAS}
 \title{Unraveling selection signatures with eigenGWAS}
 \description{
-This function performs eigenGWAS based on the paper proposed by et al. (2016) to avoid exppensive compuations with hugh number of markers. For mathematical details of the derivation please refer to the original publication below in Literature.
+This function performs eigenGWAS based on the paper proposed by Chen et al. (2016) to avoid expensive computations with high number of markers. For mathematical details of the derivation please refer to the original publication below in the references.
 
-eigenGWAS is designed to find ancestry informative markers (AIM) and loci under selection. The phenotype of eigenGWAS is an eigenvector generated from gwas data.
+eigenGWAS is designed to find ancestry informative markers (AIM) and loci under selection. The phenotype of eigenGWAS is an eigenvector generated from marker data.
 
 }
 \usage{

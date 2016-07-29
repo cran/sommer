@@ -164,3 +164,33 @@ anss2 <- mmer(Y=y.trn, Z=ETA2, method="EM", silent=TRUE)
 summary(anss2)
 cor(anss2$fitted.y[vv2], hybs$yield[vv2])
 
+## ------------------------------------------------------------------------
+data(CPdata)
+CPpheno <- CPdata$pheno
+CPgeno <- CPdata$geno
+### look at the data
+head(CPpheno)
+CPgeno[1:5,1:5]
+## fit a model including additive and dominance effects
+Y <- CPpheno
+Za <- diag(dim(Y)[1])
+A <- A.mat(CPgeno) # additive relationship matrix
+####================####
+#### ADDITIVE MODEL ####
+####================####
+ETA.A <- list(add=list(Z=Za,K=A))
+ans.A <- mmer(Y=Y, Z=ETA.A, MVM=TRUE, method="EMMA")
+summary(ans.A)
+
+## ------------------------------------------------------------------------
+## genetic variance covariance
+gvc <- ans.A$var.comp$Vu
+## extract variances (diagonals) and get standard deviations
+sd.gvc <- as.matrix(sqrt(diag(gvc))) 
+## get possible products sd(Vgi) * sd(Vgi')
+prod.sd <- sd.gvc %*% t(sd.gvc)
+## genetic correlations cov(gi,gi')/[sd(Vgi) * sd(Vgi')]
+(gen.cor <- gvc/prod.sd)
+## heritabilities
+(h2 <- diag(gvc) / diag(cov(Y, use = "complete.obs")))
+

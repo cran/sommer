@@ -1,4 +1,4 @@
-EMMAM <- function (Y, X=NULL, ZETA=NULL, tolpar = 1e-06, tolparinv = 1e-06, che=TRUE, silent=TRUE) {
+MEMMA <- function (Y, X=NULL, ZETA=NULL, tolpar = 1e-06, tolparinv = 1e-06, che=TRUE, silent=TRUE) {
   
   if(is.null(X)){
     X <- matrix(1,nrow=dim(Y)[1])
@@ -113,20 +113,31 @@ EMMAM <- function (Y, X=NULL, ZETA=NULL, tolpar = 1e-06, tolparinv = 1e-06, che=
         break
       }
     }
-    HobsInv <- solve(kronecker(ZKZt, Vgt) + kronecker(diag(n), 
-                                                      Vet) + tolparinv * diag(d * n))
-    ehat <- matrix(Y - Bt %*% X, ncol = 1, byrow = F)
-    HobsInve <- HobsInv %*% ehat
-    varvecG <- kronecker(K, Vgt)
+    ## V inverse
+    HobsInv <- solve(kronecker(ZKZt, Vgt) + kronecker(diag(n),Vet) + tolparinv * diag(d * n))
+    
+    #print(dim(Y));print(dim(Bt));print(dim(X))
+    ehat <- matrix(Y - Bt %*% X, ncol = 1, byrow = F) # residuals
+    HobsInve <- HobsInv %*% ehat # V- (Y-XB)
+    varvecG <- kronecker(K, Vgt) # G
+    ## u.hat GZ'V-(Y-XB)
     gpred <- varvecG %*% (kronecker(t(Z), diag(d))) %*% HobsInve
-    Gpred <- matrix(gpred, nrow = nrow(Y), byrow = F)
+    Gpred <- matrix(gpred, nrow = nrow(Y), byrow = F) # u.hat as matrix
     colnames(Gpred) <- rownames(K)
     Xforvec <- (kronecker(t(X), diag(d)))
     Zforvec <- (kronecker((Z), diag(d)))
     ZKforvec <- Zforvec %*% varvecG
     #if (varGhat) {
-    P <- HobsInv - HobsInv %*% Xforvec %*% solve(crossprod(Xforvec, 
-                                                           HobsInv %*% Xforvec), crossprod(Xforvec, HobsInv))
+    
+    
+    xvx <- crossprod(Xforvec,HobsInv %*% Xforvec)
+    P <- HobsInv - HobsInv %*% Xforvec %*% solve(xvx, crossprod(Xforvec, HobsInv))
+    ddv <- determinant(HobsInv, logarithm = TRUE)$modulus[[1]]
+    Yvect <- as.matrix(as.vector(as.matrix(Y))) #dim(Y.or2)
+    
+    ytPy <- t(Yvect)%*%(P%*%(Yvect))
+    llik=as.numeric(-0.5*((ddv)+determinant(solve(xvx), logarithm = TRUE)$modulus[[1]]+ytPy)) # log likelihood, problem
+    
     varGhat <- crossprod(ZKforvec, P) %*% ZKforvec
     #}
     #if (PEVGhat) {
@@ -176,6 +187,10 @@ EMMAM <- function (Y, X=NULL, ZETA=NULL, tolpar = 1e-06, tolparinv = 1e-06, che=
     #  PEVGhat <- c()
     #}
     
+    ######## AIC BIC
+    AIC = as.vector((-2 * llik ) + ( 2 * dim(X)[1]))
+    BIC = as.vector((-2 * llik ) + ( log(dim(as.matrix(Y))[2]) * dim(X)[1]))
+    
     #print(varvecG)
     ehat <- t(Y) - t(X)%*%t(Bt) # residuals = Y - XB
     
@@ -187,21 +202,22 @@ EMMAM <- function (Y, X=NULL, ZETA=NULL, tolpar = 1e-06, tolparinv = 1e-06, che=
     
     sigma <- list(Vu=Vgt, Ve=Vet)
     
-    dimos <- lapply(ZETA, function(x){dim(x$Z)})[[1]]
+    dimos <- lapply(ZETA, function(x){dim(x$Z)})
   
     
-    u.hat0 <- (t(Gpred))
+    u.hat <- t(Gpred)#unique(u.hat0)
+    colnames(u.hat) <- respo
+    #u.hat0 <- (t(Gpred))
     Z1 <- Zlist[[1]]
     namesZ1 <- colnames(Z1)
     if(!is.null(namesZ1)){
-      rownames(u.hat0) <- apply(Z1,1,function(x,y){paste(y[which(x==1)], collapse=".")},y=colnames(Z1))
+      rownames(u.hat) <- apply(Z1,1,function(x,y){paste(y[which(x==1)], collapse=".")},y=colnames(Z1))
     }
-    u.hat <- unique(u.hat0)
-    colnames(u.hat) <- respo
-    colnames(u.hat0) <- respo
     
-    return(list(beta.hat = Bt, var.comp=sigma, u.hat = u.hat , Gpred=u.hat0,
-                Var.u.hat = (varGhat), Var.beta.hat = (varBhat), 
+    #colnames(u.hat0) <- respo
+    
+    return(list(var.comp=sigma, V.inv=HobsInv, u.hat = u.hat , LL=llik, AIC=AIC,BIC=BIC,
+                Var.u.hat = (varGhat), beta.hat = t(Bt),  Var.beta.hat = (varBhat), 
                 PEV.u.hat = (PEVGhat), residuals=ehat, cond.residuals=cond.ehat,
                 fitted.y=fitted, fitted.u=fitted.u, Z=Z, K=K, dimos=dimos, ZETA=ZETA,
                 method="EMMAM")) # XsqtestB = XsqtestB, pvalB = p.adjBhat, XsqtestG = XsqtestG,  pvalG = p.adjGhat,

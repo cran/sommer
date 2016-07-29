@@ -1,4 +1,4 @@
-AI2 <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=50, constraint=TRUE, init=NULL, sherman=FALSE, che=FALSE, EIGEND=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL){
+ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=50, constraint=TRUE, init=NULL, sherman=FALSE, che=FALSE, EIGEND=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL){
   
   if(EIGEND){
     DISO <- dim(ZETA[[1]]$Z)
@@ -119,7 +119,7 @@ AI2 <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE
     if(length(ZETA)==1 & (dim(ZETA[[1]][[1]])[2] == dim(ZETA[[1]][[2]])[2])){
       misso <- which(is.na(y))
       if(length(misso) >0){
-        y[misso] <- median(y, na.rm=TRUE)
+        y[misso] <- median(unlist(y), na.rm=TRUE)
       }
     }
     ZETA2 <- ZETA; y2 <- y ; good <- which(!is.na(y)) # make a copy and identify no missing data
@@ -581,7 +581,7 @@ AI2 <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE
             nonzero <- (1:dim(var.com2)[1])[-zero]
             #print(zero);print(nonzero);print(abnormal)
             ## estimate accurately the good variance components
-            boost <- AI2(y=y.or, X=x.or, ZETA=zeta.or[-zero], R=NULL, REML=REML, draw=draw, silent=silent, iters=20, init=as.vector(var.com2)[-zero], sherman=sherman)
+            boost <- ai2help(y=y.or, X=x.or, ZETA=zeta.or[-zero], R=NULL, REML=REML, draw=draw, silent=silent, iters=20, init=as.vector(var.com2)[-zero], sherman=sherman)
             var.com2[nonzero,] <- boost
             var.com2[zero,] <- 0
             #var.com2[zero,] <- 5e-5

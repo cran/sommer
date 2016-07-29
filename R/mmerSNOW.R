@@ -1,4 +1,8 @@
-mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, iters=30, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, silent=FALSE, family=NULL, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL, full.rank=TRUE, map=NULL, fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE, lmerHELP=FALSE){
+mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, iters=20, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, silent=FALSE, family=NULL, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL, full.rank=TRUE, map=NULL, fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE){
+  
+  if(length(which(is.na(y))) == length(y)){
+    stop("Y contains only missing data. Please double check your data.",call. = FALSE)
+  }
   #if(is.null(Zi)){
   #  stop()
   #}
@@ -33,7 +37,9 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
     q <- qr(Xtest)
     chas <- q$pivot[seq(q$rank)]
     if(length(chas) < dim(X)[2]){
-      cat("\nYour X matrix was not full rank, deleting columns to achieve full rank\n")
+      if(!silent){
+        cat("\nYour X matrix was not full rank, deleting columns to achieve full rank\n")
+      }
       X <- as.matrix(X[,chas])
     }else{
       X <- as.matrix(X)
@@ -112,53 +118,18 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
   }
   ###**********************************
   ##### FIX RANDOM EFFECTS FROM THE BEGGINING TO MAKE SURE LEVELS OF Z AND K ARE ORDERED
-  Z <- lapply(Z, function(x){ # ====START.1====order the Z matrices according to the K matrix if K is not diagonal
-    ## if K exist and is not a diagonal
-    if(length(x) > 1){
-      if(length(x) > 1 | !is.diagonal.matrix(x[[2]])){ #do something
-        if(!is.null(colnames(x[[1]])) & !is.null(colnames(x[[2]]))){ # =====START.2======both Z and K matrices have column names
-          if(length(which(colnames(x[[1]]) == colnames(x[[2]]))) != dim(x[[1]])[2]){
-            y <- colnames(x[[1]])
-            mo <- colnames(x[[2]])
-            # where they match
-            if(!is.null(mo)){
-              real <- apply(data.frame(mo),1,function(b,z){grep(b,z)[1]},z=y)
-              x[[1]] <- x[[1]][, real]
-            }else{#############
-              y2 <- strsplit(y, split="")
-              y3 <- y2[[1]]
-              ## &&&&&&&&&&&&&&&&&&&
-              for(i in 2:length(y2)){ # find the common name added when creating the design matrix
-                #y3 <- y3[match(y3, y2[[i]])]
-                basd <- vector()
-                for(j in 1:length(y3)){ # for each letter
-                  good <- which(y3[j] == y2[[i]])
-                  if(length(good) > 0){
-                    basd[j] <- (y3[good])[1]
-                    y2[[i]][good] <- NA
-                  }
-                }
-                y3 <- basd
-              }# end of getting common name
-              ## &&&&&&&&&&&&&&&&&&&
-              extraname <- paste(na.omit(y3), collapse = "")
-              if(extraname != ""){ # =====START.3=====the names did have extra text
-                
-                real1 <- match(  colnames(x[[2]]), gsub(as.character(extraname),"",as.character(colnames(x[[1]]))))
-                
-                if(length(which(is.na(real1))) == 0){ # just fix it if all levels were there, 
-                  x[[1]] <- x[[1]][,real1] # reorder Z !!!!! and put it back
-                }else{ # otherwise do not fix it but let the user know that Z colnames should be the same than K colnames
-                  cat("\nNames in Z and K matrices do not match. Might be that column names of your Z matrix \nare in different order than column names of K, or the column names of the Z matrix have\nan extra word. The analysis will be performed assuming column names of Z correspond \nto colum names of K and they are in the same order. Please take a look to make sure \nthe levels of K and Z are in the same order or do not have extra words.\n")
-                }##### end of real order search
-                
-              }### =======END.3=========else the colnames of Z did not have extra text 
-              
-            }################### END OF IF K HAS COLUMN NAMES
-            
-          }### ===========END.2======of Z and K have colnames
-        }
-      } # =======END.1=======else there's no problem, K did not exist or was a diagonal (do not affect calculations)
+  Z <- lapply(Z, function(x){
+    #########
+    uuuz <- levels(as.factor(colnames(x$Z))) # order of Z
+    uuuk <- levels(as.factor(colnames(x$K))) # order of K
+    #only if both Z and K have names, otherwise don't do anything
+    if((length(uuuz) >0 ) & (length(uuuk) > 0)){ 
+      inte <- intersect(uuuz,uuuk)
+      if(length(inte)==length(uuuz)){ # the names were the same in Z and K
+        x$K <- x$K[uuuz,uuuz]
+      }else{ # no intersection between z and k names
+        cat(paste("Column names of Z and K for random effect are not the same. Make sure they are in the correct order.\n"))
+      }
     }
     return(x)
   })
@@ -183,65 +154,65 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
   ###
   ### if we want to get initial values based on lmer model we set lmerHELP=TRUE
   ###
-  if(lmerHELP){
-    ## check that there's no matrices with class "hdm"
-    were.hdm <- unlist(lapply(Z, function(x){if(!is.null(attributes(x$Z)$hdm)){y <-TRUE}else{y <- FALSE};return(y)}))
-    
-    if(length(which(were.hdm))==0){ # no hdm matrices then proceed
-      
-      ## only use it if the model has reps otherwise is a waste of time!!!
-      not.square.track <- (unlist(lapply(Z,function(x){!is.square.matrix(x$Z)})))
-      if(length(which(not.square.track)) > 0){ # check that at least any Z matrix is not square
-        mmm <- length(Z)
-        dddd <- vector(mode="list", length = mmm)
-        #print(str(dddd))
-        for(i in 1:mmm){ # for each random effect
-          if(not.square.track[i]){ # if is not square proceed
-            Z1 <- Z[[i]][[1]]
-            #print(apply(Z1,1,function(x){which(x==1)}))
-            dddd[[i]] <- colnames(Z1)[unlist(apply(Z1,1,function(x){which(x==1)}))]#
-          }else{
-            Z1 <- Z[[i]][[1]]
-            #print(str(Z1))
-            dddd[[i]] <- paste("LL",1:dim(Z1)[2],sep=".")
-          }
-        }
-        dado <- as.data.frame(do.call("cbind",dddd))
-        head(dado)
-        # this returns which random effects can be evaluated by lmer, 1:YES, 0:NO
-        doo <- apply(dado,2,function(x){s1<- length(x);s2<- length(unique(x));if(s1==s2){y <- FALSE}else{y<-TRUE}})
-        goood <- which(doo)
-        baaad <- which(!doo)
-        doo2 <- names(dado)[which(doo)]
-        a <- paste("y~",paste(paste("(1|",doo2,")",sep=""),collapse = "+"))
-        lmermodel <- lmer(as.formula(a), data=dado)
-        vc <- as.data.frame(VarCorr(lmermodel)); rownames(vc) <- vc$grp
-        if(length(baaad)>0){ # if there was terms not possible to evaluate create a matrix for them
-          bad.mat <- matrix(0,ncol=5,nrow=length(baaad)); rownames(bad.mat) <- names(baaad); colnames(bad.mat) <- colnames(vc)
-          vc2 <- rbind(vc,bad.mat)
-        }else{ # all was evaluated corectly
-          vc2 <- vc
-        }
-        ## are all K matrices diagonals? in that case you could force values instead of initiating
-        #were.squares <- unlist(lapply(Z,function(x){if(class(x$K)[1] == "ddiMatrix"){y <- TRUE}else{y<-FALSE};return(y)}))
-        were.squares <- unlist(lapply(Z, function(x){if(!is.null(attributes(x$K)$diagon)){y <-TRUE}else{y <- FALSE};return(y)}))
-        
-        conditionK <- length(which(were.squares)) == length(Z)
-        if(conditionK & (length(baaad) == 0)){ # if K's are square matrices and lmer evaluated everything force
-          forced <- vc2[c(colnames(dado),"Residual"),4]
-        }else{ # if Ks were not squared or lmer couldn't evaluate all just initiate
-          init <- vc2[c(colnames(dado),"Residual"),4]
-          were.zeros <- which(init == 0)
-          if(length(were.zeros)>0){ # do not provide a zero or EM algorithm can fail
-            init[were.zeros] <- .001
-          }
-        }
-        
-      }
-      
-    }
-  }
-  
+  #if(lmerHELP){
+  #  ## check that there's no matrices with class "hdm"
+  #  were.hdm <- unlist(lapply(Z, function(x){if(!is.null(attributes(x$Z)$hdm)){y <-TRUE}else{y <- FALSE};return(y)}))
+  #  
+  #  if(length(which(were.hdm))==0){ # no hdm matrices then proceed
+  #    
+  #    ## only use it if the model has reps otherwise is a waste of time!!!
+  #    not.square.track <- (unlist(lapply(Z,function(x){!is.square.matrix(x$Z)})))
+  #    if(length(which(not.square.track)) > 0){ # check that at least any Z matrix is not square
+  #      mmm <- length(Z)
+  #      dddd <- vector(mode="list", length = mmm)
+  #      #print(str(dddd))
+  #      for(i in 1:mmm){ # for each random effect
+  #        if(not.square.track[i]){ # if is not square proceed
+  #          Z1 <- Z[[i]][[1]]
+  #          #print(apply(Z1,1,function(x){which(x==1)}))
+  #          dddd[[i]] <- colnames(Z1)[unlist(apply(Z1,1,function(x){which(x==1)}))]#
+  #        }else{
+  #          Z1 <- Z[[i]][[1]]
+  #          #print(str(Z1))
+  #          dddd[[i]] <- paste("LL",1:dim(Z1)[2],sep=".")
+  #        }
+  #      }
+  #      dado <- as.data.frame(do.call("cbind",dddd))
+  #      head(dado)
+  #      # this returns which random effects can be evaluated by lmer, 1:YES, 0:NO
+  #      doo <- apply(dado,2,function(x){s1<- length(x);s2<- length(unique(x));if(s1==s2){y <- FALSE}else{y<-TRUE}})
+  #      goood <- which(doo)
+  #      baaad <- which(!doo)
+  #      doo2 <- names(dado)[which(doo)]
+  #      a <- paste("y~",paste(paste("(1|",doo2,")",sep=""),collapse = "+"))
+  #      lmermodel <- lmer(as.formula(a), data=dado)
+  #      vc <- as.data.frame(VarCorr(lmermodel)); rownames(vc) <- vc$grp
+  #      if(length(baaad)>0){ # if there was terms not possible to evaluate create a matrix for them
+  #        bad.mat <- matrix(0,ncol=5,nrow=length(baaad)); rownames(bad.mat) <- names(baaad); colnames(bad.mat) <- colnames(vc)
+  #        vc2 <- rbind(vc,bad.mat)
+  #      }else{ # all was evaluated corectly
+  #        vc2 <- vc
+  #      }
+  #      ## are all K matrices diagonals? in that case you could force values instead of initiating
+  #      #were.squares <- unlist(lapply(Z,function(x){if(class(x$K)[1] == "ddiMatrix"){y <- TRUE}else{y<-FALSE};return(y)}))
+  #      were.squares <- unlist(lapply(Z, function(x){if(!is.null(attributes(x$K)$diagon)){y <-TRUE}else{y <- FALSE};return(y)}))
+  #      
+  #      conditionK <- length(which(were.squares)) == length(Z)
+  #      if(conditionK & (length(baaad) == 0)){ # if K's are square matrices and lmer evaluated everything force
+  #        forced <- vc2[c(colnames(dado),"Residual"),4]
+  #      }else{ # if Ks were not squared or lmer couldn't evaluate all just initiate
+  #        init <- vc2[c(colnames(dado),"Residual"),4]
+  #        were.zeros <- which(init == 0)
+  #        if(length(were.zeros)>0){ # do not provide a zero or EM algorithm can fail
+  #          init[were.zeros] <- .001
+  #        }
+  #      }
+  #      
+  #    }
+  #    
+  #  }
+  #}
+  ########### END OF LMER HELP
   #if(length(which(were.hdm))>0){ # rebaptize hdm matrices aas normal matrices
   #Z <- lapply(Z, function(x){if(class(x$Z)=="hdm"){class(x$Z) <- "matrix"};return(x)})
   #}
@@ -300,7 +271,7 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
         if(length(random) > 0){# EMMA both in 2-level list provided
           #res <- EMMA(y=y, X=X, Z=Z[[random]][[1]], K=Z[[random]][[2]],  REML=REML,silent=silent, EIGEND=EIGEND) 
           res <- EMMA(y=y, X=X, ZETA=Z,  REML=REML,silent=silent, EIGEND=EIGEND, che=FALSE) 
-          names(res$u.hat) <- names(Z)
+          #names(res$u.hat) <- names(Z)[1]
           ### if user provide names in the Z component
           if(!is.null(names(Z))){
             rownames(res$var.comp) <- c(paste("Var(",names(Z),")",sep=""), "Var(Error)")
@@ -310,25 +281,23 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
           #res <- EMMA(y=y, X=X, Z=Z[[1]], K=Z[[2]],REML=REML,silent=silent,EIGEND=EIGEND)
           Z <- list(Z)
           res <- EMMA(y=y, X=X, ZETA=Z,  REML=REML,silent=silent, EIGEND=EIGEND, che=FALSE) 
-          names(res$u.hat) <- names(Z)
+          #names(res$u.hat) <- names(Z)[1]
           ### if user provide names in the Z component
           if(!is.null(names(Z))){
             rownames(res$var.comp) <- c(paste("Var(",names(Z),")",sep=""), "Var(Error)")
           }
           ### end of adding names
         }
-      }
-      if(method == "EM"){
+      }else if(method == "EM"){
         res <- EM(y=y, X=X, ETA=Z, R=R, init=init, iters = iters, REML=REML, draw=draw, silent=silent, forced=forced)
-      }
-      if(method == "AI"){
+      }else if(method == "AI"){
         #res <- AI(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, EIGEND=EIGEND,Fishers=Fishers)
         if(length(Z) == 1){ # if only one variance component, make sure is not Z and K both diags
           dias <- unlist(lapply(Z[[1]], function(x){if(dim(x)[1] == dim(x)[2]){y <- is.diagonal.matrix(x)}else{y <- FALSE};return(y)}))
           if(length(which(dias)) == 2){ # if K and Z are diagonals do EMMA
             #res <- EMMA(y=y, X=X, Z=Z[[random]][[1]], K=Z[[random]][[2]],REML=REML,silent=silent,EIGEND=EIGEND)
             res <- EMMA(y=y, X=X, ZETA=Z,  REML=REML,silent=silent, EIGEND=EIGEND, che=FALSE) 
-            names(res$u.hat) <- names(Z)
+            #names(res$u.hat) <- names(Z)[1]
             ### if user provide names in the Z component
             if(!is.null(names(Z))){
               rownames(res$var.comp) <- c(paste("Var(",names(Z),")",sep=""), "Var(Error)")
@@ -340,25 +309,26 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
         }else{ # if multiple variance components
           res <- AI(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, EIGEND=EIGEND,Fishers=Fishers,forced=forced) 
         }
-      }
-      if(method == "NR"){
+      }else if(method == "NR"){
         if(length(Z) == 1){ # if only one variance component, make sure is not Z and K both diags
           dias <- unlist(lapply(Z[[1]], function(x){if(dim(x)[1] == dim(x)[2]){y <- is.diagonal.matrix(x)}else{y <- FALSE};return(y)}))
           if(length(which(dias)) == 2){ # if K and Z are diagonals do EMMA
             #res <- EMMA(y=y, X=X, Z=Z[[random]][[1]], K=Z[[random]][[2]],REML=REML,silent=silent,EIGEND=EIGEND)
             res <- EMMA(y=y, X=X, ZETA=Z,  REML=REML,silent=silent, EIGEND=EIGEND, che=FALSE) 
-            names(res$u.hat) <- names(Z)
+            #names(res$u.hat) <- names(Z)[1]
             ### if user provide names in the Z component
             if(!is.null(names(Z))){
               rownames(res$var.comp) <- c(paste("Var(",names(Z),")",sep=""), "Var(Error)")
             }
             ### end of adding names
           }else{
-            res <- NR(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced)
+            res <- NR(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced)
           }
         }else{ # if multiple variance components
-          res <- NR(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced) 
+          res <- NR(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced) 
         }
+      }else{
+        stop("Unrecognized method. Please select one of the methods; 'NR', 'AI', 'EMMA' or 'EM'. ",call. = FALSE)
       }
       #estimate variance components using G
       ##########################################
@@ -376,7 +346,7 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
       # then the F statistic as Beta^2/Var(Beta),,, x = (n-p) / (n-p + 1 * F)
       # and finally the -log10 of beta distribution [-log10(pbeta(x, v2/2, v1/2))]
       if(!silent){
-      cat("\nPerforming GWAS")
+        cat("\nPerforming GWAS")
       }
       max.geno.freq= 1 - min.MAF
       #n <- dim(W)[1]
@@ -404,7 +374,7 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
       }
       ### END QQ FUNCTION
       
-      deviations <- apply(W,2,sd) # sd of markers
+      deviations <- apply(W,2,sd,na.rm=TRUE) # sd of markers
       dev.no0 <- which(deviations > 0) # markers that are not singlular
       W <- W[,dev.no0] # only good markers will be tested
       
@@ -419,7 +389,7 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
         
         
         ####
-        if(!is.null(map) ){ ########### MAP PRESENT ##################
+        if(!is.null(map) & gwas.plots){ ########### MAP PRESENT ##################
           dd <- W.scores[[u]]#matrix(step2$score)
           ffr <- fdr(dd, fdr.level=fdr.level)$fdr.10
           #rownames(dd) <- colnames(W)
@@ -445,7 +415,7 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
             
             if(gwas.plots){ # user gave map, wants map, BUT WANTS PLOT??
               qq(step2$score)
-              yylim <- ceiling(max(dd2))
+              yylim <- ceiling(max(dd2,na.rm=TRUE))
               plot(dd2, bty="n", col=col.scheme[factor(map3$Chrom, levels = unique(map3$Chrom, na.rm=TRUE))], xaxt="n", xlab="Chromosome", ylab=expression(paste(-log[10],"(p.value)")), pch=20, cex=2.5, las=2, ylim = c(0,yylim))
               ## make axis
               init.mrks <- apply(data.frame(unique(map3$Chrom)),1,function(x,y){z <- which(y == x)[1]; return(z)}, y=map3$Chrom)
@@ -462,22 +432,23 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
             cat("\nError found! There was no markers in common between the column names of the W matrix \nand the map you provided. Please make sure that your data frame has names \n'Chrom' and 'Locus' to match correctly your map and markers tested. Plotting all markers.\n")
             map3 <- NULL
             layout(matrix(1:2,1,2))
+            ffr <- fdr(step2$score, fdr.level=fdr.level)$fdr.10
             qq(step2$score)
-            yylim <- ceiling(max(step2$score))
+            yylim <- ceiling(max(step2$score,na.rm=TRUE))
             plot(step2$score, col=transp("cadetblue", 0.6), pch=20, xlab="Marker index", 
                  ylab=expression(paste(-log[10],"(p.value)")), main=paste(model,"model"), bty="n", cex=1.5, ylim=c(0,yylim))
+            abline(h=ffr, col="slateblue4", lty=3, lwd=2)
           }
           
-        }
-        else if (is.null(map) & gwas.plots){ ############ NO MAP PROVIDED #############
+        }else if (is.null(map) & gwas.plots){ ############ NO MAP PROVIDED #############
           layout(matrix(c(1,2,2),1,3))
           ffr <- fdr(step2$score, fdr.level=fdr.level)$fdr.10
           #layout(matrix(1:2,1,2))
           qq(step2$score)
           map3 <-NULL
-          yylim <- ceiling(max(step2$score))
+          yylim <- ceiling(max(step2$score,na.rm=TRUE))
           plot(step2$score, col=transp("cadetblue", 0.6), pch=20, xlab="Marker index", 
-               ylab=expression(paste(-log[10],"(p.value)")), main=paste(model,"model"), bty="n", cex=1.5, ylim=c(0,yylim))
+               ylab=expression(paste(-log[10],"(p.value)")), main=paste(model,"model"), bty="n", cex=1.5)
           abline(h=ffr, col="slateblue4", lty=3, lwd=2)
         }
         ####
@@ -516,7 +487,7 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
         if(length(random) > 0){# EMMA buth in 2-level list provided
           #res <- EMMA(y=y, X=X, Z=Z[[random]][[1]], K=Z[[random]][[2]],REML=REML, silent=silent,EIGEND=EIGEND) 
           res <- EMMA(y=y, X=X, ZETA=Z,  REML=REML,silent=silent, EIGEND=EIGEND, che=FALSE) 
-          names(res$u.hat) <- names(Z)
+          #names(res$u.hat) <- names(Z)[1]
           ### if user provide names in the Z component
           if(!is.null(names(Z))){
             rownames(res$var.comp) <- c(paste("Var(",names(Z),")",sep=""), "Var(Error)")
@@ -526,24 +497,22 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
           #res <- EMMA(y=y, X=X, Z=Z[[1]], K=Z[[2]], REML=REML,silent=silent,EIGEND=EIGEND)
           Z <- list(Z)
           res <- EMMA(y=y, X=X, ZETA=Z,  REML=REML,silent=silent, EIGEND=EIGEND, che=FALSE) 
-          names(res$u.hat) <- names(Z)
+          #names(res$u.hat) <- names(Z)[1]
           ### if user provide names in the Z component
           if(!is.null(names(Z))){
             rownames(res$var.comp) <- c(paste("Var(",names(Z),")",sep=""), "Var(Error)")
           }
           ### end of adding names
         }
-      }
-      if(method == "EM"){
+      }else if(method == "EM"){
         res <- EM(y=y, X=X, ETA=Z, R=R, init=init, iters = iters, REML=REML, draw=draw, silent=silent, forced=forced)
-      }
-      if(method == "AI"){
+      }else if(method == "AI"){
         if(length(Z) == 1){ # if only one variance component, make sure is not Z and K both diags
           dias <- unlist(lapply(Z[[1]], function(x){if(dim(x)[1] == dim(x)[2]){y <- is.diagonal.matrix(x)}else{y <- FALSE};return(y)}))
           if(length(which(dias)) == 2){ # if K and Z are diagonals do EMMA
             #res <- EMMA(y=y, X=X, Z=Z[[random]][[1]], K=Z[[random]][[2]],REML=REML,silent=silent,EIGEND=EIGEND)
             res <- EMMA(y=y, X=X, ZETA=Z,  REML=REML,silent=silent, EIGEND=EIGEND, che=FALSE) 
-            names(res$u.hat) <- names(Z)
+            #names(res$u.hat) <- names(Z)[1]
             ### if user provide names in the Z component
             if(!is.null(names(Z))){
               rownames(res$var.comp) <- c(paste("Var(",names(Z),")",sep=""), "Var(Error)")
@@ -555,20 +524,22 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
         }else{ # if multiple variance components
           res <- AI(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, EIGEND=EIGEND,Fishers=Fishers, gss=gss, forced=forced) 
         }
-      }
-      if(method == "NR"){
+      }else if(method == "NR"){
         if(length(Z) == 1){ # if only one variance component, make sure is not Z and K both diags
           dias <- unlist(lapply(Z[[1]], function(x){if(dim(x)[1] == dim(x)[2]){y <- is.diagonal.matrix(x)}else{y <- FALSE};return(y)}))
           if(length(which(dias)) == 2){ # if K and Z are diagonals do EMMA
             #res <- EMMA(y=y, X=X, Z=Z[[random]][[1]], K=Z[[random]][[2]],REML=REML,silent=silent,EIGEND=EIGEND)
+            #print(str(Z))
             res <- EMMA(y=y, X=X, ZETA=Z,  REML=REML,silent=silent, EIGEND=EIGEND, che=FALSE) 
-            names(res$u.hat) <- names(Z)
+            #names(res$u.hat) <- names(Z)[1]
           }else{
-            res <- NR(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE,Fishers=Fishers, forced=forced)
+            res <- NR(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE,Fishers=Fishers, forced=forced)
           }
         }else{ # if multiple variance components
-          res <- NR(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced) 
+          res <- NR(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced) 
         }
+      }else{
+        stop("Unrecognized method. Please select one of the methods; 'NR', 'AI', 'EMMA' or 'EM'. ",call. = FALSE)
       }
       res$method <- method
       res$maxim <- REML

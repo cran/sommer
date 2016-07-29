@@ -11,7 +11,7 @@ The data contains 3 elements. The first is the phenotypic data and the parent in
 
 The second element of the data set is the phenotypic data and other relevant information for the 40.
 
-The third element is the genomic relationship matrix for the 40 inbred lines originated from 511 SNP markers and calculated using the A.mat function from the rrBLUP package.
+The third element is the genomic relationship matrix for the 40 inbred lines originated from 511 SNP markers and calculated using the A.mat function.
 
 }
 \usage{data("cornHybrid")}
@@ -53,6 +53,9 @@ Z1 <- model.matrix(~ GCA1 -1, data = hybrid2);dim(Z1)
 Z2 <- model.matrix(~ GCA2 -1, data = hybrid2);dim(Z2)
 Z3 <- model.matrix(~ SCA -1, data = hybrid2);dim(Z3)
 
+colnames(Z1) <- levels(hybrid2$GCA1)
+colnames(Z2) <- levels(hybrid2$GCA2)
+colnames(Z3) <- levels(hybrid2$SCA)
 ####=========================================####
 #### Realized IBS relationships for set of parents 1
 ####=========================================####

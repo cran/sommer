@@ -1,8 +1,8 @@
 \name{map.plot}
 \alias{map.plot}
-\title{Creating a genetic map}
+\title{Creating a genetic map plot}
 \description{
-This function was designed to create a genetic map using a data frame indicating the Linkage Group (LG), Position and marker names (Locus). 
+This function was designed to create a genetic map plot using a data frame indicating the Linkage Group (LG), Position and marker names (Locus). 
 }
 \usage{
 map.plot(data, trait = NULL, trait.scale = "same", 
@@ -13,13 +13,13 @@ map.plot(data, trait = NULL, trait.scale = "same",
 \arguments{
   \item{data}{the data frame with 3 columns with names; Locus, LG and Position}
   \item{trait}{if something wants to be plotted next the linkage groups the user must indicate the name of the column containing the values to be ploted, i.e. p-values, LOD scores, X2 segregation distortion values, etc.}
-  \item{trait.scale}{a character value indicating if the scale should be the same or different for each linkage group. The default value id "same".}
-  \item{col.chr}{a vector with color names for the chromosomes}
-  \item{col.trait}{a vector with color names for the trait plotted next to the LG's}
+  \item{trait.scale}{is trait is not NULL, this is a character value indicating if the y axis limits for the trait plotted next to the chromosomes should be the same or different for each linkage group. The default value is "same", which means that the same y axis limit is conserved across linkage groups. For giving an individual y axis limit for each linkage group write "diff".}
+  \item{col.chr}{a vector with color names for the chromosomes. If NULL they will be drawn in gray-black scale.}
+  \item{col.trait}{a vector with color names for the dots, lines or histogram for the trait plotted next to the LG's}
   \item{type}{a character value indicating if the trait should be plotted as scatterplot `dot`, histogram `hist`, line `line` next to the chromosomes.}
-  \item{cex}{the cex value determining the value of the position number in the LGs}
+  \item{cex}{the cex value determining the size of the cM position labels in the LGs}
   \item{lwd}{the width of the lines in the plot}
-  \item{cex.axis}{the cex value for sizing the labels of LGs and traits plotted}
+  \item{cex.axis}{the cex value for sizing the labels of LGs and traits plotted (top labels)}
   \item{cex.trait}{the cex value for sizing the dots or lines of the trait plotted}
   \item{jump}{a scalar value indicating how often should be drawn a number next to the LG indicating the position. The default is 5 which means every 5 cM a label will be drawn, i.e. 0,5,10,15,... cM.}
 }

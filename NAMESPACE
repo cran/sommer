@@ -1,7 +1,7 @@
 #############
 ## EXPORTS
 #############
-export(adiag1, A.mat, AI, AI2, AI3, atcg1234, hits, big.peaks.col, bathy.colors, brewer.pal, D.mat, design.score, eigenGWAS, E.mat, EM, EM2, EMMA, EMMAM, fdr, hadamard.prod, hdm, is.diagonal.matrix, is.square.matrix, jet.colors, manhattan, matrix.trace, map.plot, maxi.qtl, mmer, mmerSNOW, MMERM, mmer2, NR, NR22, phase.F1, PEV, poe, S.mat, score.calc, transp, TP.prep)
+export(adiag1, A.mat, AI, ai2help, atcg1234, hits, big.peaks.col, bathy.colors, brewer.pal, D.mat, design.score, eigenGWAS, E.mat, EM, EM2, EMMA, fdr, hadamard.prod, hdm, is.diagonal.matrix, is.square.matrix, jet.colors, manhattan, matrix.trace, map.plot, maxi.qtl, mmer, mmerSNOW, MMERM, MEMMA, MAI, MAI2, MNR, mmer2, NR, NR22, phase.F1, PEV, poe, S.mat, score.calc, transp, TP.prep)
 
 export(summary.mmer, summary.mmerM, summary.MMERM, residuals.mmer, residuals.mmerM, residuals.MMERM, fitted.mmer, fitted.mmerM, fitted.MMERM, plot.mmer, plot.mmerM, plot.MMERM, anova.mmer, anova.mmerM, anova.MMERM, coef.mmer, coef.mmerM, coef.MMERM, randef)
 
@@ -63,7 +63,7 @@ S3method(plot, MMERM)
   importFrom("utils", "combn", "setTxtProgressBar", "txtProgressBar",
              "available.packages", "contrib.url")
   #importFrom("matrixcalc", "matrix.trace","is.diagonal.matrix", "is.square.matrix")
-  importFrom("lme4","lmer","VarCorr")
+  #importFrom("lme4","lmer","VarCorr")
   importFrom("parallel", "detectCores","mclapply") #"detectCores","makeCluster","stopCluster",
   #importFrom("doParallel","registerDoParallel")
   #importFrom("foreach", "%dopar%")

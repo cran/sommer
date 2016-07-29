@@ -6,10 +6,10 @@ This function is used internally in the function \code{\link{mmer}} when MORE th
 }
 \usage{
 NR22(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, 
-   iters=50, constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, 
+   iters=15, constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, 
    MTG2=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL, identity=TRUE, 
    kernel=NULL, start=NULL, taper=NULL, verbose=0, gamVals=NULL, 
-   maxcyc=50, tol=1e-4)
+   maxcyc=15, tol=1e-4)
 }
 \arguments{
   \item{y}{a numeric vector for the response variable}

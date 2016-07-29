@@ -1,11 +1,11 @@
-\name{EMMAM}
-\alias{EMMAM}
+\name{MEMMA}
+\alias{MEMMA}
 \title{Multivariate Efficient Mixed Model Association Algorithm}
 \description{
-This function is used internally in the function \code{\link{mmer}} when multiple responses are selected for a single variance component other than the error. It uses the efficient mixed model association (EMMAM) algorithm. 
+This function is used internally in the function \code{\link{mmer}} when multiple responses are selected for a single variance component other than the error. It uses the efficient mixed model association (MEMMA) algorithm. 
 }
 \usage{
-EMMAM(Y, X=NULL, ZETA=NULL, tolpar = 1e-06, tolparinv = 1e-06, che=TRUE,
+MEMMA(Y, X=NULL, ZETA=NULL, tolpar = 1e-06, tolparinv = 1e-06, che=TRUE,
       silent=TRUE)
 }
 \arguments{
@@ -125,7 +125,7 @@ A <- A.mat(CPgeno) # additive relationship matrix
 #### ADDITIVE MODEL ####
 ####================####
 ETA.A <- list(add=list(Z=Za,K=A))
-#ans.A <- EMMAM(Y=Y, ZETA=ETA.A)
+#ans.A <- MEMMA(Y=Y, ZETA=ETA.A)
 #ans.A$var.comp
 }
 \seealso{The core function of the package \code{\link{mmer}}}

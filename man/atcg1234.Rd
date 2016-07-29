@@ -44,6 +44,8 @@ genotypes[1:5,1:5] # look the original format
 
 ####=================================================####
 #### convert markers to numeric format diploid rice lines
+#### single letter code for inbred lines from GBS pipeline
+#### A=AA, T=TT, C=CC, G=GG 
 ####=================================================####
 #data(RICE)
 #X <- RICE$RiceGeno; X[1:5,1:5]; dim(X)

@@ -1,7 +1,7 @@
-NR22 <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=50, 
+NR22 <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=15, 
                 constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, MTG2=FALSE, Fishers=FALSE, 
                 gss=TRUE, forced=NULL, identity=TRUE, kernel=NULL, start=NULL, taper=NULL,
-                verbose=0, gamVals=NULL, maxcyc=50, tol=1e-4){
+                verbose=0, gamVals=NULL, maxcyc=15, tol=1e-4){
   
   ## when two matrices are passed to regress this is also called
   ## to evaluate the REML at certain values of gamma and find a
@@ -428,6 +428,7 @@ NR22 <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALS
   if (all(sapply(V, is.factor)) & k>2 ) {  # Contribution by Hans Jurgen Auinger
     SWsolveINDICATOR <- TRUE
   } else SWsolveINDICATOR <- FALSE
+  #print(SWsolveINDICATOR)
   Z <- list()
   for (i in 1:length(V)) {
     if (is.factor(V[[i]])) {
@@ -455,8 +456,9 @@ NR22 <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALS
   stats <- rep(0, 0)
   
   ## START ALGORITHM
-  
+  #print(taper)
   # taper is the steps to take 0-1
+  #print(taper)
   if(missing(taper)){
     taper <- rep(0.9, maxcyc)
     if(missing(start) && k>1) taper[1:2] <- c(0.5, 0.7)
@@ -575,6 +577,7 @@ NR22 <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALS
     }
     ## Limit how far out we go on the logarithmic scale
     ind <- which(pos)
+    #print(ind)
     if(length(ind)) {
       coef[ind] <- pmin(coef[ind],20)
       coef[ind] <- pmax(coef[ind],-20) ## so on regular scale everything is between exp(-20) and exp(20)
@@ -585,33 +588,44 @@ NR22 <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALS
       cat(cycle, "sigma =",sigma)
       ##cat(sigma)
     }
-    
+    #print(SWsolveINDICATOR)
     if(!SWsolveINDICATOR) {
+      #print("yeah")
       Sigma <- 0
+      #print(V[[1]][1:5,1:5])
       ## can we get rid of this loop? multiplies each var-cov for its variance component
       ## additionally sums up each var-cov V = ZKZ + ZKZ + ... + ZRZ
-      for(i in 1:k) Sigma <- Sigma + V[[i]]*sigma[i]
+      for(i in 1:k) {
+        #print(V[[i]][1:3,1:5])
+        #print(sigma[i])
+        Sigma <- Sigma + V[[i]]*sigma[i]
+      }
+      #print(Sigma[1:4,1:4])
+      #print(k)
+      #print(sigma)
+      #for(i in 1:k) print(V[[i]][1:5,1:5])
       # solves V to get V.inverse using In (identity matrix) as response
       W <- solve(Sigma,In)
-    } else {
+      #print(W[1:3,1:3])
+    } else { # if no Vformula
       W <- SWsolve2(Z[1:(k-1)],sigma)
     }
     # K is the X matrix for fixed effects
     if(is.null(K)){
       WQK <- W
     }else{ # our case, use sherman
-      WK <- W %*% K # V.inv X
-      WQK <- W - WK %*% solve(t(K)%*%WK, t(WK)) # V.inv - V.inv X [X' V.inv X]-1
+      WK <- W %*% K # V- X
+      WQK <- W - WK %*% solve(t(K)%*%WK, t(WK)) # P = V-  -  V-X [X' V- X]-1 XV-
     }
     ## WQK and WQX
-    if(reml){ # REML
-      WQX <- WQK
-    }else{ # ML
+    if(reml){ # REML(default)
+      WQX <- WQK # WQK and WKX are the same
+    }else{ # ML(not default)
       WX <- W %*% KX        # including the kernel (Oct 12 2011)
       WQX <- W - WX %*% solve(t(KX)%*%WX, t(WX))
     }
     
-    # y' [parameter space] y
+    # y' P y
     rss <- as.numeric(t(y) %*% WQX %*% y)
     
     ##if(verbose>9) cat("Sigma[1:5]",Sigma[1:5],"\n")
@@ -619,16 +633,14 @@ NR22 <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALS
     sigma <- sigma * rss/rankQK
     coef[!pos] <- sigma[!pos]
     coef[pos] <- log(sigma[pos])
-    WQK <- WQK * rankQK/rss
+    WQK <- WQK * rankQK/rss # P * [r(X) / yPy]
     WQX <- WQX * rankQK/rss
     rss <- rankQK ## looks bad but the rss is absorbed into WQK so the rss term comes out of eig below
     
+    # this is the way to check if the 
     eig <- sort(eigen(WQK,symmetric=TRUE,only.values=TRUE)$values, decreasing=TRUE)[1:rankQK]
     
     if(any(eig < 0)){
-      cat("error: Sigma is not positive definite on contrasts: range(eig)=", range(eig), "\n")
-      
-     
       WQK <- WQK + (tol - min(eig))*diag(dim(WQK)[1])
       eig <- eig + tol - min(eig)
     }
@@ -658,12 +670,13 @@ NR22 <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALS
     ind <- which(pos)
     if(length(ind)) var.components[ind] <- sigma[ind]
     
-    ## Slow part - order k n-squared
+    ## Slow part - order k n-squared P Vi
+    #print(identity)
     if(!SWsolveINDICATOR) {
       if(identity) {
         T[[k]] <- WQK
         if(k>1) {
-          for(ii in (k-1):1) T[[ii]] <- WQK %*% V[[ii]] ## # V.inv - V.inv X [X' V.inv X]-1 * ZKZi
+          for(ii in (k-1):1) T[[ii]] <- WQK %*% V[[ii]] ## # P ZKZ' #... V.inv - V.inv X [X' V.inv X]-1 * ZKZi
         }
       } else {
         for(ii in 1:k) T[[ii]] <- WQK %*% V[[ii]]
@@ -672,20 +685,31 @@ NR22 <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALS
       if(identity) {
         T[[k]] <- WQK
         if(k>1) {
-          for(ii in (k-1):1) T[[ii]] <- tcrossprod(WQK %*% Z[[ii]],Z[[ii]])
+          for(ii in (k-1):1) T[[ii]] <- tcrossprod(WQK %*% Z[[ii]],Z[[ii]]) # PZZ'
         }
       } else {
         for(ii in 1:k) T[[ii]] <- tcrossprod(WQK %*% Z[[ii]],Z[[ii]])
       }
     }
-    
+    ## obtain first derivatives
+    # Vi = dV/ds
     # V.inv - V.inv X [X' V.inv X]-1, adjust +- variance components
+    ## y' P Vi P y - tr(P Vi)
     x <- sapply(T,function(x) as.numeric(t(y) %*% x %*% WQX %*% y - sum(diag(x))))
+    ## theta(k) * 1st.deriv are scalar values
     x <- x * var.components
     
-    ## See nested for loops commented out below - evaluating the Expected Fisher Information, A
+    
+    ## See nested for loops commented out below - 
+    ## evaluating the Expected Fisher Information, A
+    ## [theta(i) * 1st.deriv(i)] * [theta(j) * 1st.deriv(j)]  * sigma(i) * sigma(j)
+    #print(var.components)
     ff <- function(x) sum(T[[x[1]]] * t(T[[x[2]]])) * var.components[x[1]] * var.components[x[2]]
-    aa <- apply(entries,1,ff)
+    aa <- apply(entries,1,ff) # matrix of combinations of var.comp 
+    ## 1 1
+    ## 2 1
+    ## 1 2
+    ## 2 2
     # A is the Fishers information matrix
     A[as.matrix(entries)] <- aa
     
@@ -776,6 +800,11 @@ NR22 <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALS
     }
   }
   
+  if(any(eig < 0)){
+    if(!silent){
+      cat("\nError: Sigma is not positive definite on contrasts: range(eig)=", range(eig), "\n")
+    }
+  }
   ################
   ############### ========================= FINISH VAR.COMP ESTIMATED =============== #############
   ############### ========================= ========================= ========================= 
@@ -783,5 +812,5 @@ NR22 <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALS
   ############### ========================= ========================= ========================= 
   
   
-  return(sigma)
+  return(list(vars=sigma,W=W))
 }

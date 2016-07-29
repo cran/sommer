@@ -50,6 +50,11 @@ Giovanny Covarrubias-Pazaran
 ####=========================================####
 data(RICE)
 W <- RICE$RiceGenoN; W[1:5,1:5]; dim(W)
+#### lets use only 5000 random markers across the genome
+#### for demonstration purposes
+ww <- sample(1:dim(W)[2],5000)
+W <- W[,ww]; dim(W)
+
 Y <- RICE$RicePheno; Y[1:5,1:5]; dim(Y)
 (vp.str <- RICE$vp.str[1:25]) # validation population with structure
 bases <- seq(50,200,25) # TP sizes required
@@ -96,7 +101,7 @@ rest <- (1:dim(W)[1])[-which(rownames(W) \%in\% vp.str)]
 #### get marker matrix for the most significant QTLs
 #### and do the TP selection using only those markers
 ####=========================================####
-#X <- bag(ans.GWAS, nmar = 25); head(X); dim(X)
+#X <- hits(ans.GWAS, nmar = 25); head(X); dim(X)
 #tp.plant.strG3 <- TP.prep(markers=X, vp.names = vp.str, 
 #                      tp.size = bases, method="sim-dissim")
 

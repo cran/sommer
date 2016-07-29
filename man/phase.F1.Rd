@@ -11,8 +11,11 @@ It takes CP data in a preliminary order (produced by JoinMap4.1 or OneMap) and p
 Ideally mapping in F1s would include the following steps:
 
 1) Do initial map with any algorithm able to deal with CP crosses (i.e. JoinMap v4.1 ML algorithm can do maps with all markers lmxll, nnxnp, hkxhk, efxeg, abxcd simultaneously)
-2) Develop parental maps (this is the step this function performs, including phasing and imputation of hk markers)
+
+\strong{2) Develop parental maps (this is the step this function performs, including phasing and imputation of hk markers)}
+
 3) Do bin mapping in the parental maps (ASMap in R is a good choice for doing the bin maps)
+
 4) Do an integrated map using the parental bin maps (LP merge is a good option)
 
 }
@@ -20,7 +23,7 @@ Ideally mapping in F1s would include the following steps:
 phase.F1(genos, silent=FALSE, start=7)
 }
 \arguments{
-  \item{genos}{a dataframe with joinmap format as shown in the \code{\link{F1geno}} data which is explained with more detail below.}
+  \item{genos}{a dataframe with joinmap format as shown in the \code{\link{F1geno}} data which is explained with more detail in the example below.}
   \item{silent}{a TRUE/FALSE statement indicating if the program should print the progrss bar as the function works.}
   \item{start}{the marker where the program should start to look for the first hk marker.}
   

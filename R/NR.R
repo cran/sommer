@@ -1,7 +1,7 @@
-NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=50, 
+NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=15, 
                constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, MTG2=FALSE, Fishers=FALSE, 
                gss=TRUE, forced=NULL, identity=TRUE, kernel=NULL, start=NULL, taper=NULL,
-               verbose=0, gamVals=NULL, maxcyc=50, tol=1e-4){
+               verbose=0, gamVals=NULL, maxcyc=15, tol=1e-4){
   
   ###########################
   ## y is a vector for the response variable
@@ -714,7 +714,6 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
       
       eig <- sort(eigen(WQK,symmetric=TRUE,only.values=TRUE)$values, decreasing=TRUE)[1:rankQK]
       if(any(eig < 0)){
-        cat("error: Sigma is not positive definite on contrasts: range(eig)=", range(eig), "\n")
         #eig[which(eig<0)]<-0.001
         #print(eig)
         WQK <- WQK + (tol - min(eig))*diag(dim(WQK)[1])
@@ -893,12 +892,14 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
     ###*****************************************************************************************
     if(constraint & length(badd) > 0){ # if a variance component was negative and constraint was activated
       # recalculate variance components removing such variance component
-      
-      cat("\nOne or more variance components close to zero. Boundary constraint applied.\n")
+      if(!silent){
+        cat("\nOne or more variance components close to zero. Boundary constraint applied.\n")
+      }
       ZETAXXX <- ZETA.or[-badd]
       sigmaxxx <- NR22(y.or, X=x.or, ZETA=ZETAXXX, init=sigma[goodd],draw=draw,silent=silent)
-      sigma[goodd] <- sigmaxxx
+      sigma[goodd] <- sigmaxxx$vars
       sigma[badd] <- 0
+      W <- sigmaxxx$W
       
     }### END OF RECALCULATING VAR.COMP WHEN NEGATIVE
     ###*****************************************************************************************
@@ -915,6 +916,7 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
   txm <- t(xm)
   zvar <- 1:length(ZETA)
   var.com2 <- as.matrix(sigma)
+  #print(var.com2)
   ################################
   ################################
   # RANDOM VARIABLES
@@ -931,6 +933,7 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
   
   #############
   varo <- as.list(var.com2)  # variance components for random, no error
+  #print(varo)
   #print(varo)
   Gspo <- lapply(as.list(c(1:length(ZETA))),function(x,K,v){
     oo=K[[x]]*as.numeric((v[[x]])); return(oo)
@@ -953,7 +956,7 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
     vm <- Zsp%*%crossprod(Gsp,tZsp) + Rsp # ZGZ+R
     Vinv <- solve(vm,sparse=TRUE, tol = 1e-19)
   }
-  
+  #print(Vinv[1:3,1:3])
   #################
   #Vinv2 <- Vinv
   ## Fixed effects
@@ -1079,6 +1082,11 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
     colnames(sigma.cov) <- rownames(out1)
   }
 
+  if(any(eig < 0)){
+    if(!silent){
+      cat("\nError: Sigma is not positive definite on contrasts: range(eig)=", range(eig), "\n")
+    }
+  }
   res <- list(var.comp=out1, V.inv = Vinv, u.hat=u, Var.u.hat=Var.u, 
               PEV.u.hat=PEV.u, beta.hat=beta, Var.beta.hat=xvxi, 
               LL=logL, AIC=AIC, BIC=BIC, X=xm, fitted.y=fitted.y, 

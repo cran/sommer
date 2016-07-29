@@ -9,13 +9,13 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-The sommer package has been developed to provide R users with a powerful mixed model solver for different genetic and non-genetic analysis in diploid and polyploid organisms. This package allows the user to estimate variance components for a mixed model with the advantage of specifying the variance-covariance structure of the random effects and obtain other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc. 
+The sommer package has been developed to provide R users with a powerful multivariate mixed model solver for different genetic and non-genetic analysis in diploid and polyploid organisms. This package allows the user to estimate variance components for a mixed model with the advantage of specifying the variance-covariance structure of the random effects and obtain other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc. 
 
 The package is focused on genomic prediction (or genomic selection) and GWAS analysis, although general mixed models can be fitted as well. The package provides kernels to estimate additive (`A.mat`), dominance (`D.mat`), and epistatic (`E.mat`) relationship matrices that have been shown to increase prediction accuracy under certain scenarios. The package provides flexibility to fit other genetic models such as full and half diallel models as well.
 
 Vignettes aim to provide several examples in how to use the sommer package under different scenarios in breeding and genetics. We will spend the rest of the space providing examples for: 
 
-1) heritability ($h^2$) calculation
+1) Heritability ($h^2$) calculation
 2) Half and full diallel designs
 3) Genome wide association analysis (GWAS) in diploids and tetraploids
 4) Genomic selection
@@ -176,6 +176,7 @@ Vg <- Va + Vd
 (H2 <- Vg / (Vg + (Ve)) )
 (h2 <- Va / (Vg + (Ve)) )
 ```
+Don't worry too much about the small h2 value, the data was simulated to be mainly dominance variance, therefore the Va was simulated extremely small leading to such value of narrow sense h2.
 
 In this second data set we show a small half diallel with 7 parents crossed in one direction. n(n-1)/2 crosses are possible 7(6)/2 = 21 unique crosses. Parents appear as males or females indistictly. Each with two replications in a CRD. For a half diallel design a single GCA variance component can be estimated and an SCA as well ($\sigma^2_GCA$ and $\sigma^2_SCA$ respectively). And BLUPs for GCA and SCA of the parents can be extracted. We would create the design matrices in sommer using the `hdm` and `model.matrix` functions for the GCA and SCA matrices respectively.
 
@@ -395,7 +396,7 @@ A <- A.mat(CPgeno) # additive relationship matrix
 #### ADDITIVE MODEL ####
 ####================####
 ETA.A <- list(add=list(Z=Za,K=A))
-ans.A <- mmer(Y=Y, Z=ETA.A, MVM=TRUE)
+ans.A <- mmer(Y=Y, Z=ETA.A, MVM=TRUE, method="EMMA")
 summary(ans.A)
 ```
 
@@ -416,7 +417,7 @@ prod.sd <- sd.gvc %*% t(sd.gvc)
 
 ## Literature
 
-Covarrubias-Pazaran G. 2016. Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744
+Covarrubias-Pazaran G. 2016. Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6):1-15.
 
 Bernardo Rex. 2010. Breeding for quantitative traits in plants. Second edition. Stemma Press. 390 pp.
 

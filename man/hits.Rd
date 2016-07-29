@@ -46,7 +46,7 @@ Giovanny Covarrubias-Pazaran
 #### For CRAN time limitations most lines in the 
 #### examples are silenced with a single '#' mark, 
 #### remove them and run the examples
-####=========================================####
+###=========================================####
 data(CPdata)
 CPpheno <- CPdata$pheno
 CPgeno <- CPdata$geno
@@ -60,11 +60,20 @@ Za <- diag(length(y))
 A <- A.mat(CPgeno) # additive relationship matrix
 
 ####=========================================####
-#### identify major genes and create the hitsging matrix
+#### compare prediction accuracies between
+#### GBLUP and hits GBLUP 
+####=========================================####
+set.seed(1234)
+y.trn <- y # for prediction accuracy
+ww <- sample(c(1:dim(Za)[1]),72) # delete data for one fifth of the population
+y.trn[ww] <- NA
+
+####=========================================####
+#### identify major genes and create the hit matrix
 ####=========================================####
 
-ETA.A <- list(list(Z=Za,K=A))
-#ans.GWAS <- mmer(Y=y, Z=ETA.A, W=CPgeno)
+#ETA.A <- list(list(Z=Za,K=A))
+#ans.GWAS <- mmer(Y=y.trn, Z=ETA.A, W=CPgeno)
 #summary(ans.GWAS)
 
 ####=========================================####
@@ -74,21 +83,12 @@ ETA.A <- list(list(Z=Za,K=A))
 
 #X1 <- hits(ans.GWAS);head(X1); dim(X1)
 
-####=========================================####
-#### compare prediction accuracies between
-#### GBLUP and hits GBLUP 
-####=========================================####
-set.seed(1234)
-y.trn <- y # for prediction accuracy
-ww <- sample(c(1:dim(Za)[1]),72) # delete data for one fifth of the population
-y.trn[ww] <- NA
-
-ETA.A <- list(list(Z=Za,K=A))
+#ETA.A <- list(list(Z=Za,K=A))
 #ans.A <- mmer(Y=y.trn, Z=ETA.A) # GBLUP
 #ans.AF <- mmer(Y=y.trn, X=X1, Z=ETA.A) # hitsging-GBLUP
 #cor(ans.A$fitted.y[ww], y[ww], use="pairwise.complete.obs") # GBLUP
 #cor(ans.AF$fitted.y[ww], y[ww], use="pairwise.complete.obs") # hitsging-GBLUP
-#### ~10 percent increase in prediction accuracy
+#### little increase in prediction accuracy
 
 
 ############################################
@@ -129,7 +129,7 @@ ETA <- list( list(Z=Z1, K=A.mat(M)))
 #ans <- mmer(Y=y, Z=ETA, method="EMMA", W=M)
 #X1 <- hits(gwasm=ans, nmar=10)
 
-#iters=50
+#iters=20
 #res <- numeric(iters) # store results from GBLUP
 #res2 <- numeric(iters) # store results from hitsGBLUP
 #for(i in 1:iters){
@@ -151,7 +151,7 @@ ETA <- list( list(Z=Z1, K=A.mat(M)))
 #### The extreme difference in this example is because the QTLs 
 #### simulated have no linkage disequilibrium with the neighboring 
 #### markers. In the reality this wouldn't occur, and altough an 
-#### increase is expected will not be as high (~5 to 12 percent)
+#### increase is expected will not be higher than 0-10 percent)
 
 }
 \seealso{The core function of the package \code{\link{mmer}}}

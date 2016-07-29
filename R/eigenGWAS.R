@@ -134,6 +134,7 @@ eigenGWAS <- function(markers, eivec=1, map=NULL){
   plot(Fst*N, Egwas1[,4], xlab="Fst", ylab="Chi-sq", bty="n")
   abline(a=0, b=1, col="red")
   
+  layout(matrix(1,1,1))
   result <- list(Egwas=-log10(Egwas1[,3]), Fst=Fst)
   return(result)
 }

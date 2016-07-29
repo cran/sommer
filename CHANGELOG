@@ -142,10 +142,23 @@ version 1.9 (2016-07-01)
   + Now 'EMMA' algorithm handles multiple random effects.
   + The first multivariate algorithm "EMMAM" has been added to sommer (a single random effect).
   + Vignettes have examples for multi-response model and parallel univariate models.
+  + 'bag' function has changed name to 'hits' to avoid confusion of selecting top 10 hits with
+    Bootstrap aggregation (bagging) 
+    
+########################  
+version 2.0 (2016-08-01)
+########################
+  
+  + Multivariate algorithms "M-EMMA", "M-AI", "M-NR" have been implemented.
+  + Minor bugs fixed.
+  + Multivariate GWAS inplemented for any of the methods.
+  + The function "mmer2" can run multivariate and parallel models as well.
+  + Bug for parallel models fixed.
+  + Eigen decomposition of additive relationship matrix implemented for 
+    multivariate models in "NR" and "AI"
   
 ##pendings
-+ multivariate version (MAI) almost done (sorry I have spent more time including more algorithms and perfecting the current implementations)
-+ add LD calculation with LD decay regression
-+ link to structure
 + get incidence matrix from vcf file directly with probabilities instead of 0,1,2
++ M-EM, AI-MME, for models with no covariance structures these models might be more suitable
++ random regression (working on it v2.1 or v2.2 would have it ready)
 
