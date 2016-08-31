@@ -21,10 +21,11 @@ Vignettes aim to provide several examples in how to use the sommer package under
 4) Genomic selection
 5) Single cross prediction
 6) Multivariate genetic models and genetic correlations
+7) Multivariate GWAS
 
 ## Background
 
-The core of the package is the `mmer` function and solves the mixed model equations proposed by Henderson (1975). An user friendly version named `mmer2` has been added as well, using the ASReml sintax. The functions are an interface to call one of the 4 ML/REML methods supported in the package; `EMMA` efficient mixed model association (Kang et al. 2008), `AI` average information (Gilmour et al. 1995; Lee et al. 2015), `EM` expectation maximization (Searle 1993; Bernardo 2010), and `NR` Newton-Raphson (Tunnicliffe 1989). All methods can estimate multiple random effect models.
+The core of the package is the `mmer` function and solves the mixed model equations. An user friendly version named `mmer2` has been added as well, using the ASReml sintax. The functions are an interface to call one of the 4 ML/REML methods supported in the package; `EMMA` efficient mixed model association (Kang et al. 2008), `AI` average information (Gilmour et al. 1995; Lee et al. 2015), `EM` expectation maximization (Searle 1993; Bernardo 2010), and the default `NR` Newton-Raphson (Tunnicliffe 1989). All methods can estimate multiple random effect models specifying covariance structures.
 
 <br>
 
@@ -94,7 +95,7 @@ K_1 \sigma^2_u1 & 0 & 0 \\
 \end{array}\right]
 $$
 
-The program takes the Zs and Ks for each random effect and construct the neccesary structure inside and estimate the variance components by ML/REML using any of the 4 methods available in sommer; Average Information, Expectation-Maximization, Newton-Raphson, and Efficient Mixed Model Association. Please refer to the canonical papers listed in the Literature section to check how the methods work. We have tested widely the methods to make sure they provide the same solution when the likelihood behaves well but for complex problems they might lead to different answers. If you have any concer please contact me at cova_ruber@live.com.mx or covarrubiasp@wisc.edu.
+The program takes the Zs and Ks for each random effect and construct the neccesary structure inside and estimates the variance components by ML/REML using any of the 4 methods available in sommer; Average Information, Expectation-Maximization, Newton-Raphson, and Efficient Mixed Model Association. Please refer to the canonical papers listed in the Literature section to check how the methods work. We have tested widely the methods to make sure they provide the same solution when the likelihood behaves well but for complex problems they might lead to slightly different answers. If you have any concer please contact me at cova_ruber@live.com.mx or covarrubiasp@wisc.edu.
 
 <br>
 
@@ -102,7 +103,7 @@ The program takes the Zs and Ks for each random effect and construct the neccesa
 
 The heritability is one of the most famous parameters in breeding and genetics theory. The heritability is usually estimated as narrow sense ($h^2$; only additive variance in the numerator $\sigma^2_A$), and broad sense ($H^2$; all genetic variance in the numerator $\sigma^2_G$).
 
-In a classical experiment with no molecular markers, special designs are performed to estimate and disect the additive ($\sigma^2_A$) and dominance ($\sigma^2_D$) variance along with environmental variability. Designs such as generation analysis, North Carolina designs are used to disect $\sigma^2_A$ and $\sigma^2_D$ to estimate the narrow sense heritability ($h^2$). When no special design is available we can still disect the genetic variance ($\sigma^2_G$) and estimate the broad sense heritability. In this example we will show the broad sense estimation.
+In a classical experiment with no molecular markers, special designs are performed to estimate and disect the additive ($\sigma^2_A$) and dominance ($\sigma^2_D$) variance along with environmental variability. Designs such as generation analysis, North Carolina designs are used to disect $\sigma^2_A$ and $\sigma^2_D$ to estimate the narrow sense heritability ($h^2$). When no special design is available we can still disect the genetic variance ($\sigma^2_G$) and estimate the broad sense heritability. In this example we will show the broad sense estimation which doesn't use covariance structures for random effects. For big models with no covariance structures, sommer's direct inversion is a bad idea to use but we will show anyways how to do it, for very sparse models we recommend using the lmer function from the lme4 package from Douglas Bates.
 
 The dataset has 41 potato lines evaluated in 5 locations across 3 years in an RCBD design. We show how to fit the model and extract the variance components to calculate the $h^2$.
 
@@ -138,7 +139,7 @@ A <- A.mat(CPgeno) # additive relationship matrix
 D <- D.mat(CPgeno) # dominance relationship matrix
 E <- E.mat(CPgeno) # epistatic relationship matrix
 
-ETA.ADE <- list(list(Z=Za,K=A),list(Z=Zd,K=D),list(Z=Ze,K=E))
+ETA.ADE <- list(add=list(Z=Za,K=A),dom=list(Z=Zd,K=D),epi=list(Z=Ze,K=E))
 ans.ADE <- mmer(Y=y, Z=ETA.ADE,silent = TRUE)
 (H2 <- sum(ans.ADE$var.comp[1:3,1])/sum(ans.ADE$var.comp[,1]))
 (h2 <- sum(ans.ADE$var.comp[1,1])/sum(ans.ADE$var.comp[,1]))
@@ -244,12 +245,12 @@ data(PolyData)
 genotypes <- PolyData$PGeno
 phenotypes <- PolyData$PPheno
 ## convert markers to numeric format
-numo <- atcg1234(data=genotypes, ploidy=4, silent = TRUE); numo[1:5,1:5]; dim(numo)
+numo <- atcg1234(data=genotypes, ploidy=4, silent = TRUE); numo[1:5,1:4]; dim(numo)
 # get only plants with both genotypes and phenotypes
 common <- intersect(phenotypes$Name,rownames(numo))
-marks <- numo[common,]; marks[1:5,1:5]
+marks <- numo[common,]; marks[1:5,1:4]
 phenotypes2 <- phenotypes[match(common,phenotypes$Name),];
-phenotypes2[1:5,1:5]
+phenotypes2[1:5,1:4]
 # Additive relationship matrix, specify ploidy
 yy <- phenotypes2$tuber_shape
 K1 <- A.mat(marks, ploidy=4)
@@ -276,7 +277,7 @@ and takes advantage of the variance covariance matrix for the genotype effect kn
 
 ```{r}
 data(wheatLines)
-X <- wheatLines$wheatGeno; X[1:5,1:5]; dim(X)
+X <- wheatLines$wheatGeno; X[1:5,1:4]; dim(X)
 Y <- wheatLines$wheatPheno
 rownames(X) <- rownames(Y)
 # select environment 1
@@ -361,7 +362,7 @@ In the previous model we only used the GCA effects (GCA1 and GCA2) for practicit
 
 A model without covariance structures would show that the SCA variance component is insignificant compared to the GCA effects. This is why including the third random effect doesn't increase the prediction accuracy.
 
-## 6) Multivariate gentic models
+## 6) Multivariate genetic models and genetic correlations
 
 Sometimes is important to estimate genetic variance-covariance among traits, multi-reponse models are very useful for such task. Currently sommer only deals with multivariate models for a single random effect of the form:
 
@@ -375,11 +376,18 @@ with:
 
 <br>
 
-$u$ ~ MVN(0, $K$$\sigma^2_u$)
+$$\mathbf{V} = \left[\begin{array}
+{rrr}
+Z_1 G_1 Z_1' + ... + Z_1 R_1 Z_1' & ... & Z_1 H_1 Z_t' + ... + Z_1 S_1 Z_t' \\
+ ... & ... & ...\\
+Z_t H_1 Z_1' + ... + Z_t S_1 Z_1' & ... & Z_t G_1 Z_t' + ... + Z_t R_1 Z_t' \\
+\end{array}\right]
+$$
+
 
 <br>
 
-We can specify the K matrices. The main difference between this model and the rest is that we will get covariance among traits related to the random effect specified and covariance among error variances. BLUPs will also be corrected for such covariances usually leading to more accurate predictions.
+where G are H are variance and covariance matrices among random effects for the "t" trait, and R and S are variance and covariance matrices among residuals. Here R=S=I$\sigma_\epsilon$ , where I is an identity matrix. We can specify the covariance matrices. BLUPs will also be corrected for such covariances usually leading to more accurate predictions.
 
 ```{r}
 data(CPdata)
@@ -387,7 +395,7 @@ CPpheno <- CPdata$pheno
 CPgeno <- CPdata$geno
 ### look at the data
 head(CPpheno)
-CPgeno[1:5,1:5]
+CPgeno[1:5,1:4]
 ## fit a model including additive and dominance effects
 Y <- CPpheno
 Za <- diag(dim(Y)[1])
@@ -400,7 +408,7 @@ ans.A <- mmer(Y=Y, Z=ETA.A, MVM=TRUE, method="EMMA")
 summary(ans.A)
 ```
 
-Now you can extract the BLUPs using the 'randef' function or simple accesing with the '$' sign and pick 'u.hat'. Calculate genetic correlations and heritabilities easily. Good luck with your analysis.
+Now you can extract the BLUPs using the 'randef' function or simple accesing with the '$' sign and pick 'u.hat'. Calculate genetic correlations and heritabilities easily. 
 
 ```{r}
 ## genetic variance covariance
@@ -414,6 +422,31 @@ prod.sd <- sd.gvc %*% t(sd.gvc)
 ## heritabilities
 (h2 <- diag(gvc) / diag(cov(Y, use = "complete.obs")))
 ```
+
+## 7) Multivariate GWAS
+
+Following the same theory of multivariate methods, theorically the marker effects can take advantage of the information contained in the correlation among traits besides exploiting the correlations between individuals. We have extended the GWAS framework to multivariate GWAS. Here, we will show a multivariate GWAS in a biparental population using the information of 4 traits.
+
+```{r}
+data(CPdata)
+CPpheno <- CPdata$pheno
+CPgeno <- CPdata$geno
+### look at the data
+head(CPpheno)
+CPgeno[1:5,1:4]
+## fit a model including additive and dominance effects
+Y <- CPpheno
+Za <- diag(dim(Y)[1])
+A <- A.mat(CPgeno) # additive relationship matrix
+####================####
+#### ADDITIVE MODEL ####
+####================####
+ETA.A <- list(add=list(Z=Za,K=A))
+ans.A <- mmer(Y=Y, Z=ETA.A, W=CPgeno, MVM=TRUE, EIGEND=TRUE, map=CPdata$map, silent=TRUE,gwas.plots = FALSE)
+summary(ans.A)
+```
+
+Good luck with your analysis. 
 
 ## Literature
 

@@ -1,4 +1,4 @@
-mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, iters=20, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, silent=FALSE, family=NULL, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL, full.rank=TRUE, map=NULL, fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE){
+mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, iters=20, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, silent=FALSE, family=NULL, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL, full.rank=TRUE, map=NULL, fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE, tolpar=1e-6, tolparinv=1e-6){
   
   if(length(which(is.na(y))) == length(y)){
     stop("Y contains only missing data. Please double check your data.",call. = FALSE)
@@ -289,7 +289,7 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
           ### end of adding names
         }
       }else if(method == "EM"){
-        res <- EM(y=y, X=X, ETA=Z, R=R, init=init, iters = iters, REML=REML, draw=draw, silent=silent, forced=forced)
+        res <- EM(y=y, X=X, ETA=Z, init=init, iters = iters, REML=REML, draw=draw, silent=silent, forced=forced)
       }else if(method == "AI"){
         #res <- AI(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, EIGEND=EIGEND,Fishers=Fishers)
         if(length(Z) == 1){ # if only one variance component, make sure is not Z and K both diags
@@ -304,10 +304,10 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
             }
             ### end of adding names
           }else{
-            res <- AI(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, EIGEND=EIGEND,Fishers=Fishers, forced=forced)
+            res <- AI(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, EIGEND=EIGEND,Fishers=Fishers, forced=forced)
           }
         }else{ # if multiple variance components
-          res <- AI(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, EIGEND=EIGEND,Fishers=Fishers,forced=forced) 
+          res <- AI(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, EIGEND=EIGEND,Fishers=Fishers,forced=forced) 
         }
       }else if(method == "NR"){
         if(length(Z) == 1){ # if only one variance component, make sure is not Z and K both diags
@@ -322,10 +322,20 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
             }
             ### end of adding names
           }else{
-            res <- NR(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced)
+            if(is.null(R)){
+              res <- NR(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced)
+            }else{
+              res <- NRR(y=y,X=X,Z=Z,R=R,tolpar=tolpar,tolparinv=tolparinv,maxcyc=iters,draw=draw,constraint = constraint)
+              method<-"NRR"
+            }
           }
         }else{ # if multiple variance components
-          res <- NR(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced) 
+          if(is.null(R)){
+            res <- NR(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced)
+          }else{
+            res <- NRR(y=y,X=X,Z=Z,R=R,tolpar=tolpar,tolparinv=tolparinv,maxcyc=iters,draw=draw,constraint = constraint)
+            method<-"NRR"
+          }
         }
       }else{
         stop("Unrecognized method. Please select one of the methods; 'NR', 'AI', 'EMMA' or 'EM'. ",call. = FALSE)
@@ -415,7 +425,9 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
             
             if(gwas.plots){ # user gave map, wants map, BUT WANTS PLOT??
               qq(step2$score)
+              
               yylim <- ceiling(max(dd2,na.rm=TRUE))
+              
               plot(dd2, bty="n", col=col.scheme[factor(map3$Chrom, levels = unique(map3$Chrom, na.rm=TRUE))], xaxt="n", xlab="Chromosome", ylab=expression(paste(-log[10],"(p.value)")), pch=20, cex=2.5, las=2, ylim = c(0,yylim))
               ## make axis
               init.mrks <- apply(data.frame(unique(map3$Chrom)),1,function(x,y){z <- which(y == x)[1]; return(z)}, y=map3$Chrom)
@@ -505,7 +517,7 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
           ### end of adding names
         }
       }else if(method == "EM"){
-        res <- EM(y=y, X=X, ETA=Z, R=R, init=init, iters = iters, REML=REML, draw=draw, silent=silent, forced=forced)
+        res <- EM(y=y, X=X, ETA=Z, init=init, iters = iters, REML=REML, draw=draw, silent=silent, forced=forced)
       }else if(method == "AI"){
         if(length(Z) == 1){ # if only one variance component, make sure is not Z and K both diags
           dias <- unlist(lapply(Z[[1]], function(x){if(dim(x)[1] == dim(x)[2]){y <- is.diagonal.matrix(x)}else{y <- FALSE};return(y)}))
@@ -519,10 +531,10 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
             }
             ### end of adding names
           }else{
-            res <- AI(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, EIGEND=EIGEND,Fishers=Fishers, gss=gss, forced=forced)
+            res <- AI(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, EIGEND=EIGEND,Fishers=Fishers, gss=gss, forced=forced)
           }
         }else{ # if multiple variance components
-          res <- AI(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, EIGEND=EIGEND,Fishers=Fishers, gss=gss, forced=forced) 
+          res <- AI(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, EIGEND=EIGEND,Fishers=Fishers, gss=gss, forced=forced) 
         }
       }else if(method == "NR"){
         if(length(Z) == 1){ # if only one variance component, make sure is not Z and K both diags
@@ -533,10 +545,21 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
             res <- EMMA(y=y, X=X, ZETA=Z,  REML=REML,silent=silent, EIGEND=EIGEND, che=FALSE) 
             #names(res$u.hat) <- names(Z)[1]
           }else{
-            res <- NR(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE,Fishers=Fishers, forced=forced)
+            if(is.null(R)){
+              res <- NR(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced)
+            }else{
+              res <- NRR(y=y,X=X,Z=Z,R=R,tolpar=tolpar,tolparinv=tolparinv,maxcyc=iters,draw=draw,constraint = constraint)
+              method<-"NRR"
+            }
           }
         }else{ # if multiple variance components
-          res <- NR(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced) 
+          if(is.null(R)){
+            res <- NR(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced)
+          }else{
+            #print(str(Z))
+            res <- NRR(y=y,X=X,Z=Z,R=R,tolpar=tolpar,tolparinv=tolparinv,maxcyc=iters,draw=draw,constraint = constraint)
+            method<-"NRR"
+          }
         }
       }else{
         stop("Unrecognized method. Please select one of the methods; 'NR', 'AI', 'EMMA' or 'EM'. ",call. = FALSE)

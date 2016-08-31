@@ -1,4 +1,4 @@
-MAI2 <- function(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,draw=TRUE,silent=FALSE,constraint=FALSE,EIGEND=FALSE,forced=NULL){
+MAI2 <- function(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv=1e-6,draw=TRUE,silent=FALSE,constraint=FALSE,EIGEND=FALSE,forced=NULL){
   
   if(tol == 1988.0906){
     MARIA <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=50, constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, EIGEND=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL){
@@ -1013,6 +1013,9 @@ MAI2 <- function(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,draw=TRUE,silen
     for(l in 1:length(listGs)){ W <- W + listGs[[l]]};(W[1:5,1:5]);dim(W)
     
     V <- try(solve(as(W, Class="sparseMatrix")), silent = TRUE)
+    if(class(V) == "try-error"){
+      V <- try(solve(as(W + tolparinv * diag(dim(W)[2]), Class="sparseMatrix"),sparse=TRUE), silent = TRUE)
+    }
     dim(V) #dimens
     V[1:5,1:5]
     W <- NULL
@@ -1222,6 +1225,9 @@ MAI2 <- function(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,draw=TRUE,silen
         for(l in 1:length(listGs)){ W <- W + listGs[[l]]};(W[1:5,1:5]);dim(W)
         
         V <- try(solve(as(W, Class="sparseMatrix")), silent = TRUE)
+        if(class(V) == "try-error"){
+          V <- try(solve(as(W + tolparinv * diag(dim(W)[2]), Class="sparseMatrix"),sparse=TRUE), silent = TRUE)
+        }
         dim(V) #dimens
         V[1:5,1:5]
         W <- NULL

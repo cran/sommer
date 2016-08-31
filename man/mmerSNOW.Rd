@@ -14,12 +14,13 @@ Please report bugs and provide data to recreate the problem. The only way to imp
 
 }
 \usage{
-mmerSNOW(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE, 
+mmerSNOW(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
      iters=20, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE,
      models="additive", ploidy=2, min.MAF = 0.05, silent=FALSE, 
      family=NULL, constraint=TRUE, sherman=FALSE, EIGEND=FALSE,
      Fishers=FALSE, gss=TRUE, forced=NULL, full.rank=TRUE, 
-     map=NULL,fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE)
+     map=NULL,fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE,
+     tolpar = 1e-06,tolparinv = 1e-06)
 }
 \arguments{
   \item{y}{a numeric vector for the response variable}
@@ -96,6 +97,8 @@ mmerSNOW(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="AI", REML=TRUE,
       \item{fdr.level}{a level of FDR to calculate and plot the line in the GWAS plot. Default is fdr.level=0.05}
       \item{manh.col}{a vector with colors desired for the manhattan plot. Default are cadetblue and red alternated.}
       \item{gwas.plots}{a TRUE/FALSE statement indicating if the GWAS and qq plot should be drawn or not. The default is TRUE but you may want to avoid it.}
+      \item{tolpar}{tolerance parameter for convergence in the multivariate models.}
+      \item{tolparinv}{tolerance parameter for matrix inverse in the multivariate models.}
 
 }
 \details{

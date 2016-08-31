@@ -1,5 +1,6 @@
-MNR <- function(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,draw=TRUE,silent=FALSE, constraint=TRUE, EIGEND=FALSE, forced=NULL){
+MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv=1e-6,draw=TRUE,silent=FALSE, constraint=TRUE, EIGEND=FALSE, forced=NULL){
   
+  choco <- names(ZETA)
   if(tol==1988.0906){
     MARIA <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=50, constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, EIGEND=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL){
       
@@ -856,6 +857,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,draw=TRUE,silent
   
   Y.or <- Y #apply((as.matrix(as.matrix(Y))),2, function(x){vv<-which(is.na(x)); if(length(vv)>0){x[vv]<-mean(x,na.rm=TRUE)};return((x))})
   Y <- scale(Y)
+  sonso <- Y
   
   if(is.null(X)){
     X <- matrix(rep(1,dim(as.data.frame(Y))[1])) 
@@ -953,7 +955,15 @@ MNR <- function(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,draw=TRUE,silent
     if(i<=nvarcom){ # ZETA[[i]]$Z %*% tcrossprod(ZETA[[i]]$K, ZETA[[i]]$Z)
       listKs[[i]] <- ZETA[[i]]$Z %*% tcrossprod(ZETA[[i]]$K, ZETA[[i]]$Z)
     }else{
-      listKs[[i]] <- diag(dimos[1]) #ZETA[[i]]$Z %*% tcrossprod(ZETA[[i]]$K, ZETA[[i]]$Z) #
+      if(!is.null(R)){
+        rrr <- do.call("kronecker",R)#ZETA[[i]]$Z %*% tcrossprod(ZETA[[i]]$K, ZETA[[i]]$Z) #
+        if(dim(rrr)[1] != dimos[1]){
+          stop("Please check the residual structure passed to the function. When doing the\nkronecker product we did not find dimensions of R match with dimensions of Y.",call. = FALSE)
+        }
+        listKs[[i]] <- rrr #do.call("kronecker",R)#ZETA[[i]]$Z %*% tcrossprod(ZETA[[i]]$K, ZETA[[i]]$Z) #
+      }else{
+        listKs[[i]] <- diag(dimos[1]) #ZETA[[i]]$Z %*% tcrossprod(ZETA[[i]]$K, ZETA[[i]]$Z) # 
+      }
     }
   }
   ####################
@@ -998,6 +1008,9 @@ MNR <- function(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,draw=TRUE,silent
       for(l in 1:length(listGs)){ W <- W + listGs[[l]]};(W[1:5,1:5]);dim(W)
       
       V <- try(solve(as(W, Class="sparseMatrix"),sparse=TRUE), silent = TRUE)
+      if(class(V) == "try-error"){
+        V <- try(solve(as(W + tolparinv * diag(dim(W)[2]), Class="sparseMatrix"),sparse=TRUE), silent = TRUE)
+      }
       dim(V) #dimens
       #print(V[1:5,1:5])
       W<-NULL
@@ -1077,6 +1090,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,draw=TRUE,silent
       ### reaccomodate var.com
       no.var <- lapply(deriv.list.vc,function(x){length(x)})
       sigma3<-cbind(sigma3,sigma2)
+      sigmaxxx <- sigma2
       for(r in 1:length(no.var)){
         si <- 1:no.var[[r]]
         newmat <- matrix(NA,ts,ts)
@@ -1126,7 +1140,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,draw=TRUE,silent
     #############################
     ### END OF CYCLES
     #############################
-    
+    sigma.scaled <- sigma
     good <- which(llstore==max(llstore))
     theta <- var.comp.ret[[good]]
     
@@ -1192,6 +1206,9 @@ MNR <- function(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,draw=TRUE,silent
           for(l in 1:length(listGs)){ W <- W + listGs[[l]]};(W[1:5,1:5]);dim(W)
           
           V <- try(solve(as(W, Class="sparseMatrix"),sparse=TRUE), silent = TRUE)
+          if(class(V) == "try-error"){
+            V <- try(solve(as(W + tolparinv * diag(dim(W)[2]), Class="sparseMatrix"),sparse=TRUE), silent = TRUE)
+          }
           dim(V) #dimens
           V[1:5,1:5]
           W<-NULL
@@ -1271,6 +1288,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,draw=TRUE,silent
           ### reaccomodate var.com
           no.var <- lapply(deriv.list.vc,function(x){length(x)})
           sigma3<-cbind(sigma3,sigma2)
+          sigmaxxx <- sigma2
           for(r in 1:length(no.var)){
             si <- 1:no.var[[r]]
             newmat <- matrix(NA,ts,ts)
@@ -1331,6 +1349,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,draw=TRUE,silent
         }
         #### end of cycles
         theta <- var.comp.ret[[cycle]]
+        sigma.scaled <- sigma
       }
     }
     ############################################
@@ -1479,12 +1498,29 @@ MNR <- function(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,draw=TRUE,silent
   
   sigma <- lapply(sigma,function(x){round(x,7)})
   
+  ### fishers
+  #sigma.cov <- (A.svd * 2)
+  #print(A.svd * attr(sonso, 'scaled:scale') + attr(sonso, 'scaled:center'))
+  if(is.null(forced)){
+    sigma.cov <- ((A.svd) * 2) 
+    FI <- (A)/2
+    #### convert FI using pos
+    FI.c <- matrix(0,dim(FI)[1],dim(FI)[2])
+    FI.c <- FI / tcrossprod((sigmaxxx-1)*pos+1)
+    ####print(A.svd)
+    #####names(sigma) <- Vcoef.names
+    sigma.cova <- try(ginv(FI.c),silent=TRUE)
+  }else{
+    sigma.cova <- NULL
+  }
+  
+  
   colnames(beta) <- namesY
   #rownames(beta) <- namesX
   return(list(var.comp=sigma, V.inv=vmi, u.hat = u.hat , Var.u.hat = (var.u.hat), 
-              beta.hat = beta, Var.beta.hat = xvxi, 
+              beta.hat = beta, Var.beta.hat = xvxi, fish.inv=sigma.cova,
               PEV.u.hat = pev.u.hat, residuals=residu, cond.residuals=cond.ehat,
-              LL=llik, AIC=AIC, BIC=BIC, X=X, dimos=dado,
+              LL=llik, AIC=AIC, BIC=BIC, X=X, dimos=dado, sigma.scaled=sigmaxxx,
               fitted.y=fitted.y, fitted.u=Zu, ZETA=ZETA,
-              method="MNR"))
+              method="MNR",choco=choco))
 }

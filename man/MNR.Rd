@@ -5,8 +5,9 @@
 This function is used internally in the function \code{\link{mmer}} when MORE than 1 variance component needs to be estimated through the use of the Newton-Raphson (MNR) algorithm for multivariate models (multiple responses).
 }
 \usage{
-MNR(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,draw=TRUE,silent=FALSE,
-    constraint=TRUE,EIGEND=FALSE,forced=NULL)
+MNR(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,
+     tolparinv=1e-6,draw=TRUE, silent=FALSE, constraint=TRUE,
+     EIGEND=FALSE,forced=NULL)
 }
 \arguments{
   \item{Y}{a matrix or data frame of response variables}
@@ -53,6 +54,7 @@ MNR(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,draw=TRUE,silent=FALSE,
   '
   
   You can see the examples at the bottom to have a clearer idea how to fit your models. }
+ \item{R}{list of R matrices to correct for residual. Internally the program will do the kronecker product of such matrices to create R.}
   \item{init}{vector of initial values for the variance components. By default this is NULL and variance components are estimated by the method selected, but in case the user want to provide initial values this argument is functional.}
   \item{maxcyc}{Maximum number of cycles allowed.  Default value is
     50. A warning is output to the screen if this is reached before
@@ -63,6 +65,7 @@ MNR(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,draw=TRUE,silent=FALSE,
     finishes.  If each component of the change proposed by the
   Newton-Raphson is lower in magnitude than \code{tol} the algorithm
   finishes. Default value is \code{1e-4}.}
+  \item{tolparinv}{tolerance parameter for matrix inverse}
     \item{silent}{a TRUE/FALSE value indicating if the function should draw the progress bar while working or should not be displayed. The default is FALSE, which means is not silent and will display the progress bar.}
     \item{constraint}{a TRUE/FALSE value indicating if the function should apply the boundary constraint indicating that variance components that are zero should be removed from the analysis and variance components recalculated.}
     \item{EIGEND}{a TRUE/FALSE value indicating if an eigen decomposition for the additive relationship matrix should be performed or not. This is based on Lee (2015). The limitations of this method are:

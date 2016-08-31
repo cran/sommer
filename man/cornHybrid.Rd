@@ -71,10 +71,32 @@ K2 <- A[levels(hybrid2$GCA2), levels(hybrid2$GCA2)]; dim(K2)
 S <- kronecker(K1, K2) ; dim(S)   
 rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 
-ETA <- list(GCA1=list(Z=Z1, K=K1), GCA2=list(Z=Z2, K=K2), SCA=list(Z=Z3, K=S))
+ETA <- list(GCA1=list(Z=Z1, K=K1), 
+            GCA2=list(Z=Z2, K=K2), 
+            SCA=list(Z=Z3, K=S)
+            )
 #ans <- mmer(Y=y, X=X1, Z=ETA)
 #ans$var.comp
 #summary(ans)
+
+####==========================================####
+####==========================================####
+#### using the 'mmer2' function would be fitted as
+####==========================================####
+####==========================================####
+
+#data(cornHybrid)
+#hybrid2 <- cornHybrid$hybrid # extract cross data
+#A <- cornHybrid$K
+#K1 <- A[levels(hybrid2$GCA1), levels(hybrid2$GCA1)]; dim(K1) 
+#K2 <- A[levels(hybrid2$GCA2), levels(hybrid2$GCA2)]; dim(K2)
+#S <- kronecker(K1, K2) ; dim(S)   
+#rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
+
+#ans <- mmer2(Yield ~ Location, random = ~ GCA1 + GCA2 + SCA, 
+#       G=list(GCA1=K1, GCA2=K2, SCA=S),data=hybrid2)
+#summary(ans)
+
 }
 \keyword{datasets}
 \seealso{The core function of the package \code{\link{mmer}}}

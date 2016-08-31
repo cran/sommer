@@ -1021,6 +1021,7 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
     ## convert FI using pos
     FI.c <- matrix(0,dim(FI)[1],dim(FI)[2])
     FI.c <- FI / tcrossprod((sigma-1)*pos+1)
+    #print(A.svd)
     names(sigma) <- Vcoef.names
     sigma.cov <- try(ginv(FI.c),silent=TRUE)
     error1 <- (class(sigma.cov)=="try-error")

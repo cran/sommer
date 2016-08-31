@@ -37,7 +37,7 @@ Giovanny Covarrubias-Pazaran
 data(CPdata)
 markers <- CPdata$geno
 markers[1:5,1:5]
-res <- eigenGWAS(markers)
+#res <- eigenGWAS(markers)
 ### ===================== ###
 ### use map information
 ### ===================== ###

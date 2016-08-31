@@ -38,8 +38,8 @@ Keyan Zhao, Chih-Wei Tung, Georgia C. Eizenga, Mark H. Wright, M. Liakat Ali, Ad
 data(RICE)
 W <- RICE$RiceGenoN; W[1:5,1:5]; dim(W)
 Y <- RICE$RicePheno; Y[1:5,1:5]; dim(Y)
-(vp.str <- RICE$vp.str[1:25]) # validation population with structure
-bases <- seq(50,200,25) # TP sizes required
+#(vp.str <- RICE$vp.str[1:25]) # validation population with structure
+#bases <- seq(50,200,25) # TP sizes required
 
 ####=========================================####
 #### a) Random sample based

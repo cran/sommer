@@ -41,6 +41,10 @@ eigenGWAS <- function(markers, eivec=1, map=NULL){
     res
   }
   #################
+  cat("Checking for presence of monomorphic markers.\n")
+  sdss <- apply_pb(markers,2,sd)
+  markers <- markers[,which(sdss > 0)]
+  #################
   if(!is.null(map)){
     required.names <- c("Chrom","Position")
     

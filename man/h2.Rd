@@ -39,7 +39,30 @@ head(h2)
 #### calculate heritability
 ####=========================================####
 #n.env <- length(levels(h2$Env))
-#h2c <- V_G/(V_G + V_GE/n.env + Ve/(2*n.env)) #the 2 is a reference for block
+#h2c <- V_G/(V_G + V_GE/n.env + Ve/(2*n.env)) #the 2 is a reference for block#
+#h2c
+
+####=========================================####
+####=========================================####
+#### using the 'mmer' function would be fitted as
+####=========================================####
+####=========================================####
+#data(h2)
+#Y <- h2$y
+#Z1 <- model.matrix(~Name-1,data=h2)
+#Z2 <- model.matrix(~Env-1,data=h2)
+#Z3 <- model.matrix(~Name:Env-1,data=h2)
+#Z4 <- model.matrix(~Block-1,data=h2)
+#ETA <- list(Name=list(Z=Z1),
+#            Env=list(Z=Z2),
+#            Name.Env=list(Z=Z3),
+#            Block=list(Z=Z4))
+
+#ans1 <- mmer(Y=Y,Z=ETA)
+#vc <- ans1$var.comp
+#V_E <- vc[2,1];V_GE <- vc[3,1];V_G <- vc[1,1];Ve <- vc[5,1]
+#n.env <- length(levels(h2$Env))
+#h2c <- V_G/(V_G + V_GE/n.env + Ve/(2*n.env)) #the 2 is a reference for block#
 #h2c
 }
 \keyword{datasets}

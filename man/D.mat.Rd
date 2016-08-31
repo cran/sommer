@@ -104,34 +104,34 @@ D <- D.mat(X)
 data(CPdata)
 CPpheno <- CPdata$pheno
 CPgeno <- CPdata$geno
-## look at the data
-#head(CPpheno)
-#CPgeno[1:5,1:5]
-## fit a model including additive and dominance effects
-y <- CPpheno$color
-Za <- diag(length(y))
-Zd <- diag(length(y))
-Ze <- diag(length(y))
-A <- A.mat(CPgeno) # additive relationship matrix
-D <- D.mat(CPgeno) # dominant relationship matrix
+#### look at the data
+head(CPpheno)
+CPgeno[1:5,1:5]
+#### fit a model including additive and dominance effects
+#y <- CPpheno$color
+#Za <- diag(length(y))
+#Zd <- diag(length(y))
+#Ze <- diag(length(y))
+#A <- A.mat(CPgeno) # additive relationship matrix
+#D <- D.mat(CPgeno) # dominant relationship matrix
 
-y.trn <- y # for prediction accuracy
-ww <- sample(c(1:dim(Za)[1]),72) # delete data for 1/5 of the population
-y.trn[ww] <- NA
+#y.trn <- y # for prediction accuracy
+#ww <- sample(c(1:dim(Za)[1]),72) # delete data for 1/5 of the population
+#y.trn[ww] <- NA
 ####================####
 #### ADDITIVE MODEL ####
 ####================####
-ETA.A <- list(list(Z=Za,K=A))
+#ETA.A <- list(list(Z=Za,K=A))
 #ans.A <- mmer(Y=y.trn, Z=ETA.A)
 #cor(ans.A$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 ####=========================####
 #### ADDITIVE-DOMINANT MODEL ####
 ####=========================####
-ETA.AD <- list(list(Z=Za,K=A),list(Z=Zd,K=D))
+#ETA.AD <- list(list(Z=Za,K=A),list(Z=Zd,K=D))
 #ans.AD <- mmer(Y=y.trn, Z=ETA.AD)
 #cor(ans.AD$fitted.y[ww], y[ww], use="pairwise.complete.obs")
-### greater accuracy !!!! 4 percent increment!!
-### we run 100 iterations, 4 percent increment in general
+### greater accuracy !!!! ~4 percent increment!!
+### we run 100 iterations, ~4 percent increment in general
 
 
 }

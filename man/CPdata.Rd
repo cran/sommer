@@ -32,17 +32,17 @@ Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits u
 data(CPdata)
 CPpheno <- CPdata$pheno
 CPgeno <- CPdata$geno
-### look at the data
+#### look at the data
 head(CPpheno)
 CPgeno[1:5,1:5]
-## fit a model including additive and dominance effects
+#### fit a model including additive and dominance effects
 y <- CPpheno$color
 Za <- diag(length(y))
 Zd <- diag(length(y))
 Ze <- diag(length(y))
 A <- A.mat(CPgeno) # additive relationship matrix
-D <- D.mat(CPgeno) # dominant relationship matrix
-E <- E.mat(CPgeno) # epistatic relationship matrix
+#D <- D.mat(CPgeno) # dominant relationship matrix
+#E <- E.mat(CPgeno) # epistatic relationship matrix
 
 y.trn <- y # for prediction accuracy
 ww <- sample(c(1:dim(Za)[1]),72) # delete data for 1/5 of the population
@@ -50,13 +50,13 @@ y.trn[ww] <- NA
 ####================####
 #### ADDITIVE MODEL ####
 ####================####
-ETA.A <- list(add=list(Z=Za,K=A))
+#ETA.A <- list(add=list(Z=Za,K=A))
 #ans.A <- mmer(Y=y.trn, Z=ETA.A)
 #cor(ans.A$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 ####=========================####
 #### ADDITIVE-DOMINANCE MODEL ####
 ####=========================####
-ETA.AD <- list(add=list(Z=Za,K=A), dom=list(Z=Zd,K=D))
+#ETA.AD <- list(add=list(Z=Za,K=A), dom=list(Z=Zd,K=D))
 #ans.AD <- mmer(Y=y.trn, Z=ETA.AD)
 #cor(ans.AD$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 ### greater accuracy !!!! 4 percent increment!!
@@ -64,7 +64,7 @@ ETA.AD <- list(add=list(Z=Za,K=A), dom=list(Z=Zd,K=D))
 ####===================================####
 #### ADDITIVE-DOMINANCE-EPISTASIS MODEL ####
 ####===================================####
-ETA.ADE <- list(add=list(Z=Za,K=A), dom=list(Z=Zd,K=D), epi=list(Z=Ze,K=E))
+#ETA.ADE <- list(add=list(Z=Za,K=A), dom=list(Z=Zd,K=D), epi=list(Z=Ze,K=E))
 #ans.ADE <- mmer(Y=y.trn, Z=ETA.ADE)
 #cor(ans.ADE$fitted.y[ww], y[ww], use="pairwise.complete.obs")
 

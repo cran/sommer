@@ -33,7 +33,9 @@ mix <- mmer2(stems~1, random=~female+male, data=FDdata)
 summary(mix)
 
 ####=========================================####
+####=========================================####
 #### using mmer function would be like
+####=========================================####
 ####=========================================####
 Z1 <- model.matrix(~female-1, data=FDdata)
 Z2 <- model.matrix(~male-1, data=FDdata)

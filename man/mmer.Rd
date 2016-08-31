@@ -2,15 +2,15 @@
 \alias{mmer}
 \title{Mixed Model Equations in R}
 \description{
-This function solves univariate and multivariate linear mixed models by different methods. It has been implemented to work with incidence and variance covariance matrices for each random effect. Currently 4 methods are supported; \strong{EMMA; efficient mixed model association} (Kang et al. 2008), \strong{AI; average information} (Gilmour et al. 1995; Lee et al. 2015), \strong{EM; expectation maximization} (Searle 1993; Bernardo 2010), and the default \strong{NR; Newton-Raphson} (Tunnicliffe 1989). All algorithms are able to deal with multiple variance components; "AI", "EM", "NR", "EMMA"" but methods "AI" and "NR" are the most efficient for dense structured models. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices that have been shown to increase prediction accuracy. The package provides flexibility to fit other genetic models such as full and half diallel models as well, see \code{\link{hdm}} function information to see how to fit those models using sommer. The core algorithms in our mixed model solver are the Newton-Raphson and Direct Average Information (Lee et al. 2015) which surpasses in performance the MME-based Average Information (Gilmour et al. 1995) when dense covariance structures are present (GBLUP and GWAS case). When these matrices are sparse (no covariance structures), the MME-based is more effective and we recommend the user to swith to the lme4 package for such cases of NO covariance structures. 
+This function solves univariate and multivariate linear mixed models by different methods. It has been implemented to work with incidence and variance covariance matrices for each random effect. Currently 4 methods are supported; \strong{EMMA; efficient mixed model association} (Kang et al. 2008), \strong{AI; average information} (Gilmour et al. 1995; Lee et al. 2015), \strong{EM; expectation maximization} (Searle 1993; Bernardo 2010), and the default \strong{NR; Newton-Raphson} (Tunnicliffe 1989). All algorithms are able to deal with multiple variance components; "AI", "EM", "NR", "EMMA"" but methods "AI" and "NR" are the most efficient for dense structured models. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices that have been shown to increase prediction accuracy. Covariance structures for the residual component is currently supported only for univariate Newton Raphson. The package provides flexibility to fit other genetic models such as full and half diallel models as well, see \code{\link{hdm}} function information to see how to fit those models using sommer. The core algorithms in our mixed model solver are the Newton-Raphson and Direct Average Information (Lee et al. 2015) which surpasses in performance the MME-based Average Information (Gilmour et al. 1995) when dense covariance structures are present (GBLUP and GWAS case). When these matrices are sparse (no covariance structures), the MME-based is more effective and we recommend the user to swith to the lme4 package for such cases of NO covariance structures. \strong{rrBLUP results can be recreated using the EMMA method}.
 
-The package has been equiped with several datasets to learn how to use the sommer package; the \code{\link{HDdata}} and \code{\link{FDdata}} datasets will introduce users to fit half and full diallel designs respectively. The \code{\link{h2}} dataset shows how to calculate heritability. The \code{\link{cornHybrid}} and \code{\link{Technow_data}} datasets contain data to teach users how to perform genomic prediction in hybrid single crosses which display GCA and SCA effects. The \code{\link{wheatLines}} dataset teaches how to do genomic prediction in single crosses in species displaying only additive effects. The \code{\link{CPdata}} dataset contains data to teach users how to fit genomic prediction models within a biparental population coming from 2 highly heterozygous parents including additive, dominance and epistatic effects.  The same data example is used to show how to include the top GWAS hits as fixed effects in the GBLUP model to increase prediction accuracy, the examples can be found in the \code{\link{hits}} documentation.  The \code{\link{PolyData}} dataset shows how to fit genomic prediction and GWAS analysis in polyploids. The second example in \code{\link{Technow_data}} data shows how to perform GWAS in single cross hybrids. A good converter from letter code to numeric format is implemented in the function \code{\link{atcg1234}}, which supports higher ploidy levels than diploid. The \code{\link{RICE}} dataset can teach users how to select the best training population using the \code{\link{TP.prep}} function in an applied breeding program, and we show comparison some comparison with other methods. Traces of selection can be obtained using markers with the \code{\link{eigenGWAS}} function. Additional examples for fitting mixed models, such as GWAS and others, can be found in the example section of the \code{\link{mmer}} and \code{\link{mmer2}} functions. Examples of multivariate models can be found in the example #3 of the \code{\link{CPdata}}.
+The package has been equiped with several datasets to learn how to use the sommer package; the \code{\link{HDdata}} and \code{\link{FDdata}} datasets will introduce users to fit half and full diallel designs respectively. The \code{\link{h2}} dataset shows how to calculate heritability. The \code{\link{cornHybrid}} and \code{\link{Technow_data}} datasets contain data to teach users how to perform genomic prediction in hybrid single crosses which display GCA and SCA effects. The \code{\link{wheatLines}} dataset teaches how to do genomic prediction in single crosses in species displaying only additive effects. The \code{\link{CPdata}} dataset contains data to teach users how to fit genomic prediction models within a biparental population coming from 2 highly heterozygous parents including additive, dominance and epistatic effects.  The same data example is used to show how to include the top GWAS hits as fixed effects in the GBLUP model to increase prediction accuracy, the examples can be found in the \code{\link{hits}} documentation.  The \code{\link{PolyData}} dataset shows how to fit genomic prediction and GWAS analysis in polyploids. The second example in \code{\link{Technow_data}} data shows how to perform GWAS in single cross hybrids. A good converter from letter code to numeric format is implemented in the function \code{\link{atcg1234}}, which supports higher ploidy levels than diploid. The \code{\link{RICE}} dataset can teach users how to select the best training population using the \code{\link{TP.prep}} function in an applied breeding program, and we show comparison some comparison with other methods. Traces of selection can be obtained using markers with the \code{\link{eigenGWAS}} function. Additional examples for fitting mixed models, such as GWAS and others, can be found in the example section of the \code{\link{mmer}} and \code{\link{mmer2}} functions. Examples of multivariate models can be found in the example #3 of the \code{\link{CPdata}}. An example of how to model autocorrelation structures in the residual components can be found in the \code{\link{yates.oats}} documentation.
 
-Finally, feel free to get in touch with me if you have any questions or suggestion at: 
+Finally, feel free to get in touch with me if you have any \strong{questions or suggestions} at: 
 
 covarrubiasp@wisc.edu
 
-For a short tutorial of how to perform different genetic analysis in sommer please type:
+\strong{For a short tutorial} of how to perform different genetic analysis in sommer please type:
 
 vignette("sommer")
 
@@ -31,9 +31,9 @@ mmer(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE,
      che=TRUE)
 }
 \arguments{
-  \item{Y}{a numeric vector for the response variable or a data frame of multiple responses (it can run multivariate and also runs univariate in parallel by using the 'n.cores' argument). The multivariate version is only enabled when the argument 'MVM' is set to TRUE.}
-  \item{X}{an incidence matrix or a list of incidence matrices (in the case of parallel models) for fixed effects related to environmental effects or experimental design. These can be constructed using the model.matrix function.}
-  \item{Z}{incidence matrices and var-cov matrices for random effects. This works for ONE OR MORE random effects. \strong{This needs to be provided as a 2-level list structure}. For example:
+  \item{Y}{a numeric \strong{vector or data frame} for the response variable(s) (it can run multivariate and also runs univariate in parallel by using the 'n.cores' argument). The \strong{multivariate version is only enabled when the argument 'MVM' is set to TRUE}.}
+  \item{X}{an incidence matrix or a list of incidence matrices (in the case of parallel models) for \strong{fixed effects} related to environmental effects or experimental design. These can be constructed using the \code{\link{model.matrix}} function.}
+  \item{Z}{incidence matrices and var-cov matrices for \strong{random effects}. This works for ONE OR MORE random effects. \strong{This needs to be provided as a 2-level list structure}. For example:
   
   '
   
@@ -50,19 +50,25 @@ mmer(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE,
   
   '
   
-  makes a 2 level list for 3 the random effects A, B and C, stored in a variable we call ETA. The general idea is that each random effect is a list, i.e. A=list(Z=Z1, K=K1) where Z is the incidence matrix and K the var-cov matrix for the random effect, \strong{if K is not provided is assumed an identity matrix} conferring independence. 
+  makes a 2 level list for modeling 3 the random effects A, B and C, stored in a variable we named ETA (can have any name). The general idea is that each random effect is a list, i.e. A=list(Z=Z1, K=K1) where Z is the incidence matrix and K the var-cov matrix for the random effect, \strong{if K is not provided is assumed an identity matrix} confering independence. 
   
   '
   
-  PLEASE remember to \strong{use the names Z and K for all random effects} when you provide your matrices, \strong{that's the only way the program distinguishes between a Z or a K matrix}. 
+  PLEASE remember to \strong{use only the names Z and K for all random effects} when you provide your matrices, \strong{that's the only way the program distinguishes between a Z (incidence) or a K (covariance) matrix}. 
   
   '
   
-  To provide extra detail, I'll rephrase it; when moving to situations of more than one random effect, you need to build a list for each random effect, and at the end everything gets joined in a list as well (BGLR type of format). Is called a 2-level list, i.e. A=list(Z=Z1, K=K1) and B=list(Z=Z2, K=K2) refers to 2 random effects and they should be put together in a list:
+  To provide extra detail, I'll rephrase it; when moving to situations of more than one random effect, you need to build a list for each random effect, and at the end everything gets joined in another list (BGLR type of format). Is called a 2-level list, i.e. A=list(Z=Z1, K=K1) and B=list(Z=Z2, K=K2) refers to 2 random effects and they should be put together in a list:
   
   '
   
-  ETA <- list( A=list(Z=Z1, K=K1), B=list(Z=Z1, K=K1) )
+  ETA <- list( 
+  
+  A=list(Z=Z1, K=K1), 
+  
+  B=list(Z=Z1, K=K1) 
+  
+  )
   
   '
   
@@ -77,9 +83,9 @@ mmer(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE,
   You can see the examples at the bottom to have a clearer idea how to fit your models.
   
   }
-  \item{W}{an incidence matrix for extra fixed effects and only to be used if GWAS is desired and markers will be treated as fixed effects according to Yu et al. (2006) for diploids, and Rosyara et al (2016) for polyploids. Theoretically X and W are both fixed effects, but they are separated to perform GWAS in a model y = Xb + Zu + Wg, allowing the program to recognize the markers from other fixed factors such as environmental factors. This has to be provided as a matrix same than X.
+  \item{W}{an incidence matrix for extra fixed effects and \strong{only to be used if GWAS is pursued} and markers will be treated as fixed effects according to Yu et al. (2006) \strong{for diploids}, and Rosyara et al (2016) \strong{for polyploids}. Theoretically X and W are both fixed effects, but they are separated to perform GWAS in a model y = Xb + Zu + Wg, allowing the program to recognize the markers from other fixed factors such as environmental and design factors (the markers have to be provided as a matrix as well).
   
-  Performs genome-wide association analysis based on the mixed model (Yu et al. 2006):
+  The genome-wide association analysis is \strong{based on the mixed model (Yu et al. 2006)}:
 
 \deqn{y = X \beta + Z g + W \tau + \varepsilon}
 
@@ -93,33 +99,48 @@ The terminology "P3D" (population parameters previously determined) was introduc
 
 The dashed line in the Manhattan plots corresponds to an FDR rate of 0.05 and is calculated using the p.adjust function included in the stats package.}
 
-  \item{R}{a matrix or list of matrices for variance-covariance structures for the residuals, i.e. for longitudinal data. if not passed is assumed an identity matrix. THIS PART STILLS IN DEVELOPMENT, NOT FUNCTIONAL YET, it is plan to be implemented in version 2.5.}
+  \item{R}{a \strong{two level list including all the R matrices to be included in the analysis}. Each element of the two level list is a list with all R matrices to be used. For example, to model spatial variation in a plot with rows(4) and columns(18) you need to create a list with both matrices:
+  
+  # autocorrelation matrix for the 4 rows, initial value gamma=0.25
+  
+  \strong{R1 <- AR1.mat(.25,4) }
+  
+ # autocorrelation matrix for the 18 cols, initial value gamma=0.25
+ 
+  \strong{R2 <- AR1.mat(.25,18)}
+  
+  then we do the 2-level list as:
+  
+  \strong{RETA <- list(spatial=list(R1,R2,type=c("AR1","AR1")))}
+  
+  which can be introduced in the R argument of the function. The idea is that a kronecker product will be taken with R1 and R1, you have to introduce the R matrices that will yield the right dimensions, and you can add as many R matrices as you want. Here we only show using one for spatial effects.
+  }
   \item{method}{this refers to the method or algorithm to be used for estimating variance components. The package currently is supported by 4 algorithms; \strong{EMMA} efficient mixed model association (Kang et al. 2008), \strong{AI} average information (Gilmour et al. 1995; Lee et al. 2015), \strong{EM} expectation maximization (Searle 1993; Bernardo 2010), and Newton-Raphson \strong{NR} (Tunnicliffe 1989). The default method is average information "AI" because of its ability to handle multiple random effects combined with its greater speed compared to "EM", "NR" and "EMMA" which can handle multiple random effects but are slower.}
   \item{REML}{a TRUE/FALSE value indicating if restricted maximum likelihood should be used instead of ML. The default is TRUE.}
-  \item{MVM}{a TRUE/FALSE value indicating if the model should be run as multivariate or as parallel univariate models. the default is FALSE which will indicate to run parallel univariate models. The 'n.cores' argument decides how many cores use in such parallelization. MVM=TRUE will run a multivariate model but only for a single random effect.}
-  \item{iters}{a scalar value indicating how many iterations have to be performed if the EM or AI algorithms are selected. There is no rule of tumb for the number of iterations. The default value is 50 iterations or EM steps, but usually will take less than that stopping before reaching the maximum number of iterations. For the AI algorithm usually takes just a few iterations.}
-  \item{draw}{a TRUE/FALSE value indicating if a plot of updated values for the variance components and the log-likelihood should be drawn or not during the optimization process. The default is FALSE. It's been set to FALSE because is less the computation time when the computer doesn't have to draw plots.}
+  \item{MVM}{a TRUE/FALSE value \strong{indicating if the model should be run as multivariate} or as parallel univariate models. the default is FALSE which will indicate to run parallel univariate models. The 'n.cores' argument decides how many cores use in such parallelization. MVM=TRUE will run a multivariate model but only for a single random effect.}
+  \item{iters}{a scalar value indicating \strong{how many iterations} have to be performed if the EM or AI algorithms are selected. There is no rule of tumb for the number of iterations. The default value is 50 iterations or EM steps, but usually will take less than that stopping before reaching the maximum number of iterations. For the AI algorithm usually takes just a few iterations.}
+  \item{draw}{a TRUE/FALSE value indicating if a plot of \strong{updated values for the variance components} and the log-likelihood \strong{should be drawn or not} during the optimization process. The default is FALSE. It's been set to FALSE because is less the computation time when the computer doesn't have to draw plots.}
   \item{init}{an vector of initial values for the EM, NR or AI algorithms. If not provided the program uses a starting values the variance(y)/#random.eff which are usually good starting values.}
   \item{n.PC}{when the user performs GWAS this refers to the number of principal components to include as fixed effects for Q + K model. Default is 0 (equals K model).}
   \item{P3D}{when the user performs GWAS, P3D=TRUE means that the variance components are estimated by REML only once, without any markers in the model. When P3D=FALSE, variance components are estimated by REML for each marker separately. The default is the first case.}
-    \item{models}{The model to be used in GWAS. The default is the additive model which applies for diploids and polyploids but the model can be a vector with all possible models, i.e. "additive","1-dom-alt","1-dom-ref","2-dom-alt","2-dom-ref" models are supported for polyploids based on Rosyara (2016).}
-      \item{ploidy}{A numeric value indicating the ploidy level of the organism. The default is 2 which means diploid but higher ploidy levels are supported. This should only be modified if you are performing GWAS in polyploids.}
+    \item{models}{\strong{The model to be used in GWAS based on ploidy}. The default is the additive model which applies for diploids and polyploids but the model can be a vector with all possible models, i.e. "additive","1-dom-alt","1-dom-ref","2-dom-alt","2-dom-ref" models are supported for polyploids based on Rosyara (2016).}
+      \item{ploidy}{A numeric value indicating the ploidy level of the organism. The default is 2 which means diploid but higher ploidy levels are supported. This \strong{is only relevant if you are performing GWAS in polyploids}.}
   \item{min.MAF}{when the user performs GWAS min.MAF is a scalar value between 0-1 indicating what is theminor allele frequency to be allowed for a marker during a GWAS analysis when providing the matrix of markers W. In general is known that results for markers with alleles with MAF < 0.05 are not reliable unless sample size is big enough.}
   \item{silent}{a TRUE/FALSE value indicating if the function should draw the progress bar and poems (see \code{\link{poe}} function) while working or should not be displayed. The default is FALSE, which means is not silent and will display the progress bar and a short poem to help the scientist (and me haha) remember that life is more than analyzing data.}
   \item{family}{a family object to specify the distribution of the response variable. For details see \code{\link{family}} help page. The argument would look something like this; family=poisson(), or family=Gamma(), etc. For more sophisticated models please look at lme4 package from Douglas Bates. NOT IMPLEMENTED YET. Planned for ~ v2.5}
       \item{constraint}{a TRUE/FALSE value indicating if the program should use the boundary constraint when one or more variance component is close to the zero boundary. The default is TRUE but needs to be used carefully. It works ideally when few variance components are close to the boundary but when there are too many variance components close to zero we highly recommend setting this parameter to FALSE since is more likely to get the right value of the variance components in this way.}
       \item{sherman}{a TRUE/FALSE value indicating if Sherman-Morrison-Woodbury formula (Seber, 2003, p. 467) should be used when estimating variance components. This will perform faster when a mixed model with no covariance structures is fitted (only AI algorithm). The default is FALSE since this software was designed for unreplicated data (altough can fit models with replicated data but slower than lme4).}
-      \item{EIGEND}{a TRUE/FALSE value indicating if an eigen decomposition for the additive relationship matrix should be performed or not. This is based on Lee (2015). The limitations of this method are:
+      \item{EIGEND}{a TRUE/FALSE value indicating if an \strong{eigen decomposition for the additive relationship matrix} should be performed or not. This is based on Lee (2015). The limitations of this method are:
       1) can only be applied to one relationship matrix
       2) The system needs to be squared and no missing data is allowed (then missing data is imputed with the median).
    The default is FALSE to avoid the user get into trouble but experimented users can take advantage from this feature to fit big models, i.e. 5000 individuals in 555 seconds = 9 minutes in a MacBook 4GB RAM.}
       \item{gss}{a TRUE/FALSE value indicating if a genomic selection is being fitted just for using certain constraints. When is FALSE the program can make some EM steps to find initial values for variance components when the starting values are to far from the real values causing the likelihood to have a strange behavior and dropping dramatically When TRUE (default) the program does not try EM steps even when far away from the likelihood because in big marker-based models can make the process quite slow.}
       \item{forced}{a vector of numeric values for variance components including error if the user wants to force the values of the variance components. On the meantime only works for forcing all of them and not a subset of them. The default is NULL, meaning that variance components will be estimated by REML/ML.}
-      \item{map}{a data frame with 2 columns, 'Chrom', and 'Locus' not neccesarily with same dimensions that markers. The program will look for markers in common among the W matrix and the map provided. Although, the association tests are performed for all markers, only the markers in common will be plotted.}
-      \item{fdr.level}{a level of FDR to calculate and plot the line in the GWAS plot. Default is fdr.level=0.05}
-      \item{manh.col}{a vector with colors desired for the manhattan plot. Default are cadetblue and red alternated.}
+      \item{map}{a data frame with 2 columns, 'Chrom', and 'Locus' not neccesarily with same dimensions that markers. The program will look for markers in common among the W matrix and the map provided. Although, the association tests are performed for all markers, only the markers in common will be plotted. \strong{Only relevant for GWAS models which include the W argument}.}
+      \item{fdr.level}{a level of FDR to calculate and plot the line in the GWAS plot. Default is fdr.level=0.05. If there's not a single significant marker nothing is returned.}
+      \item{manh.col}{a vector with colors desired for the manhattan plot. Default are cadetblue and red alternated for each chromosome.}
       \item{gwas.plots}{a TRUE/FALSE statement indicating if the GWAS and qq plot should be drawn or not. The default is TRUE but you may want to avoid it.}
-      \item{n.cores}{number of cores to use when the user passes multiple responses in the model for a faster execution. The default is 1. It relies on forking and hence is not available on Windows unless mc.cores = 1.}
+      \item{n.cores}{number of cores to use when the user passes multiple responses in the model for a faster execution. The default is 1. It relies on forking and hence is \strong{not available on Windows} unless mc.cores = 1.}
       \item{tolpar}{tolerance parameter for convergence in the multivariate models.}
       \item{tolparinv}{tolerance parameter for matrix inverse in the multivariate models.}
      \item{che}{a TRUE/FALSE value statement indicating if the program should spend time checking the matrices of random effects provided by the user for possible errors in dimensions.}
@@ -331,8 +352,8 @@ M <- t(M)
 #### fit the model
 ####=========================================####
 Z1 <- diag(length(y))
-ETA <- list( list(Z=Z1, K=A.mat(M)))
-ans <- mmer(Y=y, Z=ETA, method="EMMA")
+ETA <- list( add=list(Z=Z1, K=A.mat(M)) )
+ans <- mmer(Y=y, Z=ETA)
 summary(ans)
 
 ####=========================================####
@@ -341,7 +362,7 @@ summary(ans)
 #### markers are fixed effects
 ####=========================================####
 
-#ans <- mmer(Y=y, Z=ETA, W=M, method="EMMA")
+#ans <- mmer(Y=y, Z=ETA, W=M)
 #summary(ans)
 ############################################
 ############################################
@@ -396,6 +417,7 @@ Z3 <- model.matrix(~ SCA -1, data = hybrid2);dim(Z3)
 ####=========================================####
 ####=========================================####
 #### EXAMPLE 3
+#### use data from example 2
 #### COMPARE WITH MCMCglmm
 ####=========================================####
 ####=========================================####

@@ -143,7 +143,7 @@ version 1.9 (2016-07-01)
   + The first multivariate algorithm "EMMAM" has been added to sommer (a single random effect).
   + Vignettes have examples for multi-response model and parallel univariate models.
   + 'bag' function has changed name to 'hits' to avoid confusion of selecting top 10 hits with
-    Bootstrap aggregation (bagging) 
+    Bootstrap aggregation (bagging).
     
 ########################  
 version 2.0 (2016-08-01)
@@ -155,10 +155,22 @@ version 2.0 (2016-08-01)
   + The function "mmer2" can run multivariate and parallel models as well.
   + Bug for parallel models fixed.
   + Eigen decomposition of additive relationship matrix implemented for 
-    multivariate models in "NR" and "AI"
+    multivariate models in "NR" and "AI".
+    
+########################  
+version 2.1 (2016-09-01)
+########################
+
+  + Standard errors and Z ratios added to the summary of mixed models.
+  + Addition of functionality for residual structures, only AR1, CS, and ARMA
+    supported. The most flexible functions "MNR" and "NRR" are not able to deal 
+    with missing data so you should be careful because the program imputes with 
+    the mean.
+  + atcg1234 has a new functonality to get a presence/absence matrix for each 
+    allele at each marker.
   
 ##pendings
 + get incidence matrix from vcf file directly with probabilities instead of 0,1,2
 + M-EM, AI-MME, for models with no covariance structures these models might be more suitable
-+ random regression (working on it v2.1 or v2.2 would have it ready)
++ random regression (working on it)
 

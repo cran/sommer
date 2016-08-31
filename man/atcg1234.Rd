@@ -8,7 +8,8 @@ This function was designed to help users to transform their data in letter forma
 
 }
 \usage{
-atcg1234(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FALSE)
+atcg1234(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FALSE,
+        by.allele=FALSE)
 }
 \arguments{
   \item{data}{a dataframe with markers in columns and individuals in rows. Preferable the rownames are the ID of the plants so you don't lose track of what is what.}
@@ -17,6 +18,7 @@ atcg1234(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FALSE)
   \item{maf}{minor allele frequency used to filter the SNP markers, the default is zero which means all markers are returned in numeric format.}
   \item{multi}{a TRUE/FALSE statement indicating if the function should get rid of the markers with more than 2 alleles. If FALSE, which indicates that if markers with multiple alleles are found, the alternate and reference alleles will be the first 2 alleles found. This could be risky since some alleles will be masked, i.e. AA AG AT would take only A and G as reference and alternate alleles, converting to numeric format 2 1 1, giving the same effect to AG and AT which could be a wrong assumption. The default is TRUE, removes markers with more than two alleles. }
   \item{silent}{a TRUE/FALSE value indicating if a progress bar should be drawn for each step of the conversion. The default is silent=FALSE, which means that we want progress bar to be drawn.}
+  \item{by.allele}{a TRUE/FALSE value indicating if the program should transform the data in a zero/one matrix of presence/absense per allele. For example, a marker with 3 alleles A,T,C in a diploid organism will yield 6 possible configurations; AA, AT, AC, TT, TC, CC. Therefore, the program would create 3 columns for this marker indicating the presence/absence of each allele for each genotype. }
   
 }
 \value{

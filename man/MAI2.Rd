@@ -5,8 +5,8 @@
 This function is used internally in the function \code{\link{mmer}} when MORE than 1 variance component needs to be estimated through the use of the average information (MAI) algorithm and the MVM argument is set to TRUE.
 }
 \usage{
-MAI2(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,draw=TRUE,silent=FALSE,
-     constraint=FALSE,EIGEND=FALSE,forced=NULL)
+MAI2(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3, tolparinv=1e-6, draw=TRUE,
+     silent=FALSE, constraint=FALSE,EIGEND=FALSE,forced=NULL)
 }
 \arguments{
   \item{Y}{a matrix or data frame of response variables}
@@ -63,6 +63,7 @@ MAI2(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,draw=TRUE,silent=FALSE,
     finishes.  If each component of the change proposed by the
   Newton-Raphson is lower in magnitude than \code{tol} the algorithm
   finishes. Default value is \code{1e-4}.}
+  \item{tolparinv}{tolerance parameter for matrix inverse}
   \item{silent}{a TRUE/FALSE value indicating if the function should draw the progress bar while working or should not be displayed. The default is FALSE, which means is not silent and will display the progress bar.}
    \item{constraint}{a TRUE/FALSE value indicating if the function should apply the boundary constraint indicating that variance components that are zero should be removed from the analysis and variance components recalculated.}
    \item{EIGEND}{a TRUE/FALSE value indicating if an eigen decomposition for the additive relationship matrix should be performed or not. This is based on Lee (2015). The limitations of this method are:

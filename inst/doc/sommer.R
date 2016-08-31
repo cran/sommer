@@ -25,7 +25,7 @@ A <- A.mat(CPgeno) # additive relationship matrix
 D <- D.mat(CPgeno) # dominance relationship matrix
 E <- E.mat(CPgeno) # epistatic relationship matrix
 
-ETA.ADE <- list(list(Z=Za,K=A),list(Z=Zd,K=D),list(Z=Ze,K=E))
+ETA.ADE <- list(add=list(Z=Za,K=A),dom=list(Z=Zd,K=D),epi=list(Z=Ze,K=E))
 ans.ADE <- mmer(Y=y, Z=ETA.ADE,silent = TRUE)
 (H2 <- sum(ans.ADE$var.comp[1:3,1])/sum(ans.ADE$var.comp[,1]))
 (h2 <- sum(ans.ADE$var.comp[1,1])/sum(ans.ADE$var.comp[,1]))
@@ -90,12 +90,12 @@ data(PolyData)
 genotypes <- PolyData$PGeno
 phenotypes <- PolyData$PPheno
 ## convert markers to numeric format
-numo <- atcg1234(data=genotypes, ploidy=4, silent = TRUE); numo[1:5,1:5]; dim(numo)
+numo <- atcg1234(data=genotypes, ploidy=4, silent = TRUE); numo[1:5,1:4]; dim(numo)
 # get only plants with both genotypes and phenotypes
 common <- intersect(phenotypes$Name,rownames(numo))
-marks <- numo[common,]; marks[1:5,1:5]
+marks <- numo[common,]; marks[1:5,1:4]
 phenotypes2 <- phenotypes[match(common,phenotypes$Name),];
-phenotypes2[1:5,1:5]
+phenotypes2[1:5,1:4]
 # Additive relationship matrix, specify ploidy
 yy <- phenotypes2$tuber_shape
 K1 <- A.mat(marks, ploidy=4)
@@ -109,7 +109,7 @@ summary(ans2)
 
 ## ------------------------------------------------------------------------
 data(wheatLines)
-X <- wheatLines$wheatGeno; X[1:5,1:5]; dim(X)
+X <- wheatLines$wheatGeno; X[1:5,1:4]; dim(X)
 Y <- wheatLines$wheatPheno
 rownames(X) <- rownames(Y)
 # select environment 1
@@ -170,7 +170,7 @@ CPpheno <- CPdata$pheno
 CPgeno <- CPdata$geno
 ### look at the data
 head(CPpheno)
-CPgeno[1:5,1:5]
+CPgeno[1:5,1:4]
 ## fit a model including additive and dominance effects
 Y <- CPpheno
 Za <- diag(dim(Y)[1])
@@ -193,4 +193,22 @@ prod.sd <- sd.gvc %*% t(sd.gvc)
 (gen.cor <- gvc/prod.sd)
 ## heritabilities
 (h2 <- diag(gvc) / diag(cov(Y, use = "complete.obs")))
+
+## ------------------------------------------------------------------------
+data(CPdata)
+CPpheno <- CPdata$pheno
+CPgeno <- CPdata$geno
+### look at the data
+head(CPpheno)
+CPgeno[1:5,1:4]
+## fit a model including additive and dominance effects
+Y <- CPpheno
+Za <- diag(dim(Y)[1])
+A <- A.mat(CPgeno) # additive relationship matrix
+####================####
+#### ADDITIVE MODEL ####
+####================####
+ETA.A <- list(add=list(Z=Za,K=A))
+ans.A <- mmer(Y=Y, Z=ETA.A, W=CPgeno, MVM=TRUE, EIGEND=TRUE, map=CPdata$map, silent=TRUE,gwas.plots = FALSE)
+summary(ans.A)
 

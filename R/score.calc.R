@@ -53,7 +53,12 @@ score.calc <- function(marks,y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,max.geno.fre
           V <- beta[(p+1-v1):p]
           Fstat <- crossprod(V,Tt%*%V)/v1
           x <- v2/(v2+v1*Fstat)
-          scores[i] <- -log10(pbeta(x, v2/2, v1/2)) 
+          mama <- -log10(pbeta(x, v2/2, v1/2)) 
+          if(is.infinite(mama)){
+            scores[i] <- NA
+          }else{
+            scores[i] <- mama
+          }
           if (!general) {beta.out[i] <- beta[p]}                    
         }
       }
