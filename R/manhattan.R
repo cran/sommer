@@ -1,4 +1,9 @@
-manhattan <- function(map, col=NULL, fdr.level=0.05, show.fdr=TRUE){
+manhattan <- function(map, col=NULL, fdr.level=0.05, show.fdr=TRUE, PVCN=NULL){
+  
+  if(!is.null(PVCN)){
+    colnames(map)[which(colnames(map)==PVCN)] <- "p.val"
+  }
+  
   required.names <- c("Chrom","Position","p.val")
   
   che <- which(names(map)%in%required.names)
@@ -13,6 +18,8 @@ manhattan <- function(map, col=NULL, fdr.level=0.05, show.fdr=TRUE){
   yylim <- ceiling(max(map$p.val))
   if(is.null(col)){
     col.scheme <- rep((transp(c("cadetblue","red"))),30)
+  }else{
+    col.scheme <- rep(col,30)
   }
   ffr <- fdr(map$p.val, fdr.level=fdr.level)$fdr.10
   plot(map$p.val, bty="n", col=col.scheme[factor(map$Chrom, levels = unique(map$Chrom, na.rm=TRUE))], xaxt="n", xlab="Chromosome", ylab=expression(paste(-log[10],"(p.value)")), pch=20, cex=2, las=2, ylim=c(0,yylim))

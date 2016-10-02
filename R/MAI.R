@@ -110,10 +110,10 @@ MAI <- function(Y, X=NULL, ZETA=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=
     
   }
   if(is.null(names(ZETA))){
-    varosss <- c(paste("u.",1:length(ZETA), sep=""),"Error")
+    varosss <- c(paste("u.",1:length(ZETA), sep=""),"Residual")
     varosss2 <- c(paste("u.",1:length(ZETA), sep=""))
   }else{
-    varosss <- c(names(ZETA),"Error")
+    varosss <- c(names(ZETA),"Residual")
     varosss2 <- c(names(ZETA))
   }
   ##############################
@@ -484,7 +484,7 @@ MAI <- function(Y, X=NULL, ZETA=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=
         base2 <- base2[ order(base2[,1], base2[,2]), ]
         return(as.matrix(x[base2]))
         }else{return(as.matrix(x))}})
-        names(asDF) <- c(names(ZETA),"Error")
+        names(asDF) <- c(names(ZETA),"Residual")
         #print(var.coms)
         #print(asDF)
         var.coms <- mapply(cbind, var.coms, asDF, SIMPLIFY=FALSE)

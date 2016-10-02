@@ -66,7 +66,8 @@ score.calcMV <- function(marks,Y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,max.geno.f
         s2 <- as.double(crossprod(resid, Hinv %*% resid))/v2
         Q <- s2 * Winv#[(p-v1+1):p,(p-v1+1):p]
         Q <- diag(diag(Q))
-        Tt <- solve(Q, silent= TRUE)
+        Tt <- try(solve(Q), silent= TRUE)
+        
         if (class(Tt) != "try-error") {
           V <- beta#[(p+1-v1):p]
           Fstat <- crossprod(t(diag(V[,1])),Tt%*%(diag(V[,1])))/v1
@@ -76,6 +77,16 @@ score.calcMV <- function(marks,Y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,max.geno.f
           scores[1:length(x),i] <- -log10(pbeta(x, v2/2, v1/2)) 
           beta.out[1:length(x),i] <- V[,1]
           #if (!general) {beta.out[i] <- beta[p]}                    
+        }else{
+          Tt <- try(solve(Q + (diag(dim(Q)[1])*1e-6) ), silent= TRUE)
+          V <- beta#[(p+1-v1):p]
+          Fstat <- crossprod(t(diag(V[,1])),Tt%*%(diag(V[,1])))/v1
+          x <- v2/diag(v2+v1*Fstat)
+          #print(dim(scores))
+          #print(length(x))
+          scores[1:length(x),i] <- -log10(pbeta(x, v2/2, v1/2)) 
+          beta.out[1:length(x),i] <- V[,1]
+          #if (!general) {beta.out[i] <- beta[p]}   
         }
       }
     }

@@ -209,7 +209,7 @@ ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=F
     for(k in 1:length(var.com)){ # 
       gh1 <- varosss[k]
       if(k == length(var.com)){
-        lege2[[k]] <- paste("Var(Error):")
+        lege2[[k]] <- paste("Var(Residual):")
       }else{
         lege2[[k]] <- paste("Var(",gh1,"):",sep="")
       }

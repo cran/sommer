@@ -52,7 +52,8 @@ A platform for meta-analysis of rice crop data. \emph{Plant Physiology} \bold{13
 ####=========================================####
 #### For CRAN time limitations most lines in the 
 #### examples are silenced with one '#' mark, 
-#### remove them and run the examples
+#### remove them and run the examples using
+#### command + shift + C |OR| control + shift + C
 ####=========================================####
 data(wheatLines)
 X <- wheatLines$wheatGeno; X[1:5,1:5]; dim(X)

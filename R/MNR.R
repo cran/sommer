@@ -218,7 +218,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
         for(k in 1:length(var.com)){ # 
           gh1 <- varosss[k]
           if(k == length(var.com)){
-            lege2[[k]] <- paste("Var(Error):")
+            lege2[[k]] <- paste("Var(Residual):")
           }else{
             lege2[[k]] <- paste("Var(",gh1,"):",sep="")
           }
@@ -794,7 +794,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
       if(!abnormal & !abnormalVE){
         jkl <- c(23,18,9,20,20,5,14, NA,2,25,NA,7,9,15,22,1,14,14,25,NA,3,15,22,1,18,18,21,2,9,1,19)
         oh.yeah <- paste(letters[jkl],collapse = "")
-        cat("\nError variance (Ve) was pushing to be negative. Be careful, model might be overspecified.\n")
+        cat("\nResidual variance (Ve) was pushing to be negative. Be careful, model might be overspecified.\n")
       }
       ####
       if(EIGEND){
@@ -806,7 +806,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
       
       
       out1 <- as.matrix(var.com2, ncol=1); colnames(out1) <- "Variance Components" # variance components
-      rownames(out1) <- c(paste("Var(",varosss,")",sep=""), "Var(Error)")
+      rownames(out1) <- c(paste("Var(",varosss,")",sep=""), "Var(Residual)")
       res <- list(var.comp=out1, V.inv = Vinv, u.hat=u, Var.u.hat=Var.u, 
                   PEV.u.hat=PEV.u, beta.hat=beta, Var.beta.hat=xvxi, 
                   LL=logL, AIC=AIC, BIC=BIC, X=xm, fitted.y=fitted.y, 
@@ -1358,10 +1358,10 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
     ############################################
     ############################################
     if(is.null(names(ZETA))){
-      varosss <- c(paste("u.",1:length(ZETA), sep=""),"Error")
+      varosss <- c(paste("u.",1:length(ZETA), sep=""),"Residual")
       varosss2 <- c(paste("u.",1:length(ZETA), sep=""))
     }else{
-      varosss <- c(names(ZETA),"Error")
+      varosss <- c(names(ZETA),"Residual")
       varosss2 <- c(names(ZETA))
     }
     ############
@@ -1372,10 +1372,10 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
     sigma <- forced
     llik <- 1
     if(is.null(names(ZETA))){
-      varosss <- c(paste("u.",1:length(ZETA), sep=""),"Error")
+      varosss <- c(paste("u.",1:length(ZETA), sep=""),"Residual")
       varosss2 <- c(paste("u.",1:length(ZETA), sep=""))
     }else{
-      varosss <- c(names(ZETA),"Error")
+      varosss <- c(names(ZETA),"Residual")
       varosss2 <- c(names(ZETA))
     }
   }
@@ -1421,7 +1421,14 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
   ######## BETA.HAT, VAR.B.HAT
   
   xvx <- crossprod(X, vmi %*% X)
-  xvxi <- solve(xvx) # variance of fixed effects
+  
+  
+  xvxi <- try(solve(xvx), silent = TRUE) # variance of fixed effects
+  
+  if(class(xvxi) == "try-error"){
+    xvxi <- try(solve((xvx + tolparinv * diag(dim(xvx)[2]))), silent = TRUE)
+  }
+  
   pm <- vmi - vmi %*% X %*% solve(xvx, crossprod(X, vmi))
   beta <- xvxi %*% crossprod((X), vmi %*% Y.or2) # (XVX)-XV-Y .... Y.or3 %*% X %*% solve(crossprod(X))#
 

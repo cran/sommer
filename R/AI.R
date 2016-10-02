@@ -214,7 +214,7 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
     for(k in 1:length(var.com)){ # 
       gh1 <- varosss[k]
       if(k == length(var.com)){
-        lege2[[k]] <- paste("Var(Error):")
+        lege2[[k]] <- paste("Var(Residual):")
       }else{
         lege2[[k]] <- paste("Var(",gh1,"):",sep="")
       }
@@ -790,7 +790,7 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
   if(!abnormal & !abnormalVE){
     jkl <- c(23,18,9,20,20,5,14, NA,2,25,NA,7,9,15,22,1,14,14,25,NA,3,15,22,1,18,18,21,2,9,1,19)
     oh.yeah <- paste(letters[jkl],collapse = "")
-    cat("\nError variance (Ve) was pushing to be negative. Be careful, your model might be overspecified.\nPlease check and delete random effects if neccesary.\n")
+    cat("\nResidual variance (Ve) was pushing to be negative. Be careful, your model might be overspecified.\nPlease check and delete random effects if neccesary.\n")
   }
   ####
   if(EIGEND){
@@ -802,7 +802,7 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
   
   
   out1 <- as.matrix(var.com2, ncol=1); colnames(out1) <- "Variance Components" # variance components
-  rownames(out1) <- c(paste("Var(",varosss,")",sep=""), "Var(Error)")
+  rownames(out1) <- c(paste("Var(",varosss,")",sep=""), "Var(Residual)")
   res <- list(var.comp=out1, V.inv = Vinv, u.hat=u, Var.u.hat=Var.u, 
               PEV.u.hat=PEV.u, beta.hat=beta, Var.beta.hat=xvxi, 
               LL=logL, AIC=AIC, BIC=BIC, X=xm, fitted.y=fitted.y, 

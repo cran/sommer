@@ -60,10 +60,20 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FA
     # presense/absense of alleles
     mar.nam <- colnames(da)#unique(gsub("\\.\\d","", names(da))) # find a dot and a number after the dot
     mat.list <- list(NA) # list of matrices for each marker
+    wi=0 # counter
+    if(!silent){
+      count <- 0
+      tot <- length(mar.nam)
+      pb <- txtProgressBar(style = 3)
+      setTxtProgressBar(pb, 0)
+    }
     for(i in 1:length(mar.nam)){ # for each marker
+      wi=wi+1
+      if(!silent){
+        count <- count + 1
+      }
       
-      
-      v <- grep(mar.nam[i], colnames(da))
+      v <- which(colnames(da)==mar.nam[i])#grep(mar.nam[i], colnames(da))
       
       if(length(v)==0){
         qqqqq <- grep(mar.nam[i-1],names(da))
@@ -90,6 +100,10 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FA
       colnames(fff) <- paste(mar.nam[i],alls, sep="/")
       
       mat.list[[i]] <- fff
+      if(!silent){
+        setTxtProgressBar(pb, (count/tot))### keep filling the progress bar
+      }
+      
     }
     
     fin.mat <- do.call(cbind,mat.list)

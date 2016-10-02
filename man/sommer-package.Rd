@@ -8,15 +8,15 @@ Giovanny Covarrubias-Pazaran
 \description{
 
 
-Univariate-Multivariate linear mixed model solver for multiple random effects allowing the specification of variance covariance structures. ML/REML estimates are obtained using the \strong{Average Information}, \strong{Expectation-Maximization}, \strong{Newton-Raphson}, or \strong{Efficient Mixed Model Association} algorithms. Designed for genomic prediction and genome wide association studies (GWAS) to include additive, dominance and epistatic relationship structures or other covariance structures, but also functional as a regular mixed model program. Multivariate models (multiple responses) can be fitted currently with \strong{EMMA}, \strong{Average Information}, and the default \strong{Newton-Raphson}. rrBLUP results can be recreated using the \strong{EMMA} method. Covariance structures for the residual component is currently supported only for univariate Newton Raphson. 
+Univariate-Multivariate linear mixed model solver for multiple random effects allowing the specification of variance covariance structures. ML/REML estimates are obtained using the \strong{Average Information}, \strong{Expectation-Maximization}, \strong{Newton-Raphson}, or \strong{Efficient Mixed Model Association} algorithms. Designed for genomic prediction and genome wide association studies (GWAS) to include additive, dominance and epistatic relationship structures or other covariance structures, but also functional as a regular mixed model program. Multivariate models (multiple responses) can be fitted currently with \strong{EMMA}, \strong{Average Information}, and the default \strong{Newton-Raphson}. In addition, \strong{rrBLUP results can be recreated selecting the EMMA method}. Covariance structures for the residual component is currently supported only for univariate Newton Raphson. 
 
 The sommer package has been developed to provide R users with open-source code to understand how most popular likelihood algorithms in mixed model analysis work, related to genetic analysis and other general experiments, but at the same time allowing to perform their real analysis in diploid and polyploid organisms with small and big data sets. The core of the package is the function \code{\link{mmer}} focused in solving multivariate linear mixed models by likelihood methods. This package allows the user to estimate variance components for a mixed model with the advantage of specifying the variance-covariance structure of the random effects and obtain other parameters such as BLUPs, BLUEs, residuals, fitted values, variances-covariances for fixed and random effects, etc. The package is focused on genomic prediction (or genomic selection) and GWAS analysis, although general mixed models can be fitted as well. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices for diploid and polyploid organisms that have been shown to increase prediction accuracy under certain scenarios. The package provides flexibility to fit other genetic models such as full and half diallel models as well. 
 
 The package has been equiped with several datasets to learn how to use the sommer package; the \code{\link{HDdata}} and \code{\link{FDdata}} datasets will introduce users to fit half and full diallel designs respectively. The \code{\link{h2}} dataset shows how to calculate heritability. The \code{\link{cornHybrid}} and \code{\link{Technow_data}} datasets contain data to teach users how to perform genomic prediction in hybrid single crosses which display GCA and SCA effects. The \code{\link{wheatLines}} dataset teaches how to do genomic prediction in single crosses in species displaying only additive effects. The \code{\link{CPdata}} dataset contains data to teach users how to fit genomic prediction models within a biparental population coming from 2 highly heterozygous parents including additive, dominance and epistatic effects. The same data example is used to show how to include the top GWAS hits as fixed effects in the GBLUP model to increase prediction accuracy, the examples can be found in the \code{\link{hits}} documentation.  The \code{\link{PolyData}} dataset shows how to fit genomic prediction and GWAS analysis in polyploids. The second example in \code{\link{Technow_data}} data shows how to perform GWAS in single cross hybrids. A good converter from letter code to numeric format is implemented in the function \code{\link{atcg1234}}, which supports higher ploidy levels than diploid. The \code{\link{RICE}} dataset can teach users how to select the best training population using the \code{\link{TP.prep}} function in an applied breeding program, and we show comparisons with other methods. Traces of selection can be obtained using markers with the \code{\link{eigenGWAS}} function. A comparison of genomic prediction using univariate versus multivariate models is shown in the example#2 in the \code{\link{CPdata}} help page. Examples of multivariate models can be found in the example #3 of the \code{\link{CPdata}}. An example of how to model autocorrelation structures in the residual components can be found in the \code{\link{yates.oats}} documentation. Additional examples for fitting mixed models, such as GWAS and others, can be found in the example section of the \code{\link{mmer}} and \code{\link{mmer2}} functions.
 
-For a short tutorial of how to perform different genetic analysis in sommer please type:
+\strong{For a short tutorial} of how to perform different genetic analysis in sommer \strong{please type}:
 
-vignette("sommer")
+\strong{vignette("sommer")}
 
 Other functions such as \code{\link{summary}}, \code{\link{fitted}}, \code{\link{randef}} (notice here is randef not ranef), \code{\link{anova}}, \code{\link{residuals}}, \code{\link{coef}} and \code{\link{plot}} applicable to typical linear models can also be applied to models fitted using the \code{\link{mmer}} function which is the core of the sommer package. The algorithms in our mixed model solver are the Direct Average Information proposed by Lee et al. (2015) which surpasses in performance the MME-based Average Information (Gilmour et al. 1995) when dense covariance structures are present (GBLUP and GWAS case). In addition the Expectation-Maximization and Newton-Raphson algorithms are also available and can deal with multiple variance components with var-cov structures, in addition to the popular EMMA algorithm. All functional for multivariate models (multiple responses) as well. When the variance covariance matrices are identity matrices (sparse), or longitudinal data is being analyzed we recommend shifting to \strong{use the lme4 package for} such \strong{cases of NO covariance structures}.  
 
@@ -27,15 +27,29 @@ Additional functions for genetic analysis have been included such as False Disco
 
 install.packages("sommer")
 
-The core of the package is the function \code{\link{mmer}}, and the user-friendly version (asreml sintax type) \code{\link{mmer2}}, both focus in solving mixed models of the form:
+The core of the package is the function \code{\link{mmer}}, and the user-friendly version (asreml sintax type) \code{\link{mmer2}}.
+
+=======================================================
+=======================================================
+
+\strong{MODELS ENABLED}
+
+The mmer function fits linear mixed models by likelihood methods allowing the used of known covariance structures for random effects. If not provided independence is conferred. This program focuses in the mixed model of the form:
 
 '
 
-.............................    Y = Xb + Zu + e   ........ with distributions:
+.............................    Y = Xb + Zu + e   .....................
+
+..................................... or ................................... 
+
+..... Y = x1b1 + ... + xibi + z1u1 + ... + zjuj + e  ..... 
+
+
+with distributions:
 
 '
 
-Y ~ N[Xb, var(Zu+e)]   ......where;
+Y ~ N[Xb+Zu, var(Zu+e)]   ......where;
 
 '
 
@@ -45,13 +59,13 @@ u ~ N[0, G]  ....... where G is equal to:
 
 '
 
-|K1*sigma2(u1)......................0...........................0.........|
+|K1*\eqn{\sigma2}(u1)......................0...........................0.........|
     
-|.............0.............K2*sigma2(u2).......................0.........| = G
+|.............0.............K2*\eqn{\sigma2}(u2).......................0.........| = G
 
-|......................................................................................|
+|...............................................................................|
 
-|.............0....................0.........................Ki*sigma2(ui)...|
+|.............0....................0.........................Ki*\eqn{\sigma2}(ui)...|
 
 '
 
@@ -59,15 +73,37 @@ for the i.th random effects, allowing the user to specify the variance covarianc
 
 '
 
-e ~ N[0, R]  .....................where: I*sigma(e) = R
+e ~ N[0, R]  .....................where: I*\eqn{\sigma2}(e) = R
 
 '
 
-also Var(Y) = Var(Zu+e) = ZGZ+R = V which is the phenotypic variance
+also Var(Y) = Var(Zu+e) = ZGZ+R = V which is the phenotypic variance. Estimation of variance components are optimized with any of the 4 methods available; NR, AI, EM, EMMA (rrBLUP method).
 
--------------------------------------------------------------------------------
+=======================================================
+=======================================================
 
-The functions in the sommer packages allow the user to specify the incidence matrices with their respective variance-covariance matrix in a 2 level list structure. For example imagine a mixed model with three random effects:
+\strong{GWAS MODELS}
+
+The GWAS models in the sommer package are enabled by using the W argument, which is expected to be a numeric marker matrix. Markers are treated as fixed effects according to the model proposed by Yu et al. (2006) for diploids, and Rosyara et al. (2016) (for polyploids). The matrices X and W are both fixed effects, but they are separated by 2 different arguments to distinguish factors such as environmental and design factors for the argument "X" and markers with "W".
+  
+  The genome-wide association analysis is based on the mixed model:
+
+\deqn{y = X \beta + Z g + W \tau + e}
+
+where \eqn{\beta} is a vector of fixed effects that can model both environmental factors and population structure.  
+The variable \eqn{g} models the genetic background of each line as a random effect with \eqn{Var[g] = K \sigma^2}.  
+The variable \eqn{\tau} models the additive SNP effect as a fixed effect.  The residual variance is \eqn{Var[\varepsilon] = I \sigma_e^2}
+  
+  For unbalanced designs where phenotypes come from different environments, the environment mean can be modeled using the fixed option (e.g., fixed="env" if the column in the pheno data.frame is called "env").  When principal components are included (P+K model), the loadings are determined from an eigenvalue decomposition of the K matrix.
+
+The argument "P3D" was introduced by Zhang et al. (2010).  When P3D=FALSE, this function is equivalent to EMMA with REML (Kang et al. 2008).  When P3D=TRUE, it is equivalent to EMMAX (Kang et al. 2010).  The P3D=TRUE option is faster but can underestimate significance compared to P3D=FALSE.
+
+For extra details about the methods please read the canonical papers listed in the References section.
+
+=======================================================
+=======================================================
+
+An example imagine a mixed model with three random effects:
 
 '
 
@@ -127,10 +163,9 @@ ans <- mmer2(Y~1, random= ~ gca1 + gca2 + sca,
              data=yourdata)
 
 
-'
 
-
-The package uses Average Information \code{\link{AI}} , Expectation Maximization \code{\link{EM}}, Newton-Raphson \code{\link{NR}}, or Efficient Mixed Model Association \code{\link{EMMA}} algorithms. I have included those functions as independent in case you want to check how they work internally.
+=======================================================
+=======================================================
 
 The mmer function has been enhanced by adding the argument EIGEND which allows an eigen decomposition of the additive relationship matrix to accelerate genomic prediction models in the order of hundreds of times compared to classical EMMA or AI.
 

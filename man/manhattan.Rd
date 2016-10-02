@@ -5,7 +5,7 @@
 This function was designed to create a manhattan plot using a data frame with columns "Chrom" (Chromosome),  "Position" and "p.val" (significance for the test).  
 }
 \usage{
-manhattan(map, col=NULL, fdr.level=0.05, show.fdr=TRUE)
+manhattan(map, col=NULL, fdr.level=0.05, show.fdr=TRUE, PVCN=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -13,6 +13,7 @@ manhattan(map, col=NULL, fdr.level=0.05, show.fdr=TRUE)
   \item{col}{colors prefered by the user to be used in the manhattan plot. The default is NULL which will use the red-blue palette.}
   \item{fdr.level}{false discovery rate to be drawn in the plot.}
    \item{show.fdr}{a TRUE/FALSE value indicating if the FDR value should be shown in the manhattan plot or not. By default is TRUE meaning that will be displayed.}
+   \item{PVCN}{In case the user wants to provide the name of the column that should be treated as the "p.val" column expected by the program in the 'map' argument.}
 }
 
 

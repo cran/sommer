@@ -239,7 +239,14 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
       if(length(misso)>0){y[misso] <- mean(y,na.rm=TRUE)}
       #Wcnames <- colnames(W); Wrnames <- rownames(W)
       if(is.null(colnames(W))){colnames(W) <- paste("M",1:dim(W)[2],sep="-")}
-      W <- apply(W, 2, function(x){vv<- which(is.na(x)); if(length(vv) > 0){mu<- mean(x, na.rm = TRUE); x[vv] <- mu}else{x<-x}})
+      W <- apply(W, 2, function(x){
+        vv <- which(is.na(x)); 
+        if(length(vv) > 0){
+          mu <- mean(x, na.rm = TRUE); 
+          x[vv] <- mu}#else{x<-x}
+        return(x)
+        }
+        )
       #colnames(W) <- Wcnames;rownames(W) <- Wrnames
       if(!silent){
         cat("Estimating variance components\n") 
@@ -271,6 +278,7 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
         if(length(random) > 0){# EMMA both in 2-level list provided
           #res <- EMMA(y=y, X=X, Z=Z[[random]][[1]], K=Z[[random]][[2]],  REML=REML,silent=silent, EIGEND=EIGEND) 
           res <- EMMA(y=y, X=X, ZETA=Z,  REML=REML,silent=silent, EIGEND=EIGEND, che=FALSE) 
+          res$method <- method
           #names(res$u.hat) <- names(Z)[1]
           ### if user provide names in the Z component
           if(!is.null(names(Z))){
@@ -281,6 +289,7 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
           #res <- EMMA(y=y, X=X, Z=Z[[1]], K=Z[[2]],REML=REML,silent=silent,EIGEND=EIGEND)
           Z <- list(Z)
           res <- EMMA(y=y, X=X, ZETA=Z,  REML=REML,silent=silent, EIGEND=EIGEND, che=FALSE) 
+          res$method <- method
           #names(res$u.hat) <- names(Z)[1]
           ### if user provide names in the Z component
           if(!is.null(names(Z))){
@@ -290,6 +299,7 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
         }
       }else if(method == "EM"){
         res <- EM(y=y, X=X, ETA=Z, init=init, iters = iters, REML=REML, draw=draw, silent=silent, forced=forced)
+        res$method <- method
       }else if(method == "AI"){
         #res <- AI(y=y, X=X, ZETA=Z, R=R, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, EIGEND=EIGEND,Fishers=Fishers)
         if(length(Z) == 1){ # if only one variance component, make sure is not Z and K both diags
@@ -297,6 +307,7 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
           if(length(which(dias)) == 2){ # if K and Z are diagonals do EMMA
             #res <- EMMA(y=y, X=X, Z=Z[[random]][[1]], K=Z[[random]][[2]],REML=REML,silent=silent,EIGEND=EIGEND)
             res <- EMMA(y=y, X=X, ZETA=Z,  REML=REML,silent=silent, EIGEND=EIGEND, che=FALSE) 
+            res$method <- "EMMA"
             #names(res$u.hat) <- names(Z)[1]
             ### if user provide names in the Z component
             if(!is.null(names(Z))){
@@ -305,9 +316,11 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
             ### end of adding names
           }else{
             res <- AI(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, EIGEND=EIGEND,Fishers=Fishers, forced=forced)
+            res$method <- method
           }
         }else{ # if multiple variance components
-          res <- AI(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, EIGEND=EIGEND,Fishers=Fishers,forced=forced) 
+          res <- AI(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, EIGEND=EIGEND,Fishers=Fishers,forced=forced)
+          res$method <- method
         }
       }else if(method == "NR"){
         if(length(Z) == 1){ # if only one variance component, make sure is not Z and K both diags
@@ -315,6 +328,7 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
           if(length(which(dias)) == 2){ # if K and Z are diagonals do EMMA
             #res <- EMMA(y=y, X=X, Z=Z[[random]][[1]], K=Z[[random]][[2]],REML=REML,silent=silent,EIGEND=EIGEND)
             res <- EMMA(y=y, X=X, ZETA=Z,  REML=REML,silent=silent, EIGEND=EIGEND, che=FALSE) 
+            res$method<- "EMMA"
             #names(res$u.hat) <- names(Z)[1]
             ### if user provide names in the Z component
             if(!is.null(names(Z))){
@@ -324,17 +338,19 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
           }else{
             if(is.null(R)){
               res <- NR(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced)
+              res$method <- method
             }else{
               res <- NRR(y=y,X=X,Z=Z,R=R,tolpar=tolpar,tolparinv=tolparinv,maxcyc=iters,draw=draw,constraint = constraint)
-              method<-"NRR"
+              res$method<-"NRR"
             }
           }
         }else{ # if multiple variance components
           if(is.null(R)){
             res <- NR(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced)
+            res$method <- method
           }else{
             res <- NRR(y=y,X=X,Z=Z,R=R,tolpar=tolpar,tolparinv=tolparinv,maxcyc=iters,draw=draw,constraint = constraint)
-            method<-"NRR"
+            res$method<-"NRR"
           }
         }
       }else{
@@ -476,7 +492,7 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
       if(!is.null(map)){
         res$map <- map3
       }
-      res$method <- method
+      
     } # end of GWAS 
   }
   ## -------------------------------
@@ -499,6 +515,7 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
         if(length(random) > 0){# EMMA buth in 2-level list provided
           #res <- EMMA(y=y, X=X, Z=Z[[random]][[1]], K=Z[[random]][[2]],REML=REML, silent=silent,EIGEND=EIGEND) 
           res <- EMMA(y=y, X=X, ZETA=Z,  REML=REML,silent=silent, EIGEND=EIGEND, che=FALSE) 
+          res$method <- method
           #names(res$u.hat) <- names(Z)[1]
           ### if user provide names in the Z component
           if(!is.null(names(Z))){
@@ -509,6 +526,7 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
           #res <- EMMA(y=y, X=X, Z=Z[[1]], K=Z[[2]], REML=REML,silent=silent,EIGEND=EIGEND)
           Z <- list(Z)
           res <- EMMA(y=y, X=X, ZETA=Z,  REML=REML,silent=silent, EIGEND=EIGEND, che=FALSE) 
+          res$method <- method
           #names(res$u.hat) <- names(Z)[1]
           ### if user provide names in the Z component
           if(!is.null(names(Z))){
@@ -518,12 +536,14 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
         }
       }else if(method == "EM"){
         res <- EM(y=y, X=X, ETA=Z, init=init, iters = iters, REML=REML, draw=draw, silent=silent, forced=forced)
+        res$method <- method
       }else if(method == "AI"){
         if(length(Z) == 1){ # if only one variance component, make sure is not Z and K both diags
           dias <- unlist(lapply(Z[[1]], function(x){if(dim(x)[1] == dim(x)[2]){y <- is.diagonal.matrix(x)}else{y <- FALSE};return(y)}))
           if(length(which(dias)) == 2){ # if K and Z are diagonals do EMMA
             #res <- EMMA(y=y, X=X, Z=Z[[random]][[1]], K=Z[[random]][[2]],REML=REML,silent=silent,EIGEND=EIGEND)
             res <- EMMA(y=y, X=X, ZETA=Z,  REML=REML,silent=silent, EIGEND=EIGEND, che=FALSE) 
+            res$method <- "EMMA"
             #names(res$u.hat) <- names(Z)[1]
             ### if user provide names in the Z component
             if(!is.null(names(Z))){
@@ -532,9 +552,11 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
             ### end of adding names
           }else{
             res <- AI(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, EIGEND=EIGEND,Fishers=Fishers, gss=gss, forced=forced)
+            res$method <- method
           }
         }else{ # if multiple variance components
-          res <- AI(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, EIGEND=EIGEND,Fishers=Fishers, gss=gss, forced=forced) 
+          res <- AI(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, iters = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, EIGEND=EIGEND,Fishers=Fishers, gss=gss, forced=forced)
+          res$method <- method
         }
       }else if(method == "NR"){
         if(length(Z) == 1){ # if only one variance component, make sure is not Z and K both diags
@@ -543,28 +565,31 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
             #res <- EMMA(y=y, X=X, Z=Z[[random]][[1]], K=Z[[random]][[2]],REML=REML,silent=silent,EIGEND=EIGEND)
             #print(str(Z))
             res <- EMMA(y=y, X=X, ZETA=Z,  REML=REML,silent=silent, EIGEND=EIGEND, che=FALSE) 
+            res$method<- "EMMA"
             #names(res$u.hat) <- names(Z)[1]
           }else{
             if(is.null(R)){
               res <- NR(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced)
+              res$method <- method
             }else{
               res <- NRR(y=y,X=X,Z=Z,R=R,tolpar=tolpar,tolparinv=tolparinv,maxcyc=iters,draw=draw,constraint = constraint)
-              method<-"NRR"
+              res$method<-"NRR"
             }
           }
         }else{ # if multiple variance components
           if(is.null(R)){
             res <- NR(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced)
+            res$method <- method
           }else{
             #print(str(Z))
             res <- NRR(y=y,X=X,Z=Z,R=R,tolpar=tolpar,tolparinv=tolparinv,maxcyc=iters,draw=draw,constraint = constraint)
-            method<-"NRR"
+            res$method<-"NRR"
           }
         }
       }else{
         stop("Unrecognized method. Please select one of the methods; 'NR', 'AI', 'EMMA' or 'EM'. ",call. = FALSE)
       }
-      res$method <- method
+      #res$method <- method
       res$maxim <- REML
       res$W <- W
     }

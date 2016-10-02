@@ -1,9 +1,23 @@
-mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=FALSE, iters=20, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, silent=FALSE, family=NULL, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, gss=TRUE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE, n.cores=1,tolpar = 1e-06, tolparinv = 1e-06, che=TRUE){
+mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=FALSE, iters=20, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, silent=FALSE, family=NULL, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE, n.cores=1,tolpar = 1e-06, tolparinv = 1e-06, che=TRUE){
+  gss=TRUE
   diso <- dim(as.data.frame(Y))[2]
   
-  #print(diso)
+  ## control for 2-level list structure
+  if(!is.list(Z)){
+    stop("Please provide the Z parameter as a 2 level list structure.\nFor example for 2 random effects 'A' and 'B' do:\n    ETA <- list( A=list( Z=myZ1, K=myK1 ) , B=list( Z=myZ2, K=myK2 ) )\n    mod <- mmer(Y=y, Z=ETA)\nwhere Z's and K's are the incidence and var-covar matrices respectively.\nIf any Z or K is not provided, an identity matrix will be assumed. ",call. = FALSE)
+  }else{
+    if(!is.list(Z[[1]])){
+      stop("Please provide the Z parameter as a 2 level list structure.\nFor example for 2 random effects 'A' and 'B' do:\n    ETA <- list( A=list( Z=myZ1, K=myK1 ) , B=list( Z=myZ2, K=myK2 ) )\n    mod <- mmer(Y=y, Z=ETA)\nwhere Z's and K's are the incidence and var-covar matrices respectively.\nIf any Z or K is not provided, an identity matrix will be assumed. ",call. = FALSE)
+    }
+  }
+  ## control for Z-K names
+  zzzkkk <- unlist(lapply(Z,function(x){length(names(x))}))
+  badRE <- which(zzzkkk==0) # BAD RE WITH NO NAMES
+  if(length(badRE)>0){
+    stop("Please when specifying a random effect use the names; \n'Z' for incidence and 'K' for variance-covariance matrices.\nFor example for 1 random effect (i.e. named 'A') model do:\n    ETA <- list( A=list( Z=M1, K=M2) )\n    mod <- mmer(Y=y, Z=ETA)\nSpecifying at least one; Z or K. You need to specify if is a 'Z' or 'K' \nsince this is the only way the program distinguishes between matrices.",call. = FALSE)
+  }
   
-  my.month <- 9 #version of the month
+  my.month <- 10 #version of the month
   datee <- Sys.Date()
   both <- as.numeric(strsplit(gsub("....-","",datee),"-")[[1]])
   month <- both[1]#your month
@@ -212,7 +226,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
   cat("\nInformation contained in this fitted model: \n* Variance components, Residuals, Fitted values\n* BLUEs and BLUPs, Inverse phenotypic variance(V)\n* Variance-covariance matrix for fixed & random effects\n* Predicted error variance (PEV), LogLikelihood\nUse the '$' symbol to access such information\n")
   cat("=======================================================")
   cat("\nLinear mixed model fit by restricted maximum likelihood\n")
-  cat("********************  sommer 2.1  *********************\n")
+  cat("********************  sommer 2.2  *********************\n")
   cat("=======================================================")
   cat("\nMethod:")
   print(x$method)
@@ -302,7 +316,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
   cat("Information contained in this structure: \n* Individual results for each response model\nDisplayed: \n* AIC, BIC and Variance component summaries\nUse the '$' sign to access individual models\n")
   cat("=======================================================")
   cat("\nLinear mixed model fit by restricted maximum likelihood\n")
-  cat("********************  sommer 2.1  *********************\n")
+  cat("********************  sommer 2.2  *********************\n")
   cat("=======================================================")
   cat("\nMethod:")
   print(x$method)
@@ -343,7 +357,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
     for(i in 1:length(reto)){
       names(reto)[i] <- paste("Var-Covar(",nano[i],")",sep="")
     }
-    names(reto)[length(reto)] <- "Var-Covar(Error)"
+    names(reto)[length(reto)] <- "Var-Covar(Residual)"
   }else{ # no names available
     nano <- paste("u",1:length(object$ZETA),sep=".")
     rownames(groupss.nn) <- nano
@@ -351,7 +365,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
     for(i in 1:length(reto)){
       names(reto)[i] <- paste("Var-Covar(",nano[i],")",sep="")
     }
-    names(reto)[length(reto)] <- "Var-Covar(Error)"
+    names(reto)[length(reto)] <- "Var-Covar(Residual)"
   }
   
   LLAIC <- (cbind(as.numeric(object$LL), as.numeric(object$AIC),as.numeric(object$BIC)))
@@ -419,7 +433,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
   cat("Information contained in this structure: \n* Results for a multi response model\nDisplayed: \n* Variance-covariance component summaries\nUse the '$' sign to access parameters\n")
   cat("=======================================================")
   cat("\n    Multivariate Linear Mixed Model fit by REML    \n")
-  cat("********************  sommer 2.1  *********************\n")
+  cat("********************  sommer 2.2  *********************\n")
   cat("=======================================================")
   cat("\nMethod:")
   print((x$method))
@@ -742,11 +756,11 @@ plot.MMERM <- function(x, ...) {
 .onAttach = function(library, pkg)
 {
   Rv = R.Version()
-  if(!exists("getRversion", baseenv()) || (getRversion() < "2.1"))
-    stop("This package requires R 2.1 or later")
+  if(!exists("getRversion", baseenv()) || (getRversion() < "2.2"))
+    stop("This package requires R 2.2 or later")
   assign(".sommer.home", file.path(library, pkg),
          pos=match("package:sommer", search()))
-  sommer.version = "2.1 (2016-09-01)"
+  sommer.version = "2.2 (2016-10-01)"
   
   ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ### check which version is more recent
@@ -765,7 +779,7 @@ plot.MMERM <- function(x, ...) {
     packageStartupMessage(paste("[]===============================================================[]"),appendLF=TRUE)
     packageStartupMessage(paste("[]  Solving Mixed Model Equations in R (sommer) ", sommer.version, " []",sep=""),appendLF=TRUE)
     packageStartupMessage(paste("[]  ------------ Multivariate Linear Mixed Models -------------- []"),appendLF=TRUE)
-    packageStartupMessage("[]  ----- enabling covariance structures in random effects ----- []",appendLF=TRUE)
+    packageStartupMessage("[]  ----- Enabling covariance structures in random effects ----- []",appendLF=TRUE)
     packageStartupMessage("[]  Author: Giovanny Covarrubias-Pazaran                         []",appendLF=TRUE)
     packageStartupMessage("[]  Published: PLOS ONE 2016, 11(6):1-15                         []",appendLF=TRUE)
     packageStartupMessage("[]  Supported by the Council of Science and Technology (CONACYT) []", appendLF=TRUE)

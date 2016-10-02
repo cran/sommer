@@ -209,6 +209,7 @@ A <- A.mat(CPgeno) # additive relationship matrix
 #### ADDITIVE MODEL ####
 ####================####
 ETA.A <- list(add=list(Z=Za,K=A))
-ans.A <- mmer(Y=Y, Z=ETA.A, W=CPgeno, MVM=TRUE, EIGEND=TRUE, map=CPdata$map, silent=TRUE,gwas.plots = FALSE)
+ans.A <- mmer(Y=Y, Z=ETA.A, W=CPgeno, MVM=TRUE, EIGEND=TRUE,
+              map=CPdata$map, silent=TRUE,gwas.plots = FALSE)
 summary(ans.A)
 

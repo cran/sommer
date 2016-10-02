@@ -222,7 +222,7 @@ EM <- function(y, X=NULL, ETA=NULL, R=NULL, init=NULL, iters=50, REML=TRUE, draw
         lege2 <- list()
         for(k in 1:length(var.com)){
           if(k == length(var.com)){
-            lege2[[k]] <- paste("Var(Error):")
+            lege2[[k]] <- paste("Var(Residual):")
           }else{
             lege2[[k]] <- paste("Var(",varosss[k],"):",sep="")
           }
@@ -440,7 +440,7 @@ EM <- function(y, X=NULL, ETA=NULL, R=NULL, init=NULL, iters=50, REML=TRUE, draw
     }
     #################################
     VCC <- (as.matrix(out1,ncol=1))
-    rownames(VCC) <- c(paste("Var(",varosss,")",sep=""), "Var(Error)")
+    rownames(VCC) <- c(paste("Var(",varosss,")",sep=""), "Var(Residual)")
     output <- list(var.comp=VCC, V.inv = Vinv, u.hat=u, Var.u.hat=Var.u.hat, 
                    PEV.u.hat=PEV.u.hat, beta.hat=beta, Var.beta.hat=Var.beta.hat,
                    LL=logL, AIC=AIC, BIC=BIC, X=ETA[[xvar]][[1]], 

@@ -168,6 +168,18 @@ version 2.1 (2016-09-01)
     the mean.
   + atcg1234 has a new functonality to get a presence/absence matrix for each 
     allele at each marker.
+    
+########################  
+version 2.2 (2016-10-01)
+########################
+
+  + The LD.decay function has been added to sommer which takes a marker matrix 
+    and a map and calculates the LD decay.
+  + In addition, the LD.decay function has the "unlinked" and "gamma" arguments
+    that estimate the interchromosomal threshold for the gamma percentile to 
+    determine the real LD decay combined with the loess regression.
+  + Bugs in GWAS models for univariate and multivariate forms when missing data
+    exist have been fixed.
   
 ##pendings
 + get incidence matrix from vcf file directly with probabilities instead of 0,1,2

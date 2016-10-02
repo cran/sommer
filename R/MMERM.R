@@ -134,6 +134,19 @@ MMERM <- function (Y, X=NULL, Z=NULL, W=NULL, method="NR", tolpar = 1e-06, tolpa
     dev.no0 <- which(deviations > 0) # markers that are not singlular
     W <- W[,dev.no0] # only good markers will be tested
     
+    rw <- rownames(W)
+    cw <- colnames(W)
+    W <- apply(W, 2, function(x){
+      vv <- which(is.na(x)); 
+      if(length(vv) > 0){
+        mu <- mean(x, na.rm = TRUE); 
+        x[vv] <- mu}#else{x<-x}
+      return(x)
+    }
+    )
+    rownames(W) <- rw
+    colnames(W) <- cw
+    
     if(is.null(colnames(W))){colnames(W) <- paste("M",1:dim(W)[2],sep="")}
     marks <-colnames(W)
     Y <- scale(Y)
@@ -197,11 +210,12 @@ MMERM <- function (Y, X=NULL, Z=NULL, W=NULL, method="NR", tolpar = 1e-06, tolpa
                    bty="n", lty=3, lwd=2, col="slateblue4", cex=0.8)
           }
         }
-        res$map <- map3
+        
+        res$map <- cbind(map3[,1:3], map3$p.val)# map3
         
       }else{####$$$$$ NO MARKERS IN COMMON EXIST $$$$$$$$#######
         cat("\nError found! There was no markers in common between the column names of the W matrix \nand the map you provided. Please make sure that your data frame has names \n'Chrom' and 'Locus' to match correctly your map and markers tested. Plotting all markers.\n")
-        map3 <- NULL
+        map3 <- NA
         layout(matrix(1:2,1,2))
         for(t in 1:dim(W.scores$score)[1]){
           qq(W.scores$score[t,])
@@ -227,7 +241,7 @@ MMERM <- function (Y, X=NULL, Z=NULL, W=NULL, method="NR", tolpar = 1e-06, tolpa
              ylab=expression(paste(-log[10],"(p.value)")), main=rownames(W.scores$score)[t], bty="n", cex=1.5, ylim=c(0,yylim))
         abline(h=ffr[t], col="slateblue4", lty=3, lwd=2)
       }
-      map3 <-NULL
+      map3 <-NA
       res$map <- map3
       
     }

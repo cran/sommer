@@ -149,7 +149,7 @@ In the previous example we showed how to estimate the additive ($\sigma^2_A$), d
 
 ## 2) Half and full diallel designs 
 
-When breeders are looking for the best single cross combinations, diallel designs have been by far the most used design in crops like maize. There are 4 tipes of diallel designs depending if reciprocate and self cross are performed. In this example we will show a full dialle design (reciprocate crosses are performed) and half diallel designs (only one of the directions is performed).
+When breeders are looking for the best single cross combinations, diallel designs have been by far the most used design in crops like maize. There are 4 tipes of diallel designs depending if reciprocate and self cross (omission of parents) are performed (full diallel with parents n^2; full diallel without parents n(n-1); half diallel with parents 1/2 * n(n+1); half diallel without parents 1/2 * n(n-1) ). In this example we will show a full dialle design (reciprocate crosses are performed) and half diallel designs (only one of the directions is performed).
 
 In the first data set we show a full diallel among 40 lines from 2 heterotic groups, 20 in each. Therefore 400 possible hybrids are possible. We have pehnotypic data for 100 of them across 4 locations. We use the data available to fit a model of the form:
 
@@ -318,7 +318,7 @@ $u_s$ ~ N(0, $K_3$$\sigma^2_us$)
 
 <br>
 
-And we can specify the K matrices. The main difference between this model and the full and half diallel designs is the fact that this model will include variance covariance structures in each of the three random effects (GCA1, GCA2 and GCA3) to be able to predict the crosses that have not ocurred yet. We will use the data published by Technow et al. (2015) to show how to do prediction of single crosses.
+And we can specify the K matrices. The main difference between this model and the full and half diallel designs is the fact that this model will include variance covariance structures in each of the three random effects (GCA1, GCA2 and SCA) to be able to predict the crosses that have not ocurred yet. We will use the data published by Technow et al. (2015) to show how to do prediction of single crosses.
 
 ```{r}
 data(Technow_data)
@@ -364,7 +364,7 @@ A model without covariance structures would show that the SCA variance component
 
 ## 6) Multivariate genetic models and genetic correlations
 
-Sometimes is important to estimate genetic variance-covariance among traits, multi-reponse models are very useful for such task. Currently sommer only deals with multivariate models for a single random effect of the form:
+Sometimes is important to estimate genetic variance-covariance among traits, multi-reponse models are very useful for such task. Currently sommer can deal with multivariate models for multiple random effects of the form:
 
 <br>
 
@@ -442,7 +442,8 @@ A <- A.mat(CPgeno) # additive relationship matrix
 #### ADDITIVE MODEL ####
 ####================####
 ETA.A <- list(add=list(Z=Za,K=A))
-ans.A <- mmer(Y=Y, Z=ETA.A, W=CPgeno, MVM=TRUE, EIGEND=TRUE, map=CPdata$map, silent=TRUE,gwas.plots = FALSE)
+ans.A <- mmer(Y=Y, Z=ETA.A, W=CPgeno, MVM=TRUE, EIGEND=TRUE,
+              map=CPdata$map, silent=TRUE,gwas.plots = FALSE)
 summary(ans.A)
 ```
 

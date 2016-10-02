@@ -31,7 +31,8 @@ Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits u
 ####=========================================####
 #### For CRAN time limitations most lines in the 
 #### examples are silenced with one '#' mark, 
-#### remove them and run the examples
+#### remove them and run the examples using
+#### command + shift + C |OR| control + shift + C
 ####=========================================####
 data(cornHybrid)
 ####=========================================####
@@ -96,6 +97,28 @@ ETA <- list(GCA1=list(Z=Z1, K=K1),
 #ans <- mmer2(Yield ~ Location, random = ~ GCA1 + GCA2 + SCA, 
 #       G=list(GCA1=K1, GCA2=K2, SCA=S),data=hybrid2)
 #summary(ans)
+
+####==========================================####
+####==========================================####
+#### Example of multivariate model
+####==========================================####
+####==========================================####
+
+# data(cornHybrid)
+# hybrid2 <- cornHybrid$hybrid # extract cross data
+# hybrid2 <- hybrid2[which(!is.na(hybrid2$Yield)),]
+# names(hybrid2)[5:6] <- c("TY","PH")
+# head(hybrid2)
+# 
+# A <- cornHybrid$K
+# K1 <- A[levels(hybrid2$GCA1), levels(hybrid2$GCA1)]; dim(K1) 
+# K2 <- A[levels(hybrid2$GCA2), levels(hybrid2$GCA2)]; dim(K2)
+# S <- kronecker(K1, K2) ; dim(S)   
+# rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
+# 
+# ans <- mmer2(cbind(TY,PH) ~ Location, random = ~ GCA2 + SCA, 
+#       G=list(GCA1=K1, GCA2=K2, SCA=S),data=hybrid2, MVM=TRUE)
+# summary(ans)
 
 }
 \keyword{datasets}

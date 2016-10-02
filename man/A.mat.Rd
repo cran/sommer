@@ -82,5 +82,12 @@ for (i in 1:200) {
 }
 
 A <- A.mat(X)
+
+####=========================================####
+#### take a look at the Genomic relationship matrix
+####=========================================####
+colfunc <- colorRampPalette(c("steelblue4","springgreen","yellow"))
+hv <- heatmap(A, col = colfunc(100),Colv = "Rowv")
+str(hv)
 }
 \seealso{\code{\link{mmer}} -- the core function of the package }

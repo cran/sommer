@@ -1076,7 +1076,7 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
   
   
   out1 <- as.matrix(var.com2, ncol=1); colnames(out1) <- "Variance Components" # variance components
-  rownames(out1) <- c(paste("Var(",varosss,")",sep=""), "Var(Error)")
+  rownames(out1) <- c(paste("Var(",varosss,")",sep=""), "Var(Residual)")
   
   if(is.null(forced)){
     rownames(sigma.cov) <- rownames(out1)

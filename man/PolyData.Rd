@@ -28,7 +28,8 @@ Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits u
 ####=========================================####
 #### For CRAN time limitations most lines in the 
 #### examples are silenced with one '#' mark, 
-#### remove them and run the examples
+#### remove them and run the examples using
+#### command + shift + C |OR| control + shift + C
 ####=========================================####
 data(PolyData)
 genotypes <- PolyData$PGeno

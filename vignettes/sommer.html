@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2016-08-30" />
+<meta name="date" content="2016-10-01" />
 
 <title>Genetic analysis using the sommer package</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Genetic analysis using the sommer package</h1>
 <h4 class="author"><em>Giovanny Covarrubias-Pazaran</em></h4>
-<h4 class="date"><em>2016-08-30</em></h4>
+<h4 class="date"><em>2016-10-01</em></h4>
 
 
 
@@ -197,7 +197,7 @@ ans.ADE &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="
 </div>
 <div id="half-and-full-diallel-designs" class="section level2">
 <h2>2) Half and full diallel designs</h2>
-<p>When breeders are looking for the best single cross combinations, diallel designs have been by far the most used design in crops like maize. There are 4 tipes of diallel designs depending if reciprocate and self cross are performed. In this example we will show a full dialle design (reciprocate crosses are performed) and half diallel designs (only one of the directions is performed).</p>
+<p>When breeders are looking for the best single cross combinations, diallel designs have been by far the most used design in crops like maize. There are 4 tipes of diallel designs depending if reciprocate and self cross (omission of parents) are performed (full diallel with parents n^2; full diallel without parents n(n-1); half diallel with parents 1/2 * n(n+1); half diallel without parents 1/2 * n(n-1) ). In this example we will show a full dialle design (reciprocate crosses are performed) and half diallel designs (only one of the directions is performed).</p>
 <p>In the first data set we show a full diallel among 40 lines from 2 heterotic groups, 20 in each. Therefore 400 possible hybrids are possible. We have pehnotypic data for 100 of them across 4 locations. We use the data available to fit a model of the form:</p>
 <p><br></p>
 <p><span class="math inline">\(y = X\beta + Zu_1 + Zu_2 + Zu_S + \epsilon\)</span></p>
@@ -224,7 +224,7 @@ hybrid2 &lt;-<span class="st"> </span>cornHybrid$hybrid <span class="co"># extra
 ## Use the '$' symbol to access such information
 ## =======================================================
 ## Linear mixed model fit by restricted maximum likelihood
-## ********************  sommer 2.1  *********************
+## ********************  sommer 2.2  *********************
 ## =======================================================
 ## Method:[1] &quot;NR&quot;
 ## 
@@ -232,11 +232,11 @@ hybrid2 &lt;-<span class="st"> </span>cornHybrid$hybrid <span class="co"># extra
 ##  -1340   2688   2703 
 ## =======================================================
 ## Random effects:
-##            VarComp VarCompSE  Zratio
-## Var(GCA1)    0.000     8.109  0.0000
-## Var(GCA2)    7.283    18.226  0.3996
-## Var(SCA)   187.671    43.709  4.2937
-## Var(Error) 221.142    18.147 12.1860
+##               VarComp VarCompSE  Zratio
+## Var(GCA1)       0.000     8.109  0.0000
+## Var(GCA2)       7.283    18.226  0.3996
+## Var(SCA)      187.671    43.709  4.2937
+## Var(Residual) 221.142    18.147 12.1860
 ## Number of obs: 400  Groups: 20 20 400 
 ## =======================================================
 ## Fixed effects:
@@ -287,7 +287,7 @@ modHD &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt
 ## Use the '$' symbol to access such information
 ## =======================================================
 ## Linear mixed model fit by restricted maximum likelihood
-## ********************  sommer 2.1  *********************
+## ********************  sommer 2.2  *********************
 ## =======================================================
 ## Method:[1] &quot;NR&quot;
 ## 
@@ -295,10 +295,10 @@ modHD &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt
 ## -58.18 118.36 120.09 
 ## =======================================================
 ## Random effects:
-##            VarComp VarCompSE Zratio
-## Var(GCA)     5.508    3.5771  1.540
-## Var(SCA)     1.816    1.3637  1.332
-## Var(Error)   3.117    0.9619  3.241
+##               VarComp VarCompSE Zratio
+## Var(GCA)        5.508    3.5771  1.540
+## Var(SCA)        1.816    1.3637  1.332
+## Var(Residual)   3.117    0.9619  3.241
 ## Number of obs: 42  Groups: 7 21 
 ## =======================================================
 ## Fixed effects:
@@ -411,7 +411,7 @@ ans2 &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt"
 ## Use the '$' symbol to access such information
 ## =======================================================
 ## Linear mixed model fit by restricted maximum likelihood
-## ********************  sommer 2.1  *********************
+## ********************  sommer 2.2  *********************
 ## =======================================================
 ## Method:[1] &quot;EMMA&quot;
 ## 
@@ -478,7 +478,7 @@ ans &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt">
 <p><span class="math inline">\(u_2\)</span> ~ N(0, <span class="math inline">\(K_2\)</span><span class="math inline">\(\sigma^2_u2\)</span>)</p>
 <p><span class="math inline">\(u_s\)</span> ~ N(0, <span class="math inline">\(K_3\)</span><span class="math inline">\(\sigma^2_us\)</span>)</p>
 <p><br></p>
-<p>And we can specify the K matrices. The main difference between this model and the full and half diallel designs is the fact that this model will include variance covariance structures in each of the three random effects (GCA1, GCA2 and GCA3) to be able to predict the crosses that have not ocurred yet. We will use the data published by Technow et al. (2015) to show how to do prediction of single crosses.</p>
+<p>And we can specify the K matrices. The main difference between this model and the full and half diallel designs is the fact that this model will include variance covariance structures in each of the three random effects (GCA1, GCA2 and SCA) to be able to predict the crosses that have not ocurred yet. We will use the data published by Technow et al. (2015) to show how to do prediction of single crosses.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(Technow_data)
 
 A.flint &lt;-<span class="st"> </span>Technow_data$AF <span class="co"># Additive relationship matrix Flint</span>
@@ -539,7 +539,7 @@ anss2 &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt
 ## Use the '$' symbol to access such information
 ## =======================================================
 ## Linear mixed model fit by restricted maximum likelihood
-## ********************  sommer 2.1  *********************
+## ********************  sommer 2.2  *********************
 ## =======================================================
 ## Method:[1] &quot;EM&quot;
 ## 
@@ -547,10 +547,10 @@ anss2 &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt
 ##  -4998   9999  10004 
 ## =======================================================
 ## Random effects:
-##            VarComp
-## Var(GCA1)    16.01
-## Var(GCA2)    11.16
-## Var(Error)   17.71
+##               VarComp
+## Var(GCA1)       16.01
+## Var(GCA2)       11.16
+## Var(Residual)   17.71
 ## Number of obs: 1154  Groups: 123 86 
 ## =======================================================
 ## Fixed effects:
@@ -565,7 +565,7 @@ anss2 &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt
 </div>
 <div id="multivariate-genetic-models-and-genetic-correlations" class="section level2">
 <h2>6) Multivariate genetic models and genetic correlations</h2>
-<p>Sometimes is important to estimate genetic variance-covariance among traits, multi-reponse models are very useful for such task. Currently sommer only deals with multivariate models for a single random effect of the form:</p>
+<p>Sometimes is important to estimate genetic variance-covariance among traits, multi-reponse models are very useful for such task. Currently sommer can deal with multivariate models for multiple random effects of the form:</p>
 <p><br></p>
 <p><span class="math inline">\(Y = X\beta + Zu + \epsilon\)</span></p>
 <p><br></p>
@@ -617,7 +617,7 @@ ans.A &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt
 ## Use the '$' sign to access parameters
 ## =======================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ********************  sommer 2.1  *********************
+## ********************  sommer 2.2  *********************
 ## =======================================================
 ## Method:[1] &quot;EMMAM&quot;
 ##       logLik       AIC       BIC
@@ -632,7 +632,7 @@ ans.A &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt
 ## FruitAver 0.060416  26.7362  10.02137  -20.154
 ## Firmness  0.577043 -81.2542 -20.15401 1269.856
 ## 
-## Var-Covar(Error) 
+## Var-Covar(Residual) 
 ##               color     Yield FruitAver   Firmness
 ## color      0.002692    0.2106   0.06136   -0.06473
 ## Yield      0.210586 4010.0260  29.18299  168.24899
@@ -697,7 +697,8 @@ A &lt;-<span class="st"> </span><span class="kw">A.mat</span>(CPgeno) <span clas
 #### ADDITIVE MODEL ####
 ####================####
 ETA.A &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">add=</span><span class="kw">list</span>(<span class="dt">Z=</span>Za,<span class="dt">K=</span>A))
-ans.A &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt">Y=</span>Y, <span class="dt">Z=</span>ETA.A, <span class="dt">W=</span>CPgeno, <span class="dt">MVM=</span><span class="ot">TRUE</span>, <span class="dt">EIGEND=</span><span class="ot">TRUE</span>, <span class="dt">map=</span>CPdata$map, <span class="dt">silent=</span><span class="ot">TRUE</span>,<span class="dt">gwas.plots =</span> <span class="ot">FALSE</span>)</code></pre></div>
+ans.A &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt">Y=</span>Y, <span class="dt">Z=</span>ETA.A, <span class="dt">W=</span>CPgeno, <span class="dt">MVM=</span><span class="ot">TRUE</span>, <span class="dt">EIGEND=</span><span class="ot">TRUE</span>,
+              <span class="dt">map=</span>CPdata$map, <span class="dt">silent=</span><span class="ot">TRUE</span>,<span class="dt">gwas.plots =</span> <span class="ot">FALSE</span>)</code></pre></div>
 <pre><code>## EIGEND feature activated. Eigen decomposition of K will be performed</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans.A)</code></pre></div>
 <pre><code>## Information contained in this structure: 
@@ -707,7 +708,7 @@ ans.A &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt
 ## Use the '$' sign to access parameters
 ## =======================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ********************  sommer 2.1  *********************
+## ********************  sommer 2.2  *********************
 ## =======================================================
 ## Method:[1] &quot;MNR&quot;
 ##      logLik     AIC      BIC
@@ -722,7 +723,7 @@ ans.A &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt
 ## FruitAver 0.10615  0.05644   0.20929 -0.05616
 ## Firmness  0.13693 -0.02426  -0.05616  0.49266
 ## 
-## Var-Covar(Error) 
+## Var-Covar(Residual) 
 ##              color   Yield FruitAver Firmness
 ## color      0.39916 0.03824   0.10787 -0.01527
 ## Yield      0.03824 0.88411   0.06308  0.04965
@@ -730,27 +731,27 @@ ans.A &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt
 ## Firmness  -0.01527 0.04965   0.20656  0.47107
 ## =======================================================
 ## Standard errors for variance components:
-##                            VarComp VarCompSE  Zratio
-## u.1.color-color            0.77379   0.15483  4.9977
-## u.1.color-Yield            0.05767   0.07745  0.7446
-## u.1.color-FruitAver        0.10615   0.08481  1.2516
-## u.1.color-Firmness         0.13693   0.09519  1.4385
-## u.1.Yield-Yield            0.14065   0.07054  1.9940
-## u.1.Yield-FruitAver        0.05644   0.05456  1.0345
-## u.1.Yield-Firmness        -0.02426   0.06598 -0.3677
-## u.1.FruitAver-FruitAver    0.20929   0.08355  2.5049
-## u.1.FruitAver-Firmness    -0.05616   0.06882 -0.8160
-## u.1.Firmness-Firmness      0.49266   0.11428  4.3111
-## Error.color-color          0.39916   0.04384  9.1057
-## Error.color-Yield          0.03824   0.04073  0.9390
-## Error.color-FruitAver      0.10787   0.04060  2.6567
-## Error.color-Firmness      -0.01527   0.03192 -0.4784
-## Error.Yield-Yield          0.88411   0.07531 11.7399
-## Error.Yield-FruitAver      0.06308   0.05288  1.1929
-## Error.Yield-Firmness       0.04965   0.04201  1.1819
-## Error.FruitAver-FruitAver  0.83982   0.07293 11.5155
-## Error.FruitAver-Firmness   0.20656   0.04267  4.8412
-## Error.Firmness-Firmness    0.47107   0.04643 10.1460
+##                               VarComp VarCompSE  Zratio
+## u.1.color-color               0.77379   0.15483  4.9977
+## u.1.color-Yield               0.05767   0.07745  0.7446
+## u.1.color-FruitAver           0.10615   0.08481  1.2516
+## u.1.color-Firmness            0.13693   0.09519  1.4385
+## u.1.Yield-Yield               0.14065   0.07054  1.9940
+## u.1.Yield-FruitAver           0.05644   0.05456  1.0345
+## u.1.Yield-Firmness           -0.02426   0.06598 -0.3677
+## u.1.FruitAver-FruitAver       0.20929   0.08355  2.5049
+## u.1.FruitAver-Firmness       -0.05616   0.06882 -0.8160
+## u.1.Firmness-Firmness         0.49266   0.11428  4.3111
+## Residual.color-color          0.39916   0.04384  9.1057
+## Residual.color-Yield          0.03824   0.04073  0.9390
+## Residual.color-FruitAver      0.10787   0.04060  2.6567
+## Residual.color-Firmness      -0.01527   0.03192 -0.4784
+## Residual.Yield-Yield          0.88411   0.07531 11.7399
+## Residual.Yield-FruitAver      0.06308   0.05288  1.1929
+## Residual.Yield-Firmness       0.04965   0.04201  1.1819
+## Residual.FruitAver-FruitAver  0.83982   0.07293 11.5155
+## Residual.FruitAver-Firmness   0.20656   0.04267  4.8412
+## Residual.Firmness-Firmness    0.47107   0.04643 10.1460
 ## =======================================================
 ## Fixed effects:
 ##              color     Yield FruitAver Firmness

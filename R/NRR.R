@@ -561,7 +561,7 @@ NRR <- function(y,X=NULL,Z=NULL,R=NULL,tolpar=1e-6,tolparinv=1e-6,maxcyc=10,
     }
     ##############
     ## add sig,a.e names
-    rownames(var.com2)[length(var.com2)] <- "Error"
+    rownames(var.com2)[length(var.com2)] <- "Residual"
   }
   
   res <- list(var.comp=var.com2, V.inv = Vinv, u.hat=u, Var.u.hat=Var.u, 

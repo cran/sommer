@@ -46,7 +46,8 @@ Giovanny Covarrubias-Pazaran
 ####=========================================####
 #### For CRAN time limitations most lines in the 
 #### examples are silenced with one '#' mark, 
-#### remove them and run the examples
+#### remove them and run the examples using
+#### command + shift + C |OR| control + shift + C
 ####=========================================####
 data(RICE)
 W <- RICE$RiceGenoN; W[1:5,1:5]; dim(W)
