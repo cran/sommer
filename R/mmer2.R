@@ -1,4 +1,4 @@
-mmer2 <- function(fixed, random, rcov, G=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, iters=20, draw=FALSE, init=NULL, data, family=gaussian, silent=FALSE, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, min.n=FALSE, gwas.plots=TRUE, n.cores=1, tolpar = 1e-06, tolparinv = 1e-06){
+mmer2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, iters=20, draw=FALSE, init=NULL, family=gaussian, silent=FALSE, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, min.n=FALSE, gwas.plots=TRUE, n.cores=1, tolpar = 1e-06, tolparinv = 1e-06){
   #gss=TRUE
   if(missing(data)){
     data <- environment(fixed)
@@ -88,13 +88,13 @@ mmer2 <- function(fixed, random, rcov, G=NULL, W=NULL, method="NR", REML=TRUE, M
       ww <- which(names(G) %in% vara)
       if(length(ww) > 0){# K was provided
         ## just if there's a K matrix we make sure to be using the real names and no the model.matrix ones
-        colnames(zi) <- levels(as.factor(V[,vara]))
+        colnames(zi) <- gsub(vara,"",colnames(zi))#levels(as.factor(V[,vara]))
         #########
-        uuuz <- levels(as.factor(colnames(zi))) # order of Z
+        uuuz <- colnames(zi)#levels(as.factor(colnames(zi))) # order of Z
         uuuk <- attr(G[[ww]],"dimnames")[[1]] # order of K
         inte <- intersect(uuuz,uuuk)
         if(length(inte)==length(uuuz)){ # the names were the same in Z and K
-          ki <- G[[ww]][uuuz,uuuz]
+          ki <- G[[ww]][colnames(zi),colnames(zi)]#[uuuz,uuuz]
         }else{ # no intersection between z and k names
           cat(paste("\nNames of Z and K for random effect",vara,"are not the same. \nMake sure they are in the correct order."))
           ki <- G[[ww]] 
@@ -146,8 +146,9 @@ mmer2 <- function(fixed, random, rcov, G=NULL, W=NULL, method="NR", REML=TRUE, M
       }## Ri
       
     } # end for rcov present or not
-    #print(str(ETA))
+    #print(str(Z))
     #print(str(X))
+    #plot(yvar)
     res <- mmer(Y=yvar, X=X, Z=Z, R=R, W=W, method=method, REML=REML, iters=iters, draw=draw, init=init, silent=silent, constraint=constraint, sherman=sherman, EIGEND=EIGEND, forced=forced, map=map, fdr.level=fdr.level, manh.col=manh.col,gwas.plots=gwas.plots,n.cores=n.cores, MVM=MVM,tolpar = tolpar, tolparinv = tolparinv)
     
   }else{###only fixed effects

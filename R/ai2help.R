@@ -116,7 +116,7 @@ ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=F
     zeta.or <- ZETA
     zeta.or  <- lapply(zeta.or , function(x){lapply(x, as.matrix)}) # put back everything as matrices again
     ##
-    if(length(ZETA)==1 & (dim(ZETA[[1]][[1]])[2] == dim(ZETA[[1]][[2]])[2])){
+    if((length(ZETA)==1) & (dim(ZETA[[1]][[1]])[2] == dim(ZETA[[1]][[2]])[2]) & (EIGEND)){
       misso <- which(is.na(y))
       if(length(misso) >0){
         y[misso] <- median(unlist(y), na.rm=TRUE)

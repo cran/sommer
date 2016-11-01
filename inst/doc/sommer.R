@@ -166,7 +166,7 @@ cor(anss2$fitted.y[vv2], hybs$yield[vv2])
 
 ## ------------------------------------------------------------------------
 data(CPdata)
-CPpheno <- CPdata$pheno
+CPpheno <- CPdata$pheno[,-c(1:4)]
 CPgeno <- CPdata$geno
 ### look at the data
 head(CPpheno)
@@ -196,7 +196,7 @@ prod.sd <- sd.gvc %*% t(sd.gvc)
 
 ## ------------------------------------------------------------------------
 data(CPdata)
-CPpheno <- CPdata$pheno
+CPpheno <- CPdata$pheno[,-c(1:4)]
 CPgeno <- CPdata$geno
 ### look at the data
 head(CPpheno)

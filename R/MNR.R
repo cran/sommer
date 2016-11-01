@@ -1519,6 +1519,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
     sigma.cova <- try(ginv(FI.c),silent=TRUE)
   }else{
     sigma.cova <- NULL
+    sigmaxxx <- NULL
   }
   
   

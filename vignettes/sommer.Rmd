@@ -391,7 +391,7 @@ where G are H are variance and covariance matrices among random effects for the 
 
 ```{r}
 data(CPdata)
-CPpheno <- CPdata$pheno
+CPpheno <- CPdata$pheno[,-c(1:4)]
 CPgeno <- CPdata$geno
 ### look at the data
 head(CPpheno)
@@ -429,7 +429,7 @@ Following the same theory of multivariate methods, theorically the marker effect
 
 ```{r}
 data(CPdata)
-CPpheno <- CPdata$pheno
+CPpheno <- CPdata$pheno[,-c(1:4)]
 CPgeno <- CPdata$geno
 ### look at the data
 head(CPpheno)

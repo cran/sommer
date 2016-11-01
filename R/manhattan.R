@@ -1,4 +1,4 @@
-manhattan <- function(map, col=NULL, fdr.level=0.05, show.fdr=TRUE, PVCN=NULL){
+manhattan <- function(map, col=NULL, fdr.level=0.05, show.fdr=TRUE, PVCN=NULL, ylim=NULL){
   
   if(!is.null(PVCN)){
     colnames(map)[which(colnames(map)==PVCN)] <- "p.val"
@@ -22,7 +22,14 @@ manhattan <- function(map, col=NULL, fdr.level=0.05, show.fdr=TRUE, PVCN=NULL){
     col.scheme <- rep(col,30)
   }
   ffr <- fdr(map$p.val, fdr.level=fdr.level)$fdr.10
-  plot(map$p.val, bty="n", col=col.scheme[factor(map$Chrom, levels = unique(map$Chrom, na.rm=TRUE))], xaxt="n", xlab="Chromosome", ylab=expression(paste(-log[10],"(p.value)")), pch=20, cex=2, las=2, ylim=c(0,yylim))
+  
+  if(!is.null(ylim)){
+    yyylim <- ylim
+  }else{
+    yyylim <- c(0,yylim)
+  }
+  
+  plot(map$p.val, bty="n", col=col.scheme[factor(map$Chrom, levels = unique(map$Chrom, na.rm=TRUE))], xaxt="n", xlab="Chromosome", ylab=expression(paste(-log[10],"(p.value)")), pch=20, cex=2, las=2, ylim=yyylim)
   init.mrks <- apply(data.frame(unique(map$Chrom)),1,function(x,y){z <- which(y == x)[1]; return(z)}, y=map$Chrom)
   fin.mrks <- apply(data.frame(unique(map$Chrom)),1,function(x,y){z <- which(y == x);z2 <- z[length(z)]; return(z2)}, y=map$Chrom)
   inter.mrks <- init.mrks + ((fin.mrks - init.mrks)/2)

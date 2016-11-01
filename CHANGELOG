@@ -180,6 +180,17 @@ version 2.2 (2016-10-01)
     determine the real LD decay combined with the loess regression.
   + Bugs in GWAS models for univariate and multivariate forms when missing data
     exist have been fixed.
+    
+########################  
+version 2.3 (2016-11-01)
+########################
+
+  + The nearest neighbor function 'nna' has been added to adjust for neighbouring 
+    plots based on Lado et al. (2013).
+  + The dataset 'ExpDesigns' with several datasets to teach users how to analyze
+    certain experimental designs relevant to plant breeding has been added.
+  + A fatal bug in mmer2 and mmer of imputing data when missing data existed has 
+    been corrected
   
 ##pendings
 + get incidence matrix from vcf file directly with probabilities instead of 0,1,2

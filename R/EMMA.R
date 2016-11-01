@@ -36,18 +36,18 @@ EMMA <- function (y, X=NULL, ZETA=NULL, REML=TRUE, silent=FALSE, che=TRUE, force
   # the list of Z can or cannot include the covariance matrix for such random effect
   # if provided must be provided as Z=list(list(Z=Z1,K=K1),list(Z=Z2,K=K2), etc) 
   ############################
-  if(che){ # if coming from mmer don't check
-    if(is.list(ZETA)){
-      if(is.list(ZETA[[1]])){ # if was provided as a two level list
-        ZETA=ZETA
-      }else{ # if was provided as a one level list
-        ZETA=list(ZETA)
-      }
-    }else{
-      #stop;
-      cat("\nThe random effects need to be provided in a list format, please see examples")
-    }
-  }
+#   if(che){ # if coming from mmer don't check
+#     if(is.list(ZETA)){
+#       if(is.list(ZETA[[1]])){ # if was provided as a two level list
+#         ZETA=ZETA
+#       }else{ # if was provided as a one level list
+#         ZETA=list(ZETA)
+#       }
+#     }else{
+#       #stop;
+#       cat("\nThe random effects need to be provided in a list format, please see examples")
+#     }
+#   }
   ###########################
   # if X matrix is not present
   if(is.null(X) & is.null(ZETA)){ # nothing in the model
@@ -112,7 +112,7 @@ EMMA <- function (y, X=NULL, ZETA=NULL, REML=TRUE, silent=FALSE, che=TRUE, force
     zeta.or <- ZETA
     zeta.or  <- lapply(zeta.or , function(x){lapply(x, as.matrix)}) # put back everything as matrices again
     ## if we have eigen structure impute response
-    if(length(ZETA)==1 & (dim(ZETA[[1]][[1]])[2] == dim(ZETA[[1]][[2]])[2])){
+    if((length(ZETA)==1) & (dim(ZETA[[1]][[1]])[2] == dim(ZETA[[1]][[2]])[2]) & EIGEND){
       misso <- which(is.na(y))
       if(length(misso) >0){
         y[misso] <- median(y, na.rm=TRUE)

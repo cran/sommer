@@ -31,7 +31,7 @@ Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits u
 #### command + shift + C |OR| control + shift + C
 ####=========================================####
 data(CPdata)
-CPpheno <- CPdata$pheno
+CPpheno <- CPdata$pheno[,-c(1:4)]
 CPgeno <- CPdata$geno
 #### look at the data
 head(CPpheno)
@@ -99,7 +99,7 @@ y.trn[ww] <- NA
 ####=========================================####
 ####=========================================####
 #data(CPdata)
-#CPpheno <- CPdata$pheno
+#CPpheno <- CPdata$pheno[,-c(1:4)]
 #CPgeno <- CPdata$geno
 ### look at the data
 #head(CPpheno)
@@ -144,7 +144,7 @@ y.trn[ww] <- NA
 ####=========================================####
 ####=========================================####
 #data(CPdata)
-#CPpheno <- CPdata$pheno
+#CPpheno <- CPdata$pheno[,-c(1:4)]
 #CPgeno <- CPdata$geno
 ### look at the data
 #head(CPpheno)
@@ -170,6 +170,64 @@ y.trn[ww] <- NA
 #ETA.B <- list(add=list(Z=Za,K=A))
 #ans.B <- mmer(Y=CPpheno2, Z=ETA.B, MVM=TRUE)
 #cor(ans.B$fitted.y[ww,"color"], CPpheno[ww,"color"], use="pairwise.complete.obs")
+
+
+############################################
+############################################
+############################################
+############################################
+############################################
+############################################
+
+####=========================================####
+####=========================================####
+#### EXAMPLE 4
+#### Cross validation example
+####=========================================####
+####=========================================####
+## get data
+# data(CPdata)
+# CPpheno <- CPdata$pheno[,-c(1:4)]
+# CPgeno <- CPdata$geno
+# head(CPpheno)
+# CPgeno[1:5,1:5]
+# 
+# y <- CPpheno$color
+# Za <- diag(length(y))
+# A <- A.mat(CPgeno)
+# 
+# ## for 5-fold cross validation
+# rownames(CPpheno) <- rownames(CPgeno)
+# 
+# cv.cors <- list()
+# for(j in 1:50){ # 50 rounds of 5-fold CV
+#   
+#   base <- rownames(CPgeno) # base names of the genotypes
+#   ## define the cross validation groups
+#   CV.scheme <- list()
+#   for(i in 1:5){
+#     if(i ==5){totake <- length(base)}else{totake<-round(dim(Za)[1]/5)}
+#     CV.scheme[[i]] <- sample(base,totake) # delete data for 1/5 of the population
+#     base <- setdiff(base,CV.scheme[[i]])
+#   }
+#   ## apply the model to all groups
+#   coros <- lapply(CV.scheme,function(x){
+#     y.trn<- CPpheno
+#     y.trn[x,"Yield"] <- NA
+#     ETA.A <- list(add=list(Z=Za,K=A))
+#     ans.A <- mmer(Y=y.trn[,"Yield"], Z=ETA.A, method="EMMA", silent = TRUE)
+#     blup <- ans.A$u.hat$add;rownames(blup) <- rownames(CPpheno)
+#     cor(blup[x,1], CPpheno[x,"Yield"], use="pairwise.complete.obs")
+#   })
+#   print(j)
+#   cv.cors[[j]] <- unlist(coros)
+# }
+# 
+# boxplot(unlist(cv.cors),ylim=c(0,1))
+# 
+# ans.A <- mmer(Y=CPpheno[,"Yield"], Z=ETA.A, method="EMMA", silent = TRUE)
+# (h2<-ans.A$var.comp[1,1]/sum(ans.A$var.comp))
+# sqrt(h2)
 
 }
 \keyword{datasets}

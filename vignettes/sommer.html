@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2016-10-01" />
+<meta name="date" content="2016-10-31" />
 
 <title>Genetic analysis using the sommer package</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Genetic analysis using the sommer package</h1>
 <h4 class="author"><em>Giovanny Covarrubias-Pazaran</em></h4>
-<h4 class="date"><em>2016-10-01</em></h4>
+<h4 class="date"><em>2016-10-31</em></h4>
 
 
 
@@ -166,13 +166,13 @@ CPpheno &lt;-<span class="st"> </span>CPdata$pheno
 CPgeno &lt;-<span class="st"> </span>CPdata$geno
 ### look at the data
 <span class="kw">head</span>(CPpheno)</code></pre></div>
-<pre><code>##        color  Yield FruitAver Firmness
-## 3 0.10075269 154.67     41.93  588.917
-## 4 0.13891940 186.77     58.79  640.031
-## 5 0.08681502  80.21     48.16  671.523
-## 6 0.13408561 202.96     48.24  687.172
-## 7 0.13519278 174.74     45.83  601.322
-## 8 0.17406685 194.16     44.63  656.379</code></pre>
+<pre><code>##        id Row Col Year      color  Yield FruitAver Firmness
+## P003 P003   3   1 2014 0.10075269 154.67     41.93  588.917
+## P004 P004   4   1 2014 0.13891940 186.77     58.79  640.031
+## P005 P005   5   1 2014 0.08681502  80.21     48.16  671.523
+## P006 P006   6   1 2014 0.13408561 202.96     48.24  687.172
+## P007 P007   7   1 2014 0.13519278 174.74     45.83  601.322
+## P008 P008   8   1 2014 0.17406685 194.16     44.63  656.379</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">CPgeno[<span class="dv">1</span>:<span class="dv">5</span>,<span class="dv">1</span>:<span class="dv">4</span>]</code></pre></div>
 <pre><code>##      scaffold_50439_2381 scaffold_39344_153 uneak_3436043 uneak_2632033
 ## P003                   0                  0             0             1
@@ -224,7 +224,7 @@ hybrid2 &lt;-<span class="st"> </span>cornHybrid$hybrid <span class="co"># extra
 ## Use the '$' symbol to access such information
 ## =======================================================
 ## Linear mixed model fit by restricted maximum likelihood
-## ********************  sommer 2.2  *********************
+## ********************  sommer 2.3  *********************
 ## =======================================================
 ## Method:[1] &quot;NR&quot;
 ## 
@@ -287,7 +287,7 @@ modHD &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt
 ## Use the '$' symbol to access such information
 ## =======================================================
 ## Linear mixed model fit by restricted maximum likelihood
-## ********************  sommer 2.2  *********************
+## ********************  sommer 2.3  *********************
 ## =======================================================
 ## Method:[1] &quot;NR&quot;
 ## 
@@ -334,13 +334,13 @@ CPgeno &lt;-<span class="st"> </span>CPdata$geno
 my.map &lt;-<span class="st"> </span>CPdata$map
 ### look at the data
 <span class="kw">head</span>(CPpheno); CPgeno[<span class="dv">1</span>:<span class="dv">5</span>,<span class="dv">1</span>:<span class="dv">4</span>]</code></pre></div>
-<pre><code>##        color  Yield FruitAver Firmness
-## 3 0.10075269 154.67     41.93  588.917
-## 4 0.13891940 186.77     58.79  640.031
-## 5 0.08681502  80.21     48.16  671.523
-## 6 0.13408561 202.96     48.24  687.172
-## 7 0.13519278 174.74     45.83  601.322
-## 8 0.17406685 194.16     44.63  656.379</code></pre>
+<pre><code>##        id Row Col Year      color  Yield FruitAver Firmness
+## P003 P003   3   1 2014 0.10075269 154.67     41.93  588.917
+## P004 P004   4   1 2014 0.13891940 186.77     58.79  640.031
+## P005 P005   5   1 2014 0.08681502  80.21     48.16  671.523
+## P006 P006   6   1 2014 0.13408561 202.96     48.24  687.172
+## P007 P007   7   1 2014 0.13519278 174.74     45.83  601.322
+## P008 P008   8   1 2014 0.17406685 194.16     44.63  656.379</code></pre>
 <pre><code>##      scaffold_50439_2381 scaffold_39344_153 uneak_3436043 uneak_2632033
 ## P003                   0                  0             0             1
 ## P004                   0                  0             0             1
@@ -411,7 +411,7 @@ ans2 &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt"
 ## Use the '$' symbol to access such information
 ## =======================================================
 ## Linear mixed model fit by restricted maximum likelihood
-## ********************  sommer 2.2  *********************
+## ********************  sommer 2.3  *********************
 ## =======================================================
 ## Method:[1] &quot;EMMA&quot;
 ## 
@@ -460,11 +460,11 @@ y.trn[vv] &lt;-<span class="st"> </span><span class="ot">NA</span>
 ETA &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">g=</span><span class="kw">list</span>(<span class="dt">Z=</span>Z1, <span class="dt">K=</span>K))
 ans &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt">Y=</span>y.trn, <span class="dt">Z=</span>ETA, <span class="dt">method=</span><span class="st">&quot;EMMA&quot;</span>, <span class="dt">silent =</span> <span class="ot">TRUE</span>) <span class="co"># kinship based</span>
 <span class="kw">cor</span>(ans$u.hat$g[vv],y[vv])</code></pre></div>
-<pre><code>## [1] 0.4645812</code></pre>
+<pre><code>## [1] 0.4885687</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## maximum prediction value that can be achieved
 <span class="kw">sqrt</span>(ans$var.comp[<span class="dv">1</span>,<span class="dv">1</span>]/<span class="kw">sum</span>(ans$var.comp[,<span class="dv">1</span>]))</code></pre></div>
 <pre><code>##    Var(g) 
-## 0.5141042</code></pre>
+## 0.5771923</code></pre>
 </div>
 <div id="single-cross-prediction" class="section level2">
 <h2>5) Single cross prediction</h2>
@@ -539,7 +539,7 @@ anss2 &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt
 ## Use the '$' symbol to access such information
 ## =======================================================
 ## Linear mixed model fit by restricted maximum likelihood
-## ********************  sommer 2.2  *********************
+## ********************  sommer 2.3  *********************
 ## =======================================================
 ## Method:[1] &quot;EM&quot;
 ## 
@@ -581,17 +581,17 @@ Z_t H_1 Z_1' + ... + Z_t S_1 Z_1' &amp; ... &amp; Z_t G_1 Z_t' + ... + Z_t R_1 Z
 <p><br></p>
 <p>where G are H are variance and covariance matrices among random effects for the “t” trait, and R and S are variance and covariance matrices among residuals. Here R=S=I<span class="math inline">\(\sigma_\epsilon\)</span> , where I is an identity matrix. We can specify the covariance matrices. BLUPs will also be corrected for such covariances usually leading to more accurate predictions.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(CPdata)
-CPpheno &lt;-<span class="st"> </span>CPdata$pheno
+CPpheno &lt;-<span class="st"> </span>CPdata$pheno[,-<span class="kw">c</span>(<span class="dv">1</span>:<span class="dv">4</span>)]
 CPgeno &lt;-<span class="st"> </span>CPdata$geno
 ### look at the data
 <span class="kw">head</span>(CPpheno)</code></pre></div>
-<pre><code>##        color  Yield FruitAver Firmness
-## 3 0.10075269 154.67     41.93  588.917
-## 4 0.13891940 186.77     58.79  640.031
-## 5 0.08681502  80.21     48.16  671.523
-## 6 0.13408561 202.96     48.24  687.172
-## 7 0.13519278 174.74     45.83  601.322
-## 8 0.17406685 194.16     44.63  656.379</code></pre>
+<pre><code>##           color  Yield FruitAver Firmness
+## P003 0.10075269 154.67     41.93  588.917
+## P004 0.13891940 186.77     58.79  640.031
+## P005 0.08681502  80.21     48.16  671.523
+## P006 0.13408561 202.96     48.24  687.172
+## P007 0.13519278 174.74     45.83  601.322
+## P008 0.17406685 194.16     44.63  656.379</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">CPgeno[<span class="dv">1</span>:<span class="dv">5</span>,<span class="dv">1</span>:<span class="dv">4</span>]</code></pre></div>
 <pre><code>##      scaffold_50439_2381 scaffold_39344_153 uneak_3436043 uneak_2632033
 ## P003                   0                  0             0             1
@@ -617,7 +617,7 @@ ans.A &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt
 ## Use the '$' sign to access parameters
 ## =======================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ********************  sommer 2.2  *********************
+## ********************  sommer 2.3  *********************
 ## =======================================================
 ## Method:[1] &quot;EMMAM&quot;
 ##       logLik       AIC       BIC
@@ -671,17 +671,17 @@ prod.sd &lt;-<span class="st"> </span>sd.gvc %*%<span class="st"> </span><span c
 <h2>7) Multivariate GWAS</h2>
 <p>Following the same theory of multivariate methods, theorically the marker effects can take advantage of the information contained in the correlation among traits besides exploiting the correlations between individuals. We have extended the GWAS framework to multivariate GWAS. Here, we will show a multivariate GWAS in a biparental population using the information of 4 traits.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(CPdata)
-CPpheno &lt;-<span class="st"> </span>CPdata$pheno
+CPpheno &lt;-<span class="st"> </span>CPdata$pheno[,-<span class="kw">c</span>(<span class="dv">1</span>:<span class="dv">4</span>)]
 CPgeno &lt;-<span class="st"> </span>CPdata$geno
 ### look at the data
 <span class="kw">head</span>(CPpheno)</code></pre></div>
-<pre><code>##        color  Yield FruitAver Firmness
-## 3 0.10075269 154.67     41.93  588.917
-## 4 0.13891940 186.77     58.79  640.031
-## 5 0.08681502  80.21     48.16  671.523
-## 6 0.13408561 202.96     48.24  687.172
-## 7 0.13519278 174.74     45.83  601.322
-## 8 0.17406685 194.16     44.63  656.379</code></pre>
+<pre><code>##           color  Yield FruitAver Firmness
+## P003 0.10075269 154.67     41.93  588.917
+## P004 0.13891940 186.77     58.79  640.031
+## P005 0.08681502  80.21     48.16  671.523
+## P006 0.13408561 202.96     48.24  687.172
+## P007 0.13519278 174.74     45.83  601.322
+## P008 0.17406685 194.16     44.63  656.379</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">CPgeno[<span class="dv">1</span>:<span class="dv">5</span>,<span class="dv">1</span>:<span class="dv">4</span>]</code></pre></div>
 <pre><code>##      scaffold_50439_2381 scaffold_39344_153 uneak_3436043 uneak_2632033
 ## P003                   0                  0             0             1
@@ -708,7 +708,7 @@ ans.A &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt
 ## Use the '$' sign to access parameters
 ## =======================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ********************  sommer 2.2  *********************
+## ********************  sommer 2.3  *********************
 ## =======================================================
 ## Method:[1] &quot;MNR&quot;
 ##      logLik     AIC      BIC

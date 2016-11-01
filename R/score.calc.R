@@ -48,7 +48,7 @@ score.calc <- function(marks,y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,max.geno.fre
         resid <- y - X2 %*% beta
         s2 <- as.double(crossprod(resid, Hinv %*% resid))/v2
         Q <- s2 * Winv[(p-v1+1):p,(p-v1+1):p]
-        Tt <- solve(Q, silent= TRUE)
+        Tt <- try(solve(Q),silent=TRUE)
         if (class(Tt) != "try-error") {
           V <- beta[(p+1-v1):p]
           Fstat <- crossprod(V,Tt%*%V)/v1
@@ -60,6 +60,11 @@ score.calc <- function(marks,y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,max.geno.fre
             scores[i] <- mama
           }
           if (!general) {beta.out[i] <- beta[p]}                    
+        }else{
+          
+            scores[i] <- NA
+          
+          if (!general) {beta.out[i] <- 1e-6} 
         }
       }
     }

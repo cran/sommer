@@ -13,8 +13,8 @@ vignette("sommer")
 
 }
 \usage{
-mmer2(fixed, random, rcov, G=NULL, W=NULL, method="NR", REML=TRUE, 
-      MVM=FALSE, iters=20, draw=FALSE, init=NULL, data, family=gaussian, 
+mmer2(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=TRUE, 
+      MVM=FALSE, iters=20, draw=FALSE, init=NULL, family=gaussian, 
       silent=FALSE, constraint=TRUE, sherman=FALSE, EIGEND=FALSE,
       forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, min.n=FALSE,
       gwas.plots=TRUE,n.cores=1,tolpar = 1e-06,tolparinv = 1e-06)
@@ -37,6 +37,7 @@ This will create two autocorrelation structures, one for rows and other for colu
 \strong{id} diagonal matrix
 
     }
+  \item{data}{a data frame containing the variables specified in the formulas for response, fixed, and random effects.}
   \item{G}{a list containing the \strong{variance-covariance matrices for the random effects}, i.e. G=list(genotype=M1, year=M2), where M1 and M2 are the variance-covariance matrices. if not passed is assumed an identity matrix.}
     \item{W}{an incidence matrix for extra fixed effects and \strong{only to be used if GWAS is pursued} to fit a model of the form \deqn{y = X \beta + Z g + W \tau + \varepsilon} Markers will be treated as fixed effects according to Yu et al. (2006) \strong{for diploids}, and Rosyara et al (2016) \strong{for polyploids}. For details about the methods please go to the Details section. The dashed line in the Manhattan plots corresponds to an FDR rate of 0.05 and is calculated using the p.adjust function included in the stats package.}
   \item{method}{this refers to the method or algorithm to be used for estimating variance components. The package currently is supported by 4 algorithms; \strong{EMMA} efficient mixed model association (Kang et al. 2008), \strong{AI} average information (Gilmour et al. 1995; Lee et al. 2015), \strong{EM} expectation maximization (Searle 1993; Bernardo 2010), and the default Newton-Raphson \strong{NR} (Tunnicliffe 1989).}
@@ -45,7 +46,6 @@ This will create two autocorrelation structures, one for rows and other for colu
   \item{iters}{a scalar value indicating \strong{how many iterations} have to be performed if the optimization algorithms. There is no rule of tumb for the number of iterations but less than8 is usually enough. The default value is 20 iterations but usually will take less than that stopping before reaching the maximum number of iterations.}
   \item{draw}{a TRUE/FALSE value indicating if a plot of \strong{updated values for the variance components} and the log-likelihood \strong{should be drawn or not} during the optimization process. The default is FALSE. It's been set to FALSE because is less the computation time when the computer doesn't have to draw plots.}
   \item{init}{an vector of initial values for the EM, NR or AI algorithms. If not provided the program uses a starting values the variance(y)/#random.eff which are usually good starting values.}
-  \item{data}{a data frame containing the variables specified in the formulas for response, fixed, and random effects.}
  \item{family}{a family object to specify the distribution of the response variable. For details see \code{\link{family}} help page. The argument would look something like this; family=poisson(), or family=Gamma(), etc. For more sophisticated models please look at lme4 package from Douglas Bates. \strong{NOT IMPLEMENTED YET}. Planned for ~ v2.5}
 \item{silent}{a TRUE/FALSE value indicating if the function should or shouldn't draw the \strong{progress bar}. The default is FALSE, which means is not silent and will display the progress bar.}
       \item{constraint}{a TRUE/FALSE value indicating if the program should use the \strong{boundary constraint} when one or more variance component is close to the zero boundary. The default is TRUE but needs to be used carefully. It works ideally when few variance components are close to the boundary but when there are too many variance components close to zero we highly recommend setting this parameter to FALSE since is more likely to get the right value of the variance components in this way.}
@@ -67,7 +67,7 @@ This will create two autocorrelation structures, one for rows and other for colu
 }
 \details{
 
-The package has been equiped with several datasets to learn how to use the sommer package; the \code{\link{HDdata}} and \code{\link{FDdata}} datasets will introduce users to fit half and full diallel designs respectively. The \code{\link{h2}} dataset shows how to calculate heritability. The \code{\link{cornHybrid}} and \code{\link{Technow_data}} datasets contain data to teach users how to perform genomic prediction in hybrid single crosses which display GCA and SCA effects. The \code{\link{wheatLines}} dataset teaches how to do genomic prediction in single crosses in species displaying only additive effects. The \code{\link{CPdata}} dataset contains data to teach users how to fit genomic prediction models within a biparental population coming from 2 highly heterozygous parents including additive, dominance and epistatic effects.  The same data example is used to show how to include the top GWAS hits as fixed effects in the GBLUP model to increase prediction accuracy, the examples can be found in the \code{\link{hits}} documentation.  The \code{\link{PolyData}} dataset shows how to fit genomic prediction and GWAS analysis in polyploids. The second example in \code{\link{Technow_data}} data shows how to perform GWAS in single cross hybrids. A good converter from letter code to numeric format is implemented in the function \code{\link{atcg1234}}, which supports higher ploidy levels than diploid. The \code{\link{RICE}} dataset can teach users how to select the best training population using the \code{\link{TP.prep}} function in an applied breeding program, and we show comparison some comparison with other methods. Traces of selection can be obtained using markers with the \code{\link{eigenGWAS}} function. Additional examples for fitting mixed models, such as GWAS and others, can be found in the example section of the \code{\link{mmer}} and \code{\link{mmer2}} functions. Examples of multivariate models can be found in the example #3 of the \code{\link{CPdata}}. An example of how to model autocorrelation structures in the residual components can be found in the \code{\link{yates.oats}} documentation.
+The package has been equiped with several datasets to learn how to use the sommer package; the \code{\link{HDdata}} and \code{\link{FDdata}} datasets will introduce users to fit half and full diallel designs respectively. The \code{\link{h2}} dataset shows how to calculate heritability. The \code{\link{cornHybrid}} and \code{\link{Technow_data}} datasets contain data to teach users how to perform genomic prediction in hybrid single crosses which display GCA and SCA effects. The \code{\link{wheatLines}} dataset teaches how to do genomic prediction in single crosses in species displaying only additive effects. The \code{\link{CPdata}} dataset contains data to teach users how to fit genomic prediction models within a biparental population coming from 2 highly heterozygous parents including additive, dominance and epistatic effects.  The same data example is used to show how to include the top GWAS hits as fixed effects in the GBLUP model to increase prediction accuracy, the examples can be found in the \code{\link{hits}} documentation.  The \code{\link{PolyData}} dataset shows how to fit genomic prediction and GWAS analysis in polyploids. The second example in \code{\link{Technow_data}} data shows how to perform GWAS in single cross hybrids. A good converter from letter code to numeric format is implemented in the function \code{\link{atcg1234}}, which supports higher ploidy levels than diploid. The \code{\link{RICE}} dataset can teach users how to select the best training population using the \code{\link{TP.prep}} function in an applied breeding program, and we show comparison some comparison with other methods. Traces of selection can be obtained using markers with the \code{\link{eigenGWAS}} function. Additional examples for fitting mixed models, such as GWAS and others, can be found in the example section of the \code{\link{mmer}} and \code{\link{mmer2}} functions. Examples of multivariate models can be found in the example #3 of the \code{\link{CPdata}}. An example of how to model autocorrelation structures in the residual components can be found in the \code{\link{yates.oats}} documentation. In addition, since v2.3 we have added the \code{\link{nna}} function which does nearest neighbor to create a new data frame adjusted for spatial variation. The \code{\link{ExpDesigns}} data contains several datasets to analyze experimental designs relevant to plant breeding and several detailed examples are available.
 
 =======================================================
 =======================================================
@@ -302,4 +302,33 @@ rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 
 # plot(out$cond.residuals, residuals(fm1))
 # plot(out$u.hat[[1]], ranef(fm1)[[1]][,1])
+
+########################################################
+########################################################
+########################################################
+########################################################
+########################################################
+########################################################
+
+####=========================================####
+#### EXAMPLE 4
+#### Multivariate model example
+####=========================================####
+
+# data(FDdata)
+# head(FDdata)
+# 
+# mix <- mmer2(cbind(stems,pods,seeds)~1, 
+#              random=~female+male, MVM=TRUE,data=FDdata)
+# summary(mix)
+# #### genetic variance covariance
+# gvc <- mix$var.comp$female
+# #### extract variances (diagonals) and get standard deviations 
+# sd.gvc <- as.matrix(sqrt(diag(gvc)))
+# #### get possible products sd(Vgi) * sd(Vgi')
+# prod.sd <- sd.gvc %*% t(sd.gvc)
+# #### genetic correlations cov(gi,gi')/[sd(Vgi) * sd(Vgi')] 
+# (gen.cor <- gvc/prod.sd)
+# #### pods and seeds have a strong negative genetic covariance (-.79)
+# #### more pods, less seeds
 }

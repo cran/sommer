@@ -120,8 +120,8 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
   ##### FIX RANDOM EFFECTS FROM THE BEGGINING TO MAKE SURE LEVELS OF Z AND K ARE ORDERED
   Z <- lapply(Z, function(x){
     #########
-    uuuz <- levels(as.factor(colnames(x$Z))) # order of Z
-    uuuk <- levels(as.factor(colnames(x$K))) # order of K
+    uuuz <- as.character(colnames(x$Z))#levels(as.factor(colnames(x$Z))) # order of Z
+    uuuk <- as.character(colnames(x$K))#levels(as.factor(colnames(x$K))) # order of K
     #only if both Z and K have names, otherwise don't do anything
     if((length(uuuz) >0 ) & (length(uuuk) > 0)){ 
       inte <- intersect(uuuz,uuuk)
@@ -135,17 +135,17 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
   })
   ###**********************************
   ## impute missing data in incidence matrices with median of the vector
-  Z <- lapply(Z, function(x){
-    bbb <- which(is.na(x[[1]]))
-    if(length(bbb)>0){
-      im <- x[[1]] 
-      im <- apply(im,2,function(y){qq <- which(is.na(y)); if(length(qq)>0){y[qq] <- median(y,na.rm=TRUE)}; return(y)})
-      z=list(Z=im,K=x[[2]])
-    }else{
-      z <- x
-    }
-    return(z)
-  })
+  #Z <- lapply(Z, function(x){
+  #  bbb <- which(is.na(x[[1]]))
+  #  if(length(bbb)>0){
+  #    im <- x[[1]] 
+  #    im <- apply(im,2,function(y){qq <- which(is.na(y)); if(length(qq)>0){y[qq] <- median(y,na.rm=TRUE)}; return(y)})
+  #    z=list(Z=im,K=x[[2]])
+  #  }else{
+  #    z <- x
+  #  }
+  #  return(z)
+  #})
   ######## WRITE A POEM
   #if(!silent){
   #  poe(sample(1:9,1))
@@ -569,6 +569,7 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
             #names(res$u.hat) <- names(Z)[1]
           }else{
             if(is.null(R)){
+              #print("yes")
               res <- NR(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced)
               res$method <- method
             }else{

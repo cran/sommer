@@ -5,7 +5,7 @@
 This function was designed to create a manhattan plot using a data frame with columns "Chrom" (Chromosome),  "Position" and "p.val" (significance for the test).  
 }
 \usage{
-manhattan(map, col=NULL, fdr.level=0.05, show.fdr=TRUE, PVCN=NULL)
+manhattan(map, col=NULL, fdr.level=0.05, show.fdr=TRUE, PVCN=NULL, ylim=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -14,6 +14,7 @@ manhattan(map, col=NULL, fdr.level=0.05, show.fdr=TRUE, PVCN=NULL)
   \item{fdr.level}{false discovery rate to be drawn in the plot.}
    \item{show.fdr}{a TRUE/FALSE value indicating if the FDR value should be shown in the manhattan plot or not. By default is TRUE meaning that will be displayed.}
    \item{PVCN}{In case the user wants to provide the name of the column that should be treated as the "p.val" column expected by the program in the 'map' argument.}
+    \item{ylim}{the y axis limits for the manhattan plot if the user wants to customize it. By default the plot will reflect the minimum and maximum values found.}
 }
 
 
