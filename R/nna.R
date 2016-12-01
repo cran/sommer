@@ -4,7 +4,7 @@ nna<- function (pheno, trait = "y", rown = "row", coln = "col", nrows = 1,
   bases <- c(rown, coln, trait)
   into <- intersect(colnames(pheno), bases)
   if (length(into) < 3) {
-    stop("Please provide the information 'rown', 'coln' and 'y'.", 
+    stop("Please provide the arguments 'rown', 'coln' and 'trait'.", 
          call. = FALSE)
   }
   newd <- pheno[, c(rown, coln, trait)]

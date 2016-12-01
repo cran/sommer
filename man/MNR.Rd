@@ -7,7 +7,7 @@ This function is used internally in the function \code{\link{mmer}} when MORE th
 \usage{
 MNR(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,
      tolparinv=1e-6,draw=TRUE, silent=FALSE, constraint=TRUE,
-     EIGEND=FALSE,forced=NULL)
+     EIGEND=FALSE,forced=NULL, IMP=FALSE)
 }
 \arguments{
   \item{Y}{a matrix or data frame of response variables}
@@ -73,6 +73,7 @@ MNR(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,
       2) The system needs to be squared and no missing data is allowed (then missing data is imputed with the median).
    The default is FALSE to avoid the user get into trouble but experimented users can take advantage from this feature to fit big models, i.e. 5000 individuals in 555 seconds = 9 minutes in a MacBook 4GB RAM.}
     \item{forced}{a list of values for variance-covariance components to be used if the user wants to force those values.}
+    \item{IMP}{a TRUE/FALSE statement if the function should impute the Y matrix/dataframe with the median value or should get rid of missing values for the estimation of variance components.}
 }
 \details{
 This algorithm is based on Tunnicliffe (1989), it is based on REML. This handles models of the form:

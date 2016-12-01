@@ -1,4 +1,4 @@
-mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=FALSE, iters=20, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, silent=FALSE, family=NULL, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE, n.cores=1,tolpar = 1e-06, tolparinv = 1e-06, che=TRUE){
+mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=FALSE, iters=20, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, silent=FALSE, family=NULL, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE, n.cores=1,tolpar = 1e-06, tolparinv = 1e-06, che=TRUE, IMP=TRUE){
   gss=TRUE
   diso <- dim(as.data.frame(Y))[2]
   
@@ -17,7 +17,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
     stop("Please when specifying a random effect use the names; \n'Z' for incidence and 'K' for variance-covariance matrices.\nFor example for 1 random effect (i.e. named 'A') model do:\n    ETA <- list( A=list( Z=M1, K=M2) )\n    mod <- mmer(Y=y, Z=ETA)\nSpecifying at least one; Z or K. You need to specify if is a 'Z' or 'K' \nsince this is the only way the program distinguishes between matrices.",call. = FALSE)
   }
   
-  my.month <- 11 #version of the month
+  my.month <- 12 #version of the month
   datee <- Sys.Date()
   both <- as.numeric(strsplit(gsub("....-","",datee),"-")[[1]])
   month <- both[1]#your month
@@ -52,6 +52,14 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
     }
   }
   #########*****************************
+  for(bb in 1:length(Z)){
+    ss1 <- colnames(Z[[bb]]$Z) == colnames(Z[[bb]]$K)
+    if(length(which(!ss1))>0){
+      print(paste("Names of columns in matrices Z and K for the",bb,"th random effect do not match.")) 
+      print("This can lead to incorrect estimation of variance components. Double check.")
+    }
+  }
+  #########*****************************
   if(diso > 1){ # IF MULTIPLE RESPONSES
     
     if(MVM){ # if MULTIVARIATE
@@ -62,7 +70,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
         }
       }
       if(!silent){cat("Running multivariate model\n")}
-      RES <- MMERM(Y=Y, X=X, Z=Z, W=W, method=method, tolpar = tolpar, tolparinv = tolparinv, draw=draw, silent=silent, iters=iters-5, init=init, che=che, EIGEND=EIGEND, forced=forced, P3D=P3D, models=models, ploidy=ploidy, min.MAF=min.MAF, gwas.plots=gwas.plots, map=map,manh.col=manh.col,fdr.level=fdr.level,constraint = constraint)
+      RES <- MMERM(Y=Y, X=X, Z=Z, W=W, method=method, tolpar = tolpar, tolparinv = tolparinv, draw=draw, silent=silent, iters=iters-5, init=init, che=che, EIGEND=EIGEND, forced=forced, P3D=P3D, models=models, ploidy=ploidy, min.MAF=min.MAF, gwas.plots=gwas.plots, map=map,manh.col=manh.col,fdr.level=fdr.level,constraint = constraint, IMP=IMP)
       class(RES)<-c("MMERM")
     }else{ # if UNIVARIATE IN PARALLEL
       #######$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -226,7 +234,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
   cat("\nInformation contained in this fitted model: \n* Variance components, Residuals, Fitted values\n* BLUEs and BLUPs, Inverse phenotypic variance(V)\n* Variance-covariance matrix for fixed & random effects\n* Predicted error variance (PEV), LogLikelihood\nUse the '$' symbol to access such information\n")
   cat("=======================================================")
   cat("\nLinear mixed model fit by restricted maximum likelihood\n")
-  cat("********************  sommer 2.3  *********************\n")
+  cat("********************  sommer 2.4  *********************\n")
   cat("=======================================================")
   cat("\nMethod:")
   print(x$method)
@@ -316,7 +324,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
   cat("Information contained in this structure: \n* Individual results for each response model\nDisplayed: \n* AIC, BIC and Variance component summaries\nUse the '$' sign to access individual models\n")
   cat("=======================================================")
   cat("\nLinear mixed model fit by restricted maximum likelihood\n")
-  cat("********************  sommer 2.3  *********************\n")
+  cat("********************  sommer 2.4  *********************\n")
   cat("=======================================================")
   cat("\nMethod:")
   print(x$method)
@@ -433,7 +441,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
   cat("Information contained in this structure: \n* Results for a multi response model\nDisplayed: \n* Variance-covariance component summaries\nUse the '$' sign to access parameters\n")
   cat("=======================================================")
   cat("\n    Multivariate Linear Mixed Model fit by REML    \n")
-  cat("********************  sommer 2.3  *********************\n")
+  cat("********************  sommer 2.4  *********************\n")
   cat("=======================================================")
   cat("\nMethod:")
   print((x$method))
@@ -761,7 +769,7 @@ plot.MMERM <- function(x, ...) {
     stop("This package requires R 2.1 or later")
   assign(".sommer.home", file.path(library, pkg),
          pos=match("package:sommer", search()))
-  sommer.version = "2.3 (2016-11-01)"
+  sommer.version = "2.4 (2016-12-01)"
   
   ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ### check which version is more recent

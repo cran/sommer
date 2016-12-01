@@ -18,7 +18,7 @@ mmer(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE,
      family=NULL, constraint=TRUE, sherman=FALSE, EIGEND=FALSE,
      forced=NULL, map=NULL,fdr.level=0.05, manh.col=NULL, 
      gwas.plots=TRUE, n.cores=1,tolpar = 1e-06,tolparinv = 1e-06,
-     che=TRUE)
+     che=TRUE, IMP=TRUE)
 }
 \arguments{
   \item{Y}{a numeric \strong{vector or data frame} for the response variable(s) (it can run multivariate and also runs univariate in parallel by using the 'n.cores' argument). The \strong{multivariate version is only enabled when the argument 'MVM' is set to TRUE}.}
@@ -96,6 +96,7 @@ mmer(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE,
       \item{tolpar}{tolerance parameter for convergence in the multivariate models.}
       \item{tolparinv}{tolerance parameter for matrix inverse in the multivariate models.}
      \item{che}{a TRUE/FALSE value statement indicating if the program should spend time \strong{checking the matrices} of random effects provided by the user \strong{for possible errors} in dimensions.}
+      \item{IMP}{a TRUE/FALSE statement if the function should impute the Y matrix/dataframe with the median value or should get rid of missing values for the estimation of variance components. Only for multivariate mixed models.}
 
 }
 \details{

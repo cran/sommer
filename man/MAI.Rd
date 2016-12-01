@@ -6,7 +6,7 @@ This function is used internally in the function \code{\link{mmer}} when MORE th
 }
 \usage{
 MAI(Y, X=NULL, ZETA=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=20, 
-    init=NULL, che=TRUE, EIGEND=FALSE, forced=NULL)
+    init=NULL, tol=1e-3, che=TRUE, EIGEND=FALSE, forced=NULL, IMP=FALSE)
 
 }
 \arguments{
@@ -59,12 +59,18 @@ MAI(Y, X=NULL, ZETA=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=20,
   \item{silent}{a TRUE/FALSE value indicating if the function should draw the progress bar or iterations performed while working or should not be displayed.}
   \item{iters}{a scalar value indicating how many iterations have to be performed if the EM is performed. There is no rule of tumb for the number of iterations. The default value is 100 iterations or EM steps.}
       \item{init}{vector of initial values for the variance components. By default this is NULL and variance components are estimated by the method selected, but in case the user want to provide initial values this argument is functional.}
+      \item{tol}{Convergence criteria.  If the change in residual log
+    likelihood for one cycle is less than \code{10 x tol} the algorithm
+    finishes.  If each component of the change proposed by the
+  Newton-Raphson is lower in magnitude than \code{tol} the algorithm
+  finishes. Default value is \code{1e-4}.}
       \item{che}{a TRUE/FALSE value indicating if list structure provided by the user is correct to fix it. The default is TRUE but is turned off to FALSE within the mmer function which would imply a double check.}
       \item{EIGEND}{a TRUE/FALSE value indicating if an eigen decomposition for the additive relationship matrix should be performed or not. This is based on Lee (2015). The limitations of this methos are:
       1) can only be applied to one relationship matrix
       2) The system needs to be squared and no missing data is allowed (then missing data is imputed with the median).
    The default is FALSE to avoid the user get into trouble but experimented users can take advantage from this feature to fit big models, i.e. 5000 individuals in 555 seconds = 9 minutes in a MacBook 4GB RAM.}
       \item{forced}{a vector of numeric values for variance components including error if the user wants to force the values of the variance components. On the meantime only works for forcing all of them and not a subset of them. The default is NULL, meaning that variance components will be estimated by REML/ML.}
+      \item{IMP}{a TRUE/FALSE statement if the function should impute the Y matrix/dataframe with the median value or should get rid of missing values for the estimation of variance components.}
 
 }
 \details{

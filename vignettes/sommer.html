@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2016-10-31" />
+<meta name="date" content="2016-12-01" />
 
 <title>Genetic analysis using the sommer package</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Genetic analysis using the sommer package</h1>
 <h4 class="author"><em>Giovanny Covarrubias-Pazaran</em></h4>
-<h4 class="date"><em>2016-10-31</em></h4>
+<h4 class="date"><em>2016-12-01</em></h4>
 
 
 
@@ -224,7 +224,7 @@ hybrid2 &lt;-<span class="st"> </span>cornHybrid$hybrid <span class="co"># extra
 ## Use the '$' symbol to access such information
 ## =======================================================
 ## Linear mixed model fit by restricted maximum likelihood
-## ********************  sommer 2.3  *********************
+## ********************  sommer 2.4  *********************
 ## =======================================================
 ## Method:[1] &quot;NR&quot;
 ## 
@@ -287,7 +287,7 @@ modHD &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt
 ## Use the '$' symbol to access such information
 ## =======================================================
 ## Linear mixed model fit by restricted maximum likelihood
-## ********************  sommer 2.3  *********************
+## ********************  sommer 2.4  *********************
 ## =======================================================
 ## Method:[1] &quot;NR&quot;
 ## 
@@ -411,7 +411,7 @@ ans2 &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt"
 ## Use the '$' symbol to access such information
 ## =======================================================
 ## Linear mixed model fit by restricted maximum likelihood
-## ********************  sommer 2.3  *********************
+## ********************  sommer 2.4  *********************
 ## =======================================================
 ## Method:[1] &quot;EMMA&quot;
 ## 
@@ -527,7 +527,11 @@ vv2 &lt;-<span class="st"> </span><span class="kw">sample</span>(vv1, <span clas
 y.trn[vv2] &lt;-<span class="st"> </span><span class="ot">NA</span>
 ETA2 &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">GCA1=</span><span class="kw">list</span>(<span class="dt">Z=</span>Z1, <span class="dt">K=</span>A.dent), <span class="dt">GCA2=</span><span class="kw">list</span>(<span class="dt">Z=</span>Z2, <span class="dt">K=</span>A.flint)) 
 anss2 &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt">Y=</span>y.trn, <span class="dt">Z=</span>ETA2, <span class="dt">method=</span><span class="st">&quot;EM&quot;</span>, <span class="dt">silent=</span><span class="ot">TRUE</span>) </code></pre></div>
-<pre><code>## Column names of Z and K for random effect are not the same. Make sure they are in the correct order.
+<pre><code>## [1] &quot;Names of columns in matrices Z and K for the 1 th random effect do not match.&quot;
+## [1] &quot;This can lead to incorrect estimation of variance components. Double check.&quot;
+## [1] &quot;Names of columns in matrices Z and K for the 2 th random effect do not match.&quot;
+## [1] &quot;This can lead to incorrect estimation of variance components. Double check.&quot;
+## Column names of Z and K for random effect are not the same. Make sure they are in the correct order.
 ## Column names of Z and K for random effect are not the same. Make sure they are in the correct order.</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(anss2)</code></pre></div>
 <pre><code>## 
@@ -539,7 +543,7 @@ anss2 &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt
 ## Use the '$' symbol to access such information
 ## =======================================================
 ## Linear mixed model fit by restricted maximum likelihood
-## ********************  sommer 2.3  *********************
+## ********************  sommer 2.4  *********************
 ## =======================================================
 ## Method:[1] &quot;EM&quot;
 ## 
@@ -617,7 +621,7 @@ ans.A &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt
 ## Use the '$' sign to access parameters
 ## =======================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ********************  sommer 2.3  *********************
+## ********************  sommer 2.4  *********************
 ## =======================================================
 ## Method:[1] &quot;EMMAM&quot;
 ##       logLik       AIC       BIC
@@ -697,7 +701,7 @@ A &lt;-<span class="st"> </span><span class="kw">A.mat</span>(CPgeno) <span clas
 #### ADDITIVE MODEL ####
 ####================####
 ETA.A &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">add=</span><span class="kw">list</span>(<span class="dt">Z=</span>Za,<span class="dt">K=</span>A))
-ans.A &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt">Y=</span>Y, <span class="dt">Z=</span>ETA.A, <span class="dt">W=</span>CPgeno, <span class="dt">MVM=</span><span class="ot">TRUE</span>, <span class="dt">EIGEND=</span><span class="ot">TRUE</span>,
+ans.A &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt">Y=</span>Y, <span class="dt">Z=</span>ETA.A, <span class="dt">W=</span>CPgeno, <span class="dt">MVM=</span><span class="ot">TRUE</span>, <span class="dt">EIGEND=</span><span class="ot">TRUE</span>, <span class="dt">IMP=</span><span class="ot">TRUE</span>,
               <span class="dt">map=</span>CPdata$map, <span class="dt">silent=</span><span class="ot">TRUE</span>,<span class="dt">gwas.plots =</span> <span class="ot">FALSE</span>)</code></pre></div>
 <pre><code>## EIGEND feature activated. Eigen decomposition of K will be performed</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans.A)</code></pre></div>
@@ -708,7 +712,7 @@ ans.A &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt
 ## Use the '$' sign to access parameters
 ## =======================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ********************  sommer 2.3  *********************
+## ********************  sommer 2.4  *********************
 ## =======================================================
 ## Method:[1] &quot;MNR&quot;
 ##      logLik     AIC      BIC

@@ -1,4 +1,8 @@
-MMERM <- function (Y, X=NULL, Z=NULL, W=NULL, method="NR", tolpar = 1e-06, tolparinv = 1e-06, draw=TRUE, REML=TRUE, silent=FALSE, iters=15, init=NULL, che=TRUE, EIGEND=FALSE, forced=NULL, P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, gwas.plots=TRUE, map=NULL,manh.col=NULL,fdr.level=0.05, constraint=TRUE) {
+MMERM <- function (Y, X=NULL, Z=NULL, W=NULL, method="NR", tolpar = 1e-06, tolparinv = 1e-06, draw=TRUE, REML=TRUE, silent=FALSE, iters=15, init=NULL, che=TRUE, EIGEND=FALSE, forced=NULL, P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, gwas.plots=TRUE, map=NULL,manh.col=NULL,fdr.level=0.05, constraint=TRUE, IMP=TRUE) {
+  
+#   print(str(Z))
+#   print(str(X))
+#   print(str(Y))
   ## for some reason I don't understand quite well the multivariate models can only estimate
   ## variance components in a steady way with V=kronecker(sigma,ZKZ) and dV/ds=kronecker(traits,ZKZ)
   ## but for getting the real V matrix is V=kronecker(ZKZ,sigma) which is not the same, why???? no idea yet.
@@ -97,9 +101,9 @@ MMERM <- function (Y, X=NULL, Z=NULL, W=NULL, method="NR", tolpar = 1e-06, tolpa
       }
       res <- MEMMA(Y, X=X, ZETA=Z, tolpar = tolpar, tolparinv = tolparinv, che=che)
     }else if(method=="AI"){ ### AI
-      res <- MAI2(Y,X=X,ZETA=Z,init=init,maxcyc=iters,tol=tolpar*10000,draw=draw,silent=silent,constraint = constraint,EIGEND = EIGEND,forced=forced)
+      res <- MAI2(Y,X=X,ZETA=Z,init=init,maxcyc=iters,tol=tolpar*10000,draw=draw,silent=silent,constraint = constraint,EIGEND = EIGEND,forced=forced,IMP=IMP)
     }else if(method=="NR"){ ### NR tol=.001 = 1e-6*1000,,,,,,, tol=.01 = 1e-6*10000 
-      res <- MNR(Y,X=X,ZETA=Z,init=init,maxcyc=iters,tol=tolpar*10000,draw=draw,silent=silent,constraint = constraint,EIGEND = EIGEND,forced=forced)
+      res <- MNR(Y,X=X,ZETA=Z,init=init,maxcyc=iters,tol=tolpar*10000,draw=draw,silent=silent,constraint = constraint,EIGEND = EIGEND,forced=forced,IMP=IMP)
     }else if(method=="EM"){
       stop("Method 'EM' is not available currently for multivariate models.",call. = FALSE)
     }else{
@@ -119,9 +123,9 @@ MMERM <- function (Y, X=NULL, Z=NULL, W=NULL, method="NR", tolpar = 1e-06, tolpa
       }
       res <- MEMMA(scale(Y), X=X, ZETA=Z, tolpar = tolpar, tolparinv = tolparinv, che=che)
     }else if(method=="AI"){
-      res <- MAI2(scale(Y),X=X,ZETA=Z,init=init,maxcyc=iters,tol=tolpar*10000,draw=draw,silent=silent,constraint = constraint,EIGEND = EIGEND,forced=forced)
+      res <- MAI2(scale(Y),X=X,ZETA=Z,init=init,maxcyc=iters,tol=tolpar*10000,draw=draw,silent=silent,constraint = constraint,EIGEND = EIGEND,forced=forced,IMP=IMP)
     }else if(method=="NR"){
-      res <- MNR(scale(Y),X=X,ZETA=Z,init=init,maxcyc=iters,tol=tolpar*10000,draw=draw,silent=silent, constraint = constraint,EIGEND = EIGEND,forced=forced)
+      res <- MNR(scale(Y),X=X,ZETA=Z,init=init,maxcyc=iters,tol=tolpar*10000,draw=draw,silent=silent, constraint = constraint,EIGEND = EIGEND,forced=forced,IMP=IMP)
     }else if(method=="EM"){
       stop("Method 'EM' is not available currently for multivariate models.",call. = FALSE)
     }else{

@@ -8,8 +8,8 @@ This function was designed to help users to transform their data in letter forma
 
 }
 \usage{
-atcg1234(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FALSE,
-        by.allele=FALSE)
+atcg1234(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, 
+        silent=FALSE, by.allele=FALSE)
 }
 \arguments{
   \item{data}{a dataframe with markers in columns and individuals in rows. Preferable the rownames are the ID of the plants so you don't lose track of what is what.}

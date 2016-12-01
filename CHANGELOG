@@ -191,6 +191,17 @@ version 2.3 (2016-11-01)
     certain experimental designs relevant to plant breeding has been added.
   + A fatal bug in mmer2 and mmer of imputing data when missing data existed has 
     been corrected
+    
+########################  
+version 2.4 (2016-12-01)
+########################
+
+  + The IMP argument has been added to the function to allow the user to decide if the 
+    Y matrix should be imputed or get rid of missing values when estimating the variance
+    components in the multivariate mixed models (only). The default is FALSE which means
+    that the missing values are removed.
+  + The gryphon dataset was included in the package to provide some help to the users 
+    that want tosee how pedigree data is used
   
 ##pendings
 + get incidence matrix from vcf file directly with probabilities instead of 0,1,2

@@ -2,7 +2,7 @@
 \alias{FDdata}
 \docType{data}
 \title{
-half diallel data for corn hybrids
+Full diallel data for corn hybrids
 }
 \description{
 This dataset contains phenotpic data for 36 winter bean hybrids, coming from a full diallel design and evaluated for 9 traits. The column male and female origin columns are included as well. 

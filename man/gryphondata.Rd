@@ -1,0 +1,61 @@
+\name{gryphondata}
+\alias{gryphondata}
+\docType{data}
+\title{
+Gryphon data from the Journal of Animal Ecology
+}
+\description{
+This is a dataset that was included in the Journal of animal ecology by Wilson et al. (2010; see references) to help users understand how to use mixed models with animal datasets with pedigree data. 
+
+The dataset contains 3 elements:
+
+gryphon; variables indicating the animal, the mother of the animal, sex of the animal, and two quantitative traits named 'BWT' and 'TARSUS'.
+
+pedi; dataset with 2 columns indicating the sire and the dam of the animals contained in the gryphon dataset.
+
+A; additive relationship matrix formed using the 'getA()' function used over the pedi dataframe.
+
+}
+\usage{data("gryphondata")}
+\format{
+  The format is:
+ chr "gryphondata"
+}
+\source{
+This data was simulated for fruit breeding applications.
+}
+\references{
+
+Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744 
+
+Wilson AJ, et al. (2010) An ecologist's guide to the animal model. Journal of Animal Ecology 79(1): 13-26.
+ 
+}
+\examples{
+####=========================================####
+#### For CRAN time limitations most lines in the 
+#### examples are silenced with one '#' mark, 
+#### remove them and run the examples using
+#### command + shift + C |OR| control + shift + C
+####=========================================####
+data(gryphondata)
+
+gryphon <- gryphondata$gryphon
+ppedig <- gryphondata$pedi
+## obtained using the 'getA()' function from the pedigreemm package
+A <- gryphondata$A 
+
+#### look at the data
+head(gryphon)
+
+#### fit the model with no fixed effects (intercept only)
+#mix1 <- mmer2(BWT~1,random=~ANIMAL, G=list(ANIMAL=A), data=gryphon)
+#summary(mix1)
+
+#### fit the model with SEX as fixed effects 
+#mix2 <- mmer2(BWT~1+SEX,random=~ANIMAL, G=list(ANIMAL=A), data=gryphon)
+#summary(mix2)
+
+}
+\keyword{datasets}
+\seealso{The core function of the package \code{\link{mmer}}}

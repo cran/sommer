@@ -1,4 +1,23 @@
-MAI <- function(Y, X=NULL, ZETA=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=20, init=NULL, che=TRUE, EIGEND=FALSE, forced=NULL){
+MAI <- function(Y, X=NULL, ZETA=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=20, init=NULL, tol=1e-3, che=TRUE, EIGEND=FALSE, forced=NULL, IMP=FALSE){
+  
+  Yh <- Y
+  Xh <- X
+  Zh <- ZETA
+  ## identify missing data across variables
+  if(IMP){
+    ytouse <- 1:nrow(Y)
+  }else{
+    nona <- unlist(apply(Y,2,function(x){which(!is.na(x))}))
+    names(nona) <- NULL
+    nonat <- table(nona)
+    ytouse <- as.numeric(names(nonat)[which(nonat == dim(Y)[2])])
+    ## create provisional data sets for estimating variance components
+    Y <- Y[ytouse,]
+    if(!is.null(X)){
+      X <- X[ytouse,] 
+    }else{Xh <- X}
+    ZETA <- lapply(ZETA, function(x,good){x[[1]] <- x[[1]][good,]; x[[2]]<- x[[2]]; return(x)}, good=ytouse)
+  }
   
   if(EIGEND){
     DISO <- dim(ZETA[[1]]$Z)
@@ -316,7 +335,7 @@ MAI <- function(Y, X=NULL, ZETA=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=
       #cat("iteration #",wi,logL,"\n")
       logLL[wi] <- logL
       
-      if (((logL-logL2<0.001) | (wi==iters)) ) {
+      if (((logL-logL2 < tol) | (wi==iters)) ) {
         #if(wi > 8){
         conv=1
         if(!silent){
@@ -574,6 +593,15 @@ MAI <- function(Y, X=NULL, ZETA=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=
   ######## E.HAT
   XB <- X%*%beta
   xb <- matrix(XB, nrow = nrow(Y.or), byrow = FALSE); #in a dataframe
+  
+  ## the fitted values will be done using the original X
+  if(is.null(Xh)){ ##^^^
+    XX <- matrix(rep(1,nrow(Yh)))  ##^^^
+  }else{XX <- Xh} ##^^^
+  XX <- do.call("adiag1", rep(list(XX), ts)) ##^^^
+  xb.or <- XX%*%beta ##^^^
+  xb.or <- matrix(xb.or, nrow = nrow(Yh), byrow = FALSE); ##^^^
+  
   ehat <- matrix(t(Y.or2) - ((beta) %*% t(X.or)), ncol = 1, byrow = FALSE) #Y.or3 - XB # residuals = Y - XB
   popo <- dim(Y.or)[1]
   residu <- matrix(ehat, nrow = nrow(Y.or), byrow = TRUE); colnames(residu) <- namesY
@@ -592,6 +620,10 @@ MAI <- function(Y, X=NULL, ZETA=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=
   u.hat <- list()
   var.u.hat <- list()
   pev.u.hat <- list()
+  
+  dido <- dim(Yh) ## ^^^
+  Zul <- list() ## ^^^
+  
   for (k in 1:nvarcom) { # G ZV-(y-Xb)
     lev.re <- dim(ZETA[[k]]$Z)[2] # levels of the random effect
     Zforvec <- as(kronecker(t(as.matrix(ZETA[[k]]$Z)),diag(ts)), Class="sparseMatrix") # Z'
@@ -611,8 +643,10 @@ MAI <- function(Y, X=NULL, ZETA=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=
     if(!is.null(indnames)){
       rownames(u) <- indnames
     }
-    #var.u <- matrix(provi2, nrow = lev.re, byrow = FALSE); #colnames(var.u) <- namesY
-    #pev.u <- matrix(provi3, nrow = lev.re, byrow = FALSE); #colnames(pev.u) <- namesY
+    
+    Zforvec.or <- as(kronecker((as.matrix(Zh[[k]]$Z)),diag(ts)), Class="sparseMatrix") ## ^^^
+    zuu <-  (Zforvec.or %*% provi) ## ^^^
+    Zul[[k]] <- matrix(zuu, nrow = lev.re, byrow = TRUE); colnames(Zul[[k]]) <- namesY ## ^^^
     
     u.hat[[k]] <- u
     var.u.hat[[k]] <- var.u
@@ -623,13 +657,12 @@ MAI <- function(Y, X=NULL, ZETA=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=
   names(pev.u.hat) <- varosss2
   ##### COND. RESIDUALS AND FITTED
   
-  Zu <- matrix(0,dimos[1],dimos[2])
-  for(o in 1:nvarcom){
-    Zu <- Zu + ZETA[[o]]$Z %*% u.hat[[o]]
-  }
+  ##### fitted Zu
+  Zu <- do.call("+",Zul)
+  fitted.y <- (xb.or + Zu)
+  ## not really a Y.or is the one without missing data
+  cond.ehat <- Y.or - fitted.y[ytouse,] # Y - (XB-Zu)
   
-  fitted.y <- (xb + Zu)
-  cond.ehat <- Y.or2 - fitted.y # Y - (XB-Zu)
   dado <- lapply(ZETA, function(x){dim(x$Z)})
   if(AIsing){
     cat("\nInverse of the Average information matrix was singular")

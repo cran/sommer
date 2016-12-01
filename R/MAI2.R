@@ -1,5 +1,25 @@
-MAI2 <- function(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv=1e-6,draw=TRUE,silent=FALSE,constraint=FALSE,EIGEND=FALSE,forced=NULL){
+MAI2 <- function(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv=1e-6,draw=TRUE,silent=FALSE,constraint=FALSE,EIGEND=FALSE,forced=NULL,IMP=FALSE){
   
+  
+  Yh <- Y
+  Xh <- X
+  Zh <- ZETA
+  ## identify missing data across variables
+  if(IMP){
+    ytouse <- 1:nrow(Y)
+  }else{
+    nona <- unlist(apply(Y,2,function(x){which(!is.na(x))}))
+    names(nona) <- NULL
+    nonat <- table(nona)
+    ytouse <- as.numeric(names(nonat)[which(nonat == dim(Y)[2])])
+    ## create provisional data sets for estimating variance components
+    Y <- Y[ytouse,]
+    if(!is.null(X)){
+      X <- X[ytouse,] 
+    }else{Xh <- X}
+    ZETA <- lapply(ZETA, function(x,good){x[[1]] <- x[[1]][good,]; x[[2]]<- x[[2]]; return(x)}, good=ytouse)
+  }
+    
   if(tol == 1988.0906){
     MARIA <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=50, constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, EIGEND=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL){
       
@@ -819,9 +839,8 @@ MAI2 <- function(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv=1e-6,
     
     
     
-  }
-    
-    ##########********************(((((((((((((((((((((())))))))))))))))))))))
+    }
+  ##########********************(((((((((((((((((((((())))))))))))))))))))))
   if(EIGEND){
     if(length(ZETA)>1){
       stop("The eigen decomposition to accelarate inversion only works for models with one relationship matrix",call. = FALSE)
@@ -1471,6 +1490,15 @@ MAI2 <- function(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv=1e-6,
   ######## E.HAT
   XB <- X%*%beta
   xb <- matrix(XB, nrow = nrow(Y.or), byrow = FALSE); #in a dataframe
+  
+  ## the fitted values will be done using the original X
+  if(is.null(Xh)){ ##^^^
+    XX <- matrix(rep(1,nrow(Yh)))  ##^^^
+  }else{XX <- Xh} ##^^^
+  XX <- do.call("adiag1", rep(list(XX), ts)) ##^^^
+  xb.or <- XX%*%beta ##^^^
+  xb.or <- matrix(xb.or, nrow = nrow(Yh), byrow = FALSE); ##^^^
+  
   ##
   beta <- matrix(as.matrix(beta), nrow = ncol(X.or), byrow = FALSE); #in a dataframe
   ##
@@ -1493,6 +1521,12 @@ MAI2 <- function(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv=1e-6,
   u.hat <- list()
   var.u.hat <- list()
   pev.u.hat <- list()
+  
+  # to fill fitted values, this will have different dimensions and will use original data, 
+  # denoted with ^^^
+  dido <- dim(Yh) ## ^^^
+  Zul <- list() ## ^^^
+  
   for (k in 1:nvarcom) { # GZ'V-(y-Xb)
     lev.re <- dim(ZETA[[k]]$Z)[2] # levels of the random effect
     Zforvec <- as(kronecker(t(as.matrix(ZETA[[k]]$Z)),diag(ts)), Class="sparseMatrix") # Z'
@@ -1503,9 +1537,18 @@ MAI2 <- function(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv=1e-6,
       Uxi <- solve(t(Us[[k]]))# solve(t(Us[[k]]))
       provi <- (ZKforvec %*% HobsInve) # u.hat = GZ'V-(y-Xb) 
       u.hat[[k]] <- (Uxi) %*% matrix(provi, nrow = lev.re, byrow = TRUE); colnames(u.hat[[k]]) <- namesY
+      
+      Zforvec.or <- as(kronecker((as.matrix(Zh[[k]]$Z)),diag(ts)), Class="sparseMatrix") ## ^^^
+      zuu <-  (Zforvec.or %*% provi) ## ^^^
+      Zul[[k]] <- matrix(zuu, nrow = lev.re, byrow = TRUE); colnames(Zul[[k]]) <- namesY ## ^^^
+      
     }else{
       provi <- ZKforvec %*% HobsInve # u.hat = GZ'V-(y-Xb) 
       u.hat[[k]] <- matrix(provi, nrow = lev.re, byrow = TRUE); colnames(u.hat[[k]]) <- namesY
+      
+      Zforvec.or <- as(kronecker((as.matrix(Zh[[k]]$Z)),diag(ts)), Class="sparseMatrix") ## ^^^
+      zuu <-  (Zforvec.or %*% provi) ## ^^^
+      Zul[[k]] <- matrix(zuu, nrow = lev.re, byrow = TRUE); colnames(Zul[[k]]) <- namesY ## ^^^
     }
     
     var.u.hat[[k]] <- ZKforvec %*% pm %*% t(ZKforvec) # var.u.hat = ZGPZ'G ... sigma^4 ZKP ZK
@@ -1522,13 +1565,12 @@ MAI2 <- function(Y,X=NULL,ZETA=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv=1e-6,
   names(pev.u.hat) <- varosss2
   ##### COND. RESIDUALS AND FITTED
   
-  Zu <- matrix(0,dimos[1],dimos[2])
-  for(o in 1:nvarcom){
-    Zu <- Zu + ZETA[[o]]$Z %*% u.hat[[o]]
-  }
+  ##### fitted Zu
+  Zu <- do.call("+",Zul)
+  fitted.y <- (xb.or + Zu)
+  ## not really a Y.or is the one without missing data
+  cond.ehat <- Y.or - fitted.y[ytouse,] # Y - (XB-Zu)
   
-  fitted.y <- (xb + Zu)
-  cond.ehat <- Y.or - fitted.y # Y - (XB-Zu)
   dado <- lapply(ZETA, function(x){dim(x$Z)})
   
   sigma <- lapply(sigma,function(x){round(x,7)})

@@ -1,7 +1,32 @@
-MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv=1e-6,draw=TRUE,silent=FALSE, constraint=TRUE, EIGEND=FALSE, forced=NULL){
+MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv=1e-6,draw=TRUE,silent=FALSE, constraint=TRUE, EIGEND=FALSE, forced=NULL, IMP=FALSE){
   
-  choco <- names(ZETA)
-  if(tol==1988.0906){
+#   print(str(ZETA))
+#   print(str(X))
+#   print(str(Y))
+  
+  Yh <- Y
+  Xh <- X
+  Zh <- ZETA
+  ## identify missing data across variables
+  if(IMP){
+    ytouse <- 1:nrow(Y)
+  }else{
+    nona <- unlist(apply(Y,2,function(x){which(!is.na(x))}))
+    names(nona) <- NULL
+    nonat <- table(nona)
+    ytouse <- as.numeric(names(nonat)[which(nonat == dim(Y)[2])])
+    ## create provisional data sets for estimating variance components
+    Y <- Y[ytouse,]
+    if(!is.null(X)){
+      X <- as.matrix(X[ytouse,] )
+    }else{Xh <- X}
+    if(!is.null(R)){
+      R <- R[ytouse,ytouse] 
+    }else{R <- R}
+    ZETA <- lapply(ZETA, function(x,good){x[[1]] <- x[[1]][good,]; x[[2]]<- x[[2]]; return(x)}, good=ytouse)
+  }
+  ## 
+  if(tol == 1988.0906){
     MARIA <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=50, constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, EIGEND=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL){
       
       if(EIGEND){
@@ -817,7 +842,12 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
       #print(big.peaks.col(logL2.stored, -100000))
       return(res)
       }
-  }
+    
+    
+    
+    }
+  choco <- names(ZETA)
+  
   #####((((((((((((((((((((((((((((((((()))))))))))))))))))))))))))))))))
   #namesX <- names(X)
   if(EIGEND){
@@ -1017,7 +1047,13 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
       
       # P = V-  -  V-X [X' V- X]-1 XV- =  WQK
       VX <- V %*% X # V- X
-      P <- V - VX %*% solve(t(X)%*%VX, t(VX)) #WQK
+      
+      tXVXVX <- solve(t(X)%*%VX, t(VX))
+      if(class(tXVXVX) == "try-error"){
+        tXVXVX <- try(solve((t(X)%*%VX + (tolparinv * diag(dim(xvx)[2]))),t(VX)), silent = TRUE)
+      }
+      
+      P <- V - VX %*% tXVXVX #WQK
       V <- NULL
       #WQX <- WQK
       # y'Py
@@ -1382,7 +1418,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
   ###################
   ## END OF VAR.COMP ESTIMATION
   ###################
-
+  
   ###################
   ### 
   ### ================================================= ### 
@@ -1431,13 +1467,22 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
   
   pm <- vmi - vmi %*% X %*% solve(xvx, crossprod(X, vmi))
   beta <- xvxi %*% crossprod((X), vmi %*% Y.or2) # (XVX)-XV-Y .... Y.or3 %*% X %*% solve(crossprod(X))#
-
+  
   #beta <- matrix(beta,nrow=nrow(beta))
   #rownames(beta) <- namesY
   #varBhat <- xvxi # XV-X'
   ######## E.HAT
   XB <- X%*%beta
   xb <- matrix(XB, nrow = nrow(Y.or), byrow = FALSE); #in a dataframe
+  
+  ## the fitted values will be done using the original X
+  if(is.null(Xh)){ ##^^^
+    XX <- matrix(rep(1,nrow(Yh)))  ##^^^
+  }else{XX <- Xh} ##^^^
+  XX <- do.call("adiag1", rep(list(XX), ts)) ##^^^
+  xb.or <- XX%*%beta ##^^^
+  xb.or <- matrix(xb.or, nrow = nrow(Yh), byrow = FALSE); ##^^^
+  
   ##
   beta <- matrix(as.matrix(beta), nrow = ncol(X.or), byrow = FALSE); #in a dataframe
   #print(dim(t(Y.or)))
@@ -1458,11 +1503,16 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
   u.hat <- list()
   var.u.hat <- list()
   pev.u.hat <- list()
+  # to fill fitted values, this will have different dimensions and will use original data, 
+  # denoted with ^^^
+  dido <- dim(Yh) ## ^^^
+  Zul <- list() ## ^^^
+  
   for (k in 1:nvarcom) { # GZ'V-(y-Xb)
     lev.re <- dim(ZETA[[k]]$Z)[2] # levels of the random effect
-
+    
     Zforvec <- as(kronecker(t(as.matrix(ZETA[[k]]$Z)),diag(ts)), Class="sparseMatrix") # Z'
-
+    
     ZKforvec <- varvecG[[k]] %*% Zforvec # GZ'
     #u.hats are returned mixed because the form of the V matrix
     
@@ -1470,9 +1520,17 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
       Uxi <- solve(t(Us[[k]]))# solve(t(Us[[k]]))
       provi <- (ZKforvec %*% HobsInve) # u.hat = GZ'V-(y-Xb) 
       u.hat[[k]] <- (Uxi) %*% matrix(provi, nrow = lev.re, byrow = TRUE); colnames(u.hat[[k]]) <- namesY
+      
+      Zforvec.or <- as(kronecker((as.matrix(Zh[[k]]$Z)),diag(ts)), Class="sparseMatrix") ## ^^^
+      zuu <-  (Zforvec.or %*% provi) ## ^^^
+      Zul[[k]] <- matrix(zuu, nrow = lev.re, byrow = TRUE); colnames(Zul[[k]]) <- namesY ## ^^^
     }else{
       provi <- ZKforvec %*% HobsInve # u.hat = GZ'V-(y-Xb) 
       u.hat[[k]] <- matrix(provi, nrow = lev.re, byrow = TRUE); colnames(u.hat[[k]]) <- namesY
+      
+      Zforvec.or <- as(kronecker((as.matrix(Zh[[k]]$Z)),diag(ts)), Class="sparseMatrix") ## ^^^
+      zuu <-  (Zforvec.or %*% provi) ## ^^^
+      Zul[[k]] <- matrix(zuu, nrow = lev.re, byrow = TRUE); colnames(Zul[[k]]) <- namesY ## ^^^
     }
     
     #print("a") #ZETA[[i]]$Z %*% tcrossprod(ZETA[[i]]$K, ZETA[[i]]$Z)
@@ -1494,13 +1552,12 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
   names(pev.u.hat) <- varosss2
   ##### COND. RESIDUALS AND FITTED
   
-  Zu <- matrix(0,dimos[1],dimos[2])
-  for(o in 1:nvarcom){
-    Zu <- Zu + ZETA[[o]]$Z %*% u.hat[[o]]
-  }
+  ##### fitted Zu
+  Zu <- do.call("+",Zul)
+  fitted.y <- (xb.or + Zu)
+  ## not really a Y.or is the one without missing data
+  cond.ehat <- Y.or - fitted.y[ytouse,] # Y - (XB-Zu)
   
-  fitted.y <- (xb + Zu)
-  cond.ehat <- Y.or - fitted.y # Y - (XB-Zu)
   dado <- lapply(ZETA, function(x){dim(x$Z)})
   
   sigma <- lapply(sigma,function(x){round(x,7)})

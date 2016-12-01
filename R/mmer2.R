@@ -1,4 +1,4 @@
-mmer2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, iters=20, draw=FALSE, init=NULL, family=gaussian, silent=FALSE, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, min.n=FALSE, gwas.plots=TRUE, n.cores=1, tolpar = 1e-06, tolparinv = 1e-06){
+mmer2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, iters=20, draw=FALSE, init=NULL, family=gaussian, silent=FALSE, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, min.n=FALSE, gwas.plots=TRUE, n.cores=1, tolpar = 1e-06, tolparinv = 1e-06, IMP=TRUE){
   #gss=TRUE
   if(missing(data)){
     data <- environment(fixed)
@@ -146,10 +146,10 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=T
       }## Ri
       
     } # end for rcov present or not
-    #print(str(Z))
-    #print(str(X))
-    #plot(yvar)
-    res <- mmer(Y=yvar, X=X, Z=Z, R=R, W=W, method=method, REML=REML, iters=iters, draw=draw, init=init, silent=silent, constraint=constraint, sherman=sherman, EIGEND=EIGEND, forced=forced, map=map, fdr.level=fdr.level, manh.col=manh.col,gwas.plots=gwas.plots,n.cores=n.cores, MVM=MVM,tolpar = tolpar, tolparinv = tolparinv)
+#     print(str(Z))
+#     print(str(X))
+#     print(str(yvar))
+    res <- mmer(Y=yvar, X=X, Z=Z, R=R, W=W, method=method, REML=REML, iters=iters, draw=draw, init=init, silent=silent, constraint=constraint, sherman=sherman, EIGEND=EIGEND, forced=forced, map=map, fdr.level=fdr.level, manh.col=manh.col,gwas.plots=gwas.plots,n.cores=n.cores, MVM=MVM,tolpar = tolpar, tolparinv = tolparinv, IMP=IMP)
     
   }else{###only fixed effects
     res <- glm(yvars~X, family=family)

@@ -17,7 +17,7 @@ mmer2(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=TRUE,
       MVM=FALSE, iters=20, draw=FALSE, init=NULL, family=gaussian, 
       silent=FALSE, constraint=TRUE, sherman=FALSE, EIGEND=FALSE,
       forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, min.n=FALSE,
-      gwas.plots=TRUE,n.cores=1,tolpar = 1e-06,tolparinv = 1e-06)
+      gwas.plots=TRUE,n.cores=1,tolpar = 1e-06,tolparinv = 1e-06, IMP=TRUE)
 }
 \arguments{
   \item{fixed}{a formula specifying the \strong{response} variable(s) \strong{and fixed effects}, i.e. Yield ~ Location for \strong{univariate} models, or cbind(color,Yield) ~ Location for \strong{multivariate} models or univariate in parallel. For running multivariate the \strong{'MVM' argument} needs to be set to TRUE.}
@@ -61,8 +61,9 @@ This will create two autocorrelation structures, one for rows and other for colu
     \item{min.n}{a TRUE/FALSE statement indicating if the constraint of number of levels of each grouping factor must be < number of observations. This is a constrained usually find in lme4 and has been added and set to TRUE but can be set to FALSE when only one measure per plant is available and the user wants to perform GWAS or genomic selection with limited data.}
     \item{gwas.plots}{a TRUE/FALSE statement indicating if the \strong{manhattan and qq plot should be drawn or not}. The default is TRUE but you may want to avoid it.}
       \item{n.cores}{number of cores to use when the user passes multiple responses in the model for a faster execution. The default is 1. It relies on forking and hence is \strong{not available on Windows} unless mc.cores = 1.}
-      \item{tolpar}{tolerance parameter for convergence in the multivariate models.}
-      \item{tolparinv}{tolerance parameter for matrix inverse in the multivariate models.}
+    \item{tolpar}{tolerance parameter for convergence in the multivariate models.}
+    \item{tolparinv}{tolerance parameter for matrix inverse in the multivariate models.}
+    \item{IMP}{a TRUE/FALSE statement if the function should impute the Y matrix/dataframe with the median value or should get rid of missing values for the estimation of variance components. Only for multivariate mixed models.}
     
 }
 \details{
