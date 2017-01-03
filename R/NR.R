@@ -1,5 +1,5 @@
 NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=15, 
-               constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, MTG2=FALSE, Fishers=FALSE, 
+               constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, EIGEND=FALSE, Fishers=FALSE, 
                gss=TRUE, forced=NULL, identity=TRUE, kernel=NULL, start=NULL, taper=NULL,
                verbose=0, gamVals=NULL, maxcyc=15, tol=1e-4){
   
@@ -10,6 +10,12 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
   # the list of Z can or cannot include the covariance matrix for such random effect
   # if provided must be provided as Z=list(list(Z=Z1,K=K1),list(Z=Z2,K=K2), etc) 
   ############################
+  if(EIGEND){
+    #cat("EIGEND feature not enabled yet for 'NR' method. Please try with method='AI'\n")
+    cat("EIGEND feature activated. Eigen decomposition of K will be performed\n")
+    
+  }
+  
   if(che){ # if coming from mmer don't check
     if(is.list(ZETA)){
       if(is.list(ZETA[[1]])){ # if was provided as a two level list
@@ -44,6 +50,35 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
         xm=as.matrix(X) 
       }
     }
+    
+    if(EIGEND) y <- imputev(y)
+    y.or <- y
+    ZETA.or <-ZETA
+    x.or <- X
+    
+    ################# if EIGEND
+    ################# if EIGEND
+    if(EIGEND==TRUE){
+      ## asume K is in the 1st random effect
+      EIGENS <- lapply(ZETA, function(x){eigen(x[[2]])}) # eigen decomposition of K
+      Us <- lapply(EIGENS, function(x){x$vectors}) # extract eigen vectors U
+      Usp <- as(do.call("adiag1", Us),Class="sparseMatrix") # U'G as diagonal
+      Ds <- lapply(EIGENS, function(x){diag(x$values)}) # extract eigen values D
+      Dsp <- as(do.call("adiag1", Ds),Class="sparseMatrix") # U'G as diagonal
+      ZETA[[1]]$K <- Ds[[1]]
+      ## now adjust X and y
+      y <- imputev(y) # decomposition cannot take missing data
+      y <- as.vector(t(Usp) %*% as.matrix(y,ncol=1))
+      xm <- as.matrix(t(Usp) %*% xm)
+      txm <- t(xm)
+      X <- xm
+      #print("good")
+      #ZETA <- lapply(as.list(1:length(ZETA)),function(x,zz,kk){list(Z=zz[[x]][[1]], K=kk[[x]])}, zz=ZETA, kk=Ds)
+    }
+    ################# if EIGEND end
+    ################# if EIGEND end
+    
+    
     ############################################
     ## if K matrices are not present in ZETA
     # add an identity matrix to all effects in ETA that did not provide a var-cov matrix
@@ -284,9 +319,7 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
   
   
   ####%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  y.or <- y
-  ZETA.or <-ZETA
-  x.or <- X
+  
   if(is.null(names(ZETA))){
     varosss <- c(paste("u.",1:length(ZETA), sep=""))
   }else{
@@ -563,6 +596,7 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
     if(k>2 && is.null(start)) start <- rep(var(y,na.rm=TRUE),k)
     if(k==1 && is.null(start)) start <- var(y,na.rm=TRUE)
     
+    if(EIGEND){start <- rep(var(y,na.rm=TRUE)/10,k)}
     # skip this
     ###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -912,6 +946,16 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
     x.or <- X
   }
   
+  if(EIGEND){
+    y <- y.or
+    ZETA <-ZETA.or
+    X <- x.or #<- X
+    ##
+    y.or <- y
+    ZETA.or <-ZETA
+    x.or <- X #<- X
+  }
+  
   xm <- as.matrix(X)
   txm <- t(xm)
   zvar <- 1:length(ZETA)
@@ -945,7 +989,7 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
   #########################################################
   # Sherman-Morrison-Woodbury formula (Seber, 2003, p. 467)
   # R-  --  [R-Z[Z'R-Z+G-]-Z'R-]  #-- means minus
-
+  
   if(is.null(forced)){ #NOT FORCED
     Vinv <- W
   }else{#FORCED
@@ -1004,6 +1048,8 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
     #fitted.y <- fitted.y + (zeta.or[[h]][[1]] %*% u[[h]])
     fitted.u <- fitted.u + (ZETA.or[[h]][[1]] %*% u[[h]])
   }
+  #print(str(x.or))
+  #print(str(beta))
   fitted.y <- (x.or %*% beta) + fitted.u
   fitted.y.good <- fitted.y[good]
   residuals3 <- y - fitted.y[good] # conditional residuals
@@ -1035,6 +1081,7 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
     
   }else{ # if we forced variance components
     sigma.cov <- NULL
+    eig <- 0
     if(is.null(names(ZETA))){
       names(sigma) <- c(paste("V(u.",1:length(ZETA),")",sep=""),"V(error)")
     }else{
@@ -1052,19 +1099,19 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
   logL <- as.vector(llik)
   ###################
   
- 
+  
   ##for(i in 1:dim(FI)[1])
   ##  for(j in 1:dim(FI)[2])
   ##    FI.c[i,j] <- FI[i,j]/(((sigma[i]-1)*pos[i]+1)*((sigma[j]-1)*pos[j]+1))
-
+  
   
   if(is.null(forced)){
     rownames(sigma.cov) <- colnames(sigma.cov) <- Vcoef.names
   }
-
+  
   ## Additional warning if any pos entries are TRUE and the corresponding term is close to zero
   ## Only give this warning it I haven't given the previous one.
-
+  
   #######
   #if(is.null(nanod)){
   #  nanod <- paste("x",1:dim(xm)[1],sep=".")
@@ -1082,17 +1129,23 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
     rownames(sigma.cov) <- rownames(out1)
     colnames(sigma.cov) <- rownames(out1)
   }
-
+  
   if(any(eig < 0)){
     if(!silent){
       cat("\nError: Sigma is not positive definite on contrasts: range(eig)=", range(eig), "\n")
     }
   }
+  if(is.null(forced)){
+    fofo <- FALSE
+  }else{
+    fofo <- TRUE
+  }
   res <- list(var.comp=out1, V.inv = Vinv, u.hat=u, Var.u.hat=Var.u, 
               PEV.u.hat=PEV.u, beta.hat=beta, Var.beta.hat=xvxi, 
               LL=logL, AIC=AIC, BIC=BIC, X=xm, fitted.y=fitted.y, 
               fitted.u=fitted.u, residuals=ee, cond.residuals=residuals3,
-              fitted.y.good=fitted.y.good, Z=Zsp, K=Ksp, fish.inv=sigma.cov)
+              fitted.y.good=fitted.y.good, Z=Zsp, K=Ksp, fish.inv=sigma.cov,
+              forced=fofo)
   
   layout(matrix(1,1,1))
   #if(BAD){plot(sigma)}

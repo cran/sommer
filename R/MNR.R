@@ -7,25 +7,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
   Yh <- Y
   Xh <- X
   Zh <- ZETA
-  ## identify missing data across variables
-  if(IMP){
-    ytouse <- 1:nrow(Y)
-  }else{
-    nona <- unlist(apply(Y,2,function(x){which(!is.na(x))}))
-    names(nona) <- NULL
-    nonat <- table(nona)
-    ytouse <- as.numeric(names(nonat)[which(nonat == dim(Y)[2])])
-    ## create provisional data sets for estimating variance components
-    Y <- Y[ytouse,]
-    if(!is.null(X)){
-      X <- as.matrix(X[ytouse,] )
-    }else{Xh <- X}
-    if(!is.null(R)){
-      R <- R[ytouse,ytouse] 
-    }else{R <- R}
-    ZETA <- lapply(ZETA, function(x,good){x[[1]] <- x[[1]][good,]; x[[2]]<- x[[2]]; return(x)}, good=ytouse)
-  }
-  ## 
+  
   if(tol == 1988.0906){
     MARIA <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=50, constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, EIGEND=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL){
       
@@ -846,6 +828,28 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
     
     
     }
+  ## identify missing data across variables
+  if(IMP){
+    ytouse <- 1:nrow(Y)
+  }else{
+    nona <- unlist(apply(Y,2,function(x){which(!is.na(x))}))
+    names(nona) <- NULL
+    nonat <- table(nona)
+    ## remove the parts that have all missing data and impute the ones 
+    ## that have at least information for one of the traits
+    ytouse <- as.numeric(names(nonat)[which(nonat > 0 )])#dim(Y)[2]
+    ## create provisional data sets for estimating variance components
+    Y <- Y[ytouse,]
+    if(!is.null(X)){
+      X <- as.matrix(X[ytouse,] )
+    }else{Xh <- X}
+    if(!is.null(R)){
+      R <- R[ytouse,ytouse] 
+    }else{R <- R}
+    ZETA <- lapply(ZETA, function(x,good){x[[1]] <- x[[1]][good,]; x[[2]]<- x[[2]]; return(x)}, good=ytouse)
+  }
+  ## 
+  
   choco <- names(ZETA)
   
   #####((((((((((((((((((((((((((((((((()))))))))))))))))))))))))))))))))
@@ -1523,14 +1527,14 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
       
       Zforvec.or <- as(kronecker((as.matrix(Zh[[k]]$Z)),diag(ts)), Class="sparseMatrix") ## ^^^
       zuu <-  (Zforvec.or %*% provi) ## ^^^
-      Zul[[k]] <- matrix(zuu, nrow = lev.re, byrow = TRUE); colnames(Zul[[k]]) <- namesY ## ^^^
+      Zul[[k]] <- matrix(zuu, nrow = n, byrow = TRUE); colnames(Zul[[k]]) <- namesY ## ^^^
     }else{
       provi <- ZKforvec %*% HobsInve # u.hat = GZ'V-(y-Xb) 
       u.hat[[k]] <- matrix(provi, nrow = lev.re, byrow = TRUE); colnames(u.hat[[k]]) <- namesY
       
       Zforvec.or <- as(kronecker((as.matrix(Zh[[k]]$Z)),diag(ts)), Class="sparseMatrix") ## ^^^
       zuu <-  (Zforvec.or %*% provi) ## ^^^
-      Zul[[k]] <- matrix(zuu, nrow = lev.re, byrow = TRUE); colnames(Zul[[k]]) <- namesY ## ^^^
+      Zul[[k]] <- matrix(zuu, nrow = n, byrow = TRUE); colnames(Zul[[k]]) <- namesY ## ^^^
     }
     
     #print("a") #ZETA[[i]]$Z %*% tcrossprod(ZETA[[i]]$K, ZETA[[i]]$Z)
@@ -1553,7 +1557,14 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
   ##### COND. RESIDUALS AND FITTED
   
   ##### fitted Zu
-  Zu <- do.call("+",Zul)
+  #print(str(Zul))
+  #print(head(Zul[[1]]))
+  #Zul <- lapply(Zul, function(x){dde <- apply(as.matrix(x),2,function(rr){rr})})
+  Zu <- 0
+  for(h in 1:length(Zul)){
+    Zu <- Zu + Zul[[h]]
+  }
+  #Zu <- do.call("+",Zul)
   fitted.y <- (xb.or + Zu)
   ## not really a Y.or is the one without missing data
   cond.ehat <- Y.or - fitted.y[ytouse,] # Y - (XB-Zu)
@@ -1581,11 +1592,15 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
   
   
   colnames(beta) <- namesY
+  if(is.null(forced)){
+    fofo <- FALSE
+  }else{fofo<- TRUE}
+   
   #rownames(beta) <- namesX
   return(list(var.comp=sigma, V.inv=vmi, u.hat = u.hat , Var.u.hat = (var.u.hat), 
               beta.hat = beta, Var.beta.hat = xvxi, fish.inv=sigma.cova,
               PEV.u.hat = pev.u.hat, residuals=residu, cond.residuals=cond.ehat,
               LL=llik, AIC=AIC, BIC=BIC, X=X, dimos=dado, sigma.scaled=sigmaxxx,
               fitted.y=fitted.y, fitted.u=Zu, ZETA=ZETA,
-              method="MNR",choco=choco))
+              method="MNR",choco=choco, forced=fofo))
 }

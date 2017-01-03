@@ -98,6 +98,45 @@ ETA <- list(GCA1=list(Z=Z1, K=K1),
 #       G=list(GCA1=K1, GCA2=K2, SCA=S),data=hybrid2)
 #summary(ans)
 
+############################################
+############################################
+############################################
+############################################
+############################################
+############################################
+
+####==========================================####
+####==========================================####
+#### Example 2
+#### covariance structure in interaction effects
+####==========================================####
+####==========================================####
+# data(cornHybrid)
+# hybrid2 <- cornHybrid$hybrid # extract cross data
+# A <- cornHybrid$K # additive relationship matrix
+# y <- hybrid2$Yield # response
+# # subset additive relationship matrix
+# K2 <- A[levels(hybrid2$GCA2), levels(hybrid2$GCA2)]; dim(K2)
+# # create new variable
+# hybrid2$GCA2.LOC <- paste(hybrid2$GCA2, hybrid2$Location, sep="-")
+# L <- diag(4); 
+# # variance covariance for G:E
+# GA <- kronecker(L,K2); 
+# colnames(GA) <- paste(colnames(K2),sort(rep(1:4,20)), sep="-")
+# rownames(GA) <- colnames(GA); GA[1:4,1:4];
+# 
+# # fit the model
+# ans <- mmer2(Yield ~ Location, random = ~ GCA2 + GCA2.LOC, 
+#              G=list(GCA2=K2, GCA2.LOC=GA),data=hybrid2)
+# summary(ans)
+
+############################################
+############################################
+############################################
+############################################
+############################################
+############################################
+
 ####==========================================####
 ####==========================================####
 #### Example of multivariate model
@@ -117,7 +156,7 @@ ETA <- list(GCA1=list(Z=Z1, K=K1),
 # rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 # 
 # ans <- mmer2(cbind(TY,PH) ~ Location, random = ~ GCA2 + SCA, 
-#       G=list(GCA1=K1, GCA2=K2, SCA=S),data=hybrid2, MVM=TRUE)
+#       G=list(GCA2=K2, SCA=S),data=hybrid2, MVM=TRUE)
 # summary(ans)
 
 }

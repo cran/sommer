@@ -17,12 +17,17 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
     stop("Please when specifying a random effect use the names; \n'Z' for incidence and 'K' for variance-covariance matrices.\nFor example for 1 random effect (i.e. named 'A') model do:\n    ETA <- list( A=list( Z=M1, K=M2) )\n    mod <- mmer(Y=y, Z=ETA)\nSpecifying at least one; Z or K. You need to specify if is a 'Z' or 'K' \nsince this is the only way the program distinguishes between matrices.",call. = FALSE)
   }
   
-  my.month <- 12 #version of the month
+  my.year <- 2017
+  my.month <- 2 #version of the month
+  
   datee <- Sys.Date()
-  both <- as.numeric(strsplit(gsub("....-","",datee),"-")[[1]])
-  month <- both[1]#your month
+  year.mo.day <- as.numeric(strsplit(as.character(datee),"-")[[1]])# <- as.numeric(strsplit(gsub("....-","",datee),"-")[[1]])
+  your.year <- year.mo.day[1]
+  your.month <- year.mo.day[2]
+  #month <- both[1]#your month
   ## if your month is greater than my month you are outdated
-  if(month > my.month){
+  if(your.month > my.month & your.year >= my.year){
+    # error if your month is greater and your year is smaller
     cat("Version out of date. Please update sommer to the newest version using:\ninstall.packages('sommer') in a new session\n")
   }
   #########*****************************
@@ -60,6 +65,10 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
     }
   }
   #########*****************************
+  if(!is.null(W)){
+    cat("Response is imputed for estimation of variance components in GWAS models.\n")
+  }
+  #########*****************************
   if(diso > 1){ # IF MULTIPLE RESPONSES
     
     if(MVM){ # if MULTIVARIATE
@@ -70,7 +79,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
         }
       }
       if(!silent){cat("Running multivariate model\n")}
-      RES <- MMERM(Y=Y, X=X, Z=Z, W=W, method=method, tolpar = tolpar, tolparinv = tolparinv, draw=draw, silent=silent, iters=iters-5, init=init, che=che, EIGEND=EIGEND, forced=forced, P3D=P3D, models=models, ploidy=ploidy, min.MAF=min.MAF, gwas.plots=gwas.plots, map=map,manh.col=manh.col,fdr.level=fdr.level,constraint = constraint, IMP=IMP)
+      RES <- MMERM(Y=Y, X=X, Z=Z, W=W, method=method, tolpar = tolpar, tolparinv = tolparinv, draw=draw, silent=silent, iters=iters-5, init=init, che=che, EIGEND=EIGEND, forced=forced, P3D=P3D, models=models, ploidy=ploidy, min.MAF=min.MAF, gwas.plots=gwas.plots, map=map,manh.col=manh.col,fdr.level=fdr.level,constraint = constraint, IMP=IMP, n.PC=n.PC)
       class(RES)<-c("MMERM")
     }else{ # if UNIVARIATE IN PARALLEL
       #######$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -176,11 +185,25 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
   
   if(object$method == "NR"){
     dodo0 <- object$var.comp; colnames(dodo0)<-NULL
-    dodo <- object$var.comp/sqrt(diag(object$fish.inv)); colnames(dodo)<-NULL
-    w <- data.frame(VarComp = dodo0, VarCompSE=sqrt(diag(object$fish.inv)), Zratio=as.matrix(dodo))
+    if(object$forced){# var.comp were forced
+      w <- data.frame(VarComp = dodo0)
+    }else{# var.comp were not forced
+      dodo <- object$var.comp/sqrt(diag(object$fish.inv)); colnames(dodo)<-NULL
+      w <- data.frame(VarComp = dodo0, VarCompSE=sqrt(diag(object$fish.inv)), Zratio=as.matrix(dodo))
+    }
+   
   }else if(object$method == "NRR"){
     w <- object$var.comp
     
+    if(object$forced){# var.comp were forced
+      vaross <- lapply(object$var.comp, function(x){
+        if(dim(as.matrix(x))[1]>1){aa <- upper.tri(x); diag(aa) <- TRUE
+        babas <- which(aa,arr.ind = TRUE); babas <- babas[ order(babas[,1], babas[,2]), ]
+        return(x[babas])}else{return(as.matrix(x))}})
+      sigma.real <- as.matrix(unlist(vaross))
+      w <- data.frame(VarComp=sigma.real)
+      rownames(w) <- rownames(object$var.comp)
+    }else{# var.comp were not forced
     zzz <- object$sigma.scaled/sqrt(diag(object$fish.inv))
     vaross <- lapply(object$var.comp, function(x){
       if(dim(as.matrix(x))[1]>1){aa <- upper.tri(x); diag(aa) <- TRUE
@@ -191,7 +214,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
     w <- data.frame(VarComp=sigma.real, VarCompSE=sese,
                     Zratio=zzz)
     rownames(w) <- rownames(object$var.comp)
-    
+    }
   }else{
     w <- data.frame(VarComp = matrix(c(object$var.comp), ncol = 1)) 
   }
@@ -234,7 +257,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
   cat("\nInformation contained in this fitted model: \n* Variance components, Residuals, Fitted values\n* BLUEs and BLUPs, Inverse phenotypic variance(V)\n* Variance-covariance matrix for fixed & random effects\n* Predicted error variance (PEV), LogLikelihood\nUse the '$' symbol to access such information\n")
   cat("=======================================================")
   cat("\nLinear mixed model fit by restricted maximum likelihood\n")
-  cat("********************  sommer 2.4  *********************\n")
+  cat("********************  sommer 2.5  *********************\n")
   cat("=======================================================")
   cat("\nMethod:")
   print(x$method)
@@ -324,7 +347,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
   cat("Information contained in this structure: \n* Individual results for each response model\nDisplayed: \n* AIC, BIC and Variance component summaries\nUse the '$' sign to access individual models\n")
   cat("=======================================================")
   cat("\nLinear mixed model fit by restricted maximum likelihood\n")
-  cat("********************  sommer 2.4  *********************\n")
+  cat("********************  sommer 2.5  *********************\n")
   cat("=======================================================")
   cat("\nMethod:")
   print(x$method)
@@ -410,23 +433,42 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
   ########## get the names of the variable combos
   
   if(object$method == "MNR"){
-    zzz <- object$sigma.scaled/sqrt(diag(object$fish.inv))
-    vaross <- lapply(object$var.comp, function(x){
-      if(dim(as.matrix(x))[1]>1){aa <- upper.tri(x); diag(aa) <- TRUE
-      babas <- which(aa,arr.ind = TRUE); babas <- babas[ order(babas[,1], babas[,2]), ]
-      return(x[babas])}else{return(as.matrix(x))}})
-    
-    if(!is.null(colnames(wx))){
-      vaross <- lapply(vaross,function(x){dd <- as.vector(x);names(dd) <- sisisi;return(dd)})
+    #### 111
+    if(object$forced){
+      #### 222
+      vaross <- lapply(object$var.comp, function(x){
+        if(dim(as.matrix(x))[1]>1){aa <- upper.tri(x); diag(aa) <- TRUE
+        babas <- which(aa,arr.ind = TRUE); babas <- babas[ order(babas[,1], babas[,2]), ]
+        return(x[babas])}else{return(as.matrix(x))}})
+      
+      if(!is.null(colnames(wx))){
+        vaross <- lapply(vaross,function(x){dd <- as.vector(x);names(dd) <- sisisi;return(dd)})
+      }
+      sigma.real <- as.matrix(unlist(vaross))
+      
+      w2 <- data.frame(VarComp=sigma.real)
+      
+    }else{
+      ###2222
+      zzz <- object$sigma.scaled/sqrt(diag(object$fish.inv))
+      vaross <- lapply(object$var.comp, function(x){
+        if(dim(as.matrix(x))[1]>1){aa <- upper.tri(x); diag(aa) <- TRUE
+        babas <- which(aa,arr.ind = TRUE); babas <- babas[ order(babas[,1], babas[,2]), ]
+        return(x[babas])}else{return(as.matrix(x))}})
+      
+      if(!is.null(colnames(wx))){
+        vaross <- lapply(vaross,function(x){dd <- as.vector(x);names(dd) <- sisisi;return(dd)})
+      }
+      
+      sigma.real <- as.matrix(unlist(vaross))
+      
+      
+      sese <- sigma.real/zzz
+      w2 <- data.frame(VarComp=sigma.real, VarCompSE=sese,
+                       Zratio=zzz)
     }
-    
-    sigma.real <- as.matrix(unlist(vaross))
-    
-    
-    sese <- sigma.real/zzz
-    w2 <- data.frame(VarComp=sigma.real, VarCompSE=sese,
-                     Zratio=zzz)
   }else{
+    ##### 11111
     w2 <- NULL
   }
   
@@ -441,7 +483,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
   cat("Information contained in this structure: \n* Results for a multi response model\nDisplayed: \n* Variance-covariance component summaries\nUse the '$' sign to access parameters\n")
   cat("=======================================================")
   cat("\n    Multivariate Linear Mixed Model fit by REML    \n")
-  cat("********************  sommer 2.4  *********************\n")
+  cat("********************  sommer 2.5  *********************\n")
   cat("=======================================================")
   cat("\nMethod:")
   print((x$method))
@@ -769,7 +811,7 @@ plot.MMERM <- function(x, ...) {
     stop("This package requires R 2.1 or later")
   assign(".sommer.home", file.path(library, pkg),
          pos=match("package:sommer", search()))
-  sommer.version = "2.4 (2016-12-01)"
+  sommer.version = "2.5 (2017-01-01)"
   
   ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ### check which version is more recent
@@ -795,7 +837,7 @@ plot.MMERM <- function(x, ...) {
     packageStartupMessage("[]  Type 'vignette('sommer')' for a short tutorial               []",appendLF=TRUE)
     packageStartupMessage("[]  Type 'citation('sommer')' to know how to cite sommer         []",appendLF=TRUE)
     packageStartupMessage(paste("[]===============================================================[]"),appendLF=TRUE)
-    packageStartupMessage("UPDATE 'sommer' EVERY MONTH USING 'install.packages('sommer')'",appendLF=TRUE)
+    packageStartupMessage("UPDATE 'sommer' EVERY 2-MONTHS USING 'install.packages('sommer')'",appendLF=TRUE)
     
     #if(yyy > current){ # yyy < current in CRAN
     #  packageStartupMessage(paste("Version",current,"is now available."),appendLF=TRUE) # version current

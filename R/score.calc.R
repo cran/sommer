@@ -1,4 +1,4 @@
-score.calc <- function(marks,y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,max.geno.freq,silent=FALSE,P3D=TRUE) {
+score.calc <- function(marks,y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,max.geno.freq,silent=FALSE,P3D=TRUE, method="NR") {
   # needs to be modified to work if Hinv is not provided, not in a hurry, normally wouldn't be possible
   #
   m <- length(marks)
@@ -34,10 +34,23 @@ score.calc <- function(marks,y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,max.geno.fre
       v2 <- n - p                 
       if (is.null(Hinv) | P3D == FALSE) {	# ZZ and K are only for y with no missing data
         yytt <- y[which(!is.na(y))]
-        ETA <- list(Z=ZZ,K=K)
-        out <- try(EMMA(y=yytt,X=X2,ZETA=ETA,silent=TRUE)) #Z=list(list(Z=ZZ,K=K)))
-        #print("yes")
-        #if (class(out)!="try-error") { 
+        ETA <- list(list(Z=as.matrix(ZZ),K=as.matrix(K)))
+        #print(str(ETA))
+        #print(str(yytt))
+        if(method=="EMMA"){
+          out <- try(EMMA(y=yytt,X=X2,ZETA=ETA,silent=TRUE, che=FALSE)) #Z=list(list(Z=ZZ,K=K)))
+        }else if(method=="NR"){
+          out <- try(NR(y=yytt,X=X2,ZETA=ETA,silent=TRUE,che=FALSE, draw=FALSE)) 
+        }else if(method=="AI"){
+          out <- try(AI(y=yytt,X=X2,ZETA=ETA,silent=TRUE,che=FALSE, draw=FALSE)) 
+        }else if(method=="EM"){
+          out <- try(EM(y=yytt,X=X2,ETA=ETA,silent=TRUE, draw=FALSE)) 
+        }else{
+          stop("Method not valid", call.=FALSE)
+        }
+                #print("yes")
+        #if (class(out)!="try-error") {
+        #print(str(out))
           Hinv <- out$V.inv
         #}
       } 

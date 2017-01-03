@@ -58,6 +58,8 @@ score.calcMV <- function(marks,Y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,max.geno.f
         Hinv <- out$V.inv
         #}
       } 
+      #print(str(X2))
+      #print(str(Hinv))
       W <- crossprod(X2, Hinv %*% X2) 
       Winv <- try(solve(W),silent=TRUE)
       if (class(Winv) != "try-error") {

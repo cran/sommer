@@ -7,7 +7,7 @@ This function is used internally in the function \code{\link{mmer}} when MORE th
 \usage{
 NR(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, 
    iters=15, constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, 
-   MTG2=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL, identity=TRUE, 
+   EIGEND=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL, identity=TRUE, 
    kernel=NULL, start=NULL, taper=NULL, verbose=0, gamVals=NULL, 
    maxcyc=15, tol=1e-4)
 }
@@ -24,7 +24,7 @@ NR(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
       \item{init}{vector of initial values for the variance components. By default this is NULL and variance components are estimated by the method selected, but in case the user want to provide initial values this argument is functional.}
       \item{sherman}{a TRUE/FALSE value indicating if Sherman-Morrison-Woodbury formula (Seber, 2003, p. 467) should be used when estimating variance components in order to perform faster when a mixed model with no covariance structure using the average information algorithm is fitted. The default is FALSE since this software was designed for unreplicated data (altough can fit models with replicated data but slower than lme4).}
       \item{che}{a TRUE/FALSE value indicating if list structure provided by the user is correct to fix it. The default is TRUE but is turned off to FALSE within the mmer function which would imply a double check.}
-      \item{MTG2}{a TRUE/FALSE value indicating if an eigen decomposition for the additive relationship matrix should be performed or not. This is based on Lee (2015). The limitations of this methos are:
+      \item{EIGEND}{a TRUE/FALSE value indicating if an eigen decomposition for the additive relationship matrix should be performed or not. This is based on Lee (2015). The limitations of this methos are:
       1) can only be applied to one relationship matrix
       2) The system needs to be squared and no missing data is allowed (then missing data is imputed with the median).
    The default is FALSE to avoid the user get into trouble but experimented users can take advantage from this feature to fit big models, i.e. 5000 individuals in 555 seconds = 9 minutes in a MacBook 4GB RAM.}

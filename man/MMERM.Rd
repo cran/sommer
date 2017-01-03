@@ -11,7 +11,7 @@ MMERM(Y, X=NULL, Z=NULL, W=NULL, method="NR", tolpar = 1e-06, tolparinv = 1e-06,
       draw=TRUE, REML=TRUE, silent=FALSE, iters=15, init=NULL, che=TRUE,
       EIGEND=FALSE, forced=NULL, P3D=TRUE, models="additive", ploidy=2, 
       min.MAF=0.05, gwas.plots=TRUE, map=NULL,manh.col=NULL,fdr.level=0.05,
-      constraint=TRUE, IMP=TRUE)
+      constraint=TRUE, IMP=TRUE, n.PC=0)
 }
 \arguments{
    \item{Y}{a numeric vector for the response variable or a data frame of multiple responses (it can run multivariate and also runs univariate in parallel by using the 'n.cores' argument). The multivariate version is only enabled for a single random effect.}
@@ -101,6 +101,7 @@ The dashed line in the Manhattan plots corresponds to an FDR rate of 0.05 and is
   \item{fdr.level}{a level of FDR to calculate and plot the line in the GWAS plot. Default is fdr.level=0.05}
   \item{constraint}{a TRUE/FALSE value indicating if the function should apply the boundary constraint indicating that variance components that are zero should be removed from the analysis and variance components recalculated.}
   \item{IMP}{a TRUE/FALSE statement if the function should impute the Y matrix/dataframe with the median value or should get rid of missing values for the estimation of variance components. Only for multivariate mixed models.}
+  \item{n.PC}{when the user performs GWAS this refers to the number of principal components to include as fixed effects for Q + K model. Default is 0 (equals K model).}
     
 }
 

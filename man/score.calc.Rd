@@ -6,7 +6,7 @@ This function is a wrapper from the rrBLUP package to be used when a mixed model
 }
 \usage{
 score.calc(marks,y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,
-           max.geno.freq,silent=FALSE,P3D=TRUE)
+           max.geno.freq,silent=FALSE,P3D=TRUE, method="NR")
 }
 
 \arguments{
@@ -24,6 +24,7 @@ score.calc(marks,y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,
   \item{max.geno.freq}{1 - min.MAF}
   \item{silent}{a TRUE/FALSE value indicating if the progress bar should be drawn or not}
   \item{P3D}{when the user performs GWAS, P3D=TRUE means that the variance components are estimated by REML only once, without any markers in the model. When P3D=FALSE, variance components are estimated by REML for each marker separately. The default is the first case.}
+  \item{method}{one of the four methods to estimate variance components.}
 
 }
 

@@ -568,7 +568,7 @@ NRR <- function(y,X=NULL,Z=NULL,R=NULL,tolpar=1e-6,tolparinv=1e-6,maxcyc=10,
               PEV.u.hat=PEV.u, beta.hat=beta, Var.beta.hat=xvxi, 
               LL=logL, AIC=AIC, BIC=BIC, X=xm, fitted.y=fitted.y, 
               fitted.u=fitted.u, residuals=ee, cond.residuals=residuals3,
-              fish.inv=sigma.cov, sigma.scaled=sigma)
+              fish.inv=sigma.cov, sigma.scaled=sigma, forced=FALSE)
   
   return(res)
 }

@@ -55,7 +55,7 @@ pheno$hy <- paste(pheno$dent, pheno$flint, sep=":");head(pheno);dim(pheno)
 #dim(hybs)
 
 ####=========================================####
-#### CREATE INCIDENCE MATRICES
+#### CREATE INCIDENCE MATRICES AND SORT
 ####=========================================####
 #Z1 <- model.matrix(~gcad-1, data=hybs); dim(Z1)
 #Z2 <- model.matrix(~gcaf-1, data=hybs); dim(Z2)
@@ -63,6 +63,9 @@ pheno$hy <- paste(pheno$dent, pheno$flint, sep=":");head(pheno);dim(pheno)
 #colnames(Z1) <- levels(hybs$gcad)
 #colnames(Z2) <- levels(hybs$gcaf)
 #colnames(Z3) <- levels(hybs$sca)
+#A.dent <- A.dent[colnames(Z1),colnames(Z1)]
+#A.flint <- A.flint[colnames(Z2),colnames(Z2)]
+#DD <- DD[colnames(Z3),colnames(Z3)]
 ####=========================================####
 #### RUN THE PREDICTION MODEL
 ####=========================================####

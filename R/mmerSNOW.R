@@ -245,16 +245,20 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
           mu <- mean(x, na.rm = TRUE); 
           x[vv] <- mu}#else{x<-x}
         return(x)
-        }
-        )
+      }
+      )
       #colnames(W) <- Wcnames;rownames(W) <- Wrnames
       if(!silent){
-        cat("Estimating variance components\n") 
+        if(is.null(forced)){
+          cat("Estimating variance components\n")
+        }else{
+          cat("Forcing variance components\n") 
+        } 
       }
       fixed <- which(unlist(lapply(Z, function(x){names(x)[1]})) == "X") # elements of Z that are FIXED
       random <- which(unlist(lapply(Z, function(x){names(x)[1]})) == "Z") # elements of Z that are RANDOM
       random2 <- which(names(Z) == "Z")
-      ## if P+K model wants to be implemented
+      ## if Q+K model wants to be implemented
       if (n.PC > 0) {
         KK <- A.mat(W, shrink = FALSE)
         eig.vec <- eigen(KK)$vectors
@@ -337,7 +341,7 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
             ### end of adding names
           }else{
             if(is.null(R)){
-              res <- NR(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced)
+              res <- NR(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced, EIGEND=EIGEND)
               res$method <- method
             }else{
               res <- NRR(y=y,X=X,Z=Z,R=R,tolpar=tolpar,tolparinv=tolparinv,maxcyc=iters,draw=draw,constraint = constraint)
@@ -346,7 +350,7 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
           }
         }else{ # if multiple variance components
           if(is.null(R)){
-            res <- NR(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced)
+            res <- NR(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced, EIGEND=EIGEND)
             res$method <- method
           }else{
             res <- NRR(y=y,X=X,Z=Z,R=R,tolpar=tolpar,tolparinv=tolparinv,maxcyc=iters,draw=draw,constraint = constraint)
@@ -409,13 +413,15 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
         model <- models[u]
         if(!silent){cat(paste("\nRunning",model,"model"))}
         ZO <- diag(dim(W)[1])
-        step2 <- score.calc(marks=colnames(W),y=y,Z=ZO,X=X2,K=res$K, ZZ= res$Z, M=W,Hinv=res$V.inv,ploidy=ploidy,model=model,min.MAF=min.MAF,max.geno.freq=max.geno.freq, silent=silent, P3D=P3D)
+        step2 <- score.calc(marks=colnames(W),y=y,Z=ZO,X=X2,K=res$K, ZZ= res$Z, M=W,Hinv=res$V.inv,ploidy=ploidy,model=model,min.MAF=min.MAF,max.geno.freq=max.geno.freq, silent=silent, P3D=P3D, method=method)
         W.scores[[u]] <- as.matrix(step2$score)
         rownames(W.scores[[u]]) <- colnames(W)
         
-        
-        ####
-        if(!is.null(map) & gwas.plots){ ########### MAP PRESENT ##################
+        ##################### -----------------------------------------
+        #### PLOTS
+        ##################### -----------------------------------------
+        if(!is.null(map) & gwas.plots){ 
+          ########### MAP PRESENT  and user wants plots ##################
           dd <- W.scores[[u]]#matrix(step2$score)
           ffr <- fdr(dd, fdr.level=fdr.level)$fdr.10
           #rownames(dd) <- colnames(W)
@@ -468,7 +474,8 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
             abline(h=ffr, col="slateblue4", lty=3, lwd=2)
           }
           
-        }else if (is.null(map) & gwas.plots){ ############ NO MAP PROVIDED #############
+        }else if (is.null(map) & gwas.plots){ 
+          ############ NO MAP PROVIDED  but user wants plots#############
           layout(matrix(c(1,2,2),1,3))
           ffr <- fdr(step2$score, fdr.level=fdr.level)$fdr.10
           #layout(matrix(1:2,1,2))
@@ -478,6 +485,30 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
           plot(step2$score, col=transp("cadetblue", 0.6), pch=20, xlab="Marker index", 
                ylab=expression(paste(-log[10],"(p.value)")), main=paste(model,"model"), bty="n", cex=1.5)
           abline(h=ffr, col="slateblue4", lty=3, lwd=2)
+        }else if(!is.null(map) & !gwas.plots){
+          ## there IS map but user don't want plots
+          dd <- W.scores[[u]]#matrix(step2$score)
+          ffr <- fdr(dd, fdr.level=fdr.level)$fdr.10
+          #rownames(dd) <- colnames(W)
+          ## make sure map doesn't have duplicated markers
+          non.dup <- which(!duplicated(map$Locus))
+          map2 <- map[non.dup,]
+          rownames(map2) <- map2$Locus
+          ##get marker in common between GWAS and map 
+          intro <- intersect(rownames(map2),rownames(dd))
+          choco <- which(colnames(map2) == "Chrom")
+          if(length(intro) > 0 & length(choco) > 0){ ####$$$$$ MARKERS IN COMMON  $$$$$$$$#######
+            ## map adjusted and log p.values adjusted
+            map3 <- map2[intro,]
+            dd2 <- as.matrix(dd[intro,])
+            map3$p.val <- dd[intro,]
+          }else{####$$$$$ NO MARKERS IN COMMON EXIST $$$$$$$$#######
+            cat("\nError found! There was no markers in common between the column names of the W matrix \nand the map you provided. Please make sure that your data frame has names \n'Chrom' and 'Locus' to match correctly your map and markers tested. Plotting all markers.\n")
+            map3 <- NULL
+          }
+        }else if(is.null(map) & !gwas.plots){
+          ## there is NO map and user don want plots
+          map3 <- NULL
         }
         ####
         
@@ -502,7 +533,11 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
     if((!is.null(Z) & is.null(W)) ) {
       
       if(!silent){
-        cat("Estimating variance components\n") 
+        if(is.null(forced)){
+          cat("Estimating variance components\n")
+        }else{
+          cat("Forcing variance components\n") 
+        } 
       }
       fixed <- which(unlist(lapply(Z, function(x){names(x)[1]})) == "X") # elements of Z that are FIXED
       random <- which(unlist(lapply(Z, function(x){names(x)[1]})) == "Z") # elements of Z that are RANDOM
@@ -570,7 +605,7 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
           }else{
             if(is.null(R)){
               #print("yes")
-              res <- NR(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced)
+              res <- NR(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced, EIGEND=EIGEND)
               res$method <- method
             }else{
               res <- NRR(y=y,X=X,Z=Z,R=R,tolpar=tolpar,tolparinv=tolparinv,maxcyc=iters,draw=draw,constraint = constraint)
@@ -579,7 +614,7 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
           }
         }else{ # if multiple variance components
           if(is.null(R)){
-            res <- NR(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced)
+            res <- NR(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced, EIGEND=EIGEND)
             res$method <- method
           }else{
             #print(str(Z))

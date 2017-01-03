@@ -92,7 +92,7 @@ mmer(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE,
       \item{fdr.level}{a level of \strong{false discovery rate} to calculate and plot the line in the GWAS plot. Default is fdr.level=0.05. If there's not a single significant marker nothing is returned.}
       \item{manh.col}{a vector with \strong{colors desired for the manhattan plot}. Default are cadetblue and red alternated for each chromosome.}
       \item{gwas.plots}{a TRUE/FALSE statement indicating if the \strong{manhattan and qq plot should be drawn or not}. The default is TRUE but you may want to avoid it.}
-      \item{n.cores}{number of cores to use when the user passes multiple responses in the model for a faster execution. The default is 1. It relies on forking and hence is \strong{not available on Windows} unless mc.cores = 1.}
+      \item{n.cores}{number of cores to use when the user passes multiple responses in the model for a faster execution of univariate models. The default is 1. It relies on forking and hence is \strong{not available on Windows} unless mc.cores = 1.}
       \item{tolpar}{tolerance parameter for convergence in the multivariate models.}
       \item{tolparinv}{tolerance parameter for matrix inverse in the multivariate models.}
      \item{che}{a TRUE/FALSE value statement indicating if the program should spend time \strong{checking the matrices} of random effects provided by the user \strong{for possible errors} in dimensions.}

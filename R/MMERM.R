@@ -1,4 +1,4 @@
-MMERM <- function (Y, X=NULL, Z=NULL, W=NULL, method="NR", tolpar = 1e-06, tolparinv = 1e-06, draw=TRUE, REML=TRUE, silent=FALSE, iters=15, init=NULL, che=TRUE, EIGEND=FALSE, forced=NULL, P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, gwas.plots=TRUE, map=NULL,manh.col=NULL,fdr.level=0.05, constraint=TRUE, IMP=TRUE) {
+MMERM <- function (Y, X=NULL, Z=NULL, W=NULL, method="NR", tolpar = 1e-06, tolparinv = 1e-06, draw=TRUE, REML=TRUE, silent=FALSE, iters=15, init=NULL, che=TRUE, EIGEND=FALSE, forced=NULL, P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, gwas.plots=TRUE, map=NULL,manh.col=NULL,fdr.level=0.05, constraint=TRUE, IMP=TRUE, n.PC=0) {
   
 #   print(str(Z))
 #   print(str(X))
@@ -109,12 +109,38 @@ MMERM <- function (Y, X=NULL, Z=NULL, W=NULL, method="NR", tolpar = 1e-06, tolpa
     }else{
       stop("Unrecognized method. Please select one of the methods; 'NR', 'AI', 'EMMA' or 'EM'. ",call. = FALSE)
     }
+    ######################## 
+  }else{
     ########################  
     ########################
     ### IF GWAS
     ########################  
     ########################
-  }else{
+    
+    ####-----------------------
+    ####-----------------------
+    ## if Q+K model wants to be implemented
+    if (n.PC > 0) {
+      
+      make.full <- function(X) {
+        svd.X <- svd(X)
+        r <- max(which(svd.X$d > 1e-08))
+        return(as.matrix(svd.X$u[, 1:r]))
+      }
+      
+      KK <- A.mat(W, shrink = FALSE)
+      eig.vec <- eigen(KK)$vectors
+      # if no X matrix make an intercept
+      if(is.null(X)){X <- as.matrix(rep(1,dim(KK)[1]))}
+      # extract incidence matrices from random effects
+      Zss <- lapply(Z, function(x){x[[1]]})
+      Zssp <- as(do.call("cbind", Zss),Class="sparseMatrix")
+      # bind X matrix provided by user, Z's of random effects, and eigen vectors
+      X <- make.full(cbind(X, Zssp %*% (1 + as.matrix(eig.vec[,1:n.PC])) ))
+
+    }
+    ####-----------------------
+    ####-----------------------
     if(method=="EMMA"){
       if(!silent){
         if(length(Z)>1){
@@ -236,7 +262,10 @@ MMERM <- function (Y, X=NULL, Z=NULL, W=NULL, method="NR", tolpar = 1e-06, tolpa
     } else if (is.null(map) & gwas.plots){ ############ NO MAP PROVIDED #############
       layout(matrix(c(1,2,2),1,3))
       dd <- t(W.scores$score)#matrix(W.scores$score)
-      ffr <- apply(dd,2,function(x,y){fdr(x,fdr.level = y)$fdr.10},y=fdr.level)
+      # get FDR value
+      ffr <- apply(dd,2,function(x,yyy){fdr(x,fdr.level = yyy)$fdr.10},yyy=fdr.level)
+      
+      
       #layout(matrix(1:2,1,2))
       for(t in 1:dim(W.scores$score)[1]){
         qq(W.scores$score[t,])

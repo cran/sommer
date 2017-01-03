@@ -282,6 +282,9 @@ Z1 <- model.matrix(~ GCA1 -1, data = hybrid2);dim(Z1)
 Z2 <- model.matrix(~ GCA2 -1, data = hybrid2);dim(Z2)
 Z3 <- model.matrix(~ SCA -1, data = hybrid2);dim(Z3)
 
+colnames(Z1) <- levels(hybrid2$GCA1)
+colnames(Z2) <- levels(hybrid2$GCA2)
+colnames(Z3) <- levels(hybrid2$SCA)
 ####=========================================####
 #### Realized IBS relationships for set of parents 1
 ####=========================================####
@@ -297,7 +300,10 @@ Z3 <- model.matrix(~ SCA -1, data = hybrid2);dim(Z3)
 #S <- kronecker(K1, K2) ; dim(S)   
 #rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 
-#ETA <- list(GCA1=list(Z=Z1, K=K1), GCA2=list(Z=Z2, K=K2), SCA=list(Z=Z3, K=S))
+#ETA <- list(GCA1=list(Z=Z1, K=K1), 
+#            GCA2=list(Z=Z2, K=K2), 
+#            SCA=list(Z=Z3, K=S)
+#)
 #ans <- mmer(Y=y, X=X1, Z=ETA)
 #ans$var.comp
 #summary(ans)
@@ -389,14 +395,14 @@ Z3 <- model.matrix(~ SCA -1, data = hybrid2);dim(Z3)
 ####=========================================####
 #head(CPpheno)
 #ETA.A <- list(add=list(Z=Za,K=A))
-#ans.A <- mmer(Y=CPpheno, Z=ETA.A, method="EMMA", n.cores = 4)
+#ans.A <- mmer(Y=CPpheno[,-c(1:4)], Z=ETA.A, n.cores = 4)
 #summary(ans.A)
 ####=========================================####
 #### Additive + dominance model
 ####=========================================####
 #head(CPpheno)
 #ETA.AD <- list(add=list(Z=Za,K=A),dom=list(Z=Zd,K=D))
-#ans.AD <- mmer(Y=CPpheno, Z=ETA.AD, method="AI", n.cores = 4)
+#ans.AD <- mmer(Y=CPpheno[,-c(1:4)], Z=ETA.AD, n.cores = 4)
 #summary(ans.AD)
 
 ############################################
@@ -419,7 +425,7 @@ CPgeno <- CPdata$geno
 head(CPpheno)
 CPgeno[1:5,1:5]
 ## fit a model including additive and dominance effects
-#Y <- CPpheno
+#Y <- CPpheno[,-c(1:4)]
 #Za <- diag(dim(Y)[1])
 #A <- A.mat(CPgeno) # additive relationship matrix
 ####================####
