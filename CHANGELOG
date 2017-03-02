@@ -212,10 +212,16 @@ version 2.5 (2017-01-01)
   + Q+K model multivariate enabled
   + EIGEND feature added to NR method
   
-  
+########################
+version 2.6 (2017-03-01)
+########################
+
+  + 'imp' argument added to the atcg1234() function to allow users to avoid imputation
+  + Covariance structures for the residual component are not longer supported. 
+
 ##pendings
 + get incidence matrix from vcf file directly with probabilities instead of 0,1,2
-+ M-EM, AI-MME, for models with no covariance structures these models might be more suitable
++ M-EM, AI-MME, for models with no or small covariance structures these models might be more suitable
 + random regression (working on it)
-+ add eigen feature to NR method
++ fix eigen feature to multivariate NR method
 

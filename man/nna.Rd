@@ -81,15 +81,9 @@ m4 <- mmer2(fixed=Y ~ V*N + nnx, random = ~ B + B:MP,
             data = newyates)
 newyates$res <- residuals(m4)
 
-m5 <- mmer2(fixed=Y ~ V*N, random = ~ B + B:MP, 
-            rcov = ~ ar1(col):ar1(row),
-            data = yates.oats)
-newyates$res.ar1 <- residuals(m5)
-
 # library(lattice)
 # wireframe(res~row*col,yates.oats)
 # wireframe(res~row*col,newyates)
-# wireframe(res.ar1~row*col,newyates)
 
 }
 \seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

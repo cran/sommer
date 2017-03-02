@@ -1,17 +1,17 @@
 Package: sommer
 Type: Package
 Title: Solving Mixed Model Equations in R
-Version: 2.5
-Date: 2017-01-01
+Version: 2.6
+Date: 2017-03-01
 Author: Giovanny Covarrubias-Pazaran
 Maintainer: Giovanny Covarrubias-Pazaran <cova_ruber@live.com.mx>
-Description: Multivariate mixed model solver for multiple random effects allowing the specification of variance covariance structures. ML/REML estimates are obtained using the Average Information (AI), Expectation-Maximization (EM), Newton-Raphson (NR), or Efficient Mixed Model Association (EMMA) algorithms. Designed for genomic prediction and genome wide association studies (GWAS) to include additive, dominance and epistatic relationship structures or other covariance structures in R, but also functional as a regular mixed model program. Multivariate models (multiple responses) can be fitted currently with NR, AI and EMMA algorithms allowing multiple random effects as well. Covariance structures for the residual component is currently supported only for balanced univariate Newton Raphson models. 
+Description: Multivariate mixed model solver for multiple random effects allowing the specification of variance covariance structures. ML/REML estimates are obtained using the Newton-Raphson (NR), Average Information (AI), Expectation-Maximization (EM), or Efficient Mixed Model Association (EMMA) algorithms. Designed for genomic prediction and genome wide association studies (GWAS) to include additive, dominance and epistatic relationship structures or other covariance structures in R, but also functional as a regular mixed model program. Multivariate models (multiple responses) can be fitted currently with NR, AI and EMMA algorithms allowing multiple random effects as well. Correlated residuals are no longer Covariance structures for the residual component are no longer supported. 
 Depends: R (>= 2.10), Matrix (>= 1.1.1), methods, stats, MASS, parallel
 License: GPL-3
 URL: http://www.wisc.edu
-Packaged: 2017-01-03 03:58:31 UTC; cova_ruber
+Packaged: 2017-03-01 19:55:26 UTC; cova_ruber
 NeedsCompilation: no
 Repository: CRAN
-Date/Publication: 2017-01-03 06:19:01
+Date/Publication: 2017-03-02 08:09:38
 Suggests: knitr
 VignetteBuilder: knitr

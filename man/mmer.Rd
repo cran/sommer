@@ -12,7 +12,7 @@ vignette("sommer")
 
 }
 \usage{
-mmer(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
+mmer(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE, 
      MVM=FALSE, iters=20, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE,
      models="additive", ploidy=2, min.MAF = 0.05, silent=FALSE, 
      family=NULL, constraint=TRUE, sherman=FALSE, EIGEND=FALSE,
@@ -52,22 +52,6 @@ mmer(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE,
   }
   \item{W}{an incidence matrix for extra fixed effects and \strong{only to be used if GWAS is pursued} to fit a model of the form \deqn{y = X \beta + Z g + W \tau + \varepsilon}. Markers will be treated as fixed effects according to Yu et al. (2006) \strong{for diploids}, and Rosyara et al (2016) \strong{for polyploids}. For details about the methods please go to the Details section. The dashed line in the Manhattan plots corresponds to an FDR rate of 0.05 and is calculated using the p.adjust function included in the stats package.}
 
-  \item{R}{a \strong{two level list including all the R matrices to be included in the analysis}. Each element of the two level list is a list with all R matrices to be used. For example, to model spatial variation in a plot with rows(4) and columns(18) you need to create a list with both matrices:
-  
-  # autocorrelation matrix for the 4 rows, initial value gamma=0.25
-  
-  \strong{R1 <- AR1.mat(.25,4) }
-  
- # autocorrelation matrix for the 18 cols, initial value gamma=0.25
- 
-  \strong{R2 <- AR1.mat(.25,18)}
-  
-  then we do the 2-level list as:
-  
-  \strong{RETA <- list(spatial=list(R1,R2,type=c("AR1","AR1")))}
-  
-  which can be introduced in the R argument of the function. The idea is that a kronecker product will be taken with R1 and R1, you have to introduce the R matrices that will yield the right dimensions, and you can add as many R matrices as you want. Here we only show using one for spatial effects.
-  }
   \item{method}{this refers to the method or algorithm to be used for estimating variance components. The package currently is supported by 4 algorithms; \strong{EMMA} efficient mixed model association (Kang et al. 2008), \strong{AI} average information (Gilmour et al. 1995; Lee et al. 2015), \strong{EM} expectation maximization (Searle 1993; Bernardo 2010), and the default Newton-Raphson \strong{NR} (Tunnicliffe 1989).}
   \item{REML}{a TRUE/FALSE value indicating if restricted maximum likelihood should be used instead of ML. The default is TRUE.}
   \item{MVM}{a TRUE/FALSE value \strong{indicating if the model should be run as multivariate} or as parallel univariate models. the default is FALSE which will indicate to run parallel univariate models. The 'n.cores' argument decides how many cores use in such parallelization. MVM=TRUE will run a multivariate model but only for a single random effect.}
@@ -101,7 +85,7 @@ mmer(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE,
 }
 \details{
 
-The package has been equiped with several datasets to learn how to use the sommer package; the \code{\link{HDdata}} and \code{\link{FDdata}} datasets will introduce users to fit half and full diallel designs respectively. The \code{\link{h2}} dataset shows how to calculate heritability. The \code{\link{cornHybrid}} and \code{\link{Technow_data}} datasets contain data to teach users how to perform genomic prediction in hybrid single crosses which display GCA and SCA effects. The \code{\link{wheatLines}} dataset teaches how to do genomic prediction in single crosses in species displaying only additive effects. The \code{\link{CPdata}} dataset contains data to teach users how to fit genomic prediction models within a biparental population coming from 2 highly heterozygous parents including additive, dominance and epistatic effects.  The same data example is used to show how to include the top GWAS hits as fixed effects in the GBLUP model to increase prediction accuracy, the examples can be found in the \code{\link{hits}} documentation.  The \code{\link{PolyData}} dataset shows how to fit genomic prediction and GWAS analysis in polyploids. The second example in \code{\link{Technow_data}} data shows how to perform GWAS in single cross hybrids. A good converter from letter code to numeric format is implemented in the function \code{\link{atcg1234}}, which supports higher ploidy levels than diploid. The \code{\link{RICE}} dataset can teach users how to select the best training population using the \code{\link{TP.prep}} function in an applied breeding program, and we show comparison some comparison with other methods. Traces of selection can be obtained using markers with the \code{\link{eigenGWAS}} function. Additional examples for fitting mixed models, such as GWAS and others, can be found in the example section of the \code{\link{mmer}} and \code{\link{mmer2}} functions. Examples of multivariate models can be found in the example #3 of the \code{\link{CPdata}}. An example of how to model autocorrelation structures in the residual components can be found in the \code{\link{yates.oats}} documentation. In addition, since v2.3 we have added the \code{\link{nna}} function which does nearest neighbor to create a new data frame adjusted for spatial variation. The \code{\link{ExpDesigns}} data contains several datasets to analyze experimental designs relevant to plant breeding and several detailed examples are available.
+The package has been equiped with several datasets to learn how to use the sommer package; the \code{\link{HDdata}} and \code{\link{FDdata}} datasets will introduce users to fit half and full diallel designs respectively. The \code{\link{h2}} dataset shows how to calculate heritability. The \code{\link{cornHybrid}} and \code{\link{Technow_data}} datasets contain data to teach users how to perform genomic prediction in hybrid single crosses which display GCA and SCA effects. The \code{\link{wheatLines}} dataset teaches how to do genomic prediction in single crosses in species displaying only additive effects. The \code{\link{CPdata}} dataset contains data to teach users how to fit genomic prediction models within a biparental population coming from 2 highly heterozygous parents including additive, dominance and epistatic effects.  The same data example is used to show how to include the top GWAS hits as fixed effects in the GBLUP model to increase prediction accuracy, the examples can be found in the \code{\link{hits}} documentation.  The \code{\link{PolyData}} dataset shows how to fit genomic prediction and GWAS analysis in polyploids. The second example in \code{\link{Technow_data}} data shows how to perform GWAS in single cross hybrids. A good converter from letter code to numeric format is implemented in the function \code{\link{atcg1234}}, which supports higher ploidy levels than diploid. The \code{\link{RICE}} dataset can teach users how to select the best training population using the \code{\link{TP.prep}} function in an applied breeding program, and we show comparison some comparison with other methods. Traces of selection can be obtained using markers with the \code{\link{eigenGWAS}} function. Additional examples for fitting mixed models, such as GWAS and others, can be found in the example section of the \code{\link{mmer}} and \code{\link{mmer2}} functions. Examples of multivariate models can be found in the example #3 of the \code{\link{CPdata}}. In addition, since v2.3 we have added the \code{\link{nna}} function which does nearest neighbor to create a new data frame adjusted for spatial variation. The \code{\link{ExpDesigns}} data contains several datasets to analyze experimental designs relevant to plant breeding and several detailed examples are available.
 
 =======================================================
 =======================================================

@@ -5,11 +5,11 @@
 This function uses a dataframe with 2 columns named "female" and "male" in numeric format and creates an incidence matrix for a single explanatory variable corresponding to the GCA effect. The resulting incidence matrix can be used in the mmer function as a 'Z' argument in the 2-level list argument for random effects.
 }
 \usage{
-hdm(data)
+hdm(dat)
 }
 
 \arguments{
-  \item{data}{a dataframe with 2 columns named 'female' and 'male' with numeric or factor values indicating the male or female used to produce such hybrid.}
+  \item{dat}{a dataframe with 2 columns named 'female' and 'male' with numeric or factor values indicating the male or female used to produce such hybrid.}
 }
 \value{
 \describe{

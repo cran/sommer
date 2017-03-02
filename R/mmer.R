@@ -1,7 +1,10 @@
-mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=FALSE, iters=20, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, silent=FALSE, family=NULL, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE, n.cores=1,tolpar = 1e-06, tolparinv = 1e-06, che=TRUE, IMP=TRUE){
+mmer <- function(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, iters=20, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, silent=FALSE, family=NULL, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE, n.cores=1,tolpar = 1e-06, tolparinv = 1e-06, che=TRUE, IMP=TRUE){
+  R=NULL
   gss=TRUE
   diso <- dim(as.data.frame(Y))[2]
-  
+  if(method=="AI"){
+    cat(paste("Please consider using the 'NR'(more stable) algorithm instead of 'AI'\n"))
+  }
   ## control for 2-level list structure
   if(!is.list(Z)){
     stop("Please provide the Z parameter as a 2 level list structure.\nFor example for 2 random effects 'A' and 'B' do:\n    ETA <- list( A=list( Z=myZ1, K=myK1 ) , B=list( Z=myZ2, K=myK2 ) )\n    mod <- mmer(Y=y, Z=ETA)\nwhere Z's and K's are the incidence and var-covar matrices respectively.\nIf any Z or K is not provided, an identity matrix will be assumed. ",call. = FALSE)
@@ -18,7 +21,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
   }
   
   my.year <- 2017
-  my.month <- 2 #version of the month
+  my.month <- 4 #version of the month
   
   datee <- Sys.Date()
   year.mo.day <- as.numeric(strsplit(as.character(datee),"-")[[1]])# <- as.numeric(strsplit(gsub("....-","",datee),"-")[[1]])
@@ -257,7 +260,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
   cat("\nInformation contained in this fitted model: \n* Variance components, Residuals, Fitted values\n* BLUEs and BLUPs, Inverse phenotypic variance(V)\n* Variance-covariance matrix for fixed & random effects\n* Predicted error variance (PEV), LogLikelihood\nUse the '$' symbol to access such information\n")
   cat("=======================================================")
   cat("\nLinear mixed model fit by restricted maximum likelihood\n")
-  cat("********************  sommer 2.5  *********************\n")
+  cat("********************  sommer 2.6  *********************\n")
   cat("=======================================================")
   cat("\nMethod:")
   print(x$method)
@@ -347,7 +350,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
   cat("Information contained in this structure: \n* Individual results for each response model\nDisplayed: \n* AIC, BIC and Variance component summaries\nUse the '$' sign to access individual models\n")
   cat("=======================================================")
   cat("\nLinear mixed model fit by restricted maximum likelihood\n")
-  cat("********************  sommer 2.5  *********************\n")
+  cat("********************  sommer 2.6  *********************\n")
   cat("=======================================================")
   cat("\nMethod:")
   print(x$method)
@@ -483,7 +486,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, MVM=
   cat("Information contained in this structure: \n* Results for a multi response model\nDisplayed: \n* Variance-covariance component summaries\nUse the '$' sign to access parameters\n")
   cat("=======================================================")
   cat("\n    Multivariate Linear Mixed Model fit by REML    \n")
-  cat("********************  sommer 2.5  *********************\n")
+  cat("********************  sommer 2.6  *********************\n")
   cat("=======================================================")
   cat("\nMethod:")
   print((x$method))
@@ -811,7 +814,7 @@ plot.MMERM <- function(x, ...) {
     stop("This package requires R 2.1 or later")
   assign(".sommer.home", file.path(library, pkg),
          pos=match("package:sommer", search()))
-  sommer.version = "2.5 (2017-01-01)"
+  sommer.version = "2.6 (2017-03-01)"
   
   ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ### check which version is more recent

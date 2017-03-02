@@ -1,4 +1,5 @@
-mmer2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, iters=20, draw=FALSE, init=NULL, family=gaussian, silent=FALSE, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, min.n=FALSE, gwas.plots=TRUE, n.cores=1, tolpar = 1e-06, tolparinv = 1e-06, IMP=TRUE){
+mmer2 <- function(fixed, random, data, G=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, iters=20, draw=FALSE, init=NULL, family=gaussian, silent=FALSE, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, min.n=FALSE, gwas.plots=TRUE, n.cores=1, tolpar = 1e-06, tolparinv = 1e-06, IMP=TRUE){
+  #rcov <- missing
   #gss=TRUE
   if(missing(data)){
     data <- environment(fixed)
@@ -108,48 +109,48 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=T
     }
     names(Z) <- zvar.names
     
-    if(missing(rcov)){
-      R <- NULL
-    }else{
-      rvar.names <- gsub(" ", "", strsplit(as.character(rcov[2]), split = "[+]")[[1]])
-      R <- list()
-      for(n in 1:length(rvar.names)){ #Ri
-        req.ris <- strsplit(rvar.names[n],":")[[1]] # required Rij's
-        # 1) ar1, 2) cs, 3) arma
-        typ.r <- gsub("\\(.*","",req.ris) # type of correlation matrix
-        typ.v <- gsub(".*\\(","",req.ris); typ.v <- gsub("\\)","",typ.v) # for which variable
-        Ri <- list() # to store Rij's
-        rit <- vector(mode="character")# to store type of correlation matrices
-        for(o in 1:length(typ.r)){#Rij
-          if(typ.r[o]=="ar1"){
-            nr <- length(table(data[,typ.v[o]]))
-            Ri[[o]] <- AR1.mat(.25,nr)
-            rit[o] <- "AR1"
-          }else if(typ.r[o]=="cs"){
-            nr <- length(table(data[,typ.v[o]]))
-            Ri[[o]] <- CS.mat(.25,nr)
-            rit[o] <- "CS"
-          }else if(typ.r[o]=="arma"){
-            nr <- length(table(data[,typ.v[o]]))
-            Ri[[o]] <- AR1.mat(.25,nr)
-            rit[o] <- "AR1"
-          }else if(typ.r[o]=="id"){
-            nr <- length(table(data[,typ.v[o]]))
-            Ri[[o]] <- diag(nr)
-            rit[o] <- "ID"
-          }
-        }
-        ## once we filled Ri put Ri in R
-        R[[n]] <- Ri
-        R[[n]]$type <- rit
-        #names(R[[n]])[o+1] <- "type"
-      }## Ri
-      
-    } # end for rcov present or not
+#     if(missing(rcov)){
+#       R <- NULL
+#     }else{
+#       rvar.names <- gsub(" ", "", strsplit(as.character(rcov[2]), split = "[+]")[[1]])
+#       R <- list()
+#       for(n in 1:length(rvar.names)){ #Ri
+#         req.ris <- strsplit(rvar.names[n],":")[[1]] # required Rij's
+#         # 1) ar1, 2) cs, 3) arma
+#         typ.r <- gsub("\\(.*","",req.ris) # type of correlation matrix
+#         typ.v <- gsub(".*\\(","",req.ris); typ.v <- gsub("\\)","",typ.v) # for which variable
+#         Ri <- list() # to store Rij's
+#         rit <- vector(mode="character")# to store type of correlation matrices
+#         for(o in 1:length(typ.r)){#Rij
+#           if(typ.r[o]=="ar1"){
+#             nr <- length(table(data[,typ.v[o]]))
+#             Ri[[o]] <- AR1.mat(.25,nr)
+#             rit[o] <- "AR1"
+#           }else if(typ.r[o]=="cs"){
+#             nr <- length(table(data[,typ.v[o]]))
+#             Ri[[o]] <- CS.mat(.25,nr)
+#             rit[o] <- "CS"
+#           }else if(typ.r[o]=="arma"){
+#             nr <- length(table(data[,typ.v[o]]))
+#             Ri[[o]] <- AR1.mat(.25,nr)
+#             rit[o] <- "AR1"
+#           }else if(typ.r[o]=="id"){
+#             nr <- length(table(data[,typ.v[o]]))
+#             Ri[[o]] <- diag(nr)
+#             rit[o] <- "ID"
+#           }
+#         }
+#         ## once we filled Ri put Ri in R
+#         R[[n]] <- Ri
+#         R[[n]]$type <- rit
+#         #names(R[[n]])[o+1] <- "type"
+#       }## Ri
+#       
+#     } # end for rcov present or not
 #     print(str(Z))
 #     print(str(X))
 #     print(str(yvar))
-    res <- mmer(Y=yvar, X=X, Z=Z, R=R, W=W, method=method, REML=REML, iters=iters, draw=draw, init=init, silent=silent, constraint=constraint, sherman=sherman, EIGEND=EIGEND, forced=forced, map=map, fdr.level=fdr.level, manh.col=manh.col,gwas.plots=gwas.plots,n.cores=n.cores, MVM=MVM,tolpar = tolpar, tolparinv = tolparinv, IMP=IMP)
+    res <- mmer(Y=yvar, X=X, Z=Z, W=W, method=method, REML=REML, iters=iters, draw=draw, init=init, silent=silent, constraint=constraint, sherman=sherman, EIGEND=EIGEND, forced=forced, map=map, fdr.level=fdr.level, manh.col=manh.col,gwas.plots=gwas.plots,n.cores=n.cores, MVM=MVM,tolpar = tolpar, tolparinv = tolparinv, IMP=IMP)
     
   }else{###only fixed effects
     res <- glm(yvars~X, family=family)

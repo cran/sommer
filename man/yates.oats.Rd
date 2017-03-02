@@ -41,8 +41,7 @@
 
 data(yates.oats)
 head(yates.oats)
-m3 <- mmer2(fixed=Y ~ V*N, random = ~ B + B:MP, 
-            rcov = ~ ar1(col):ar1(row),
+m3 <- mmer2(fixed=Y ~ V*N, random = ~ B + B:MP,
             data = yates.oats)
 summary(m3)       
 m3$var.comp
@@ -59,12 +58,8 @@ X1 <- model.matrix(~V*N,yates.oats)
 Z1 <- model.matrix(~B-1, yates.oats)
 Z2 <- model.matrix(~B:MP-1, yates.oats)
 ETA <- list(B=list(Z=Z1),BMP=list(Z=Z2))
-###residual structures
-R1 <- AR1.mat(.25,4) #col 4
-R2 <- AR1.mat(.25,18) #row 18 
-RETA <- list(list(R1,R2,type=c("AR1","AR1")))
 ###run the model
-m4 <- mmer(Y=y,X=X1,Z=ETA,R=RETA)
+m4 <- mmer(Y=y,X=X1,Z=ETA)
 summary(m4)
 }
 

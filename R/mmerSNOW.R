@@ -343,19 +343,21 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
             if(is.null(R)){
               res <- NR(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced, EIGEND=EIGEND)
               res$method <- method
-            }else{
-              res <- NRR(y=y,X=X,Z=Z,R=R,tolpar=tolpar,tolparinv=tolparinv,maxcyc=iters,draw=draw,constraint = constraint)
-              res$method<-"NRR"
             }
+#             else{
+#               res <- NRR(y=y,X=X,Z=Z,R=R,tolpar=tolpar,tolparinv=tolparinv,maxcyc=iters,draw=draw,constraint = constraint)
+#               res$method<-"NRR"
+#             }
           }
         }else{ # if multiple variance components
           if(is.null(R)){
             res <- NR(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced, EIGEND=EIGEND)
             res$method <- method
-          }else{
-            res <- NRR(y=y,X=X,Z=Z,R=R,tolpar=tolpar,tolparinv=tolparinv,maxcyc=iters,draw=draw,constraint = constraint)
-            res$method<-"NRR"
           }
+#           else{
+#             res <- NRR(y=y,X=X,Z=Z,R=R,tolpar=tolpar,tolparinv=tolparinv,maxcyc=iters,draw=draw,constraint = constraint)
+#             res$method<-"NRR"
+#           }
         }
       }else{
         stop("Unrecognized method. Please select one of the methods; 'NR', 'AI', 'EMMA' or 'EM'. ",call. = FALSE)
@@ -607,20 +609,22 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
               #print("yes")
               res <- NR(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced, EIGEND=EIGEND)
               res$method <- method
-            }else{
-              res <- NRR(y=y,X=X,Z=Z,R=R,tolpar=tolpar,tolparinv=tolparinv,maxcyc=iters,draw=draw,constraint = constraint)
-              res$method<-"NRR"
             }
+#             else{
+#               res <- NRR(y=y,X=X,Z=Z,R=R,tolpar=tolpar,tolparinv=tolparinv,maxcyc=iters,draw=draw,constraint = constraint)
+#               res$method<-"NRR"
+#             }
           }
         }else{ # if multiple variance components
           if(is.null(R)){
             res <- NR(y=y, X=X, ZETA=Z, REML=REML, draw=draw, silent=silent, maxcyc = iters, constraint=constraint, init=init, sherman=sherman, che=FALSE, Fishers=Fishers, forced=forced, EIGEND=EIGEND)
             res$method <- method
-          }else{
-            #print(str(Z))
-            res <- NRR(y=y,X=X,Z=Z,R=R,tolpar=tolpar,tolparinv=tolparinv,maxcyc=iters,draw=draw,constraint = constraint)
-            res$method<-"NRR"
           }
+#           else{
+#             #print(str(Z))
+#             res <- NRR(y=y,X=X,Z=Z,R=R,tolpar=tolpar,tolparinv=tolparinv,maxcyc=iters,draw=draw,constraint = constraint)
+#             res$method<-"NRR"
+#           }
         }
       }else{
         stop("Unrecognized method. Please select one of the methods; 'NR', 'AI', 'EMMA' or 'EM'. ",call. = FALSE)

@@ -1,4 +1,4 @@
-atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FALSE, by.allele=FALSE){
+atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FALSE, by.allele=FALSE, imp=TRUE){
   ##### START GBS.TO.BISNP DATA ######
   gbs.to.bisnp <- function(x) {
     y <- rep(NA,length(x))
@@ -310,14 +310,18 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FA
       return(x)
     }
     # time to impute
-    missing <- which(is.na(M))
-    if (length(missing) > 0) {
-      cat("Imputing missing data with mode \n")
-      if(silent){
-        M <- apply(M, 2, impute.mode)
-      }else{
-        M <- apply_pb(M, 2, impute.mode)
+    if(imp){
+      missing <- which(is.na(M))
+      if (length(missing) > 0) {
+        cat("Imputing missing data with mode \n")
+        if(silent){
+          M <- apply(M, 2, impute.mode)
+        }else{
+          M <- apply_pb(M, 2, impute.mode)
+        }
       }
+    }else{
+      cat("Imputation not required. Be careful using non-imputed matrices in mixed model solvers\n")
     }
     if(ploidy == 2){
       M <- M - 1
