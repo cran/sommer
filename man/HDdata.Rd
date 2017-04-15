@@ -34,7 +34,7 @@ head(HDdata)
 #### GCA matrix for half diallel using male and female columns
 #### use the 'hdm' function to create the half diallel matrix
 ####=========================================####
-Z1 <- hdm(HDdata[,c("male","female")])
+Z1 <- overlay(HDdata[,c("male","female")])
 
 ####=========================================####
 #### SCA matrix
@@ -48,6 +48,27 @@ y <- HDdata$sugar
 ETA <- list(GCA=list(Z=Z1), SCA=list(Z=Z2)) # Zu component
 modHD <- mmer(Y=y, Z=ETA)
 summary(modHD)
+
+####=========================================####
+  #### Example 2
+  #### using overlay with mmer2 function
+  ####=========================================####
+  # data(HDdata)
+  # head(HDdata)
+  # HDdata$female <- as.factor(HDdata$female)
+  # HDdata$male <- as.factor(HDdata$male)
+  # HDdata$geno <- as.factor(HDdata$geno)
+  # #### model using overlay
+  # modh <- mmer2(sugar~1, random=~female + and(male) + geno, 
+  #               data=HDdata)
+  # summary(modh)
+  # #### model using overlay [and(.)] and covariance structures [g(.)]
+  # A <- diag(7); A[1,2] <- 0.5; A[2,1] <- 0.5 # fake covariance structure
+  # colnames(A) <- as.character(1:7); rownames(A) <- colnames(A);A
+  # 
+  # modh2 <- mmer2(sugar~1, random=~g(female) + and(g(male)) + geno, 
+  #               G=list(female=A, male=A),data=HDdata)
+  # summary(modh2)
 }
 \keyword{datasets}
 \seealso{The core function of the package \code{\link{mmer}}}

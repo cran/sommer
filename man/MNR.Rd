@@ -6,7 +6,7 @@ This function is used internally in the function \code{\link{mmer}} when MORE th
 }
 \usage{
 MNR(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,
-     tolparinv=1e-6,draw=TRUE, silent=FALSE, constraint=TRUE,
+     tolparinv=1e-6,draw=FALSE, silent=FALSE, constraint=FALSE,
      EIGEND=FALSE,forced=NULL, IMP=FALSE)
 }
 \arguments{

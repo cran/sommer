@@ -1,4 +1,9 @@
+
+
+
 hdm <- function(dat){
+  
+  warning("The hdm function has been substituted by the 'overlay' function.\nPlease type ?overlay to see how to use it (almost identical).",call. = FALSE)
   ss1 <- intersect(colnames(dat), c("female","male"))
   if(length(ss1)==0){
     stop("Columns 'female' and 'male' are rquired for building a hald diallel matrix",call.=FALSE)
@@ -18,6 +23,8 @@ hdm <- function(dat){
   S3[,colnames(S2)] <- S3[,colnames(S2)] + S2[,colnames(S2)] ## add males
   return(S3)
 }
+
+
 # 
 # hdm <- function(data){
 #   v1 <- data$female

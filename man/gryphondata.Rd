@@ -49,11 +49,11 @@ A <- gryphondata$A
 head(gryphon)
 
 #### fit the model with no fixed effects (intercept only)
-#mix1 <- mmer2(BWT~1,random=~ANIMAL, G=list(ANIMAL=A), data=gryphon)
+#mix1 <- mmer2(BWT~1,random=~g(ANIMAL), G=list(ANIMAL=A), data=gryphon)
 #summary(mix1)
 
 #### fit the model with SEX as fixed effects 
-#mix2 <- mmer2(BWT~1+SEX,random=~ANIMAL, G=list(ANIMAL=A), data=gryphon)
+#mix2 <- mmer2(BWT~1+SEX,random=~g(ANIMAL), G=list(ANIMAL=A), data=gryphon)
 #summary(mix2)
 
 }

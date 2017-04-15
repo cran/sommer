@@ -1,8 +1,8 @@
-MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv=1e-6,draw=TRUE,silent=FALSE, constraint=TRUE, EIGEND=FALSE, forced=NULL, IMP=FALSE){
+MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv=1e-6,draw=FALSE,silent=FALSE, constraint=FALSE, EIGEND=FALSE, forced=NULL, IMP=FALSE){
   
-#   print(str(ZETA))
-#   print(str(X))
-#   print(str(Y))
+  #   print(str(ZETA))
+  #   print(str(X))
+  #   print(str(Y))
   
   Yh <- Y
   Xh <- X
@@ -828,7 +828,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
     
     
     }
-  ## identify missing data across variables
+  ## identify missing data across variables and adjust according to user if we wants to impute or not
   if(IMP){
     ytouse <- 1:nrow(Y)
   }else{
@@ -849,6 +849,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
     ZETA <- lapply(ZETA, function(x,good){x[[1]] <- x[[1]][good,]; x[[2]]<- x[[2]]; return(x)}, good=ytouse)
   }
   ## 
+
   
   choco <- names(ZETA)
   
@@ -913,6 +914,9 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
   Y.or2 <- as.matrix(as.vector(Y.or)); dim(Y.or2)
   
   n <- dim(ZETA[[1]]$Z)[1]#no. of individuals
+  if(IMP==FALSE){
+    n <- dim(Zh[[1]]$Z)[1]#no. of individuals
+  }
   nvarcom <- length(ZETA)
   dimos <- dim(as.matrix(Y))
   ts <- dimos[2] #no. of traits
@@ -1255,7 +1259,13 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
           
           # P = V-  -  V-X [X' V- X]-1 XV- =  WQK
           VX <- V %*% X # V- X
-          P <- V - VX %*% solve(t(X)%*%VX, t(VX)) #WQK
+          
+          tXVXVX <- solve(t(X)%*%VX, t(VX))
+          if(class(tXVXVX) == "try-error"){
+            tXVXVX <- try(solve((t(X)%*%VX + (tolparinv * diag(dim(xvx)[2]))),t(VX)), silent = TRUE)
+          }
+          
+          P <- V - VX %*% tXVXVX #WQK
           V <- NULL
           #WQX <- WQK
           # y'Py
@@ -1456,10 +1466,14 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
   
   
   ######## AIC BIC
+  if(!silent){
+  cat("\n[1/5] Calculating AIC and BIC\n")
+  }
   AIC = as.vector((-2 * llik ) + ( 2 * dim(X)[2]))
   BIC = as.vector((-2 * llik ) + ( log(length(Y)) * dim(X)[2]))
   ######## BETA.HAT, VAR.B.HAT
   
+  if(!silent){cat("[2/5] Calculating estimates and variance for fixed effects\n")}
   xvx <- crossprod(X, vmi %*% X)
   
   
@@ -1492,14 +1506,15 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
   #print(dim(t(Y.or)))
   #print(dim((t(beta) %*% t(X.or))))
   ##
+  if(!silent){cat("[3/5] Calculating Var(BLUPs). This may take some time for dense models.\n")}
   ehat <- matrix(t(Y.or) - (t(beta) %*% t(X.or)), ncol = 1, byrow = FALSE) #Y.or3 - XB # residuals = Y - XB
   residu <- matrix(ehat, nrow = nrow(Y.or), byrow = TRUE); colnames(residu) <- namesY
   ######## U.HAT, PEV, etc.
   varvecG <- list()
   for (k in 1:nvarcom) { # ZKsZ'=G 
     K <-  ZETA[[k]]$K #tcrossprod(ZETA[[k]]$Z %*% ZETA[[k]]$K, (ZETA[[k]]$Z))
-    varvecG[[k]] <- kronecker(as.matrix(K), (sigma[[k]]))
-    #print(varvecG[[k]][1:5,1:5])
+    #varvecG[[k]] <- kronecker(as.matrix(K), (sigma[[k]]))
+    varvecG[[k]] <- kronecker(as.matrix(K), as(sigma[[k]],Class="denseMatrix"))#(sigma[[k]]))
   }# str(varvecG)
   #print(dim(t(Y.or2)));print(dim(beta));print(dim(X.or)) ... 
   HobsInve <- vmi %*%  ehat # V-(y-Xb)' ... nxn %*% linearized(txn)
@@ -1511,7 +1526,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
   # denoted with ^^^
   dido <- dim(Yh) ## ^^^
   Zul <- list() ## ^^^
-  
+  if(!silent){cat("[4/5] Calculating BLUPs and PEV\n")}
   for (k in 1:nvarcom) { # GZ'V-(y-Xb)
     lev.re <- dim(ZETA[[k]]$Z)[2] # levels of the random effect
     
@@ -1530,11 +1545,16 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
       Zul[[k]] <- matrix(zuu, nrow = n, byrow = TRUE); colnames(Zul[[k]]) <- namesY ## ^^^
     }else{
       provi <- ZKforvec %*% HobsInve # u.hat = GZ'V-(y-Xb) 
-      u.hat[[k]] <- matrix(provi, nrow = lev.re, byrow = TRUE); colnames(u.hat[[k]]) <- namesY
+      u.hat[[k]] <- matrix(provi, nrow = lev.re, byrow = TRUE); 
+      colnames(u.hat[[k]]) <- namesY
+      
       
       Zforvec.or <- as(kronecker((as.matrix(Zh[[k]]$Z)),diag(ts)), Class="sparseMatrix") ## ^^^
       zuu <-  (Zforvec.or %*% provi) ## ^^^
-      Zul[[k]] <- matrix(zuu, nrow = n, byrow = TRUE); colnames(Zul[[k]]) <- namesY ## ^^^
+      Zul[[k]] <- matrix(zuu, nrow = n, byrow = TRUE); 
+      colnames(Zul[[k]]) <- namesY ## ^^^
+      
+      
     }
     
     #print("a") #ZETA[[i]]$Z %*% tcrossprod(ZETA[[i]]$K, ZETA[[i]]$Z)
@@ -1576,6 +1596,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
   ### fishers
   #sigma.cov <- (A.svd * 2)
   #print(A.svd * attr(sonso, 'scaled:scale') + attr(sonso, 'scaled:center'))
+  if(!silent){cat("[5/5] Calculating standar errors (SE) for variance components.\n")}
   if(is.null(forced)){
     sigma.cov <- ((A.svd) * 2) 
     FI <- (A)/2
@@ -1595,7 +1616,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
   if(is.null(forced)){
     fofo <- FALSE
   }else{fofo<- TRUE}
-   
+  
   #rownames(beta) <- namesX
   return(list(var.comp=sigma, V.inv=vmi, u.hat = u.hat , Var.u.hat = (var.u.hat), 
               beta.hat = beta, Var.beta.hat = xvxi, fish.inv=sigma.cova,

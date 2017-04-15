@@ -651,5 +651,9 @@ mmerSNOW <- function(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
   #if(!is.null(beeping)){
   #  beep(sound = beeping, expr = NULL) 
   #}
+#   manyzero <- which(res$var.comp[,1]==0)
+#   if(length(manyzero)>1){
+#     cat("\nTwo or more variance components were zero. Try to refit the model without one by one.\n")
+#   }
   return(res)
 }

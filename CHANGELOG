@@ -217,7 +217,14 @@ version 2.6 (2017-03-01)
 ########################
 
   + 'imp' argument added to the atcg1234() function to allow users to avoid imputation
-  + Covariance structures for the residual component are not longer supported. 
+  + Covariance structures for the residual component are not longer supported.
+  
+########################
+version 2.7 (2017-05-01)
+########################
+
+  + at(.), diag(.), and(.), g(.) functions added to be used in mmer2.
+  + NR algorithm updated to deal with multiple variance components equal to zero
 
 ##pendings
 + get incidence matrix from vcf file directly with probabilities instead of 0,1,2

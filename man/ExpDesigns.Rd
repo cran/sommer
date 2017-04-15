@@ -45,8 +45,21 @@ head(data1)
 ## blocking factor: "block"
 ## treatments, personal names for replicated and non-replicated: "trt"
 ## check no check indicator: "new"
-mix1 <- mmer2(yield~entryc, random=~block+trt:new, data=data1)
+mix1 <- mmer2(yield~entryc, random=~block+trt, data=data1)
 summary(mix1)
+
+# ## compare raw unreplicated measure with adjusted blup
+# library(plyr)
+# avers <- ddply(data1, .(trt), summarize,mean = round(mean(yield), 2))
+# plot(avers$mean[-c(1:4)], mix1$u.hat$trt[-c(1:4),1],ylab="BLUP",xlab="Raw", 
+#      pch=20, cex=2, col="blue")
+# ## if you have row and column information you can see the design
+# library(agridat)
+# data1$row <- c(sample(1:7),sample(1:6),sample(1:7))
+# data1$col <- c(1:3)[data1$block]
+# d1 <- desplot(yield ~ row*col, data1, main="ABD1",
+#               text=trt,strip.cex=3, cex=1)
+# print(d1)
 
 #### =================================== ####
 #### ===== Augmented Block Design 2 ==== ####
@@ -60,7 +73,7 @@ head(data2)
 ## treatments, replicated and non-replicated: "Entry"
 ## check no check indicator: "new"
 ## this is also known as Federer's unreplicated design
-mix2<- mmer2(TSW ~ entryc, random=~Block+Entry:new, data=data2)
+mix2<- mmer2(TSW ~ entryc, random=~Block+Entry, data=data2)
 summary(mix2)
 
 #### =================================== ####
@@ -82,6 +95,14 @@ summary(mix.ibd)
 # rownames(a)[1] <-"geno1"
 #a[-1] <- a[-1]+a[1]
 #plot(density(mix.ibd$beta.hat))
+
+## map of the field
+# library(agridat)
+# data.ibd$block <- as.numeric(as.character(data.ibd$block))
+# data.ibd$cols <- as.numeric(as.character(data.ibd$cols))
+# d1 <- desplot(yield ~ block*cols, data.ibd, main="IBD",
+#               text=Genotype,strip.cex=3, cex=1)
+# print(d1)
 
 #### =================================== ####
 #### ======= Split Plot Design  ======== ####
@@ -154,6 +175,10 @@ head(data.lsd)
 ##
 mix.lsd <- mmer2(yield ~ variety ,random=~ row + col, data=data.lsd)
 summary(mix.lsd)
+
+# library(agridat)
+# desplot(yield ~ row*col, data.lsd, main="LSD",
+#               strip.cex=3, cex=1, text=variety)
 
 #### =================================== ####
 #### =====  North Carolina Design I ==== ####

@@ -259,7 +259,7 @@ EM <- function(y, X=NULL, ETA=NULL, R=NULL, init=NULL, iters=50, REML=TRUE, draw
           #change=abs(sum(unlist(var.com) - unlist(track)))
           uuu1 <- cbind(unlist(var.com), unlist(track))
           #uuu2 <- apply(uuu1,1,function(x){if(abs(x[1] - x[2]) < 0.0001){y <- TRUE}else{y <- FALSE}; return(y)})
-          uuu2 <- apply(uuu1,1,function(x){if(abs(x[1] - x[2]) < x[1]/100){y <- TRUE}else{y <- FALSE}; return(y)})
+          uuu2 <- apply(uuu1,1,function(x){if(abs(x[1] - x[2]) < x[1]/1000){y <- TRUE}else{y <- FALSE}; return(y)})
           change <- length(which(uuu2))
         }
         ####

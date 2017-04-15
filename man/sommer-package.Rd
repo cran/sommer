@@ -8,9 +8,9 @@ Giovanny Covarrubias-Pazaran
 \description{
 
 
-Multivariate-Univariate linear mixed model solver for multiple random effects allowing the specification of variance covariance structures. ML/REML estimates are obtained using the \strong{Newton-Raphson}, \strong{Average Information}, \strong{Expectation-Maximization}, or \strong{Efficient Mixed Model Association} algorithms. Designed for genomic prediction and genome wide association studies (GWAS) to include additive, dominance and epistatic relationship structures or other covariance structures, but also functional as a regular mixed model program. Multivariate models (multiple responses) can be fitted currently with the default \strong{Newton-Raphson}, \strong{EMMA}, \strong{Average Information}. In addition, \strong{rrBLUP results can be recreated selecting the EMMA method}. Covariance structures for the residual component are not longer supported. 
+Multivariate-Univariate linear mixed model solver for multiple random effects allowing the specification of variance covariance structures. ML/REML estimates are obtained using the \strong{Direct-Inversion Newton-Raphson}, \strong{Direct-Inversion Average Information}, \strong{Expectation-Maximization}, or \strong{Efficient Mixed Model Association} algorithms. Designed for genomic prediction and genome wide association studies (GWAS) to include additive, dominance and epistatic relationship structures or other covariance structures, but also functional as a regular mixed model program. Multivariate models (multiple responses) can be fitted currently with the default \strong{Direct-Inversion Newton-Raphson}, \strong{EMMA}, \strong{Direct-Inversion Average Information}. In addition, \strong{rrBLUP results can be recreated selecting the EMMA method}. Covariance structures for the residual component are not longer supported. 
 
-The sommer package has been developed to provide R users with open-source code to understand how most popular likelihood algorithms in mixed model analysis work, related to genetic analysis and other general experiments, but at the same time allowing to perform their real analysis in diploid and polyploid organisms with small and big data sets. The core of the package is the function \code{\link{mmer}} focused in solving multivariate linear mixed models by likelihood methods. This package allows the user to estimate variance components for a mixed model with the advantage of specifying the variance-covariance structure of the random effects and obtain other parameters such as BLUPs, BLUEs, residuals, fitted values, variances-covariances for fixed and random effects, etc. The package is focused on genomic prediction (or genomic selection) and GWAS analysis, although general mixed models can be fitted as well. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices for diploid and polyploid organisms that have been shown to increase prediction accuracy under certain scenarios. The package provides flexibility to fit other genetic models such as full and half diallel models as well. 
+The sommer package has been developed to provide R users with open-source code to understand how most popular likelihood algorithms in mixed model analysis work, related to genetic analysis and other general experiments, but at the same time allowing to perform their real analysis in diploid and polyploid organisms with small and big data sets. The core of the package is the function \code{\link{mmer}} focused in solving multivariate linear mixed models by likelihood methods. \strong{There's 2 ways of fitting a model, specifying all matrices using \code{\link{mmer}} or using the formula-based solver \code{\link{mmer2}}}. This package allows the user to estimate variance components for a mixed model with the advantage of specifying the variance-covariance structure of the random effects and obtain other parameters such as BLUPs, BLUEs, residuals, fitted values, variances-covariances for fixed and random effects, etc. The package is focused on genomic prediction (and genomic selection) and GWAS analysis, although general mixed models can be fitted as well. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices for diploid and polyploid organisms that have been shown to increase prediction accuracy under certain scenarios. The package provides flexibility to fit other genetic models such as full and half diallel models as well. 
 
 The package has been equiped with several datasets to learn how to use the sommer package; the \code{\link{HDdata}} and \code{\link{FDdata}} datasets will introduce users to fit half and full diallel designs respectively. The \code{\link{h2}} dataset shows how to calculate heritability. The \code{\link{cornHybrid}} and \code{\link{Technow_data}} datasets contain data to teach users how to perform genomic prediction in hybrid single crosses which display GCA and SCA effects. The \code{\link{wheatLines}} dataset teaches how to do genomic prediction in single crosses in species displaying only additive effects. The \code{\link{CPdata}} dataset contains data to teach users how to fit genomic prediction models within a biparental population coming from 2 highly heterozygous parents including additive, dominance and epistatic effects. The same data example is used to show how to include the top GWAS hits as fixed effects in the GBLUP model to increase prediction accuracy, the examples can be found in the \code{\link{hits}} documentation.  The \code{\link{PolyData}} dataset shows how to fit genomic prediction and GWAS analysis in polyploids. The second example in \code{\link{Technow_data}} data shows how to perform GWAS in single cross hybrids. A good converter from letter code to numeric format is implemented in the function \code{\link{atcg1234}}, which supports higher ploidy levels than diploid. The \code{\link{RICE}} dataset can teach users how to select the best training population using the \code{\link{TP.prep}} function in an applied breeding program, and we show comparisons with other methods. Traces of selection can be obtained using markers with the \code{\link{eigenGWAS}} function. A comparison of genomic prediction using univariate versus multivariate models is shown in the example#2 in the \code{\link{CPdata}} help page. Examples of multivariate models can be found in the example #3 of the \code{\link{CPdata}}. Furthermore, since v2.3 we have added the \code{\link{nna}} function which does nearest neighbor to create a new data frame adjusted for spatial variation. The \code{\link{ExpDesigns}} data contains several datasets to analyze experimental designs relevant to plant breeding and several detailed examples are available. The \code{\link{gryphondata}} data contains an example of an animal model including pedigree information. Additional examples for fitting mixed models, such as GWAS and others, can be found in the example section of the \code{\link{mmer}} and \code{\link{mmer2}} functions.
 
@@ -173,7 +173,7 @@ The mmer function has been enhanced by adding the argument EIGEND which allows a
 
 Finally, feel free to get in touch with me if you have any questions or suggestions at: 
 
-covarrubiasp@wisc.edu
+cova_ruber@live.com.mx
 
 
 I'll be glad to help or answer any question. We have spent a valuable amount of time developing this package. Please cite us in your publication. Type 'citation("sommer")' to know how to cite it.
@@ -205,7 +205,7 @@ Tunnicliffe W. 1989. On the use of marginal likelihood in time series model esti
 }
 \keyword{ R package }
 \seealso{
-http://cggl.horticulture.wisc.edu/home-page/
+https://scholar.google.com/citations?user=Ic0qn-kAAAAJ&hl=en
 }
 \examples{
 
@@ -230,6 +230,8 @@ M <- matrix(rep(0,200*1000),1000,200)
 for (i in 1:200) {
   M[,i] <- ifelse(runif(1000)<0.5,-1,1)
 }
+colnames(M) <- paste("geno",1:dim(M)[2], sep="")
+rownames(M) <- paste("mark",1:dim(M)[1], sep="")
 ####=========================================####
 #### simulate phenotypes
 ####=========================================####
@@ -239,13 +241,13 @@ u[QTL] <- 1
 g <- as.vector(crossprod(M,u))
 h2 <- 0.5
 y <- g + rnorm(200,mean=0,sd=sqrt((1-h2)/h2*var(g)))
-M <- t(M)
+M <- t(M); M[1:5,1:5]
 ####=========================================####
 #### fit the model
 ####=========================================####
-Z1 <- diag(length(y))
-ETA <- list(add=list(Z=Z1, K=A.mat(M)))
-#ans <- mmer(Y=y, Z=ETA)
+K<-A.mat(M) # additive relationship matrix
+dat <- data.frame(y=y,id=rownames(M));head(dat)
+#ans <- mmer2(y~1, random=~g(id), G=list(id=K), data=dat)
 #summary(ans)
 
 ####=========================================####
@@ -254,7 +256,7 @@ ETA <- list(add=list(Z=Z1, K=A.mat(M)))
 #### markers are fixed effects
 ####=========================================####
 
-#ans <- mmer(Y=y, Z=ETA, W=M)
+#ans <- mmer2(y~1, random=~g(id), G=list(id=K), W=M, data=dat)
 #summary(ans)
 
 ############################################
@@ -270,43 +272,30 @@ ETA <- list(add=list(Z=Z1, K=A.mat(M)))
 ####=========================================####
 #### EXAMPLE 2
 #### breeding values with 3 variance components
-#### Hybrid prediction
+#### Hybrid prediction using mmer2
 ####=========================================####
 ####=========================================####
-data(cornHybrid)
-hybrid2 <- cornHybrid$hybrid # extract cross data
-A <- cornHybrid$K
-y <- hybrid2$Yield
-X1 <- model.matrix(~ Location, data = hybrid2);dim(X1)
-Z1 <- model.matrix(~ GCA1 -1, data = hybrid2);dim(Z1)
-Z2 <- model.matrix(~ GCA2 -1, data = hybrid2);dim(Z2)
-Z3 <- model.matrix(~ SCA -1, data = hybrid2);dim(Z3)
-
-colnames(Z1) <- levels(hybrid2$GCA1)
-colnames(Z2) <- levels(hybrid2$GCA2)
-colnames(Z3) <- levels(hybrid2$SCA)
-####=========================================####
-#### Realized IBS relationships for set of parents 1
-####=========================================####
-#K1 <- A[levels(hybrid2$GCA1), levels(hybrid2$GCA1)]; dim(K1) 
-####=========================================####
-#### Realized IBS relationships for set of parents 2
-####=========================================####
-#K2 <- A[levels(hybrid2$GCA2), levels(hybrid2$GCA2)]; dim(K2)
-####=========================================####
-#### Realized IBS relationships for cross 
-#### (as the Kronecker product of K1 and K2)
-####=========================================####
-#S <- kronecker(K1, K2) ; dim(S)   
-#rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
-
-#ETA <- list(GCA1=list(Z=Z1, K=K1), 
-#            GCA2=list(Z=Z2, K=K2), 
-#            SCA=list(Z=Z3, K=S)
-#)
-#ans <- mmer(Y=y, X=X1, Z=ETA)
-#ans$var.comp
-#summary(ans)
+# data(cornHybrid)
+# hybrid2 <- cornHybrid$hybrid # extract cross data
+# A <- cornHybrid$K
+# ####=========================================####
+# #### Realized IBS relationships for set of parents 1
+# ####=========================================####
+# K1 <- A[levels(hybrid2$GCA1), levels(hybrid2$GCA1)]; dim(K1) 
+# ####=========================================####
+# #### Realized IBS relationships for set of parents 2
+# ####=========================================####
+# K2 <- A[levels(hybrid2$GCA2), levels(hybrid2$GCA2)]; dim(K2)
+# ####=========================================####
+# #### Realized IBS relationships for cross 
+# #### (as the Kronecker product of K1 and K2)
+# ####=========================================####
+# S <- kronecker(K1, K2) ; dim(S)   
+# rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
+# 
+# ans <- mmer2(Yield~Location, random=~g(GCA1)+ g(GCA2) + g(SCA),
+#              G=list(GCA1=K1, GCA2=K2, SCA=S), data=hybrid2)
+# summary(ans)
 
 ############################################
 ############################################
@@ -322,44 +311,33 @@ colnames(Z3) <- levels(hybrid2$SCA)
 #### EXAMPLE 3
 #### PREDICTING SPECIFIC PERFORMANCE
 #### within biparental population
+#### using mmer2 to make it easier
 ####=========================================####
 ####=========================================####
 
-#data(CPdata)
-#CPpheno <- CPdata$pheno
-#CPgeno <- CPdata$geno
-## look at the data
-#head(CPpheno)
-#CPgeno[1:5,1:5]
-####=========================================####
-#### fit a model including additive and dominance effects
-####=========================================####
-#y <- CPpheno$color
-#Za <- diag(length(y))
-#Zd <- diag(length(y))
-#A <- A.mat(CPgeno)
-#D <- D.mat(CPgeno)
-
-#y.trn <- y # for prediction accuracy
-#ww <- sample(c(1:dim(Za)[1]),72) # delete data for one fifth of the population
-#y.trn[ww] <- NA
-
-####=========================================####
-#### ADDITIVE MODEL
-####=========================================####
-#ETA.A <- list(add=list(Z=Za,K=A))
-#ans.A <- mmer(Y=y.trn, Z=ETA.A)
-#cor(ans.A$fitted.y[ww], y[ww], use="pairwise.complete.obs")
-####=========================================####
-#### ADDITIVE-DOMINANCE MODEL 
-####=========================================####
-#ETA.AD <- list(add=list(Z=Za,K=A),dom=list(Z=Zd,K=D))
-#ans.AD <- mmer(Y=y.trn, Z=ETA.AD)
-#cor(ans.AD$fitted.y[ww], y[ww], use="pairwise.complete.obs")
-#summary(ans.A)
-#summary(ans.AD)
-### 0.63 accuracy !!!! 4 percent increment!!
-
+# data(CPdata)
+# CPpheno <- CPdata$pheno
+# CPgeno <- CPdata$geno
+# ### look at the data
+# head(CPpheno); CPgeno[1:5,1:5]
+# ###=========================================####
+# ### fit a model including additive and dominance effects
+# ###=========================================####
+# A <- A.mat(CPgeno)
+# D <- D.mat(CPgeno)
+# ####=========================================####
+# #### ADDITIVE MODEL 
+# ####=========================================####
+# ans.A <- mmer2(Yield~1,random=~ g(id), G=list(id=A), 
+#                data=CPpheno)
+# summary(ans.A)
+# ####=========================================####
+# #### ADDITIVE-DOMINANCE MODEL 
+# ####=========================================####
+# CPpheno$idd <- CPpheno$id 
+# ans.AD <- mmer2(Yield~1,random=~ g(id) + g(idd), 
+#                 G=list(id=A, idd=D), data=CPpheno)
+# summary(ans.AD)
 
 ############################################
 ############################################
@@ -379,31 +357,28 @@ colnames(Z3) <- levels(hybrid2$SCA)
 ####=========================================####
 ####=========================================####
 
-#data(CPdata)
-#CPpheno <- CPdata$pheno
-#CPgeno <- CPdata$geno
-####=========================================####
-#### Calculate incidence and relationship matrices
-####=========================================####
-#N <- dim(CPpheno)[1]
-#Za <- diag(N)
-#Zd <- diag(N)
-#A <- A.mat(CPgeno)
-#D <- D.mat(CPgeno)
-####=========================================####
-#### Only additive model using all traits
-####=========================================####
-#head(CPpheno)
-#ETA.A <- list(add=list(Z=Za,K=A))
-#ans.A <- mmer(Y=CPpheno[,-c(1:4)], Z=ETA.A, n.cores = 4)
-#summary(ans.A)
-####=========================================####
-#### Additive + dominance model
-####=========================================####
-#head(CPpheno)
-#ETA.AD <- list(add=list(Z=Za,K=A),dom=list(Z=Zd,K=D))
-#ans.AD <- mmer(Y=CPpheno[,-c(1:4)], Z=ETA.AD, n.cores = 4)
-#summary(ans.AD)
+# data(CPdata)
+# CPpheno <- CPdata$pheno; CPpheno$idd <- CPpheno$id 
+# CPgeno <- CPdata$geno
+# ###=========================================####
+# ### Do incidence and relationship matrices
+# ###=========================================####
+# A <- A.mat(CPgeno)
+# D <- D.mat(CPgeno)
+# ###=========================================####
+# ### Only additive model using all traits
+# ###=========================================####
+# head(CPpheno)
+# ans.A <- mmer2(cbind(color,Yield,FruitAver)~1, random = ~ g(id),
+#               G=list(id=A), n.cores = 3, data=CPpheno)
+# summary(ans.A)
+# ###=========================================####
+# ### Additive + dominance model
+# ###=========================================####
+# head(CPpheno)
+# ans.AD <- mmer2(cbind(color,Yield,FruitAver)~1, random=~g(id)+g(idd),
+#                G=list(id=A, idd=D), n.cores = 3, data=CPpheno)
+# summary(ans.AD)
 
 ############################################
 ############################################
@@ -418,22 +393,52 @@ colnames(Z3) <- levels(hybrid2$SCA)
 #### MULTIVARIATE MODEL
 ####=========================================####
 ####=========================================####
-data(CPdata)
-CPpheno <- CPdata$pheno
-CPgeno <- CPdata$geno
-### look at the data
-head(CPpheno)
-CPgeno[1:5,1:5]
-## fit a model including additive and dominance effects
-#Y <- CPpheno[,-c(1:4)]
-#Za <- diag(dim(Y)[1])
-#A <- A.mat(CPgeno) # additive relationship matrix
-####================####
-#### ADDITIVE MODEL ####
-####================####
-#ETA.A <- list(add=list(Z=Za,K=A))
-#### MAKE SURE YOU SET 'MVM=TRUE'
-#ans.A <- mmer(Y=Y, Z=ETA.A, MVM=TRUE)
-#summary(ans.A)
+# data(CPdata)
+# CPpheno <- CPdata$pheno
+# CPgeno <- CPdata$geno
+# ### look at the data
+# head(CPpheno)
+# CPgeno[1:5,1:5]
+# ## fit a model including additive effects
+# A <- A.mat(CPgeno) 
+# ### MAKE SURE YOU SET 'MVM=TRUE'
+# ans.A <- mmer2(cbind(color,Yield,FruitAver)~1, random = ~ g(id),
+#               G=list(id=A),MVM=TRUE, data=CPpheno)
+# summary(ans.A)
+
+############################################
+############################################
+############################################
+############################################
+############################################
+############################################
+
+####=========================================####
+####=========================================####
+#### EXAMPLE 6
+#### OVERLAY IN MODELS
+####=========================================####
+####=========================================####
+
+# data(HDdata)
+# head(HDdata)
+# HDdata$female <- as.factor(HDdata$female)
+# HDdata$male <- as.factor(HDdata$male)
+# HDdata$geno <- as.factor(HDdata$geno)
+# #### model using overlay
+# modh <- mmer2(sugar~1, random=~female + and(male) + geno, 
+#               data=HDdata)
+# summary(modh)
+
+####=========================================####
+#### model using overlay [and(.)] 
+#### and covariance structures [g(.)]
+####=========================================####
+# A <- diag(7); A[1,2] <- 0.5; A[2,1] <- 0.5 # fake covariance structure
+# colnames(A) <- as.character(1:7); rownames(A) <- colnames(A);A
+# 
+# modh2 <- mmer2(sugar~1, random=~g(female) + and(g(male)) + geno, 
+#               G=list(female=A, male=A),data=HDdata)
+# summary(modh2)
 
 }

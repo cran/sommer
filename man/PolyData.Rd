@@ -35,72 +35,61 @@ data(PolyData)
 genotypes <- PolyData$PGeno
 phenotypes <- PolyData$PPheno
 
-####=========================================####
-####### convert markers to numeric format
-####=========================================####
-#numo <- atcg1234(data=genotypes, ploidy=4); numo[1:5,1:5]; dim(numo)
-
-####=========================================####
-####### plants with both genotypes and phenotypes
-####=========================================####
-#common <- intersect(phenotypes$Name,rownames(numo))
-
-####=========================================####
-#### get the markers and phenotypes for such inds
-####=========================================####
-#marks <- numo[common,]; marks[1:5,1:5]
-#phenotypes2 <- phenotypes[match(common,phenotypes$Name),];
-#phenotypes2[1:5,1:5]
-
-####=========================================####
-#### response variable
-####=========================================####
-#yy <- phenotypes2$tuber_shape
-#set.seed(1234)
-#ww <- sample(1:187,38)
-#yy.trn <- yy; yy.trn[ww] <- NA
-
-####=========================================####
-####### Additive relationship matrix, specify ploidy
-####=========================================####
-#K1 <- A.mat(marks, ploidy=4); dim(K1);K1[1:5,1:5]
-
-####=========================================####
-#### Incidence matrix for genotypes
-####=========================================####
-#Z1 <- diag(length(yy))
-
-####=========================================####
-#### double check all dimensions
-####=========================================####
-#dim(Z1); dim(K1); length(yy)
-#ETA <- list(add=list(Z=Z1, K=K1)) # random effects for genotypes
-
-####=========================================####
-#### run the genomic selection model
-####=========================================####
-#ans <- mmer(Y=yy.trn, Z=ETA)
-#cor(yy[ww],ans$fitted.y[ww])
-#summary(ans)
-
-####=========================================####
-#### run it as GWAS model
-####=========================================####
-#my.map <- PolyData$map
-#models <- c("additive","1-dom-alt","1-dom-ref","2-dom-alt","2-dom-ref")
-#ans2 <- mmer(Y=yy.trn, Z=ETA, W=marks,  
-#              ploidy=4, models=models[1], map=my.map)
-#summary(ans2)
-
-####=========================================####
-#### compare to GWAS including dominance
-####=========================================####
-#D <- D.mat(marks)
-#E <- E.mat(marks)
-#ETA.AD <- list(add=list(Z=Z1, K=K1),dom=list(Z=Z1, K=D))
-#ans3 <- mmer(Y=yy.trn, Z=ETA.AD, W=marks, 
-#              ploidy=4, models=models[1], map=my.map)
-#summary(ans3)
+# ####=========================================####
+# ####### convert markers to numeric format
+# ####=========================================####
+# numo <- atcg1234(data=genotypes, ploidy=4); numo[1:5,1:5]; dim(numo)
+# 
+# ###=========================================####
+# ###### plants with both genotypes and phenotypes
+# ###=========================================####
+# common <- intersect(phenotypes$Name,rownames(numo))
+# 
+# ###=========================================####
+# ### get the markers and phenotypes for such inds
+# ###=========================================####
+# marks <- numo[common,]; marks[1:5,1:5]
+# phenotypes2 <- phenotypes[match(common,phenotypes$Name),];
+# phenotypes2[1:5,1:5]
+# 
+# ###=========================================####
+# ### response variable
+# ###=========================================####
+# yy.trn <- phenotypes2
+# set.seed(1234)
+# ww <- sample(1:187,38)
+# yy.trn[ww,"tuber_shape"] <- NA
+# 
+# ###=========================================####
+# ###### Additive relationship matrix, specify ploidy
+# ###=========================================####
+# A <- A.mat(marks, ploidy=4); dim(K1);K1[1:5,1:5]
+# D <- D.mat(marks, ploidy=4)
+# E <- E.mat(marks, ploidy=4)
+# ###=========================================####
+# ### run the genomic selection model
+# ###=========================================####
+# ans <- mmer2(tuber_shape~1, random=~g(Name), 
+#              G=list(Name=A), data=yy.trn)
+# cor(phenotypes2[ww,"tuber_shape"],ans$fitted.y[ww])
+# summary(ans)
+# 
+# ###=========================================####
+# ### run it as GWAS model
+# ###=========================================####
+# my.map <- PolyData$map
+# models <- c("additive","1-dom-alt","1-dom-ref","2-dom-alt","2-dom-ref")
+# ans2 <- mmer2(tuber_shape~1, random=~g(Name), models = "additive",
+#              G=list(Name=A), W=marks, data=phenotypes2)
+# summary(ans2)
+# 
+# ###=========================================####
+# ### compare to GWAS including dominance
+# ###=========================================####
+# phenotypes2$Named <- phenotypes2$Name
+# ans3 <- mmer2(tuber_shape~1, random=~g(Name) + g(Named), models = "additive",
+#               G=list(Name=A, Named=D), W=marks, data=phenotypes2)
+# summary(ans3)
 }
 \keyword{datasets}
 \seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

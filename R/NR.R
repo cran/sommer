@@ -845,6 +845,17 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
       sigma[!pos] <- coef[!pos]
       sigma[pos] <- exp(coef[pos])
       
+      ####***********************************
+      ####***********************************
+      ######### modified for sommer 2.7
+      #### the idea is that vc that are negative are set to almost zero
+      #### but negative  to make sure that is refitted
+      if(constraint){
+        sigma[which(sigma<=0)] <- -(1e-6)
+      }
+      ####***********************************
+      ####***********************************
+      
       if(draw){# draw
         ylim <- max(unlist(record), na.rm=TRUE)
         my.palette <- brewer.pal(7,"Accent")

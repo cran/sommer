@@ -44,34 +44,25 @@ pheno$hy <- paste(pheno$dent, pheno$flint, sep=":");head(pheno);dim(pheno)
 ####=========================================####
 #### CREATE A DATA FRAME WITH ALL POSSIBLE HYBRIDS
 ####=========================================####
-#DD <- kronecker(A.dent,A.flint,make.dimnames=TRUE)
+# DD <- kronecker(A.dent,A.flint,make.dimnames=TRUE)
+# hybs <- data.frame(sca=rownames(DD),yield=NA,matter=NA,gcad=NA, gcaf=NA)
+# hybs$yield[match(pheno$hy, hybs$sca)] <- pheno$GY
+# hybs$matter[match(pheno$hy, hybs$sca)] <- pheno$GM
+# hybs$gcad <- as.factor(gsub(":.*","",hybs$sca))
+# hybs$gcaf <- as.factor(gsub(".*:","",hybs$sca))
+# head(hybs)
+####=========================================####
+## RUN THE PREDICTION MODEL
+####=========================================####
+# y.trn <- hybs
+# vv1 <- which(!is.na(hybs$yield))
+# vv2 <- sample(vv1, 100)
+# y.trn[vv2,"yield"] <- NA
+# anss2 <- mmer2(yield~1, random=~g(gcad) + g(gcaf), G=list(gcad=A.dent, gcaf=A.flint), 
+#                method="EM", data=y.trn) 
+# summary(anss2)
+# cor(anss2$fitted.y[vv2], hybs$yield[vv2])
 
-#hybs <- data.frame(sca=rownames(DD),yield=NA,matter=NA,gcad=NA, gcaf=NA)
-#hybs$yield[match(pheno$hy, hybs$sca)] <- pheno$GY
-#hybs$matter[match(pheno$hy, hybs$sca)] <- pheno$GM
-#hybs$gcad <- as.factor(gsub(":.*","",hybs$sca))
-#hybs$gcaf <- as.factor(gsub(".*:","",hybs$sca))
-#head(hybs)
-#dim(hybs)
-
-####=========================================####
-#### CREATE INCIDENCE MATRICES AND SORT
-####=========================================####
-#Z1 <- model.matrix(~gcad-1, data=hybs); dim(Z1)
-#Z2 <- model.matrix(~gcaf-1, data=hybs); dim(Z2)
-#Z3 <- model.matrix(~sca-1, data=hybs); dim(Z3) #only full model
-#colnames(Z1) <- levels(hybs$gcad)
-#colnames(Z2) <- levels(hybs$gcaf)
-#colnames(Z3) <- levels(hybs$sca)
-#A.dent <- A.dent[colnames(Z1),colnames(Z1)]
-#A.flint <- A.flint[colnames(Z2),colnames(Z2)]
-#DD <- DD[colnames(Z3),colnames(Z3)]
-####=========================================####
-#### RUN THE PREDICTION MODEL
-####=========================================####
-#ETA2 <- list(GCA1=list(Z=Z1, K=A.dent), GCA2=list(Z=Z2, K=A.flint)) 
-#anss2 <- mmer(Y=hybs$yield, Z=ETA2) 
-#summary(anss2)
 #### try EM algorithm as well if only 2 variance components
 #### you can try adding SCA effects by adding SCA=list(Z=Z3, K=DD)
 #### to the random effects but will slow down the model a lot
@@ -96,41 +87,26 @@ pheno$hy <- paste(pheno$dent, pheno$flint, sep=":");head(pheno);dim(pheno)
 #### GWAS in single cross hybrids
 ####=========================================####
 ####=========================================####
-data(Technow_data)
-
-####=========================================####
-#### RUN THE PREDICTION MODEL
-####=========================================####
-A.flint <- Technow_data$AF # Additive relationship matrix Flint
-A.dent <- Technow_data$AD # Additive relationship matrix Dent
-
-pheno <- Technow_data$pheno # phenotypes for 1254 single cross hybrids
-pheno$hy <- paste(pheno$dent, pheno$flint, sep=":");head(pheno);dim(pheno) 
-
-#DD <- kronecker(A.dent,A.flint,make.dimnames=TRUE)
-#hybs <- data.frame(sca=rownames(DD),yield=NA,matter=NA,gcad=NA, gcaf=NA)
-#hybs$yield[match(pheno$hy, hybs$sca)] <- pheno$GY
-#hybs$matter[match(pheno$hy, hybs$sca)] <- pheno$GM
-#hybs$gcad <- as.factor(gsub(":.*","",hybs$sca))
-#hybs$gcaf <- as.factor(gsub(".*:","",hybs$sca))
-#head(hybs)
-####=========================================####
-#### Get BLUPs for parental lines
-####=========================================####
-#mix3 <- mmer2(matter~1, random=~gcad + gcaf, method="EM", data=hybs)
-#matterBLUP <- rbind(mix3$u.hat$gcad, mix3$u.hat$gcaf) 
-####=========================================####
-#### RUN GWAS combining markers
-####=========================================####
-#M.dent <- Technow_data$MD # Marker matrix Dent
-#M.flint <- Technow_data$MF # Marker matrix Flint
-#Mall <- rbind(M.dent,M.flint)
-
-#AA <- A.mat(Mall) # Additive relationship matrix
-#ZZ <- diag(dim(AA)[1]) # incidence matrix
-#ETA <- list(sc=list(Z=ZZ, K=AA)) # Random component 
-#mix4 <- mmer(Y=as.matrix(matterBLUP), Z=ETA, W=Mall) # mixed model
-#summary(mix4)
+# data(Technow_data)
+# pheno <- Technow_data$pheno # phenotypes for 1254 single cross hybrids
+# pheno$hy <- paste(pheno$dent, pheno$flint, sep=":");head(pheno);dim(pheno) 
+# pheno$dent <- as.factor(pheno$dent)
+# pheno$flint <- as.factor(pheno$flint)
+# ###=========================================####
+# ### RUN GWAS combining markers
+# ###=========================================####
+# M.dent <- Technow_data$MD # Marker matrix Dent
+# M.flint <- Technow_data$MF # Marker matrix Flint
+# Mall <- rbind(M.dent,M.flint); dim(Mall)
+# Adf <- A.mat(Mall) # Additive relationship matrix
+# # marker matrix for GWAS is the cbind of dent and flint, 
+# # parental genomes analyzed by separate but in same framework
+# MGF <- cbind(M.dent[pheno$dent,],M.flint[pheno$flint,]); dim(MGF) 
+# 
+# mox <- mmer2(GY~1, random=~g(dent) + and(g(flint)), 
+#              G=list(dent=Adf, flint=Adf), method="EM",
+#              W=MGF, data=pheno)
+# summary(mox)
 
 }
 \keyword{datasets}

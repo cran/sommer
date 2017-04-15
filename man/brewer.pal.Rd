@@ -7,7 +7,16 @@
 \arguments{
   \item{n}{Number of different colors in the palette, minimum 3, maximum depending on palette.}
 
-  \item{name}{A palette name from the lists below.}
+  \item{name}{A palette name from the lists below:
+  Accent 8
+Dark2 8
+Paired 12
+Pastel1 9
+Pastel2 8
+Set1 9
+Set2 8
+Set3 12
+  }
 }
 \value{
   A vector of colors.

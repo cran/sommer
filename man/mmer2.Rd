@@ -3,13 +3,13 @@
 \title{Mixed Model Equations in R v2}
 \description{
 
-This function solves univariate and multivariate linear mixed models by likelihood methods. It has been \strong{implemented to work with a data frame} which will create the incidence and variance covariance matrices for each random effect. Currently 4 optimization \strong{methods} are supported; \strong{efficient mixed model association (EMMA)} (Kang et al. 2008), \strong{average information (AI)} (Gilmour et al. 1995; Lee et al. 2015), \strong{expectation maximization (EM)} (Searle 1993; Bernardo 2010), and the default \strong{Newton-Raphson (NR)} (Tunnicliffe 1989). All algorithms are able to deal with multiple variance components. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices. Covariance structures for the residual component is currently supported only for univariate Newton Raphson. The package provides flexibility to fit other genetic models such as full and half diallel models as well (see the \code{\link{hdm}} function). The core algorithms in our mixed model solver are the Newton-Raphson and Direct Average Information (Lee et al. 2015) which surpasses in performance the MME-based Average Information (Gilmour et al. 1995) when dense covariance structures are present (GBLUP and GWAS case). When these matrices are sparse (\strong{when no covariance structures}), the MME-based is more effective and we recommend the user to \strong{swith to use the lme4} package. \strong{rrBLUP results can be recreated using the EMMA method. Keep in mind that such method is limited to a single random effect}.
+This function solves univariate and multivariate linear mixed models by likelihood methods. It has been \strong{implemented to work with a data frame in a formula-based fashion} which will create the incidence and variance covariance matrices for the user and call the \code{\link{mmer}} function in the background. Currently 4 optimization \strong{methods} are supported; \strong{efficient mixed model association (EMMA)} (Kang et al. 2008), \strong{Direct-Inversion Average Information (AI)} (Gilmour et al. 1995; Lee et al. 2015), \strong{expectation maximization (EM)} (Searle 1993; Bernardo 2010), and the default \strong{Direct-Inversion Newton-Raphson (NR)} (Tunnicliffe 1989). All algorithms are able to deal with multiple variance components. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices. The package provides flexibility to fit other genetic models such as full and half diallel models as well (see how to use the \code{\link{and}} functionality). The core algorithms in sommer based in Direct-Inversion surpasses in performance the MME-based only when dense covariance structures are present (GBLUP and GWAS case). When these matrices are sparse (meaning \strong{when dense covariance structures don't exist}), the MME-based algorithms are faster and we recommend the user to \strong{swith to use the lme4 or asreml} packages. \strong{rrBLUP results can be recreated using the EMMA method. Keep in mind that such method is limited to a single random effect}.
 
-Finally, feel free to get in touch with me if you have any \strong{questions, bug reports and suggestions} at: covarrubiasp@wisc.edu
+Finally, feel free to get in touch with me if you have any \strong{questions, bug reports and suggestions} at: cova_ruber@live.com.mx
 
-\strong{For a short tutorial} of how to perform different genetic analysis with sommer please type:
+\strong{For a short tutorial} of how to perform different genetic analysis with sommer please \strong{type}:
 
-vignette("sommer")
+\strong{vignette("sommer")}
 
 }
 \usage{
@@ -17,21 +17,44 @@ mmer2(fixed, random, data, G=NULL, W=NULL, method="NR", REML=TRUE,
       MVM=FALSE, iters=20, draw=FALSE, init=NULL, family=gaussian, 
       silent=FALSE, constraint=TRUE, sherman=FALSE, EIGEND=FALSE,
       forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, min.n=FALSE,
-      gwas.plots=TRUE,n.cores=1,tolpar = 1e-06,tolparinv = 1e-06, IMP=TRUE)
+      gwas.plots=TRUE,n.cores=1,tolpar = 1e-06,tolparinv = 1e-06, IMP=TRUE,
+      n.PC=0, P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05)
 }
 \arguments{
-  \item{fixed}{a formula specifying the \strong{response} variable(s) \strong{and fixed effects}, i.e. Yield ~ Location for \strong{univariate} models, or cbind(color,Yield) ~ Location for \strong{multivariate} models or univariate in parallel. For running multivariate the \strong{'MVM' argument} needs to be set to TRUE.}
-  \item{random}{a formula specifying the name of the \strong{random effects}, i.e. random= ~ genotype + year. }
+  \item{fixed}{a formula specifying the \strong{response} variable(s) \strong{and fixed effects}, i.e. Yield ~ Location for \strong{univariate} models, or cbind(color,Yield) ~ Location for \strong{multivariate} models \strong{or univariate in parallel}. For running multivariate the \strong{'MVM' argument} needs to be set to TRUE.}
+  \item{random}{a formula specifying the name of the \strong{random effects}, i.e. random= ~ genotype + year.
+  
+  Useful functions can be used to fit heterogeneous variances and others:
+  
+  \strong{at(.)}   can be used to specify heterogeneous variance, i.e. random=~at(Location,c("3","4")):ID
+  
+  \strong{diag(.)}   can be used to specify a diagonal variance structure, i.e. random=~diag(Location):ID
+  
+  \strong{us(.)}   can be used to specify a unstructured variance, i.e. random=~us(Location):ID
+  
+  \strong{and(.)}   can be used to specify overlay of matrices, i.e. random=~male + and(female)
+  
+  \strong{g(.)}   can be used to specify that a covariance structure for the random effect should be included, i.e. random=~g(male), random=~ g(female) + and(g(male)), etc.
+  
+  }
   \item{data}{a data frame containing the variables specified in the formulas for response, fixed, and random effects.}
-  \item{G}{a list containing the \strong{variance-covariance matrices for the random effects}, i.e. G=list(genotype=M1, year=M2), where M1 and M2 are the variance-covariance matrices. if not passed is assumed an identity matrix.}
+  \item{G}{a list containing the \strong{variance-covariance matrices for the random effects}, i.e. if the user specifies: 
+  
+  random=~ g(genotype) + g(year)
+  
+  then the G argument should be used as:  
+  
+  G=list(genotype=M1, year=M2) 
+  
+  where M1 and M2 are the variance-covariance matrices for random effects 'genotype' and 'year' respectively.}
     \item{W}{an incidence matrix for extra fixed effects and \strong{only to be used if GWAS is pursued} to fit a model of the form \deqn{y = X \beta + Z g + W \tau + \varepsilon} Markers will be treated as fixed effects according to Yu et al. (2006) \strong{for diploids}, and Rosyara et al (2016) \strong{for polyploids}. For details about the methods please go to the Details section. The dashed line in the Manhattan plots corresponds to an FDR rate of 0.05 and is calculated using the p.adjust function included in the stats package.}
-  \item{method}{this refers to the method or algorithm to be used for estimating variance components. The package currently is supported by 4 algorithms; \strong{EMMA} efficient mixed model association (Kang et al. 2008), \strong{AI} average information (Gilmour et al. 1995; Lee et al. 2015), \strong{EM} expectation maximization (Searle 1993; Bernardo 2010), and the default Newton-Raphson \strong{NR} (Tunnicliffe 1989).}
+  \item{method}{this refers to the method or algorithm to be used for estimating variance components. The package currently is supported by 4 algorithms; \strong{EMMA} efficient mixed model association (Kang et al. 2008), \strong{AI} Direct-inversion average information (Gilmour et al. 1995; Lee et al. 2015), \strong{EM} expectation maximization (Searle 1993; Bernardo 2010), and the default Direct-inversion Newton-Raphson \strong{NR} (Tunnicliffe 1989).}
   \item{REML}{a TRUE/FALSE value indicating if restricted maximum likelihood should be used instead of ML. The default is TRUE.}
   \item{MVM}{a TRUE/FALSE value \strong{indicating if the model should be run as multivariate} or as parallel univariate models. the default is FALSE which will indicate to run parallel univariate models. The 'n.cores' argument decides how many cores use in such parallelization. MVM=TRUE will run a multivariate model but only for a single random effect.}
   \item{iters}{a scalar value indicating \strong{how many iterations} have to be performed if the optimization algorithms. There is no rule of tumb for the number of iterations but less than8 is usually enough. The default value is 20 iterations but usually will take less than that stopping before reaching the maximum number of iterations.}
   \item{draw}{a TRUE/FALSE value indicating if a plot of \strong{updated values for the variance components} and the log-likelihood \strong{should be drawn or not} during the optimization process. The default is FALSE. It's been set to FALSE because is less the computation time when the computer doesn't have to draw plots.}
   \item{init}{an vector of initial values for the EM, NR or AI algorithms. If not provided the program uses a starting values the variance(y)/#random.eff which are usually good starting values.}
- \item{family}{a family object to specify the distribution of the response variable. For details see \code{\link{family}} help page. The argument would look something like this; family=poisson(), or family=Gamma(), etc. For more sophisticated models please look at lme4 package from Douglas Bates. \strong{NOT IMPLEMENTED YET}. Planned for ~ v2.5}
+ \item{family}{a family object to specify the distribution of the response variable. For details see \code{\link{family}} help page. The argument would look something like this; family=poisson(), or family=Gamma(), etc. For more sophisticated models please look at lme4 package from Douglas Bates. \strong{NOT IMPLEMENTED YET}.}
 \item{silent}{a TRUE/FALSE value indicating if the function should or shouldn't draw the \strong{progress bar}. The default is FALSE, which means is not silent and will display the progress bar.}
       \item{constraint}{a TRUE/FALSE value indicating if the program should use the \strong{boundary constraint} when one or more variance component is close to the zero boundary. The default is TRUE but needs to be used carefully. It works ideally when few variance components are close to the boundary but when there are too many variance components close to zero we highly recommend setting this parameter to FALSE since is more likely to get the right value of the variance components in this way.}
       \item{sherman}{a TRUE/FALSE value indicating if Sherman-Morrison-Woodbury formula (Seber, 2003, p. 467) should be used when estimating variance components.}
@@ -39,16 +62,21 @@ mmer2(fixed, random, data, G=NULL, W=NULL, method="NR", REML=TRUE,
       1) can only be applied to one relationship matrix
       2) The system needs to be squared and no missing data is allowed (then missing data is imputed with the median).
    The default is FALSE to avoid the user get into trouble but experimented users can take advantage from this feature to fit big models, i.e. 5000 individuals in 555 seconds = 9 minutes in a MacBook 4GB RAM.}
-    \item{forced}{a vector (univariate models) or list (multivariate models) of numeric values for variance components including error if the user wants to \strong{force the values of the variance components}. On the meantime only works for forcing all of them and not a subset of them. The default is NULL, meaning that variance components will be estimated by REML/ML.}
+    \item{forced}{a vector (univariate models) or list of matrices (multivariate models) of numeric values for (co)variance components including error if the user wants to \strong{force the values of the variance components}. On the meantime only works for forcing all of them and not a subset of them. The default is NULL, meaning that variance components will be estimated by REML/ML.}
       \item{map}{a data frame with 2 columns, 'Chrom', and 'Locus' to \strong{create a nice manhattan plot when performing GWAS}. The map does not need to have same dimensions that the marker matrix. The function will look for markers in common among the W matrix and the map provided. Although, the association tests are performed for all markers, only the markers in common will be plotted.}
       \item{fdr.level}{a level of \strong{false discovery rate} to calculate and plot the line in the GWAS plot. Default is fdr.level=0.05. If there's not a single significant marker nothing is returned.}
-      \item{manh.col}{a vector with \strong{colors desired for the manhattan plot}. Default are cadetblue and red alternated for each chromosome.}
+      \item{manh.col}{a vector with \strong{colors desired for the manhattan plot}. Default are cadetblue and red alternated for each chromosome. A function for drawing manhattan plots is available(\code{\link{manhattan}}).}
     \item{min.n}{a TRUE/FALSE statement indicating if the constraint of number of levels of each grouping factor must be < number of observations. This is a constrained usually find in lme4 and has been added and set to TRUE but can be set to FALSE when only one measure per plant is available and the user wants to perform GWAS or genomic selection with limited data.}
-    \item{gwas.plots}{a TRUE/FALSE statement indicating if the \strong{manhattan and qq plot should be drawn or not}. The default is TRUE but you may want to avoid it.}
-      \item{n.cores}{number of cores to use when the user passes multiple responses in the model for a faster execution. The default is 1. It relies on forking and hence is \strong{not available on Windows} unless mc.cores = 1.}
+    \item{gwas.plots}{a TRUE/FALSE statement indicating if the \strong{manhattan and qq plot should be drawn or not}. The default is TRUE but you may want to avoid it. A function for drawing manhattan plots is available(\code{\link{manhattan}}).}
+      \item{n.cores}{number of cores to use when the user passes multiple responses in the model for a faster execution. The default is 1. It relies on forking and hence is \strong{not available on Windows} unless mc.cores = 1. Only useful for univariate models. For multivariate models operations cannot be parallelized.}
     \item{tolpar}{tolerance parameter for convergence in the multivariate models.}
     \item{tolparinv}{tolerance parameter for matrix inverse in the multivariate models.}
-    \item{IMP}{a TRUE/FALSE statement if the function should impute the Y matrix/dataframe with the median value or should get rid of missing values for the estimation of variance components. Only for multivariate mixed models.}
+    \item{IMP}{a TRUE/FALSE statement if the function should impute the Y matrix/dataframe of responses with the median value or should ignore rows with missing values for the estimation of variance-covariance components. Only for multivariate mixed models, not used in univariate.}
+    \item{n.PC}{when the user performs GWAS this refers to the number of principal components to include as fixed effects for Q + K model. Default is 0 (equals K model). See Details section.}
+  \item{P3D}{when the user performs GWAS, P3D=TRUE means that the variance components are estimated by REML only once, without any markers in the model. When P3D=FALSE, variance components are estimated by REML for each marker separately. The default is the first case. See Details section.}
+    \item{models}{\strong{The model to be used in GWAS based on ploidy}. The default is the additive model which applies for diploids and polyploids but the model can be a vector with all possible models, i.e. "additive","1-dom-alt","1-dom-ref","2-dom-alt","2-dom-ref" models are supported for polyploids based on Rosyara (2016). See Details section.}
+      \item{ploidy}{A numeric value indicating the ploidy level of the organism to be used in GWAS for creating the incidence matrices when doing the marker tests. The default is 2 which means diploid, but higher ploidy levels are supported. This \strong{is only relevant if you are performing GWAS in polyploids}.}
+  \item{min.MAF}{when the user performs GWAS min.MAF is a scalar value between 0-1 indicating what is theminor allele frequency to be allowed for a marker provided in the argument "W". In general is known that results for markers with alleles with MAF < 0.05 are not reliable unless sample size is big enough. Markers below this value will be ignored.}
     
 }
 \details{
@@ -225,12 +253,10 @@ rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 #ans$var.comp
 #summary(ans)
 
-####=========================================####
-#### please remember THIS FUNCTION IS LIMITED since the matrices for random 
-#### effects are built based on a dataframe provided, for more general models 
-#### including the genomic analysis please use the 'mmer' function which 
-#### works directly with matrices and is more flexible
-####=========================================####
+#### you can specify heterogeneus variances
+# ans <- mmer2(fixed=Yield ~ 1, random = ~ GCA2 + at(Location):GCA2, 
+# data=hybrid2)
+# summary(ans)
 
 ########################################################
 ########################################################
@@ -239,8 +265,32 @@ rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 ########################################################
 ########################################################
 
+####=========================================####
 ####=========================================####
 #### EXAMPLE 2
+#### breeding values for 1 variance component
+#### with variance covariance structure
+####=========================================####
+####=========================================####
+data(CPdata)
+CPpheno <- CPdata$pheno
+CPgeno <- CPdata$geno
+#### create the variance-covariance matrix 
+A <- A.mat(CPgeno)
+#### look at the data and fit the model
+head(CPpheno)
+mix1 <- mmer2(Yield~1,random=~g(id), G=list(id=A), data=CPpheno)
+summary(mix1)
+
+########################################################
+########################################################
+########################################################
+########################################################
+########################################################
+########################################################
+
+####=========================================####
+#### EXAMPLE 3
 #### comparison with lmer, install 'lme4' 
 #### and run the code below
 ####=========================================####
@@ -265,6 +315,12 @@ rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 #vv=which(abs(out$u.hat[[3]]) > 0)
 #plot(out$u.hat[[3]][vv,], ranef(fm1)$SCA[,1])
 
+#### a more complex model specifying which locations
+#out2 <- mmer2(Yield ~ 1, random = ~ at(Location,c("3","4")):GCA2 
+#        + at(Location,c("3","4")):SCA,
+#        data=hybrid2)
+#summary(out2)
+
 ########################################################
 ########################################################
 ########################################################
@@ -273,7 +329,7 @@ rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 ########################################################
 
 ####=========================================####
-#### EXAMPLE 3
+#### EXAMPLE 4
 #### comparison with lmer, install 'lme4' 
 #### and run the code below
 ####=========================================####
@@ -289,6 +345,11 @@ rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 # plot(out$cond.residuals, residuals(fm1))
 # plot(out$u.hat[[1]], ranef(fm1)[[1]][,1])
 
+### specific variances for Subjects at Days
+# sleepstudy$Days <- as.factor(sleepstudy$Days)
+# out <- mmer2(Reaction ~ 1, random = ~ Subject + at(Days):Subject, 
+#              data=sleepstudy)
+# summary(out)
 ########################################################
 ########################################################
 ########################################################
@@ -297,7 +358,7 @@ rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 ########################################################
 
 ####=========================================####
-#### EXAMPLE 4
+#### EXAMPLE 5
 #### Multivariate model example
 ####=========================================####
 
@@ -317,4 +378,34 @@ rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 # (gen.cor <- gvc/prod.sd)
 # #### pods and seeds have a strong negative genetic covariance (-.79)
 # #### more pods, less seeds
+
+########################################################
+########################################################
+########################################################
+########################################################
+########################################################
+########################################################
+
+####=========================================####
+#### EXAMPLE 6
+#### More on modeling
+####=========================================####
+
+# library(lme4)
+# data(sleepstudy)
+# head(sleepstudy)
+# # try lme4
+# (fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy))
+# summary(fm1)
+# # try sommer
+# out <- mmer2(Reaction ~ Days, random = ~ Subject + at(Days):Subject, data=sleepstudy)
+# summary(out)
+# plot(out$cond.residuals, residuals(fm1))
+# plot(out$u.hat$Subject, ranef(fm1)[[1]][,1])
+# # now consider Days as factor by creating a new indicator variable
+# sleepstudy$Days2 <- as.factor(sleepstudy$Days) 
+# out2 <- mmer2(Reaction ~ Days, random = ~ Subject + at(Days2):Subject, data=sleepstudy)
+# summary(out2)
+# plot(out2$cond.residuals, residuals(fm1))
+# plot(out2$u.hat$Subject, ranef(fm1)[[1]][,1])
 }

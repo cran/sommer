@@ -3,7 +3,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, i
   gss=TRUE
   diso <- dim(as.data.frame(Y))[2]
   if(method=="AI"){
-    cat(paste("Please consider using the 'NR'(more stable) algorithm instead of 'AI'\n"))
+    cat(paste("Please consider using the 'NR'(more stable and same time consumption) algorithm instead of 'AI'\n"))
   }
   ## control for 2-level list structure
   if(!is.list(Z)){
@@ -21,7 +21,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, i
   }
   
   my.year <- 2017
-  my.month <- 4 #version of the month
+  my.month <- 7 #version of the month
   
   datee <- Sys.Date()
   year.mo.day <- as.numeric(strsplit(as.character(datee),"-")[[1]])# <- as.numeric(strsplit(gsub("....-","",datee),"-")[[1]])
@@ -260,7 +260,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, i
   cat("\nInformation contained in this fitted model: \n* Variance components, Residuals, Fitted values\n* BLUEs and BLUPs, Inverse phenotypic variance(V)\n* Variance-covariance matrix for fixed & random effects\n* Predicted error variance (PEV), LogLikelihood\nUse the '$' symbol to access such information\n")
   cat("=======================================================")
   cat("\nLinear mixed model fit by restricted maximum likelihood\n")
-  cat("********************  sommer 2.6  *********************\n")
+  cat("********************  sommer 2.7  *********************\n")
   cat("=======================================================")
   cat("\nMethod:")
   print(x$method)
@@ -350,7 +350,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, i
   cat("Information contained in this structure: \n* Individual results for each response model\nDisplayed: \n* AIC, BIC and Variance component summaries\nUse the '$' sign to access individual models\n")
   cat("=======================================================")
   cat("\nLinear mixed model fit by restricted maximum likelihood\n")
-  cat("********************  sommer 2.6  *********************\n")
+  cat("********************  sommer 2.7  *********************\n")
   cat("=======================================================")
   cat("\nMethod:")
   print(x$method)
@@ -486,7 +486,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, i
   cat("Information contained in this structure: \n* Results for a multi response model\nDisplayed: \n* Variance-covariance component summaries\nUse the '$' sign to access parameters\n")
   cat("=======================================================")
   cat("\n    Multivariate Linear Mixed Model fit by REML    \n")
-  cat("********************  sommer 2.6  *********************\n")
+  cat("********************  sommer 2.7  *********************\n")
   cat("=======================================================")
   cat("\nMethod:")
   print((x$method))
@@ -814,7 +814,7 @@ plot.MMERM <- function(x, ...) {
     stop("This package requires R 2.1 or later")
   assign(".sommer.home", file.path(library, pkg),
          pos=match("package:sommer", search()))
-  sommer.version = "2.6 (2017-03-01)"
+  sommer.version = "2.7 (2017-05-01)"
   
   ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ### check which version is more recent

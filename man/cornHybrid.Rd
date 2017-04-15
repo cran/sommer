@@ -94,7 +94,7 @@ ETA <- list(GCA1=list(Z=Z1, K=K1),
 #S <- kronecker(K1, K2) ; dim(S)   
 #rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 
-#ans <- mmer2(Yield ~ Location, random = ~ GCA1 + GCA2 + SCA, 
+#ans <- mmer2(Yield ~ Location, random = ~ g(GCA1) + g(GCA2) + g(SCA), 
 #       G=list(GCA1=K1, GCA2=K2, SCA=S),data=hybrid2)
 #summary(ans)
 
@@ -126,7 +126,7 @@ ETA <- list(GCA1=list(Z=Z1, K=K1),
 # rownames(GA) <- colnames(GA); GA[1:4,1:4];
 # 
 # # fit the model
-# ans <- mmer2(Yield ~ Location, random = ~ GCA2 + GCA2.LOC, 
+# ans <- mmer2(Yield ~ Location, random = ~ g(GCA2) + g(GCA2.LOC), 
 #              G=list(GCA2=K2, GCA2.LOC=GA),data=hybrid2)
 # summary(ans)
 
@@ -155,7 +155,7 @@ ETA <- list(GCA1=list(Z=Z1, K=K1),
 # S <- kronecker(K1, K2) ; dim(S)   
 # rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 # 
-# ans <- mmer2(cbind(TY,PH) ~ Location, random = ~ GCA2 + SCA, 
+# ans <- mmer2(cbind(TY,PH) ~ Location, random = ~ g(GCA2) + g(SCA), 
 #       G=list(GCA2=K2, SCA=S),data=hybrid2, MVM=TRUE)
 # summary(ans)
 
