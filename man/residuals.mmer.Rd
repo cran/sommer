@@ -15,6 +15,6 @@
   vector of residuals
  }
 \author{Giovanny Covarrubias \email{covarrubiasp@wisc.edu}}
-\seealso{\code{\link{residuals}}, \code{\link{mmer}}}
+\seealso{\code{\link{residuals}}, \code{\link{mmer}}, and \code{\link{mmer2}}}
 \keyword{models}
 

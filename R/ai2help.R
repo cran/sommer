@@ -1,5 +1,7 @@
 ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=50, constraint=TRUE, init=NULL, sherman=FALSE, che=FALSE, EIGEND=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL){
   
+  #print(str(init))
+  
   if(EIGEND){
     DISO <- dim(ZETA[[1]]$Z)
     if(DISO[1] != DISO[2]){
@@ -11,7 +13,7 @@ ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=F
   
   y.or <- y
   x.or <- X
-  pushess <- rep(0,length(ZETA)+1)
+  pushess <- (rep(0,length(ZETA)+length(R)))
   ### make full function
   '%!in%' <- function(x,y)!('%in%'(x,y))
   make.full <- function(X) {
@@ -77,7 +79,7 @@ ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=F
     ############################################
     ## if K matrices are not present in ZETA
     # add an identity matrix to all effects in ETA that did not provide a var-cov matrix
-    if(is.null(R)){R <- diag(length(y))} # dim(x[[1]])[2]
+    if(is.null(R)){R <- list(units=diag(length(y)))} # dim(x[[1]])[2]
     
     if(che){ # if needs to be checked, else just skip
       ZETA <- lapply(ZETA, function(x){
@@ -99,22 +101,23 @@ ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=F
     #######################################################
     ## order random effects according to degrees of freedom
     tokeep <- names(ZETA)
-    df <- unlist(lapply(ZETA, function(x){dim(x[[1]])[2]}))
-    df2 <- sort(df, decreasing = FALSE)
-    df.ord <- numeric() # # 
-    for(u in 1:length(df)){
-      df.ord[u] <- which(df2 %in% df[u])[1]
-      df2[df.ord[u]] <- NA
-    }
-    ZETA <- ZETA[df.ord]
-    names(ZETA) <- tokeep[df.ord]
-    if(!is.null(init)){init <- init[c(df.ord, (length(init)))]}
-    if(!is.null(forced)){forced <- forced[c(df.ord, (length(forced)))]}
+#     df <- unlist(lapply(ZETA, function(x){dim(x[[1]])[2]}))
+#     df2 <- sort(df, decreasing = FALSE)
+#     df.ord <- numeric() # # 
+#     for(u in 1:length(df)){
+#       df.ord[u] <- which(df2 %in% df[u])[1]
+#       df2[df.ord[u]] <- NA
+#     }
+#     ZETA <- ZETA[df.ord]
+#     names(ZETA) <- tokeep[df.ord]
+#     if(!is.null(init)){init <- init[c(df.ord, (length(init)))]}
+#     if(!is.null(forced)){forced <- forced[c(df.ord, (length(forced)))]}
     #####################################################
     ## to use later for fitted values
     x.or <- as.matrix(xm)
     zeta.or <- ZETA
     zeta.or  <- lapply(zeta.or , function(x){lapply(x, as.matrix)}) # put back everything as matrices again
+    R.or <- R
     ##
     if((length(ZETA)==1) & (dim(ZETA[[1]][[1]])[2] == dim(ZETA[[1]][[2]])[2]) & (EIGEND)){
       misso <- which(is.na(y))
@@ -123,6 +126,7 @@ ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=F
       }
     }
     ZETA2 <- ZETA; y2 <- y ; good <- which(!is.na(y)) # make a copy and identify no missing data
+    R2 <- R
     #ZETA <- lapply(ZETA2, function(x,good){x[[1]] <- x[[1]][good,]; x[[2]]<- x[[2]]; return(x)}, good=good)
     if(length(ZETA)==1 & EIGEND==TRUE & (dim(ZETA[[1]][[1]])[2] == dim(ZETA[[1]][[2]])[2])){
       
@@ -134,15 +138,17 @@ ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=F
           x[[1]] <- x[[1]][good,]; x[[2]]<- x[[2]]
           return(x)
         }}, good=good)
+      R <- lapply(R2, function(x,good){x <- x[good,good]; return(x)}, good=good)
     }else{
       ZETA <- lapply(ZETA2, function(x,good){x[[1]] <- x[[1]][good,]; x[[2]]<- x[[2]]; return(x)}, good=good)
+      R <- lapply(R2, function(x,good){x <- x[good,good]; return(x)}, good=good)
     }
     ################
     y <- y[good]
     ZETA <- lapply(ZETA, function(x){lapply(x, as.matrix)}) # put back everything as matrices again
     xm <- as.matrix(xm[good,])
     txm <- t(xm)
-    R <- R[good,good]
+    #R <- R[good,good]
     ###########################
     #### BECOME SPARSE
     #R=as(R,Class="sparseMatrix")
@@ -172,7 +178,9 @@ ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=F
     for (k in zvar) {
       om[[k]] <- tcrossprod(ZETA2[[k]][[1]], ZETA2[[k]][[1]] %*% (ZETA2[[k]][[2]]) ) 
     }
-    om[[length(om)+1]] <- as(diag(length(y)),Class="sparseMatrix") 
+    for(k1 in 1:length(R)){ # change
+      om[[k1 + length(zvar)]] <- as(R[[k1]],Class="sparseMatrix") 
+    }
     #######################
     ## Initial values
     if(length(ZETA)==1 & EIGEND==TRUE & (dim(ZETA[[1]][[1]])[2] == dim(ZETA[[1]][[2]])[2])){
@@ -182,8 +190,9 @@ ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=F
     }
     var.y <- var(y, na.rm=TRUE)
     yv <- scale(y)
-    nvarcom <- length(ZETA) + 1
+    nvarcom <- length(ZETA)  + length(R)
     base.var <- var(yv, na.rm = TRUE)/nvarcom
+    #print(init)
     ### EIGEND requires very small initial var.comp compared to regular models
     if(length(ZETA)==1 & EIGEND==TRUE & (dim(ZETA[[1]][[1]])[1] == dim(ZETA[[1]][[2]])[2])){
       if(is.null(init)){var.com <- c(rep(.0001, nvarcom))}else{var.com <- init/var.y} # at the end error variance
@@ -191,6 +200,10 @@ ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=F
     }else{
       if(is.null(init)){var.com <- c(rep(.01, nvarcom))}else{var.com <- init/var.y} # at the end error variance
     }
+    #var.y
+#     print(nvarcom)
+#     print(var.com)
+#     print(init)
     weird=FALSE
     tn = length(yv)
     logL2=-10000000 # initial log-likelihood
@@ -201,18 +214,26 @@ ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=F
     #var.com <- rep(var(yy2, na.rm = TRUE)/nvarcom, nvarcom) ### NEW at the end error variance
     ##################
     if(is.null(names(ZETA))){
-      varosss <- c(paste("u.",df.ord, sep=""))
+      varosss <- c(paste("u.",1:length(ZETA), sep=""))
     }else{
       varosss <- c(names(ZETA))
     }
+    ### ADDITION FOR sommer 2.8
+    if(is.null(names(R))){
+      varosss <- c(varosss,paste("Res.",1:length(R),sep=""))
+    }else{
+      varosss <- c(varosss,names(R))
+    }
+    ##################
+    
     lege2 <- list()
     for(k in 1:length(var.com)){ # 
       gh1 <- varosss[k]
-      if(k == length(var.com)){
-        lege2[[k]] <- paste("Var(Residual):")
-      }else{
+#       if(k == length(var.com)){
+#         lege2[[k]] <- paste("Var(Residual):")
+#       }else{
         lege2[[k]] <- paste("Var(",gh1,"):",sep="")
-      }
+    #  }
     }
     ##################
     ## initialize the progress bar
@@ -242,6 +263,12 @@ ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=F
     }; #print(nmbb)
     #########################################################################################################
     
+#     print(str(var.com))
+#     print(str(varosss))
+#     print(str(ZETA))
+#     print(str(xm))
+#     print(str(R))
+    
     ups <- numeric()
     if(is.null(forced)){ # &&&&&&&&&&&&&&&& IF NOT FORCED &&&&&&&&&&&&&&&&&
       #print(is.null(tZsp))
@@ -256,13 +283,21 @@ ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=F
         ### ----------------------------------------------------------------- ###
         ### ----------------------------------------------------------------- ###
         varo <- as.list(var.com)  # variance components as list, no error included
+        #print(varo)
         Gspo <- lapply(as.list(c(1:length(ZETA))),function(x,K,v){
           oo=K[[x]]*as.numeric((v[[x]])); return(oo)
         }, K=Gs, v=varo) ## K*v(u)
         Gsp <- as(do.call("adiag1", Gspo),Class="sparseMatrix") # G as diagonal
-        Rsp <- as(R*as.numeric(var.com[length(var.com)]),Class="sparseMatrix") # R matrix
+        #Rsp <- as(R*as.numeric(var.com[length(var.com)]),Class="sparseMatrix") # R matrix
         varo <- NULL
         Gspo <- NULL
+        
+        Rsp <- R[[1]] * as.numeric(var.com[1 + length(zvar)]) # change
+        if(length(R)>1){
+          for(tu in 2:length(R)){
+            Rsp <- Rsp + as(R[[tu]] *as.numeric(var.com[tu + length(zvar)]),Class="sparseMatrix")
+          }
+        }
         #########################################################
         # Sherman-Morrison-Woodbury formula (Seber, 2003, p. 467)
         # R-  --  [R-Z[Z'R-Z+G-]-Z'R-]  #-- means minus
@@ -275,7 +310,10 @@ ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=F
           #########################################################
         }else{
           vm <- Zsp%*%crossprod(Gsp,tZsp) + Rsp # V=ZGZ+R, was Gsp %*%t(Zsp)
-          vmi <- solve(vm, sparse=TRUE, tol = 1e-19) # inverse of V
+          vmi <- try(solve(vm, sparse=TRUE, tol = 1e-19)) # inverse of V
+          if(class(vmi)=="try-error"){
+            vmi <- solve(vm+diag(1e-16,dim(vm)[1]),sparse=TRUE)# inverse of V
+          }
         }
         ### ----------------------------------------------------------------- ###
         ### ----------------------------------------------------------------- ###
@@ -284,7 +322,7 @@ ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=F
         ### ----------------------------------------------------------------- ###
         vmi.xm <- vmi%*%xm
         xvx=txm%*%vmi.xm # X'V-X
-        xvxi=solve(xvx, sparse=TRUE, tol = 1e-19) # (X'V-X)-
+        xvxi=solve(xvx, sparse=TRUE) # (X'V-X)-
         #s1=vmi%*%xm # in steps to make computations faster
         s2=xvxi%*%txm%*%vmi 
         pm=vmi-crossprod(t(vmi.xm),s2) #vmi-s1%*%s2#
@@ -312,27 +350,27 @@ ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=F
         }
         #################################
         ### CONTROL OF ZIG.ZAG LIKELIHOOD
-        if(wi > 10 & gss == TRUE){
-          
-          joke <- round(dim(as.matrix(ups))[2]*.2)
-          todo <- (dim(as.matrix(ups))[2]-joke):dim(ups)[2]
-          pushes <- apply(as.matrix(ups[,todo]),1,function(fg){length(which(fg < 0))/length(fg)}) # how many times were pushed to be negative
-          kkkkk <- length(which(pushes > .4))
-          
-          if( ( zig.zag(logL2.stored[(length(logL2.stored)-4):length(logL2.stored)]) == 1) & (kkkkk == 0)  ){
-            wi=iters
-            if(!silent){
-              setTxtProgressBar(pb, (tot/tot))### keep filling the progress bar
-            }
-            cat("\nA weird likelihood behavior has been encountered. \nBe careful with variance components returned.\nSystem has singularities, ML estimators returned.\nPlease check results trying the NR or EM algorithms")
-            draw=TRUE
-          }else if(( zig.zag(logL2.stored[(length(logL2.stored)-4):length(logL2.stored)]) == 1) & (kkkkk != 0)){
-            #print(pushes)
-            wi=iters
-            
-          }
-          
-        }
+#         if(wi > 10 & gss == TRUE){
+#           
+#           joke <- round(dim(as.matrix(ups))[2]*.2)
+#           todo <- (dim(as.matrix(ups))[2]-joke):dim(ups)[2]
+#           pushes <- apply(as.matrix(ups[,todo]),1,function(fg){length(which(fg < 0))/length(fg)}) # how many times were pushed to be negative
+#           kkkkk <- length(which(pushes > .4))
+#           
+#           if( ( zig.zag(logL2.stored[(length(logL2.stored)-4):length(logL2.stored)]) == 1) & (kkkkk == 0)  ){
+#             wi=iters
+#             if(!silent){
+#               setTxtProgressBar(pb, (tot/tot))### keep filling the progress bar
+#             }
+#             cat("\nA weird likelihood behavior has been encountered. \nBe careful with variance components returned.\nSystem has singularities, ML estimators returned.\nPlease check results trying the NR or EM algorithms")
+#             draw=TRUE
+#           }else if(( zig.zag(logL2.stored[(length(logL2.stored)-4):length(logL2.stored)]) == 1) & (kkkkk != 0)){
+#             #print(pushes)
+#             wi=iters
+#             
+#           }
+#           
+#         }
         #################################
         
         #############
@@ -450,16 +488,16 @@ ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=F
             }
             #var.com[fail]/2#1e-3#base.var/sample(2:4,1)#1e-08#check that now if var.com < 1e-17 is considered zero
           }
-          extreme <- which(as.vector(unlist(var.com)) > 1.5)
-          if(length(extreme) > 0 & wi > 1){ # just do it after the second iteration
-            #stn <- max(var.com[-extreme])+.05
-            if(nmbb){
-              var.com[extreme] <- .05
-            }else{
-              var.com[extreme] <- 1e-3
-            }
-            #record[extreme,(wi-1)]/var.y#.01#var.com[extreme]/2# 2e-3#1e-06#base.var
-          }
+#           extreme <- which(as.vector(unlist(var.com)) > 1.5)
+#           if(length(extreme) > 0 & wi > 1){ # just do it after the second iteration
+#             #stn <- max(var.com[-extreme])+.05
+#             if(nmbb){
+#               var.com[extreme] <- .05
+#             }else{
+#               var.com[extreme] <- 1e-3
+#             }
+#             #record[extreme,(wi-1)]/var.y#.01#var.com[extreme]/2# 2e-3#1e-06#base.var
+#           }
           record <- cbind(record, var.com * as.numeric(var.y))
           
           
@@ -483,13 +521,13 @@ ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=F
             lege <- list()
             #lege2 <- list()
             for(k in 1:length(var.com)){
-              if(k == length(var.com)){
-                lege[[k]] <- paste("Var(e):",round(record[k,wi+1],4), sep="")
-                #lege2[[k]] <- paste("Var(e):")
-              }else{
+#               if(k == length(var.com)){
+#                 lege[[k]] <- paste("Var(e):",round(record[k,wi+1],4), sep="")
+#                 #lege2[[k]] <- paste("Var(e):")
+#               }else{
                 lege[[k]] <- paste("Var(",varosss[k],"):",round(record[k,wi+1],4), sep="")
                 #lege2[[k]] <- paste("Var(u",k,"):",sep="")
-              }
+             # }
             }
             legend("topleft",bty="n", cex=0.7, col=my.palette, lty=1, lwd=3, legend=unlist(lege))
           }
@@ -504,7 +542,10 @@ ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=F
           if(wi > 10){
             joke <- round(dim(as.matrix(ups))[2]*.2)
             todo <- (dim(as.matrix(ups))[2]-joke):dim(as.matrix(ups))[2]
-            pushes <- apply(as.matrix(ups[,todo]),1,function(fg){length(which(fg < 0))/length(fg)}) # how many times were pushed to be negative
+            pushes <- (apply(as.matrix(ups[,todo]),1,function(fg){length(which(fg < 0))/length(fg)})) # how many times were pushed to be negative
+            
+#             print(str(pushess))
+#             print(str(pushes))
             pushess <- rbind(pushess,pushes)
             crush <- apply(as.matrix(pushess),2,sum)
             badbad<- which(crush > 1)
@@ -563,7 +604,7 @@ ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=F
         abnormalVE=FALSE
       }
       
-      RE <- length(ZETA) # how many random effects
+      RE <- length(ZETA) + length(R) # how many random effects
       #print(constraint);print(EIGEND);print(abnormal)
       #print(pushes)
       ###### APPLY CONSTRAINT 
@@ -581,7 +622,7 @@ ai2help <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=F
             nonzero <- (1:dim(var.com2)[1])[-zero]
             #print(zero);print(nonzero);print(abnormal)
             ## estimate accurately the good variance components
-            boost <- ai2help(y=y.or, X=x.or, ZETA=zeta.or[-zero], R=NULL, REML=REML, draw=draw, silent=silent, iters=20, init=as.vector(var.com2)[-zero], sherman=sherman)
+            boost <- ai2help(y=y.or, X=x.or, ZETA=zeta.or[-zero], R=R.or, REML=REML, draw=draw, silent=silent, iters=20, init=as.vector(var.com2)[-zero], sherman=sherman)
             var.com2[nonzero,] <- boost
             var.com2[zero,] <- 0
             #var.com2[zero,] <- 5e-5

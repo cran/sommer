@@ -40,5 +40,5 @@ Robert J. Henry. 2013. Molecular Markers in Plants. Wiley-Blackwell. ISBN 978-0-
 
 Ben Hui Liu. 1998. Statistical Genomics. CRC Press LLC. ISBN 0-8493-3166-8.
 }
-\seealso{The core function of the package: \code{\link{mmer}}}
+\seealso{The core functions of the package: \code{\link{mmer}} and \code{\link{mmer2}}}
 

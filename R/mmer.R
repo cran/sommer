@@ -1,9 +1,13 @@
-mmer <- function(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, iters=20, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, silent=FALSE, family=NULL, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE, n.cores=1,tolpar = 1e-06, tolparinv = 1e-06, che=TRUE, IMP=TRUE){
-  R=NULL
+mmer <- function(Y, X=NULL, Z=NULL, R=NULL, W=NULL, method="NR", REML=TRUE, DI=TRUE, MVM=FALSE, iters=20, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, silent=FALSE, family=NULL, constraint=TRUE, sherman=FALSE, EIGEND=FALSE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE, n.cores=1,tolpar = 1e-06, tolparinv = 1e-06, che=TRUE, IMP=TRUE){
+  #R=NULL
   gss=TRUE
   diso <- dim(as.data.frame(Y))[2]
-  if(method=="AI"){
-    cat(paste("Please consider using the 'NR'(more stable and same time consumption) algorithm instead of 'AI'\n"))
+  #   if(method=="AI"){
+  #     cat(paste("Please consider using the 'NR'(more stable and same time consumption) algorithm instead of 'AI'\n"))
+  #   }
+  
+  if(method=="EM" & !is.null(R)){
+    stop("R structures not enabled yet for the EM algorithm other than a normal identity matrix.")
   }
   ## control for 2-level list structure
   if(!is.list(Z)){
@@ -21,7 +25,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, i
   }
   
   my.year <- 2017
-  my.month <- 7 #version of the month
+  my.month <- 8 #month when the user will start to get notifications
   
   datee <- Sys.Date()
   year.mo.day <- as.numeric(strsplit(as.character(datee),"-")[[1]])# <- as.numeric(strsplit(gsub("....-","",datee),"-")[[1]])
@@ -110,9 +114,9 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, i
                 stop("If you specify multiple fixed effect matrices (X), \nit has to be the same number than responses provided.",call. = FALSE)
               }
               WORK <- apply(data.frame(1:diso),1,function(x,y,z){cbind(y[[x]],z[[x]])},y=Y,z=X)
-              RES <- mclapply(WORK,function(x){ mmerSNOW(y=x[,1], X=x[,-1], Z=Z, R=R, W=W, method=method, REML=REML, iters=iters, draw=FALSE, init=init, silent=TRUE, constraint=constraint, sherman=sherman, EIGEND=EIGEND, gss=gss, forced=forced, map=map, fdr.level=fdr.level, manh.col=manh.col,gwas.plots=gwas.plots,P3D=P3D, tolpar = tolpar, tolparinv = tolparinv, n.PC=n.PC,models=models,ploidy=ploidy,min.MAF = min.MAF)}, mc.cores=n.cores)
+              RES <- mclapply(WORK,function(x){ mmerSNOW(y=x[,1], X=x[,-1], Z=Z, R=R, W=W, method=method, REML=REML, DI=DI, iters=iters, draw=FALSE, init=init, silent=TRUE, constraint=constraint, sherman=sherman, EIGEND=EIGEND, gss=gss, forced=forced, map=map, fdr.level=fdr.level, manh.col=manh.col,gwas.plots=gwas.plots,P3D=P3D, tolpar = tolpar, tolparinv = tolparinv, n.PC=n.PC,models=models,ploidy=ploidy,min.MAF = min.MAF)}, mc.cores=n.cores)
             }else{ # user just provide a single fixed effect matrix
-              RES <- mclapply(Y,function(x){ mmerSNOW(y=x[,1], X=X, Z=Z, R=R, W=W, method=method, REML=REML, iters=iters, draw=FALSE, init=init, silent=TRUE, constraint=constraint, sherman=sherman, EIGEND=EIGEND, gss=gss, forced=forced, map=map, fdr.level=fdr.level, manh.col=manh.col,gwas.plots=gwas.plots,P3D=P3D,n.PC=n.PC,tolpar=tolpar, tolparinv = tolparinv,models=models,ploidy=ploidy,min.MAF = min.MAF)}, mc.cores=n.cores)
+              RES <- mclapply(Y,function(x){ mmerSNOW(y=x[,1], X=X, Z=Z, R=R, W=W, method=method, REML=REML, DI=DI,iters=iters, draw=FALSE, init=init, silent=TRUE, constraint=constraint, sherman=sherman, EIGEND=EIGEND, gss=gss, forced=forced, map=map, fdr.level=fdr.level, manh.col=manh.col,gwas.plots=gwas.plots,P3D=P3D,n.PC=n.PC,tolpar=tolpar, tolparinv = tolparinv,models=models,ploidy=ploidy,min.MAF = min.MAF)}, mc.cores=n.cores)
             }
             ########################################################################
             names(RES) <- names(Y)
@@ -131,9 +135,9 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, i
                 stop("If you specify multiple fixed effect matrices (X), \nit has to be the same number than responses provided.",call. = FALSE)
               }
               WORK <- apply(data.frame(1:diso),1,function(x,y,z){cbind(y[[x]],z[[x]])},y=Y,z=X)
-              RES <- mclapply(WORK,function(x){ mmerSNOW(y=x[,1], X=x[,-1], Z=Z, R=R, W=W, method=method, REML=REML, iters=iters, draw=FALSE, init=init, silent=TRUE, constraint=constraint, sherman=sherman, EIGEND=EIGEND, gss=gss, forced=forced, map=map, fdr.level=fdr.level, tolpar=tolpar, tolparinv = tolparinv,manh.col=manh.col,gwas.plots=gwas.plots,P3D=P3D,n.PC=n.PC,models=models,ploidy=ploidy,min.MAF = min.MAF)}, mc.cores=n.cores)
+              RES <- mclapply(WORK,function(x){ mmerSNOW(y=x[,1], X=x[,-1], Z=Z, R=R, W=W, method=method, REML=REML,DI=DI, iters=iters, draw=FALSE, init=init, silent=TRUE, constraint=constraint, sherman=sherman, EIGEND=EIGEND, gss=gss, forced=forced, map=map, fdr.level=fdr.level, tolpar=tolpar, tolparinv = tolparinv,manh.col=manh.col,gwas.plots=gwas.plots,P3D=P3D,n.PC=n.PC,models=models,ploidy=ploidy,min.MAF = min.MAF)}, mc.cores=n.cores)
             }else{ # user just provide a single fixed effect matrix
-              RES <- mclapply(Y,function(x){ mmerSNOW(y=x[,1], X=X, Z=Z, R=R, W=W, method=method, REML=REML, iters=iters, draw=FALSE, init=init, silent=TRUE, constraint=constraint, sherman=sherman, EIGEND=EIGEND, gss=gss, forced=forced, map=map, fdr.level=fdr.level, tolpar=tolpar, tolparinv = tolparinv, manh.col=manh.col,gwas.plots=gwas.plots,P3D=P3D,n.PC=n.PC,models=models,ploidy=ploidy,min.MAF = min.MAF)}, mc.cores=n.cores)
+              RES <- mclapply(Y,function(x){ mmerSNOW(y=x[,1], X=X, Z=Z, R=R, W=W, method=method, REML=REML,DI=DI, iters=iters, draw=FALSE, init=init, silent=TRUE, constraint=constraint, sherman=sherman, EIGEND=EIGEND, gss=gss, forced=forced, map=map, fdr.level=fdr.level, tolpar=tolpar, tolparinv = tolparinv, manh.col=manh.col,gwas.plots=gwas.plots,P3D=P3D,n.PC=n.PC,models=models,ploidy=ploidy,min.MAF = min.MAF)}, mc.cores=n.cores)
             }
             ########################################################################
             names(RES) <- names(Y)
@@ -155,10 +159,22 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, i
         stop("If you specify multiple fixed effect matrices (X), \nit has to be the same number than responses provided.",call. = FALSE)
       }
     }
-    RES <- mmerSNOW(y=Y, X=X, Z=Z, R=R, W=W, method=method, REML=REML, iters=iters, draw=draw, init=init, silent=silent, constraint=constraint, sherman=sherman, EIGEND=EIGEND, gss=gss, forced=forced, map=map, fdr.level=fdr.level, tolpar=tolpar, tolparinv = tolparinv,manh.col=manh.col,gwas.plots=gwas.plots,P3D=P3D,n.PC=n.PC,models=models,ploidy=ploidy,min.MAF = min.MAF)
+    #print(str(R))
+    RES <- mmerSNOW(y=Y, X=X, Z=Z, R=R, W=W, method=method, REML=REML, DI=DI, iters=iters, 
+                    draw=draw, init=init, silent=silent, constraint=constraint, 
+                    sherman=sherman, EIGEND=EIGEND, gss=gss, forced=forced, map=map, 
+                    fdr.level=fdr.level, tolpar=tolpar, tolparinv = tolparinv,
+                    manh.col=manh.col,gwas.plots=gwas.plots,P3D=P3D,n.PC=n.PC,
+                    models=models,ploidy=ploidy,min.MAF = min.MAF)
   }
   #########*****************************
   #########*****************************
+  RES$Y <- Y
+  RES$X <- X
+  RES$Z <- Z
+  RES$R <- R
+  RES$W <- W
+  RES$DI <- DI
   layout(matrix(1,1,1))
   return(RES)
 }
@@ -172,43 +188,19 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, i
   groupss <- unlist(lapply(object$u.hat, function(y){dim(as.matrix(y))[1]}))
   groupss <- paste(groupss,collapse = " ")
   nn <- length(unlist(object$residuals))
-  #cat("Linear mixed model fit by restricted maximum likelihood\n")
-  #cat("=======================================================")
-  #cat("\nMethod:")
-  #print(object$method)
+  
   method=object$method
-  #cat("\n")
-  
-  logo <- c(logLik = object$LL, AIC=object$AIC, BIC=object$BIC)
-  names(logo) = c("logLik","AIC","BIC")
-  #print(c(logo), digits = digits)
-  
-  #cat("=======================================================")
-  #cat("\nRandom effects:\n")
-  
-  if(object$method == "NR"){
-    dodo0 <- object$var.comp; colnames(dodo0)<-NULL
-    if(object$forced){# var.comp were forced
-      w <- data.frame(VarComp = dodo0)
-    }else{# var.comp were not forced
-      dodo <- object$var.comp/sqrt(diag(object$fish.inv)); colnames(dodo)<-NULL
-      w <- data.frame(VarComp = dodo0, VarCompSE=sqrt(diag(object$fish.inv)), Zratio=as.matrix(dodo))
-    }
-   
-  }else if(object$method == "NRR"){
-    w <- object$var.comp
+
+  if(object$method == "NR" | (object$method == "AI" & object$DI == FALSE)){
+    dodo0 <- object$var.comp[,1]; colnames(dodo0)<-NULL
+    dodo <- object$var.comp[,1]/sqrt(abs(diag(object$fish.inv ))); colnames(dodo)<-NULL
+    w <- data.frame(VarComp = dodo0, VarCompSE=sqrt(abs(diag(object$fish.inv))), Zratio=as.matrix(dodo), constraint=object$var.comp[,2])
     
-    if(object$forced){# var.comp were forced
-      vaross <- lapply(object$var.comp, function(x){
-        if(dim(as.matrix(x))[1]>1){aa <- upper.tri(x); diag(aa) <- TRUE
-        babas <- which(aa,arr.ind = TRUE); babas <- babas[ order(babas[,1], babas[,2]), ]
-        return(x[babas])}else{return(as.matrix(x))}})
-      sigma.real <- as.matrix(unlist(vaross))
-      w <- data.frame(VarComp=sigma.real)
-      rownames(w) <- rownames(object$var.comp)
-    }else{# var.comp were not forced
-    zzz <- object$sigma.scaled/sqrt(diag(object$fish.inv))
-    vaross <- lapply(object$var.comp, function(x){
+  }else if(object$method == "NRR"){
+    w <- object$var.comp[,1]
+    
+    zzz <- object$sigma.scaled/sqrt(abs(diag(object$fish.inv)))
+    vaross <- lapply(object$var.comp[,1], function(x){
       if(dim(as.matrix(x))[1]>1){aa <- upper.tri(x); diag(aa) <- TRUE
       babas <- which(aa,arr.ind = TRUE); babas <- babas[ order(babas[,1], babas[,2]), ]
       return(x[babas])}else{return(as.matrix(x))}})
@@ -217,37 +209,48 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, i
     w <- data.frame(VarComp=sigma.real, VarCompSE=sese,
                     Zratio=zzz)
     rownames(w) <- rownames(object$var.comp)
-    }
-  }else{
-    w <- data.frame(VarComp = matrix(c(object$var.comp), ncol = 1)) 
+    #}
+  }else if(object$method == "EMMA"){
+#     dodo0 <- object$var.comp[,1]; colnames(dodo0)<-NULL
+#     dodo <- object$var.comp[,1]/sqrt(abs(diag(object$fish.inv))); colnames(dodo)<-NULL
+    w <- object$var.comp# data.frame(VarComp = dodo0, VarCompSE=sqrt(abs(diag(object$fish.inv))), Zratio=as.matrix(dodo), constraint=object$var.comp[,2])
+    colnames(w)[1] <- c("VarComp")
+  }else if((object$method == "AI" & object$DI == TRUE) | object$method == "EM"){ #because in DI 'y' is scaled
+    dodo0 <- object$var.comp[,1]; colnames(dodo0)<-NULL
+    ## z ratio for AI
+    dodo <- object$sigma.scaled/sqrt(abs(diag(object$fish.inv))); colnames(dodo)<-NULL
+    ## se
+    ses <- object$var.comp[,1]/dodo
+    w <- data.frame(VarComp = dodo0, VarCompSE=ses, Zratio=as.matrix(dodo), constraint=object$var.comp[,2])
   }
-  
-  if(object$method == "EM"){
-    row.names(w) <- rownames(object$var.comp)
+  if(object$method == "EM" ){
+    dodo0 <- object$var.comp[,1]; colnames(dodo0)<-NULL
+    dodo <- object$var.comp[,1]/sqrt(abs(diag(object$fish.inv * var(object$y, na.rm = TRUE)))) ; colnames(dodo)<-NULL
+    ses <- sqrt(abs(diag(object$fish.inv * var(object$y, na.rm = TRUE))))
+    w <- data.frame(VarComp = dodo0, VarCompSE=ses, Zratio=as.matrix(dodo), constraint=object$var.comp[,2])
+    
   }
-  if(object$method == "AI" | object$method == "EMMA" | object$method == "NR"){
-    row.names(w) <- rownames(object$var.comp)
-  }
-  #print(w, digits = digits)
-  #cat(paste("Number of obs:",nn," Groups:",groupss,"\n"))
+  rownames(w) <- rownames(object$var.comp)
   
   #cat("=======================================================")
   #cat("\nFixed effects:\n")
-  coef <- data.frame(Value = as.matrix(object$beta.hat), Std.Error=(matrix(sqrt(diag(object$Var.beta.hat)),ncol=1)), t.value=(matrix((object$beta.hat-0)/sqrt(diag(object$Var.beta.hat)), ncol=1)))
+  coef <- data.frame(Value = as.matrix(object$beta.hat), Std.Error=(matrix(sqrt(abs(diag(as.matrix(object$Var.beta.hat)))),ncol=1)), t.value=(matrix((object$beta.hat-0)/sqrt(abs(diag(as.matrix(object$Var.beta.hat)))), ncol=1)))
   if(dim(coef)[1] == 1){rownames(coef) <- "Intercept"}
+  
+  logo <- data.frame(logLik = round(object$LL,digits), AIC=round(object$AIC,digits), 
+                     BIC=round(object$BIC, digits), Method=object$method, Conv=object$convergence, DI=object$DI)
+  rownames(logo) <-"Params"
+  #names(logo) = c("logLik","AIC","BIC","Method")
+  
+  #logo$Method <- 
+  #logo$Convergence<- object$convergence
   #printCoefmat((coef))
   #cat("=======================================================")
   #cat("\nVar-Cov for Fixed effects (diagonals are variances):\n")
-  
-  #varbhat <- data.frame(as.matrix(object$Var.beta.hat))
-  #rownames(varbhat) <- colnames(object$X)
-  #colnames(varbhat) <- rownames(varbhat) 
-  #if(dim(varbhat)[1] == 1){rownames(varbhat) <- "Intercept"}
-  
   #printCoefmat(varbhat)
   #cat("=======================================================")
   #cat("\nInformation contained in this fitted model: \n* Variance components\n* Residuals and conditional residuals\n* Inverse phenotypic variance(V)\* BLUEs and BLUPs\n* Variance-covariance matrix for fixed effects\n* Variance-covariance matrix for random effects\n* Predicted error variance (PEV)\n* LogLikelihood\n* AIC and BIC\n* Fitted values\nUse the '$' symbol to access such information")
-  output <- list(groupss=groupss, nn=nn, logo=logo, w=w, coef=coef, method=method) #varbhat=varbhat,
+  output <- list(groupss=groupss, nn=nn, logo=logo, w=w, coef=coef, method=method, convergence=object$convergence) #varbhat=varbhat,
   attr(output, "class")<-c("summary.mmer", "list")
   return(output)
 }
@@ -258,43 +261,34 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, i
   #groupss <- paste(groupss,collapse = " ")
   #nn <- length(unlist(x$residuals))
   cat("\nInformation contained in this fitted model: \n* Variance components, Residuals, Fitted values\n* BLUEs and BLUPs, Inverse phenotypic variance(V)\n* Variance-covariance matrix for fixed & random effects\n* Predicted error variance (PEV), LogLikelihood\nUse the '$' symbol to access such information\n")
-  cat("=======================================================")
-  cat("\nLinear mixed model fit by restricted maximum likelihood\n")
-  cat("********************  sommer 2.7  *********************\n")
-  cat("=======================================================")
-  cat("\nMethod:")
-  print(x$method)
+  cat("===========================================================")
+  cat("\n  Linear mixed model fit by restricted maximum likelihood\n")
+  cat("**********************  sommer 2.8  ***********************\n")
+  cat("===========================================================")
+  #cat(paste("\nMethod:",x$method ))
+  #cat(paste("\nConvergence:",x$convergence))
   cat("\n")
   
   #logo <- c(logLik = x$LL, AIC=x$AIC, BIC=x$BIC)
   #names(logo) = c("logLik","AIC","BIC")
-  print(c(x$logo), digits = digits)
+  #print(c(x$logo), digits = digits)
+  print(x$logo)
+  #cat("\n")
   
-  cat("=======================================================")
+  cat("===========================================================")
   cat("\nRandom effects:\n")
   #w <- data.frame(VarianceComp = matrix(c(x$var.comp), ncol = 1))
   
-  #if(x$method == "EM"){
-  #  row.names(w) <- names(x$var.comp)
-  #}
-  #if(x$method == "AI" | x$method == "EMMA"){
-  #  row.names(w) <- rownames(x$var.comp)
-  #}
   print(x$w, digits = digits)
   cat(paste("Number of obs:",x$nn," Groups:",x$groupss,"\n"))
   
-  cat("=======================================================")
+  cat("===========================================================")
   cat("\nFixed effects:\n")
   #coef <- data.frame(Value = x$beta.hat, Std.Error=(matrix(sqrt(diag(x$Var.beta.hat)),ncol=1)), t.value=(matrix((x$beta.hat-0)/sqrt(diag(x$Var.beta.hat)), ncol=1)))
   #if(dim(coef)[1] == 1){rownames(coef) <- "Intercept"}
   printCoefmat((x$coef))
-  #cat("=======================================================")
-  #cat("\nVar-Cov for Fixed effects:\n(diagonals are variances)\n")
-  #varbhat <- data.frame(x$Var.beta.hat)
-  #colnames(varbhat) <- rownames(varbhat) 
-  #if(dim(varbhat)[1] == 1){rownames(varbhat) <- "Intercept"}
-  #printCoefmat(x$varbhat)
-  cat("=======================================================")
+  
+  cat("===========================================================")
   cat("\nUse the '$' symbol to access all information\n\n")
 }
 #### =========== ####
@@ -302,6 +296,8 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, i
 #### =========== ####
 "summary.mmerM" <- function(object, ...) {
   
+  na23 <- names(object)
+  object <- object[-c(which(na23 %in% c("Y","X","Z","R")))]
   
   digits = max(3, getOption("digits") - 3)
   #forget <- length(object)
@@ -324,20 +320,25 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, i
   method=object[[1]]$method
   #cat("\n")
   
-  LLAIC <- rbind(do.call("cbind",lapply(object,function(x){x$LL})),
-                 do.call("cbind",lapply(object,function(x){x$AIC})),
-                 do.call("cbind",lapply(object,function(x){x$BIC}))
-  )
-  
-  rownames(LLAIC) = c("logLik","AIC","BIC")
-  
-  if(object[[1]]$method == "NR"){
+  LLAIC <- do.call(rbind,lapply(object, function(x){
+    logo <- data.frame(logLik = round(x$LL,digits), AIC=round(x$AIC,digits), 
+                       BIC=round(x$BIC, digits), Method=x$method, Conv=x$convergence)
     
-    w <- lapply(object,function(x){xy <- cbind(x$var.comp,sqrt(diag(x$fish.inv)),x$var.comp/sqrt(diag(x$fish.inv)));colnames(xy)<-c("VarComp","VarCompSE","Zratio");return(xy)})
-  }else{
-    w <- do.call("cbind",lapply(object,function(x){x$var.comp}))
-    colnames(w) <- names(object)
-  }
+  }))
+  #     rbind(do.call("cbind",lapply(object,function(x){x$LL})),
+  #                  do.call("cbind",lapply(object,function(x){x$AIC})),
+  #                  do.call("cbind",lapply(object,function(x){x$BIC}))
+  #   )
+  #   
+  #   rownames(LLAIC) = c("logLik","AIC","BIC")
+  
+  #   if(object[[1]]$method == "NR"){
+  #     
+  w <- lapply(object,function(x){xy <- cbind(x$var.comp[,1],sqrt(abs(diag(x$fish.inv))),x$var.comp[,1]/sqrt(abs(diag(x$fish.inv))));colnames(xy)<-c("VarComp","VarCompSE","Zratio");return(xy)})
+  #   }else{
+  #     w <- do.call("cbind",lapply(object,function(x){x$var.comp}))
+  #     colnames(w) <- names(object)
+  #   }
   
   output <- list(groupss=groupss.nn, logo=LLAIC, w=w, method=method)
   attr(output, "class")<-c("summary.mmerM", "list")
@@ -350,11 +351,11 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, i
   cat("Information contained in this structure: \n* Individual results for each response model\nDisplayed: \n* AIC, BIC and Variance component summaries\nUse the '$' sign to access individual models\n")
   cat("=======================================================")
   cat("\nLinear mixed model fit by restricted maximum likelihood\n")
-  cat("********************  sommer 2.7  *********************\n")
+  cat("********************  sommer 2.8  *********************\n")
   cat("=======================================================")
-  cat("\nMethod:")
-  print(x$method)
-  cat("")
+  #cat("\nMethod:")
+  #print(x$method)
+  cat("\n")
   print(x$logo)#, digits = digits)
   cat("=======================================================")
   cat("\nVariance components:\n")
@@ -437,31 +438,16 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, i
   
   if(object$method == "MNR"){
     #### 111
-    if(object$forced){
-      #### 222
-      vaross <- lapply(object$var.comp, function(x){
-        if(dim(as.matrix(x))[1]>1){aa <- upper.tri(x); diag(aa) <- TRUE
-        babas <- which(aa,arr.ind = TRUE); babas <- babas[ order(babas[,1], babas[,2]), ]
-        return(x[babas])}else{return(as.matrix(x))}})
-      
-      if(!is.null(colnames(wx))){
-        vaross <- lapply(vaross,function(x){dd <- as.vector(x);names(dd) <- sisisi;return(dd)})
-      }
-      sigma.real <- as.matrix(unlist(vaross))
-      
-      w2 <- data.frame(VarComp=sigma.real)
-      
-    }else{
-      ###2222
-      zzz <- object$sigma.scaled/sqrt(diag(object$fish.inv))
-      vaross <- lapply(object$var.comp, function(x){
-        if(dim(as.matrix(x))[1]>1){aa <- upper.tri(x); diag(aa) <- TRUE
-        babas <- which(aa,arr.ind = TRUE); babas <- babas[ order(babas[,1], babas[,2]), ]
-        return(x[babas])}else{return(as.matrix(x))}})
-      
-      if(!is.null(colnames(wx))){
-        vaross <- lapply(vaross,function(x){dd <- as.vector(x);names(dd) <- sisisi;return(dd)})
-      }
+    ###2222
+    zzz <- object$sigma.scaled/sqrt(abs(diag(object$fish.inv)))
+    vaross <- lapply(object$var.comp, function(x){
+      if(dim(as.matrix(x))[1]>1){aa <- upper.tri(x); diag(aa) <- TRUE
+      babas <- which(aa,arr.ind = TRUE); babas <- babas[ order(babas[,1], babas[,2]), ]
+      return(x[babas])}else{return(as.matrix(x))}})
+    
+    if(!is.null(colnames(wx))){
+      vaross <- lapply(vaross,function(x){dd <- as.vector(x);names(dd) <- sisisi;return(dd)})
+      #}
       
       sigma.real <- as.matrix(unlist(vaross))
       
@@ -486,7 +472,7 @@ mmer <- function(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, i
   cat("Information contained in this structure: \n* Results for a multi response model\nDisplayed: \n* Variance-covariance component summaries\nUse the '$' sign to access parameters\n")
   cat("=======================================================")
   cat("\n    Multivariate Linear Mixed Model fit by REML    \n")
-  cat("********************  sommer 2.7  *********************\n")
+  cat("********************  sommer 2.8  *********************\n")
   cat("=======================================================")
   cat("\nMethod:")
   print((x$method))
@@ -814,7 +800,7 @@ plot.MMERM <- function(x, ...) {
     stop("This package requires R 2.1 or later")
   assign(".sommer.home", file.path(library, pkg),
          pos=match("package:sommer", search()))
-  sommer.version = "2.7 (2017-05-01)"
+  sommer.version = "2.8 (2017-07-01)" # usually 2 months before it expires
   
   ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ### check which version is more recent
@@ -830,16 +816,16 @@ plot.MMERM <- function(x, ...) {
   assign(".sommer.version", sommer.version, pos=match("package:sommer", search()))
   if(interactive())
   {
-    packageStartupMessage(paste("[]===============================================================[]"),appendLF=TRUE)
-    packageStartupMessage(paste("[]  Solving Mixed Model Equations in R (sommer) ", sommer.version, " []",sep=""),appendLF=TRUE)
-    packageStartupMessage(paste("[]  ------------ Multivariate Linear Mixed Models -------------- []"),appendLF=TRUE)
-    packageStartupMessage("[]  ----- Enabling covariance structures in random effects ----- []",appendLF=TRUE)
-    packageStartupMessage("[]  Author: Giovanny Covarrubias-Pazaran                         []",appendLF=TRUE)
-    packageStartupMessage("[]  Published: PLOS ONE 2016, 11(6):1-15                         []",appendLF=TRUE)
-    packageStartupMessage("[]  Supported by the Council of Science and Technology (CONACYT) []", appendLF=TRUE)
-    packageStartupMessage("[]  Type 'vignette('sommer')' for a short tutorial               []",appendLF=TRUE)
-    packageStartupMessage("[]  Type 'citation('sommer')' to know how to cite sommer         []",appendLF=TRUE)
-    packageStartupMessage(paste("[]===============================================================[]"),appendLF=TRUE)
+    packageStartupMessage(paste("[*]================================================================[*]"),appendLF=TRUE)
+    packageStartupMessage(paste("[*]  Solving Mixed Model Equations in R (sommer) ", sommer.version, "  [*]",sep=""),appendLF=TRUE)
+    packageStartupMessage(paste("[*]  ------------ Multivariate Linear Mixed Models --------------  [*]"),appendLF=TRUE)
+    #    packageStartupMessage("[*]  ----- Enabling covariance structures in random effects -----  [*]",appendLF=TRUE)
+    packageStartupMessage("[*]  Author: Giovanny Covarrubias-Pazaran                          [*]",appendLF=TRUE)
+    packageStartupMessage("[*]  Published: PLoS ONE 2016, 11(6):1-15                          [*]",appendLF=TRUE)
+    #    packageStartupMessage("[*]  Supported by the Council of Science and Technology (CONACYT)  [*]", appendLF=TRUE)
+    packageStartupMessage("[*]  Type 'vignette('sommer')' for a short tutorial                [*]",appendLF=TRUE)
+    packageStartupMessage("[*]  Type 'citation('sommer')' to know how to cite sommer          [*]",appendLF=TRUE)
+    packageStartupMessage(paste("[*]================================================================[*]"),appendLF=TRUE)
     packageStartupMessage("UPDATE 'sommer' EVERY 2-MONTHS USING 'install.packages('sommer')'",appendLF=TRUE)
     
     #if(yyy > current){ # yyy < current in CRAN

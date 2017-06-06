@@ -7,7 +7,8 @@ This function is used internally in the function \code{\link{mmer}} when MORE th
 \usage{
 AI(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, 
    iters=50, constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, 
-   EIGEND=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL)
+   EIGEND=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL,
+   tolpar = 1e-04, tolparinv = 1e-06)
 }
 \arguments{
   \item{y}{a numeric vector for the response variable}
@@ -29,10 +30,12 @@ AI(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
       \item{Fishers}{a TRUE/FALSE value indicating if the program should calculate at the final step and return the inverse of the Fishers Information Matrix.}
       \item{gss}{a TRUE/FALSE value indicating if a genomic selection is being fitted just for using certain constraints. When is FALSE (default) the program can make some EM steps to find initial values for variance components when the starting values are to far from the real values causing the likelihood to have a strange behavior and dropping dramatically When TRUE the program does not try EM steps even when far away from the likelihood because in big marker-based models can make the process quite slow.}
       \item{forced}{a vector of numeric values for variance components including error if the user wants to force the values of the variance components. On the meantime only works for forcing all of them and not a subset of them. The default is NULL, meaning that variance components will be estimated by REML/ML.}
+      \item{tolpar}{tolerance parameter for convergence in the models.}
+      \item{tolparinv}{tolerance parameter for matrix inversion in the models.}
 
 }
 \details{
-This algorithm is based on Gilmour et al. (1995), it is based on REML. This handles models of the form:
+This algorithm is based on Lee et al. (2016), it is based on REML. This handles models of the form:
 
 .
 

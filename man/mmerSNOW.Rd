@@ -14,13 +14,13 @@ Please report bugs and provide data to recreate the problem. The only way to imp
 
 }
 \usage{
-mmerSNOW(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE, 
+mmerSNOW(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE,DI=TRUE,
      iters=20, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE,
      models="additive", ploidy=2, min.MAF = 0.05, silent=FALSE, 
      family=NULL, constraint=TRUE, sherman=FALSE, EIGEND=FALSE,
      Fishers=FALSE, gss=TRUE, forced=NULL, full.rank=TRUE, 
      map=NULL,fdr.level=0.05, manh.col=NULL, gwas.plots=TRUE,
-     tolpar = 1e-06,tolparinv = 1e-06)
+     tolpar = 1e-04,tolparinv = 1e-06)
 }
 \arguments{
   \item{y}{a numeric vector for the response variable}
@@ -73,6 +73,7 @@ mmerSNOW(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE,
   \item{R}{a matrix for variance-covariance structures for the residuals, i.e. for longitudinal data. if not passed is assumed an identity matrix. THIS PART STILLS IN DEVELOPMENT, NOT FUNCTIONAL YET, it is plan to be implemented in version 1.6.}
   \item{method}{this refers to the method or algorithm to be used for estimating variance components. The package currently is supported by 4 algorithms; "EMMA" efficient mixed model association (Kang et al. 2008), "AI" average information (Gilmour et al. 1995; Lee et al. 2015), "EM" expectation maximization (Searle 1993; Bernardo 2010), and Newton-Raphson "NR" (Tunnicliffe 1989). The default method is average information "AI" because of its ability to handle multiple random effects and its greater speed compared to "EM", "NR" and "EMMA" which can handle multiple random effects but are slower in dense models.}
   \item{REML}{a TRUE/FALSE value indicating if restricted maximum likelihood should be used instead of ML. The default is TRUE.}
+  \item{DI}{a TRUE/FALSE value indicating if the method to estimate variance components should be direct inversion (DI=TRUE) or MME-based (DI=FALSE) if available for such method.}
   \item{iters}{a scalar value indicating how many iterations have to be performed if the EM or AI algorithms are selected. There is no rule of tumb for the number of iterations. The default value is 50 iterations or EM steps, but usually will take less than that stopping before reaching the maximum number of iterations. For the AI algorithm usually takes just a few iterations.}
   \item{draw}{a TRUE/FALSE value indicating if a plot of updated values for the variance components and the log-likelihood should be drawn or not during the optimization process. The default is FALSE. It's been set to FALSE because is less the computation time when the computer doesn't have to draw plots.}
   \item{init}{an vector of initial values for the EM, NR or AI algorithms. If not provided the program uses a starting values the variance(y)/#random.eff which are usually good starting values.}
@@ -104,65 +105,49 @@ mmerSNOW(y, X=NULL, Z=NULL, W=NULL, R=NULL, method="NR", REML=TRUE,
 \details{
 The package has been developed to provide R users with code to understand how most common algorithms in mixed model analysis work related to genetics field, but also allowing to perform their real analysis. This package allows the user to calculate the variance components for a mixed model with the advantage of specifying the variance-covariance structure of the random effects. This program focuses in the mixed model of the form:
 
-.
+'
 
-.............................    y = Xb + Zu + e   ........ with distributions:
+\deqn{Y = X \beta + Z u + \epsilon}
 
-.
+'
 
-y ~ N[Xb, var(Zu+e)]   ......where;
+with distributions:
 
-.
+'
 
-b ~ N[b.hat, 0]  ............zero variance because is a fixed term
+\deqn{Y ~ MVN ( X\beta+Zu, var(Z u + \epsilon) )}
 
-u ~ N[0, G]  ....... where G is equal to:
+where;
 
-.
+'
 
-|K1*sigma2(u1)......................0...........................0.........|
-    
-|.............0.............K2*sigma2(u2).......................0.........| = G
+\deqn{\beta  ~ N (\beta, 0)} 
 
-|......................................................................................|
+\deqn{u  ~ N (0, G)} 
 
-|.............0....................0.........................Ki*sigma2(ui)...|
+where G is equal to:
 
-.
+'
+
+\tabular{rrrrr}{
+  K1*\eqn{\sigma2}(u1)  \tab \tab 0 \tab \tab 0\cr
+  0 \tab \tab K2*\eqn{\sigma2}(u2) \tab \tab 0\cr
+  ... \tab \tab ... \tab \tab ...\cr
+  0 \tab \tab 0 \tab \tab Ki*\eqn{\sigma2}(ui)\cr
+}
+
+
+'
 
 for the i.th random effects, allowing the user to specify the variance covariance structures in the K matrices and
 
-.
+'
 
-e ~ N[0, R]  .....................where: I*sigma(e) = R
+\deqn{\epsilon  ~ N (0, R)}
 
-.
+where: \eqn{R = I * \sigma2 \epsilon}
 
-also Var(y) = Var(Zu+e) = ZGZ+R = V which is the phenotypic variance
-
--------------------------------------------------------------------------------
-
-The functions in the sommer packages allow the user to specify the incidence matrices with their respective variance-covariance matrix in a 2 level list structure. For example imagine a mixed model with three random effects:
-
-.
-
-fixed = only intercept...................................b ~ N[b.hat, 0]
-
-random = GCA1 + GCA2 + SCA.................u ~ N[0, G]       
-
-.
-
-then G takes the form:
-
-.
-
-|K1*sigma2(gca1).....................0..........................0.........|
-    
-|.............0.............K2*sigma2(gca2).....................0.........| = G
-
-|.............0....................0......................K3*sigma2(sca)...|
-
-.
+'
 
 This mixed model would be specified in the \code{\link{mmerSNOW}} function as:
 
@@ -432,12 +417,7 @@ Z3 <- model.matrix(~ SCA -1, data = hybrid2);dim(Z3)
 #Z2 <- model.matrix(~as.factor(herd)-1, data=milk); dim(Z2)
 #ETA<- list(list(Z=Z1, K=K1),list(Z=Z2))
 #fm3 <- mmerSNOW(y=y, Z=ETA) 
-####=========================================####
-##### or using mmerSNOW2 would look:
-####=========================================####
-#fm3 <- mmerSNOW2(fixed=milk ~ 1, random = ~ id + herd, 
-#             G=list(id=K1), data=milk)
-#summary(fm3)
+
 ####=========================================####
 #### Try pedigreemm but takes longer, 
 #### is an extension of lme4

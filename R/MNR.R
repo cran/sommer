@@ -8,7 +8,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,maxcyc=20,tol=1e-3,tolparinv
   Xh <- X
   Zh <- ZETA
   
-  if(tol == 1988.0906){
+  if(tol == 1e-22){
     MARIA <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=50, constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, EIGEND=FALSE, Fishers=FALSE, gss=TRUE, forced=NULL){
       
       if(EIGEND){

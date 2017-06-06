@@ -53,7 +53,7 @@ MMERM(Y, X=NULL, Z=NULL, W=NULL, method="NR", tolpar = 1e-06, tolparinv = 1e-06,
   
   '
   
-  mod1 <- mmer(y=y, Z=ETA) 
+  mod1 <- mmer(Y=y, Z=ETA) 
   
   '
   

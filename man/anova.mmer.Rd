@@ -15,6 +15,6 @@
   vector of anova
  }
 \author{Giovanny Covarrubias \email{covarrubiasp@wisc.edu}}
-\seealso{\code{\link{anova}}, \code{\link{mmer}}}
+\seealso{\code{\link{anova}}, \code{\link{mmer}}, and \code{\link{mmer2}}}
 \keyword{models}
 

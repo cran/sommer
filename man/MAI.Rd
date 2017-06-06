@@ -74,46 +74,6 @@ MAI(Y, X=NULL, ZETA=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=20,
 
 }
 \details{
-This algorithm is based on Gilmour et al. (1995), it is based on REML. This handles models of the form:
-
-.
-
-y = Xb + Zu + e
-
-.
-
-b ~ N[b.hat, 0]  ............zero variance because is a fixed term
-
-u ~ N[0, K*sigma(u)]  .......where: K*sigma(u) = G
-
-e ~ N[0, I*sigma(e)]  .......where: I*sigma(e) = R
-
-y ~ N[Xb, var(Zu+e)]   ......where;
-
-var(y) = var(Zu+e) = ZGZ+R = V which is the phenotypic variance
-
-.
-
-The function allows the user to specify the incidence matrices with their respective variance-covariance matrix in a 2 level list structure. For example imagine a mixed model with the following design:
-
-.
-
-fixed = only intercept.....................b ~ N[b.hat, 0]
-
-random = GCA1 + GCA2 + SCA.................u ~ N[0, G]       
-
-.
-
-where G is:
-
-.
-
-|K*sigma(gca1).....................0..........................0.........|
-    
-|.............0.............S*sigma(gca2).....................0.........| = G
-
-|.............0....................0......................W*sigma(sca)..|
-
 .
 
 The likelihood function optimized in this algorithm is:
@@ -189,7 +149,7 @@ Lee et al. 2015. EIGEND: An efficient algorithm for multivariate linear mixed mo
 #### remove them and run the examples
 ####=========================================####
 data(CPdata)
-CPpheno <- CPdata$pheno
+CPpheno <- CPdata$pheno[,-c(1:4)]
 CPgeno <- CPdata$geno
 ### look at the data
 head(CPpheno)

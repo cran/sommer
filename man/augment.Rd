@@ -40,4 +40,4 @@ blup2 <- blup[grep("Check1",rownames(blup)),]
 
 }
 \keyword{datasets}
-\seealso{The core function of the package \code{\link{mmer}}}
+\seealso{The core functions of the package \code{\link{mmer}} and and \code{\link{mmer2}} }

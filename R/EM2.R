@@ -1,4 +1,6 @@
 EM2 <- function(y, X=NULL, ETA=NULL, R=NULL, init=NULL, iters=50, REML=TRUE, draw=TRUE, silent=FALSE){
+  
+  Kinvo <- lapply(ETA, function(x){solve(x$K)})
   ### make sure fixed effects are there
   if(is.null(X) & is.null(ETA)){ # nothing in the model
     tn = length(y); xm <- matrix(1,tn,1) 
@@ -61,6 +63,7 @@ EM2 <- function(y, X=NULL, ETA=NULL, R=NULL, init=NULL, iters=50, REML=TRUE, dra
     ETA2 <- ETA; y2 <- y ; good <- which(!is.na(y)) # make a copy and identify no missing data
     ETA <- lapply(ETA, function(x,good){x[[1]] <- x[[1]][good,]; x[[2]]<- x[[2]]; return(x)}, good=good)
     y <- y[good]
+    #R <- lapply(R, function(x,good){x <- x[good,good]; return(x)}, good=good)
     R <- R[good,good]
     ################
     nran <- length(which(unlist(lapply(ETA, function(x){names(x)[1]})) == "Z")) # number of random effects
@@ -101,7 +104,7 @@ EM2 <- function(y, X=NULL, ETA=NULL, R=NULL, init=NULL, iters=50, REML=TRUE, dra
         prov <- numeric()
         for(k in 1:length(ETA)){ #multiply it for all other variance components
           if(j == k & names(ETA[[j]])[1] != "X"){ ## diagonal element of CC and not fixed
-            res <- crossprod(ETA[[j]][[1]], ETA[[k]][[1]]) + (as.vector(axs[[j-1]]) * solve(as.matrix(ETA[[j]][[2]]))) # var(e)/var(x) K-
+            res <- crossprod(ETA[[j]][[1]], ETA[[k]][[1]]) + (as.vector(axs[[j-1]]) * (as.matrix(Kinvo[[j-1]]))) # solve(as.matrix(ETA[[j]][[2]]))) # var(e)/var(x) K-
             ## we used j-1 because the 2nd element of ETA is the first var.component and the var(e) is never used in here
           }else{
             res <- crossprod(ETA[[j]][[1]], ETA[[k]][[1]])
@@ -128,6 +131,7 @@ EM2 <- function(y, X=NULL, ETA=NULL, R=NULL, init=NULL, iters=50, REML=TRUE, dra
       # adjust error variance
       now <- 0
       for(f in 1:length(pairs.a)){now <- now + crossprod(as.matrix(ETA[[f]][[1]])%*%thetaHat[pairs.a[[f]],],y)}
+      ## y'y - sum(Zu y) / (n - n.ranef - n.fixef)
       varE = ( crossprod(y) - now ) / (length(y)-nn[[1]])
       # adjust the rest
       indexK <- which(unlist(lapply(ETA, function(x){names(x)[1]})) == "Z")
@@ -136,7 +140,8 @@ EM2 <- function(y, X=NULL, ETA=NULL, R=NULL, init=NULL, iters=50, REML=TRUE, dra
       ##
       for(k in 1:(length(var.com)-1)){ # adjust var comps except ERROR VARIANCE
         rrr <- indexK[k]
-        Kinv <- solve(ETA[[rrr]][[2]])
+        Kinv <- (as.matrix(Kinvo[[k]]))#solve(ETA[[rrr]][[2]])
+        ### UPDATE VAR(Gi)  ------   [ (u'Ai u) + (tr(Ai Cuu) * Var(e)) ] / q
         var.com[[k]] = ( ( t(thetaHat[pairs.a[[rrr]],]) %*% Kinv  %*% thetaHat[pairs.a[[rrr]],] ) + matrix.trace(Kinv%*%CInv[pairs.a[[rrr]],pairs.a[[rrr]]]*as.numeric(varE)))/nrow(ETA[[rrr]][[2]]) 
       }
       var.com[[length(var.com)]] = varE # last variance component

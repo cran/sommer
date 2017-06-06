@@ -45,4 +45,4 @@ F1geno[1:10,1:10]
 ####=========================================####
 }
 \keyword{datasets}
-\seealso{The core function of the package \code{\link{mmer}}}
+\seealso{The core functions of the package \code{\link{mmer}} and and \code{\link{mmer2}}}

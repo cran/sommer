@@ -19,27 +19,6 @@ MEMMA(Y, X=NULL, ZETA=NULL, tolpar = 1e-06, tolparinv = 1e-06, che=TRUE,
   
 }
 \details{
-This algorithm is based on Kang et al. (2008), it is based on REML using the ridge regression parameter lambda as the ration of Var(e)/Var(u). This handles models of the form:
-
-.
-
-y = Xb + Zu + e
-
-.
-
-b ~ N[b.hat, 0]  zero variance because is a fixed term
-
-u ~ N[0, K*sigma(u)]  where: K*sigma(u) = G
-
-e ~ N[0, I*sigma(e)]  where: I*sigma(e) = R
-
-y ~ N[Xb, var(Zu+e)]   where;
-
-var(y) = var(Zu+e) = ZGZ+R = V which is the phenotypic variance
-
-.
-
-The function allows the user to specify the incidence matrices for the random effect "u" as Z and its variance-covariance matrix as K.
 
 .
 
@@ -128,4 +107,4 @@ ETA.A <- list(add=list(Z=Za,K=A))
 #ans.A <- MEMMA(Y=Y, ZETA=ETA.A)
 #ans.A$var.comp
 }
-\seealso{The core function of the package \code{\link{mmer}}}
+\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

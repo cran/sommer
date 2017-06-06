@@ -70,4 +70,4 @@ summary(mix2)
 
 }
 \keyword{datasets}
-\seealso{The core function of the package \code{\link{mmer}}}
+\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

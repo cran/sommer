@@ -26,10 +26,13 @@
 
 overlay <-function(dat, rlist=NULL, prefix=NULL){
   
+  
+  dat <- as.data.frame(dat)
+  
   if(is.null(dim(dat))){
     stop("Please provide a data frame to the overlay function, not a vector.\n", call. = FALSE)
   }
-  dat <- as.data.frame(dat)
+  
   if(is.null(rlist)){
     #rlist <- vector(mode="list",length = dim(dat)[2])
     rlist <- as.list(rep(1, dim(dat)[2]))

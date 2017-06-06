@@ -470,12 +470,17 @@ EMMA <- function (y, X=NULL, ZETA=NULL, REML=TRUE, silent=FALSE, che=TRUE, force
     }
     sigma <- matrix(sigma)
     rownames(sigma) <- c(paste("V(u.",1:length(ZETA),")",sep=""),"V(Error)")
-    res <- list(var.comp=sigma, beta.hat = betahat, 
+    
+    out1 <- as.data.frame(sigma)
+    out1[,"constraint"] <- "Positive"
+    convergence<-TRUE
+    res <- list(var.comp=out1, beta.hat = betahat, 
                 u.hat = u.hatl, Var.u.hat = varuhatl, 
                 Var.beta.hat = var.beta, PEV.u.hat = PEVuhatl, 
                 LL = loglik, AIC=AIC, BIC=BIC, V.inv=Hinvhat, X=X, Z=Z, K=K, 
                 fitted.y=fitted.y, fitted.u=fitted.u, residuals=ehat, 
-                cond.residuals=residuals2, fitted.y.good=fitted.y.good)
+                cond.residuals=residuals2, fitted.y.good=fitted.y.good,
+                convergence=convergence)
   } ### end of model with random effects
   return(res)
 }

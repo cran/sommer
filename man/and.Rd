@@ -52,4 +52,4 @@ summary(modh)
 #               G=list(female=A, male=A),data=HDdata)
 # summary(modh2)
 }
-\seealso{The core function of the package \code{\link{mmer}}}
+\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}} }

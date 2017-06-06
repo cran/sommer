@@ -1,36 +1,38 @@
 ---
-title: "Genetic analysis using the sommer package"
+title: "Quantitative genetics using the sommer package"
 author: "Giovanny Covarrubias-Pazaran"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Genetic analysis using the sommer package}
+  %\VignetteIndexEntry{Quantitative genetics using the sommer package}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-The sommer package has been developed to provide R users with a powerful multivariate mixed model solver for different genetic and non-genetic analysis in diploid and polyploid organisms. This package allows the user to estimate variance components for a mixed model with the advantage of specifying the variance-covariance structure of the random effects and obtain other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc. 
+The sommer package was developed to provide R users with a powerful multivariate mixed model solver for different genetic and non-genetic analysis in diploid and polyploid organisms. This package allows the user to estimate variance components for a mixed model with the advantage of specifying the variance-covariance structure of the random effects and obtain other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc. 
 
-The package is focused on genomic prediction (or genomic selection) and GWAS analysis, although general mixed models can be fitted as well. The package provides kernels to estimate additive (`A.mat`), dominance (`D.mat`), and epistatic (`E.mat`) relationship matrices that have been shown to increase prediction accuracy under certain scenarios. The package provides flexibility to fit other genetic models such as full and half diallel models as well.
+The package is focused on genomic prediction (hybrid prediction & genomic selection) and GWAS analysis, although general mixed models can be fitted as well. The package provides kernels to estimate additive (`A.mat`), dominance (`D.mat`), and epistatic (`E.mat`) relationship matrices that have been shown to increase prediction accuracy under certain scenarios. The package provides flexibility to fit other genetic models such as full and half diallel models as well.
 
 Vignettes aim to provide several examples in how to use the sommer package under different scenarios in breeding and genetics. We will spend the rest of the space providing examples for: 
 
 1) Heritability ($h^2$) calculation
-2) Half and full diallel designs
-3) Genome wide association analysis (GWAS) in diploids and tetraploids
-4) Genomic selection
-5) Single cross prediction
-6) Multivariate genetic models and genetic correlations
-7) Multivariate GWAS
-8) Specifying heterogeneous variances in univariate mixed models
+2) Specifying heterogeneous variances in univariate mixed models
+3) Using the pin calculator
+4) Half and full diallel designs
+5) Genome wide association analysis (GWAS) in diploids and tetraploids
+6) Genomic selection
+7) Single cross prediction
+8) Multivariate genetic models and genetic correlations
+9) Multivariate GWAS
+
 
 ## Background
 
-The core of the package are the `mmer` (matrix-based) and `mmer2` (formula-based) functions which solve the mixed model equations. The functions are an interface to call one of the 4 ML/REML methods supported in the package; `EMMA` efficient mixed model association (Kang et al. 2008), `AI` average information (Gilmour et al. 1995; Lee et al. 2015), `EM` expectation maximization (Searle 1993; Bernardo 2010), and the default `NR` Newton-Raphson (Tunnicliffe 1989). All methods can handle multiple random effects and covariance structures.
+The core of the package are the `mmer` (matrix-based) and `mmer2` (formula-based) functions which solve the mixed model equations. The functions are an interface to call one of the 4 ML/REML methods supported in the package; `EMMA` efficient mixed model association (Kang et al. 2008), `AI` Direct-Inversion Average Information (Gilmour et al. 1995; Lee et al. 2015), `EM` expectation maximization (Searle 1993; Bernardo 2010), and the default `NR` Direct-Inversion Newton-Raphson (Tunnicliffe 1989). All methods can handle multiple random effects and covariance structures and multivariate (multiple responses) mixed models. 
 
 <br>
 
-The mixed model solved by the algorithms has the form:
+The univariate mixed models that sommer can solve have the form:
 
 <br>
 
@@ -96,7 +98,57 @@ K_1 \sigma^2_u1 & 0 & 0 \\
 \end{array}\right]
 $$
 
-The program takes the Zs and Ks for each random effect and construct the neccesary structure inside and estimates the variance components by ML/REML using any of the 4 methods available in sommer; Direct-Inversion Average Information, Expectation-Maximization, Direct-Inversion Newton-Raphson, and Efficient Mixed Model Association. Please refer to the canonical papers listed in the Literature section to check how the methods work. We have tested widely the methods to make sure they provide the same solution when the likelihood behaves well but for complex problems they might lead to slightly different answers. If you have any concer please contact me at cova_ruber@live.com.mx or covarrubiasp@wisc.edu.
+Since version 2.0 sommer can handle multivariate models. These have the form:
+
+<br>
+
+$Y = X\beta + Zu + \epsilon$ 
+
+<br>
+
+with:
+
+<br>
+
+$$\mathbf{Y} = \left[\begin{array}
+{r}
+y_1 \\
+y_2 \\
+... \\
+y_t \\
+\end{array}\right]
+$$
+
+<br>
+
+$$\mathbf{X} = \left[\begin{array}
+{rrr}
+X & ... & ... \\
+... & ... & ...\\
+... & ... & X \\
+\end{array}\right]
+$$
+
+<br>
+
+$$\mathbf{V} = \left[\begin{array}
+{rrr}
+Z_1 G_1 Z_1' + ... + Z_1 R_1 Z_1' & ... & Z_1 H_1 Z_t' + ... + Z_1 S_1 Z_t' \\
+ ... & ... & ...\\
+Z_t H_1 Z_1' + ... + Z_t S_1 Z_1' & ... & Z_t G_1 Z_t' + ... + Z_t R_1 Z_t' \\
+\end{array}\right]
+$$
+
+
+<br>
+
+for 't' traits, where G are H are variance and covariance matrices among random effects for the "t" trait, and R and S are variance and covariance matrices among residuals. Here R=S=I$\sigma_\epsilon$ , where I is an identity matrix. We can specify the covariance matrices. BLUPs will also be corrected for such covariances usually leading to more accurate predictions.
+
+<br>
+
+The function `mmer` takes the Zs and Ks for each random effect and construct the neccesary structure inside and estimates the variance components by ML/REML using any of the 4 methods available in sommer. The `mmer2` function is enabled to work in a model-based fashion so user don't have to build the Z's and K matrices. Please refer to the canonical papers listed in the Literature section to check how the algorithms work. We have tested widely the methods to make sure they provide the same solution when the likelihood behaves well but for complex problems they might lead to slightly different answers. If you have any concern please contact me at cova_ruber@live.com.mx.
+
+In the following section we will go in detail over several examples on how to use mixed models in univariate and multivariate case and their use in quantitative genetics.
 
 <br>
 
@@ -104,7 +156,7 @@ The program takes the Zs and Ks for each random effect and construct the neccesa
 
 The heritability is one of the most popular parameters in the breeding and genetics community. The heritability is usually estimated as narrow sense ($h^2$; only additive variance in the numerator $\sigma^2_A$), and broad sense ($H^2$; all genetic variance in the numerator $\sigma^2_G$).
 
-In a classical experiment with no molecular markers, special designs are performed to estimate and disect the additive ($\sigma^2_A$) and dominance ($\sigma^2_D$) variance along with environmental variability. Designs such as generation analysis, North Carolina designs are used to disect $\sigma^2_A$ and $\sigma^2_D$ to estimate the narrow sense heritability ($h^2$). When no special design is available we can still disect the genetic variance ($\sigma^2_G$) and estimate the broad sense heritability. In this example we will show the broad sense estimation which doesn't use covariance structures for random effects. For big models with no covariance structures, sommer's direct inversion is a bad idea to use but we will show anyways how to do it, for very sparse models we recommend using the lmer function from the lme4 package from Douglas Bates.
+In a classical experiment with no molecular markers, special designs are performed to estimate and disect the additive ($\sigma^2_A$) and dominance ($\sigma^2_D$) variance along with environmental variability. Designs such as generation analysis, North Carolina designs are used to disect $\sigma^2_A$ and $\sigma^2_D$ to estimate the narrow sense heritability ($h^2$). When no special design is available we can still disect the genetic variance ($\sigma^2_G$) and estimate the broad sense heritability. In this example we will show the broad sense estimation which doesn't use covariance structures for random effects. For big models with no covariance structures, sommer's direct inversion is a bad idea to use but we will show anyways how to do it, for very sparse models we recommend using the lmer function from the lme4 package from Douglas Bates or change to the EM algorithm which uses MME-based algorithms.
 
 The dataset has 41 potato lines evaluated in 5 locations across 3 years in an RCBD design. We show how to fit the model and extract the variance components to calculate the $h^2$.
 
@@ -120,6 +172,22 @@ V_E <- vc[2,1];V_GE <- vc[3,1];V_G <- vc[1,1];Ve <- vc[5,1]
 n.env <- length(levels(h2$Env))
 h2 <- V_G/(V_G + V_GE/n.env + Ve/(2*n.env)) #the 2 is a reference for block
 h2
+```
+
+The same model can be fitted with the `mmer` function that is actually used by the `mmer2` function in the background. This is just to show that you can create your customized matrices and use the mixed model solver. This is how you would do it:
+
+```{r}
+library(sommer)
+data(h2)
+head(h2)
+Z1 <- model.matrix(~Name-1, h2)
+Z2 <- model.matrix(~Env-1, h2)
+Z3 <- model.matrix(~Env:Name-1, h2)
+Z4 <- model.matrix(~Block-1, h2)
+ETA <- list(name=list(Z=Z1),env=list(Z=Z2),name.env=list(Z=Z3),block=list(Z=Z4))
+y <- h2$y
+ans1 <- mmer(Y=y, Z=ETA, silent = TRUE)
+vc <- ans1$var.comp
 ```
 
 Recently with markers becoming cheaper, thousand of markers can be run in the breeding materials. When markers are available, an special design is not neccesary to disect the additive genetic variance. The availability of the additive, dominance and epistatic relationship matrices allow us to estimate $\sigma^2_A$, $\sigma^2_D$ and $\sigma^2_I$.
@@ -144,9 +212,84 @@ ans.ADE <- mmer2(color~1, random=~g(id) + g(idd) + g(ide),
 (h2 <- sum(ans.ADE$var.comp[1,1])/sum(ans.ADE$var.comp[,1]))
 ```
 
-In the previous example we showed how to estimate the additive ($\sigma^2_A$), dominance ($\sigma^2_D$), and epistatic ($\sigma^2_I$) variance components based on markers and estimate broad ($H^2$) and narrow sense heritability ($h^2$).
+In the previous example we showed how to estimate the additive ($\sigma^2_A$), dominance ($\sigma^2_D$), and epistatic ($\sigma^2_I$) variance components based on markers and estimate broad ($H^2$) and narrow sense heritability ($h^2$). Notice that we used the `g()` function which indicates that the random effect inside the parenthesis (i.e. id, idd or ide) has a covariance matrix (A, D, or E), that will be specified in the G argument in the form of a list and using the name of the random efect to allow the program to recognize which variance covariance matrix belongs to each random effect. Please DO NOT provide the inverse but the original covariance matrix. This is why we have called the function `g()` and no `giv()` as the popular software asreml.
 
-## 2) Half and full diallel designs 
+Just to show one more time that you can use your own matrices we will repeat the same calculation using the `mmer` function:
+
+```{r}
+data(CPdata)
+CPgeno <- CPdata$geno
+### look at the data
+head(CPpheno)
+CPgeno[1:5,1:4]
+## fit a model including additive and dominance effects
+Z1 <- model.matrix(~id-1, CPpheno); colnames(Z1) <- gsub("id","",colnames(Z1))
+A <- A.mat(CPgeno) # additive relationship matrix
+D <- D.mat(CPgeno) # dominance relationship matrix
+E <- E.mat(CPgeno) # epistatic relationship matrix
+y <- CPpheno$color
+
+ETA <- list(id=list(Z=Z1,K=A),idd=list(Z=Z1,K=D),ide=list(Z=Z1,K=E))
+ans.ADE <- mmer(Y=y, Z=ETA, silent = TRUE)
+ans.ADE$var.comp
+```
+
+## 2) Specifying heterogeneous variances in univariate models
+
+Very often in multi-environment trials, the assumption that genetic variance is the same across locations may be too naive. Because of that, specifying a general genetic component and a location specific genetic variance is the way to go. Although the function 'mmer' implemented in sommer can be used to do that, can be quite cumbersome and messy to create the incidence and variance covariance matrices for fitting those models. For that reason the function 'mmer2' was added to the package to make such models easier to fit.
+
+We estimate variance components for $GCA_2$ and $SCA$ specifying the variance structure.
+
+```{r, fig.show='hold'}
+data(cornHybrid)
+hybrid2 <- cornHybrid$hybrid # extract cross data
+head(hybrid2)
+### fit the model
+modFD <- mmer2(Yield~1, random=~ at(Location,c("3","4")):GCA2, 
+               rcov= ~ at(Location):units,
+               data=hybrid2, silent = TRUE)
+summary(modFD)
+```
+
+In the previous example we showed how the `at` function is used in the `mmer2` solver. By using the `at` function you can specify that i.e. the GCA2 has a different variance in different Locations, in this case locations 3 and 4, but also a main GCA variance. This is considered a CS + DIAG (compound symmetry + diagonal) model.
+
+In addition, other functions can be added on top to fit models with covariance structures, i.e. the `g()` function which indicates that the random effect inside the parenthesis (i.e. GCA2) has a covariance matrix (A, pedigree or genomic relationship matrix) that will be specified in the G argument in the form of a list:
+
+```{r, fig.show='hold'}
+data(cornHybrid)
+hybrid2 <- cornHybrid$hybrid # extract cross data
+## get the covariance structure for GCA2
+A <- cornHybrid$K
+## fit the model
+modFD <- mmer2(Yield~1, random=~ g(GCA2) + at(Location):g(GCA2), 
+               rcov= ~ at(Location):units,
+              data=hybrid2, G=list(GCA2=A),
+             silent = TRUE, draw=FALSE)
+summary(modFD)
+```
+The `draw` argument allows you to see the progress of the likelihood and the change of the variance components, we just mention it in case you like to do that inspection but this will make the fitting process more time consuming.
+
+## 3) Using the pin calculator
+
+Sometimes the user needs to calculate ratios or functions of specific variance-covariance components and obtain the standard error for such parameters. Examples of these are the genetic correlations, heritabilities, etc. Using the CPdata we will show how to estimate the heritability and the standard error.
+
+```{r, fig.show='hold'}
+data(CPdata)
+CPpheno <- CPdata$pheno
+CPgeno <- CPdata$geno
+#### create the variance-covariance matrix 
+A <- A.mat(CPgeno)
+#### look at the data and fit the model
+head(CPpheno)
+mix1 <- mmer2(color~1,random=~g(id), G=list(id=A), data=CPpheno, silent=TRUE)
+summary(mix1)
+#### run the pin function
+pin(mix1, h2 ~ V1 / ( V1 + V2 ) )
+```
+
+The same can be used for multivariate models. Please check the documentation of the `pin` function to see more examples.
+
+## 4) Half and full diallel designs 
 
 When breeders are looking for the best single cross combinations, diallel designs have been by far the most used design in crops like maize. There are 4 types of diallel designs depending if reciprocate and self cross (omission of parents) are performed (full diallel with parents n^2; full diallel without parents n(n-1); half diallel with parents 1/2 * n(n+1); half diallel without parents 1/2 * n(n-1) ). In this example we will show a full dialle design (reciprocate crosses are performed) and half diallel designs (only one of the directions is performed).
 
@@ -178,7 +321,7 @@ Vg <- Va + Vd
 ```
 Don't worry too much about the small h2 value, the data was simulated to be mainly dominance variance, therefore the Va was simulated extremely small leading to such value of narrow sense h2.
 
-In this second data set we show a small half diallel with 7 parents crossed in one direction. n(n-1)/2 crosses are possible 7(6)/2 = 21 unique crosses. Parents appear as males or females indistictly. Each with two replications in a CRD. For a half diallel design a single GCA variance component can be estimated and an SCA as well ($\sigma^2_GCA$ and $\sigma^2_SCA$ respectively). And BLUPs for GCA and SCA of the parents can be extracted. We would create the design matrices in sommer using the `overlay` and `model.matrix` functions for the GCA and SCA matrices respectively.
+In this second data set we show a small half diallel with 7 parents crossed in one direction. n(n-1)/2 crosses are possible 7(6)/2 = 21 unique crosses. Parents appear as males or females indistictly. Each with two replications in a CRD. For a half diallel design a single GCA variance component for both males and females can be estimated and an SCA as well ($\sigma^2_GCA$ and $\sigma^2_SCA$ respectively), and BLUPs for GCA and SCA of the parents can be extracted. We would show first how to use it with the `mmer2` function using the `and()` function and later we will show how to do it creating customized matrices using the `overlay` and `model.matrix` functions for the GCA and SCA matrices respectively. The specific model here is:
 
 $y = X\beta + Zu_g + Zu_s + \epsilon$ 
 
@@ -202,7 +345,25 @@ Vg <- Va + Vd
 (h2 <- Va / (Vg + (Ve/2)) )
 ```
 
-## 3) Genome wide association analysis (GWAS) in diploids and tetraploids
+Notice how the `and()` argument makes the overlay possible making sure that male and female are joint into a single random effect. The same can be done using the `mmer` argument by creating the incidence and covariance matrices in case you want to see what is doing `mmer2` in the background.
+
+```{r, fig.show='hold'}
+  data(HDdata)
+  head(HDdata)
+  #### GCA matrix for half diallel using male and female columns
+  #### use the 'overlay' function to create the half diallel matrix
+  Z1 <- overlay(HDdata[,c(3:4)])
+  #### Obtain the SCA matrix
+  Z2 <- model.matrix(~as.factor(geno)-1, data=HDdata)
+  #### Define the response variable and run
+  y <- HDdata$sugar
+  ETA <- list(list(Z=Z1), list(Z=Z2)) # Zu component
+  modHD <- mmer(Y=y, Z=ETA, draw=FALSE, silent=TRUE)
+  summary(modHD)
+```
+
+
+## 5) Genome wide association analysis (GWAS) in diploids and tetraploids
 
 With the development of modern statistical machinery the detection of markers associated to phenotypic traits have become quite straight forward. The days of QTL mapping using biparental populations exclusively are in the past. In this section we will show how to perform QTL mapping for diploid and polyploid organisms with complex genetic relationships. In addition we will show QTL mapping in biparental populations to clarify that the fact that is not required anymore doesn't limit the capabilities of modern mixed model machinery.
 
@@ -232,6 +393,8 @@ ans.A <- mmer2(color~1,random=~g(id), G=list(id=A),
                W=CPgeno, data=CPpheno, silent=TRUE, map=my.map) # fit the model
 ```
 
+Notice that we used the random effect `g(id)` to adjust for the population structure whereas the markers are added in the `W` argument. Internally there's 2 option for this 2-step GWAS models, in the default `P3D=TRUE` the model estimate variance components once and test each marker by a generalized least square process adjusting by the inverse of the V matrix (ZKZ'+R). If the user sets the argument `P3D=FALSE` the model will estimate variance components for each marker tested by adding the marker being tested as a fixed effect in the model so the variance components are adjusted. This can be quite time consuming and the first option presented usually yields very good results. For more details go to the help page of the `mmer` or `mmer2` functions. 
+
 Now we will show how to do GWAS in a tetraploid using potato data. Is not very different from diploids. We only need to pay attention to the `ploidy` argument in the `atcg1234` and `A.mat` functions. In addition, when running the `mmer` model there is more models that can be implemented according to Rosyara et al. (2016).
 
 ```{r}
@@ -250,11 +413,13 @@ K1 <- A.mat(marks, ploidy=4)
 # run the model you want
 models <- c("additive","1-dom-alt","1-dom-ref","2-dom-alt","2-dom-ref")
 ans2 <- mmer2(tuber_shape~1, random=~g(Name), G=list(Name=K1), W=marks, 
-              method="EMMA", data=phenotypes2, silent = TRUE)
+              method="EMMA", data=phenotypes2, silent = TRUE, models="additive")
 summary(ans2)
 ```
 
-## 4) Genomic selection
+Notice the use of the `models` argument. The default is the additive model which applies for diploids and polyploids but for polyploids the model can be a vector with all possible models, i.e. "additive","1-dom-alt","1-dom-ref","2-dom-alt","2-dom-ref" models are supported for polyploids based on Rosyara (2016)
+
+## 6) Genomic selection
 
 In this section we will use wheat data from CIMMYT to show how is genomic selection performed. This is the case of prediction of specific individuals within a population. It basically uses a similar model of the form:
 
@@ -285,7 +450,7 @@ cor(ans$u.hat$`g(id)`[vv,],Y[vv,"X1"])
 sqrt(ans$var.comp[1,1]/sum(ans$var.comp[,1]))
 ```
 
-## 5) Single cross prediction
+## 7) Single cross prediction
 
 When doing prediction of single cross performance the phenotype can be dissected in three main components, the general combining abilities (GCA) and specific combining abilities (SCA). This can be expressed with the same model analyzed in the diallel experiment mentioned before:
 
@@ -340,53 +505,9 @@ In the previous model we only used the GCA effects (GCA1 and GCA2) for practicit
 
 A model without covariance structures would show that the SCA variance component is insignificant compared to the GCA effects. This is why including the third random effect doesn't increase the prediction accuracy.
 
-## 6) Multivariate genetic models and genetic correlations
+## 8) Multivariate genetic models and genetic correlations
 
-Sometimes is important to estimate genetic variance-covariance among traits, multi-reponse models are very useful for such task. Currently sommer can deal with multivariate models for multiple random effects of the form:
-
-<br>
-
-$Y = X\beta + Zu + \epsilon$ 
-
-<br>
-
-with:
-
-<br>
-
-$$\mathbf{Y} = \left[\begin{array}
-{r}
-y_1 \\
-y_2 \\
-... \\
-y_t \\
-\end{array}\right]
-$$
-
-<br>
-
-$$\mathbf{X} = \left[\begin{array}
-{rrr}
-X & ... & ... \\
-... & ... & ...\\
-... & ... & X \\
-\end{array}\right]
-$$
-
-<br>
-
-$$\mathbf{V} = \left[\begin{array}
-{rrr}
-Z_1 G_1 Z_1' + ... + Z_1 R_1 Z_1' & ... & Z_1 H_1 Z_t' + ... + Z_1 S_1 Z_t' \\
- ... & ... & ...\\
-Z_t H_1 Z_1' + ... + Z_t S_1 Z_1' & ... & Z_t G_1 Z_t' + ... + Z_t R_1 Z_t' \\
-\end{array}\right]
-$$
-
-
-<br>
-
-for 't' traits, where G are H are variance and covariance matrices among random effects for the "t" trait, and R and S are variance and covariance matrices among residuals. Here R=S=I$\sigma_\epsilon$ , where I is an identity matrix. We can specify the covariance matrices. BLUPs will also be corrected for such covariances usually leading to more accurate predictions.
+Sometimes is important to estimate genetic variance-covariance among traits, multi-reponse models are very useful for such task. Let see an example with 3 traits (color, Yield, and Firmness) and a single random effect (genotype; id) although multiple effects can be modeled as well. We need to use a variance covariance structure for the random effect to be able to obtain the genetic covariance among traits.
 
 ```{r}
 data(CPdata)
@@ -404,7 +525,7 @@ ans.A <- mmer2(cbind(color,Yield,Firmness)~1, random=~g(id),G=list(id=A),
 summary(ans.A)
 ```
 
-Now you can extract the BLUPs using the 'randef' function or simple accesing with the '$' sign and pick 'u.hat'. Calculate genetic correlations and heritabilities easily. 
+Now you can extract the BLUPs using the 'randef' function or simple accesing with the '$' sign and pick 'u.hat'. Also, genetic correlations and heritabilities can be calculated easily. 
 
 ```{r}
 ## genetic variance covariance
@@ -419,9 +540,9 @@ prod.sd <- sd.gvc %*% t(sd.gvc)
 (h2 <- diag(gvc) / diag(cov(CPpheno[,names(diag(gvc))], use = "complete.obs")))
 ```
 
-## 7) Multivariate GWAS
+## 9) Multivariate GWAS
 
-Following the same theory of multivariate methods, theorically the marker effects can take advantage of the information contained in the correlation among traits besides exploiting the correlations between individuals. We have extended the GWAS framework to multivariate GWAS. Here, we will show a multivariate GWAS in a biparental population using the information of 4 traits.
+Following the same theory of multivariate methods, theorically the marker effects can take advantage of the information contained in the correlation among traits besides exploiting the correlations between individuals. We have extended the GWAS framework to multivariate GWAS. Here, we will show a multivariate GWAS in a biparental population using the information of 2 traits for simplicity although any number of traits can be used.
 
 ```{r}
 data(CPdata)
@@ -440,36 +561,7 @@ ans.A <- mmer2(cbind(color,Firmness)~1, random=~g(id),G=list(id=A),
 summary(ans.A)
 ```
 
-## 8) Specifying heterogeneous variances in univariate models
-
-Very often in multi-environment trials, the assumption that genetic variance is the same across locations may be too naive. Because of that, specifying a general genetic component and a location specific genetic variance is the way to go. Although the function 'mmer' implemented in sommer can be used to do that, can be quite cumbersome and messy to create the incidence and variance covariance matrices for fitting those models. For that reason the function 'mmer2' was added to the package to make such models easier to fit.
-
-We estimate variance components for $GCA_2$ and $SCA$ specifying the variance structure.
-
-```{r, fig.show='hold'}
-data(cornHybrid)
-hybrid2 <- cornHybrid$hybrid # extract cross data
-head(hybrid2)
-### fit the model
-modFD <- mmer2(Yield~1, random=~ GCA2 + at(Location,c("3","4")):GCA2, 
-               data=hybrid2, silent = TRUE)
-summary(modFD)
-```
-
-In addition, other functions can be added on top to fit models with covariance structures:
-
-```{r, fig.show='hold'}
-data(cornHybrid)
-hybrid2 <- cornHybrid$hybrid # extract cross data
-## get the covariance structure for GCA2
-A <- cornHybrid$K
-## fit the model
-modFD <- mmer2(Yield~1, random=~ g(GCA2) + at(Location):g(GCA2), 
-              data=hybrid2, G=list(GCA2=A),
-             silent = TRUE, draw=FALSE)
-summary(modFD)
-```
-
+Notice that here we made use of several arguments that were not neccesarily.
 Good luck with your analysis. 
 
 ## Literature

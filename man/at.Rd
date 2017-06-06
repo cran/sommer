@@ -32,4 +32,4 @@ head(hybrid2)
 modFD <- mmer2(Yield~1, random=~at(Location,c("3","4")):GCA2, data=hybrid2)
 summary(modFD)
 }
-\seealso{The core function of the package \code{\link{mmer}}}
+\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}} }

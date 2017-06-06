@@ -40,4 +40,4 @@ mix1 <- mmer2(Yield~1,random=~g(id), G=list(id=A), data=CPpheno)
 summary(mix1)
 
 }
-\seealso{The core function of the package \code{\link{mmer}}}
+\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

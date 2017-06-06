@@ -91,4 +91,4 @@ colfunc <- colorRampPalette(c("steelblue4","springgreen","yellow"))
 hv <- heatmap(A[1:15,1:15], col = colfunc(100),Colv = "Rowv")
 str(hv)
 }
-\seealso{\code{\link{mmer}} -- the core function of the package }
+\seealso{\code{\link{mmer}} and \code{\link{mmer2}}-- the core functions of the package }

@@ -2,7 +2,7 @@
 \alias{mmer}
 \title{Mixed Model Equations in R}
 \description{
-This function solves univariate and multivariate linear mixed models by likelihood methods. It has been \strong{implemented to work directly with incidence and variance covariance matrices} for each random effect. Currently 4 optimization \strong{methods} are supported; \strong{Efficient Mixed Model Association (EMMA)} (Kang et al. 2008), \strong{Direct-Inversion Average Information (AI)} (Gilmour et al. 1995; Lee et al. 2015), \strong{Expectation Maximization (EM)} (Searle 1993; Bernardo 2010), and the default \strong{Direct-Inversion Newton-Raphson (NR)} (Tunnicliffe 1989). All algorithms are able to deal with multiple variance components. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices. Covariance structures for the residual component is currently supported only for univariate Newton Raphson. The package provides flexibility to fit other genetic models such as full and half diallel models as well (see the \code{\link{overlay}} function). The core algorithms in sommer based in Direct-Inversion surpasses in performance the MME-based only when dense covariance structures are present (GBLUP and GWAS case). When these matrices are sparse (meaning \strong{when dense covariance structures don't exist}), the MME-based algorithms are faster and we recommend the user to \strong{swith to use the lme4 or asreml} packages. \strong{rrBLUP results can be recreated using the EMMA method. Keep in mind that such method is limited to a single random effect}.
+This function solves univariate and multivariate linear mixed models by likelihood methods. It has been \strong{implemented to work directly with incidence and variance covariance matrices} for each random effect. Current optimization \strong{methods} are; \strong{efficient mixed model association (EMMA)} (Kang et al. 2008), \strong{Direct-Inversion Average Information (AI)} (Lee et al. 2015), \strong{MME-based expectation maximization (EM)} (Searle 1993; Bernardo 2010), \strong{MME-based Average Information (AI)}(Gilmour et al. 1995). and the default \strong{Direct-Inversion Newton-Raphson (NR)} (Tunnicliffe 1989). All algorithms are able to deal with multiple variance components. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices. The package provides flexibility to fit other genetic models such as full and half diallel models as well (see how to use the \code{\link{and}} functionality), and heterogeneous variances (\code{\link{at}} function). The core algorithms in sommer based in \strong{Direct-Inversion surpasses in performance the MME-based only when dense covariance structures are present} (GBLUP and GWAS case). \strong{With sparse matrices} (meaning when dense covariance structures don't exist), the MME-based algorithms are faster and we recommend to shift to the use of method="EM" or method="AI" combined with DI="FALSE" to change from direct-inversion to MME-based algorithms. \strong{rrBLUP results can be recreated using the EMMA method. Keep in mind that such method is limited to a single random effect}.
 
 Finally, feel free to get in touch with me if you have any \strong{questions, bug reports and suggestions} at: covarrubiasp@wisc.edu
 
@@ -12,7 +12,7 @@ vignette("sommer")
 
 }
 \usage{
-mmer(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE, 
+mmer(Y, X=NULL, Z=NULL, R=NULL, W=NULL, method="NR", REML=TRUE, DI=TRUE,
      MVM=FALSE, iters=20, draw=FALSE, init=NULL, n.PC=0, P3D=TRUE,
      models="additive", ploidy=2, min.MAF = 0.05, silent=FALSE, 
      family=NULL, constraint=TRUE, sherman=FALSE, EIGEND=FALSE,
@@ -50,10 +50,12 @@ mmer(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE,
   PLEASE remember to \strong{use only the names Z and K for all random effects} when you provide your matrices, \strong{that's the only way the program distinguishes between a Z (incidence) or a K (covariance) matrix}. You can see the examples at the bottom to have a clearer idea how to fit your models.
   
   }
+  \item{R}{a list with R matrices used when the user wants heterogeneous residual variances, i.e. if user wants different residual variance components for each environment in a multienvironment analysis.}
   \item{W}{an incidence matrix for extra fixed effects and \strong{only to be used if GWAS is pursued} to fit a model of the form \deqn{y = X \beta + Z g + W \tau + \varepsilon}. Markers will be treated as fixed effects according to Yu et al. (2006) \strong{for diploids}, and Rosyara et al (2016) \strong{for polyploids}. For details about the methods please go to the Details section. The dashed line in the Manhattan plots corresponds to an FDR rate of 0.05 and is calculated using the p.adjust function included in the stats package.}
 
   \item{method}{this refers to the method or algorithm to be used for estimating variance components. The package currently is supported by 4 algorithms; \strong{EMMA} efficient mixed model association (Kang et al. 2008), \strong{AI} average information (Gilmour et al. 1995; Lee et al. 2015), \strong{EM} expectation maximization (Searle 1993; Bernardo 2010), and the default Newton-Raphson \strong{NR} (Tunnicliffe 1989).}
   \item{REML}{a TRUE/FALSE value indicating if restricted maximum likelihood should be used instead of ML. The default is TRUE.}
+  \item{DI}{a TRUE/FALSE value indicating if the method (i.e. AI, NR, etc.) to estimate variance components should use direct inversion (DI=TRUE) or MME-based (DI=FALSE) techniques if available for such method.}
   \item{MVM}{a TRUE/FALSE value \strong{indicating if the model should be run as multivariate} or as parallel univariate models. the default is FALSE which will indicate to run parallel univariate models. The 'n.cores' argument decides how many cores use in such parallelization. MVM=TRUE will run a multivariate model but only for a single random effect.}
   \item{iters}{a scalar value indicating \strong{how many iterations} have to be performed if the optimization algorithms. There is no rule of tumb for the number of iterations but less than8 is usually enough. The default value is 20 iterations but usually will take less than that stopping before reaching the maximum number of iterations.}
   \item{draw}{a TRUE/FALSE value indicating if a plot of \strong{updated values for the variance components} and the log-likelihood \strong{should be drawn or not} during the optimization process. The default is FALSE. It's been set to FALSE because is less the computation time when the computer doesn't have to draw plots.}
@@ -77,15 +79,15 @@ mmer(Y, X=NULL, Z=NULL, W=NULL, method="NR", REML=TRUE,
       \item{manh.col}{a vector with \strong{colors desired for the manhattan plot}. Default are cadetblue and red alternated for each chromosome.}
       \item{gwas.plots}{a TRUE/FALSE statement indicating if the \strong{manhattan and qq plot should be drawn or not}. The default is TRUE but you may want to avoid it.}
       \item{n.cores}{number of cores to use when the user passes multiple responses in the model for a faster execution of univariate models. The default is 1. It relies on forking and hence is \strong{not available on Windows} unless mc.cores = 1.}
-      \item{tolpar}{tolerance parameter for convergence in the multivariate models.}
-      \item{tolparinv}{tolerance parameter for matrix inverse in the multivariate models.}
+      \item{tolpar}{tolerance parameter for convergence in the models.}
+      \item{tolparinv}{tolerance parameter for matrix inversion in the models.}
      \item{che}{a TRUE/FALSE value statement indicating if the program should spend time \strong{checking the matrices} of random effects provided by the user \strong{for possible errors} in dimensions.}
       \item{IMP}{a TRUE/FALSE statement if the function should impute the Y matrix/dataframe with the median value or should get rid of missing values for the estimation of variance components. \strong{Only for multivariate mixed models}.}
 
 }
 \details{
 
-The package has been equiped with several datasets to learn how to use the sommer package; the \code{\link{HDdata}} and \code{\link{FDdata}} datasets will introduce users to fit half and full diallel designs respectively. The \code{\link{h2}} dataset shows how to calculate heritability. The \code{\link{cornHybrid}} and \code{\link{Technow_data}} datasets contain data to teach users how to perform genomic prediction in hybrid single crosses which display GCA and SCA effects. The \code{\link{wheatLines}} dataset teaches how to do genomic prediction in single crosses in species displaying only additive effects. The \code{\link{CPdata}} dataset contains data to teach users how to fit genomic prediction models within a biparental population coming from 2 highly heterozygous parents including additive, dominance and epistatic effects.  The same data example is used to show how to include the top GWAS hits as fixed effects in the GBLUP model to increase prediction accuracy, the examples can be found in the \code{\link{hits}} documentation.  The \code{\link{PolyData}} dataset shows how to fit genomic prediction and GWAS analysis in polyploids. The second example in \code{\link{Technow_data}} data shows how to perform GWAS in single cross hybrids. A good converter from letter code to numeric format is implemented in the function \code{\link{atcg1234}}, which supports higher ploidy levels than diploid. The \code{\link{RICE}} dataset can teach users how to select the best training population using the \code{\link{TP.prep}} function in an applied breeding program, and we show comparison some comparison with other methods. Traces of selection can be obtained using markers with the \code{\link{eigenGWAS}} function. Additional examples for fitting mixed models, such as GWAS and others, can be found in the example section of the \code{\link{mmer}} and \code{\link{mmer2}} functions. Examples of multivariate models can be found in the example #3 of the \code{\link{CPdata}}. In addition, since v2.3 we have added the \code{\link{nna}} function which does nearest neighbor to create a new data frame adjusted for spatial variation. The \code{\link{ExpDesigns}} data contains several datasets to analyze experimental designs relevant to plant breeding and several detailed examples are available.
+The package has been equiped with several datasets to learn how to use the sommer package; the \code{\link{HDdata}} and \code{\link{FDdata}} datasets will introduce users to fit half and full diallel designs respectively. The \code{\link{h2}} dataset shows how to calculate heritability. The \code{\link{cornHybrid}} and \code{\link{Technow_data}} datasets contain data to teach users how to perform genomic prediction in hybrid single crosses which display GCA and SCA effects. The \code{\link{wheatLines}} dataset teaches how to do genomic prediction in single crosses in species displaying only additive effects. The \code{\link{CPdata}} dataset contains data to teach users how to fit genomic prediction models within a biparental population coming from 2 highly heterozygous parents including additive, dominance and epistatic effects.  The same data example is used to show how to include the top GWAS hits as fixed effects in the GBLUP model to increase prediction accuracy, the examples can be found in the \code{\link{hits}} documentation.  The \code{\link{PolyData}} dataset shows how to fit genomic prediction and GWAS analysis in polyploids. The second example in \code{\link{Technow_data}} data shows how to perform GWAS in single cross hybrids. A good converter from letter code to numeric format is implemented in the function \code{\link{atcg1234}}, which supports higher ploidy levels than diploid. The \code{\link{RICE}} dataset can teach users how to select the best training population using the \code{\link{TP.prep}} function in an applied breeding program, and we show comparison some comparison with other methods. Traces of selection can be obtained using markers with the \code{\link{eigenGWAS}} function. Additional examples for fitting mixed models, such as GWAS and others, can be found in the example section of the \code{\link{mmer}} and \code{\link{mmer2}} functions. Examples of multivariate models can be found in the example #3 of the \code{\link{CPdata}}. In addition, since v2.3 we have added the \code{\link{nna}} function which does nearest neighbor to create a new data frame adjusted for spatial variation. The \code{\link{ExpDesigns}} data contains several datasets to analyze experimental designs relevant to plant breeding and several detailed examples are available. Useful functions for analyzing such designs are included such as the \code{\link{blocker}} and \code{\link{fill.design}}.
 
 =======================================================
 =======================================================
@@ -96,34 +98,35 @@ The mmer function fits linear mixed models by likelihood methods allowing the us
 
 '
 
-.............................    Y = Xb + Zu + e   .....................
+\deqn{Y = X \beta + Z u + \epsilon}
 
-..................................... or ................................... 
-
-..... Y = x1b1 + ... + xibi + z1u1 + ... + zjuj + e  ..... 
-
+'
 
 with distributions:
 
 '
 
-Y ~ N[Xb+Zu, var(Zu+e)]   ......where;
+\deqn{Y ~ MVN ( X\beta+Zu, var(Z u + \epsilon) )}
+
+where;
 
 '
 
-b ~ N[b.hat, 0]  ............zero variance because is a fixed term
+\deqn{\beta  ~ N (\beta, 0)} 
 
-u ~ N[0, G]  ....... where G is equal to:
+\deqn{u  ~ N (0, G)} 
+
+where G is equal to:
 
 '
 
-|K1*\eqn{\sigma2}(u1)......................0...........................0.........|
-    
-|.............0.............K2*\eqn{\sigma2}(u2).......................0.........| = G
+\tabular{rrrrr}{
+  K1*\eqn{\sigma2}(u1)  \tab \tab 0 \tab \tab 0\cr
+  0 \tab \tab K2*\eqn{\sigma2}(u2) \tab \tab 0\cr
+  ... \tab \tab ... \tab \tab ...\cr
+  0 \tab \tab 0 \tab \tab Ki*\eqn{\sigma2}(ui)\cr
+}
 
-|...............................................................................|
-
-|.............0....................0.........................Ki*\eqn{\sigma2}(ui)...|
 
 '
 
@@ -131,7 +134,9 @@ for the i.th random effects, allowing the user to specify the variance covarianc
 
 '
 
-e ~ N[0, R]  .....................where: I*\eqn{\sigma2}(e) = R
+\deqn{\epsilon  ~ N (0, R)}
+
+where: \eqn{R = I * \sigma2 \epsilon}
 
 '
 
@@ -208,7 +213,7 @@ Gilmour et al. 1995. Average Information REML: An efficient algorithm for varian
 
 Kang et al. 2008. Efficient control of population structure in model organism association mapping. Genetics 178:1709-1723.
 
-Lee et al. 2015. EIGEND: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: http://dx.doi.org/10.1101/027201.
+Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: http://dx.doi.org/10.1101/027201.
 
 Searle. 1993. Applying the EM algorithm to calculating ML and REML estimates of variance components. Paper invited for the 1993 American Statistical Association Meeting, San Francisco.
 

@@ -21,7 +21,7 @@ EM2(y, X=NULL, ETA=NULL, R=NULL, init=NULL,
 
 }
 \details{
-This algorithm is based on Searle (1993) and Bernanrdo (2010), it is an iterative procedure NOT based on likelihood. This handles models of the form:
+This algorithm is based on Searle (1993) and Bernanrdo (2010). This handles models of the form:
 
 .
 

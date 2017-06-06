@@ -1,17 +1,17 @@
 Package: sommer
 Type: Package
 Title: Solving Mixed Model Equations in R
-Version: 2.7
-Date: 2017-05-01
+Version: 2.8
+Date: 2017-07-01
 Author: Giovanny Covarrubias-Pazaran
 Maintainer: Giovanny Covarrubias-Pazaran <cova_ruber@live.com.mx>
-Description: Multivariate linear mixed-effect model solver for multiple random effects allowing the specification of variance covariance structures. ML/REML estimates are obtained using the Direct-Inversion Newton-Raphson (NR), Direct-Inversion Average Information (AI), Expectation-Maximization (EM), or Efficient Mixed Model Association (EMMA) algorithms. Designed for genomic prediction and genome wide association studies (GWAS) to include additive, dominance and epistatic relationship structures or other covariance structures in R, but also functional as a regular mixed model program. Multivariate models (multiple responses) can be fitted currently with NR, AI and EMMA algorithms allowing multiple random effects as well. Covariance structures for the residual component are no longer supported. 
+Description: Multivariate linear mixed model solver for estimation of heterogeneous variances and specification of variance covariance structures. Maximum and Restricted Maximum Likelihood (ML/REML) estimates can be obtained using the Direct-Inversion Newton-Raphson (NR), Direct-Inversion Average Information (AI), MME-based Expectation-Maximization (EM), and Efficient Mixed Model Association (EMMA) algorithms. Designed for genomic prediction and genome wide association studies (GWAS) to include additive, dominance and epistatic relationship structures or other covariance structures in R, but also functional as a regular multivariate mixed model software. Multivariate models (multiple responses) can be fitted currently with NR, AI and EMMA algorithms.
 Depends: R (>= 2.10), Matrix (>= 1.1.1), methods, stats, MASS, parallel
 License: GPL-3
 URL: http://www.wisc.edu
-Packaged: 2017-04-15 10:34:39 UTC; cova_ruber
+Packaged: 2017-06-06 19:55:59 UTC; cova_ruber
 NeedsCompilation: no
 Repository: CRAN
-Date/Publication: 2017-04-15 13:53:09 UTC
+Date/Publication: 2017-06-06 22:14:27 UTC
 Suggests: knitr
 VignetteBuilder: knitr

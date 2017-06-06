@@ -5,24 +5,27 @@
 This function is used internally in the function \code{\link{mmer}} when MORE than 1 variance component needs to be estimated through the use of the expectation maximization (EM) algorithm.
 }
 \usage{
-EM(y, X=NULL, ETA=NULL, R=NULL, init=NULL, 
-   iters=50, REML=TRUE, draw=TRUE, silent=FALSE, forced=NULL)
+EM(y,X=NULL,ZETA=NULL,R=NULL,iters=30,draw=TRUE,silent=FALSE, 
+   constraint=TRUE, init=NULL, forced=NULL, tolpar = 1e-04, 
+   tolparinv = 1e-06)
 }
 \arguments{
-  \item{y}{a numeric vector for the response variable}
+    \item{y}{a numeric vector for the response variable}
   \item{X}{an incidence matrix for fixed effects.}
-  \item{ETA}{an incidence matrix for random effects. This can be for one or more random effects. This NEEDS TO BE PROVIDED AS A LIST STRUCTURE. For example Z=list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=K3)) makes a 2 level list for 3 random effects. The general idea is that each random effect with or without its variance-covariance structure is a list, i.e. list(Z=Z1, K=K1) where Z is the incidence matrix and K the var-cov matrix. When moving to more than one random effect we need to make several lists that need to be inside another list. What we call a 2-level list, i.e. list(Z=Z1, K=K1) and list(Z=Z2, K=K2) would need to be put in the form; list(list(Z=Z1, K=K1),list(Z=Z1, K=K1)), which as can be seen, is a list of lists (2-level list). }
-  \item{R}{a matrix for variance-covariance structures for the residuals, i.e. for longitudinal data. if not passed is assumed an identity matrix.}
-  \item{init}{Initial values for the variance components if defaults want to be changed.}
-  \item{iters}{a scalar value indicating how many iterations have to be performed if the EM is performed. There is no rule of tumb for the number of iterations. The default value is 100 iterations or EM steps.}
-  \item{REML}{a TRUE/FALSE value indicating if restricted maximum likelihood should be used instead of ML. The default is TRUE.}
-  \item{draw}{a TRUE/FALSE value indicating if a plot of updated values for the variance components should be drawn or not. The default is TRUE. COMPUTATION TIME IS SMALLER IF YOU DON'T PLOT SETTING draw=FALSE}
+  \item{ZETA}{an incidence matrix for random effects. This can be for one or more random effects. This NEEDS TO BE PROVIDED AS A LIST STRUCTURE. For example Z=list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=K3)) makes a 2 level list for 3 random effects. The general idea is that each random effect with or without its variance-covariance structure is a list, i.e. list(Z=Z1, K=K1) where Z is the incidence matrix and K the var-cov matrix. When moving to more than one random effect we need to make several lists that need to be inside another list. What we call a 2-level list, i.e. list(Z=Z1, K=K1) and list(Z=Z2, K=K2) would need to be put in the form; list(list(Z=Z1, K=K1),list(Z=Z1, K=K1)), which as can be seen, is a list of lists (2-level list). }
+  \item{R}{a list of matrices for residuals, i.e. for longitudinal data. if not passed is assumed an identity matrix.}
+  \item{draw}{a TRUE/FALSE value indicating if a plot of updated values for the variance components and the likelihood should be drawn or not. The default is TRUE. COMPUTATION TIME IS SMALLER IF YOU DON'T PLOT SETTING draw=FALSE}
   \item{silent}{a TRUE/FALSE value indicating if the function should draw the progress bar or iterations performed while working or should not be displayed.}
-  \item{forced}{a vector of numeric values for variance components including error if the user wants to force the values of the variance components. On the meantime only works for forcing all of them and not a subset of them. The default is NULL, meaning that variance components will be estimated by REML/ML.}
+  \item{iters}{a scalar value indicating how many iterations have to be performed if the EM is performed. There is no rule of tumb for the number of iterations. The default value is 100 iterations or EM steps.}
+    \item{constraint}{a TRUE/FALSE value indicating if the program should use the boundary constraint when one or more variance component is close to the zero boundary. The default is TRUE but needs to be used carefully. It works ideally when few variance components are close to the boundary but when there are too many variance components close to zero we highly recommend setting this parameter to FALSE since is more likely to get the right value of the variance components in this way.}
+      \item{init}{vector of initial values for the variance components. By default this is NULL and variance components are estimated by the method selected, but in case the user want to provide initial values this argument is functional.}
+      \item{forced}{a vector of numeric values for variance components including error if the user wants to force the values of the variance components. On the meantime only works for forcing all of them and not a subset of them. The default is NULL, meaning that variance components will be estimated by REML/ML.}
+      \item{tolpar}{tolerance parameter for convergence in the models.}
+      \item{tolparinv}{tolerance parameter for matrix inversion in the models.}
 
 }
 \details{
-This algorithm is based on Searle (1993) and Bernanrdo (2010), it is an iterative procedure NOT based on likelihood. This handles models of the form:
+This algorithm is based on Searle (1993) and Bernanrdo (2010). This handles models of the form:
 
 .
 
@@ -181,6 +184,6 @@ S <- kronecker(K1, K2) ; dim(S)
 rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 
 ETA <- list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=S))
-#ans <- EM(y=y, ETA=ETA, iters=3)
+#ans <- EM(y=y, ZETA=ETA, iters=3)
 }
-\seealso{The core function of the package \code{\link{mmer}}}
+\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

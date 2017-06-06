@@ -44,7 +44,7 @@ score.calc <- function(marks,y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,max.geno.fre
         }else if(method=="AI"){
           out <- try(AI(y=yytt,X=X2,ZETA=ETA,silent=TRUE,che=FALSE, draw=FALSE)) 
         }else if(method=="EM"){
-          out <- try(EM(y=yytt,X=X2,ETA=ETA,silent=TRUE, draw=FALSE)) 
+          out <- try(EM(y=yytt,X=X2,ZETA=ETA,silent=TRUE, draw=FALSE)) 
         }else{
           stop("Method not valid", call.=FALSE)
         }

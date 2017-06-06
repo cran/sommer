@@ -56,4 +56,4 @@ ETA <- list(list(Z=Z1), list(Z=Z2)) # Zu component
 modHD <- mmer(Y=y, Z=ETA, draw=FALSE, silent=TRUE)
 summary(modHD)
 }
-\seealso{The core function of the package \code{\link{mmer}}}
+\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

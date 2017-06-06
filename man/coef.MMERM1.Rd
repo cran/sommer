@@ -14,6 +14,6 @@
   vector of coef
  }
 \author{Giovanny Covarrubias \email{covarrubiasp@wisc.edu}}
-\seealso{\code{\link{coef}}, \code{\link{mmer}}}
+\seealso{\code{\link{coef}}, \code{\link{mmer}} and \code{\link{mmer2}}}
 \keyword{models}
 

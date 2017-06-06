@@ -12,6 +12,19 @@ h2 <- V_G/(V_G + V_GE/n.env + Ve/(2*n.env)) #the 2 is a reference for block
 h2
 
 ## ------------------------------------------------------------------------
+library(sommer)
+data(h2)
+head(h2)
+Z1 <- model.matrix(~Name-1, h2)
+Z2 <- model.matrix(~Env-1, h2)
+Z3 <- model.matrix(~Env:Name-1, h2)
+Z4 <- model.matrix(~Block-1, h2)
+ETA <- list(name=list(Z=Z1),env=list(Z=Z2),name.env=list(Z=Z3),block=list(Z=Z4))
+y <- h2$y
+ans1 <- mmer(Y=y, Z=ETA, silent = TRUE)
+vc <- ans1$var.comp
+
+## ------------------------------------------------------------------------
 data(CPdata)
 CPpheno <- CPdata$pheno; CPpheno$idd <-CPpheno$id; CPpheno$ide <-CPpheno$id 
 CPgeno <- CPdata$geno
@@ -27,6 +40,58 @@ ans.ADE <- mmer2(color~1, random=~g(id) + g(idd) + g(ide),
                  G=list(id=A,idd=D,ide=E), silent = TRUE, data=CPpheno)
 (H2 <- sum(ans.ADE$var.comp[1:3,1])/sum(ans.ADE$var.comp[,1]))
 (h2 <- sum(ans.ADE$var.comp[1,1])/sum(ans.ADE$var.comp[,1]))
+
+## ------------------------------------------------------------------------
+data(CPdata)
+CPgeno <- CPdata$geno
+### look at the data
+head(CPpheno)
+CPgeno[1:5,1:4]
+## fit a model including additive and dominance effects
+Z1 <- model.matrix(~id-1, CPpheno); colnames(Z1) <- gsub("id","",colnames(Z1))
+A <- A.mat(CPgeno) # additive relationship matrix
+D <- D.mat(CPgeno) # dominance relationship matrix
+E <- E.mat(CPgeno) # epistatic relationship matrix
+y <- CPpheno$color
+
+ETA <- list(id=list(Z=Z1,K=A),idd=list(Z=Z1,K=D),ide=list(Z=Z1,K=E))
+ans.ADE <- mmer(Y=y, Z=ETA, silent = TRUE)
+ans.ADE$var.comp
+
+## ---- fig.show='hold'----------------------------------------------------
+data(cornHybrid)
+hybrid2 <- cornHybrid$hybrid # extract cross data
+head(hybrid2)
+### fit the model
+modFD <- mmer2(Yield~1, random=~ at(Location,c("3","4")):GCA2, 
+               rcov= ~ at(Location):units,
+               data=hybrid2, silent = TRUE)
+summary(modFD)
+
+## ---- fig.show='hold'----------------------------------------------------
+data(cornHybrid)
+hybrid2 <- cornHybrid$hybrid # extract cross data
+## get the covariance structure for GCA2
+A <- cornHybrid$K
+## fit the model
+modFD <- mmer2(Yield~1, random=~ g(GCA2) + at(Location):g(GCA2), 
+               rcov= ~ at(Location):units,
+              data=hybrid2, G=list(GCA2=A),
+             silent = TRUE, draw=FALSE)
+summary(modFD)
+
+## ---- fig.show='hold'----------------------------------------------------
+data(CPdata)
+CPpheno <- CPdata$pheno
+CPgeno <- CPdata$geno
+#### create the variance-covariance matrix 
+A <- A.mat(CPgeno)
+#### look at the data and fit the model
+head(CPpheno)
+mix1 <- mmer2(color~1,random=~g(id), G=list(id=A), data=CPpheno, silent=TRUE)
+summary(mix1)
+#### run the pin function
+pin(mix1, h2 ~ V1 / ( V1 + V2 ) )
 
 ## ---- fig.show='hold'----------------------------------------------------
 data(cornHybrid)
@@ -63,6 +128,20 @@ Vg <- Va + Vd
 (H2 <- Vg / (Vg + (Ve/2)) ) # 2 technical reps
 (h2 <- Va / (Vg + (Ve/2)) )
 
+## ---- fig.show='hold'----------------------------------------------------
+  data(HDdata)
+  head(HDdata)
+  #### GCA matrix for half diallel using male and female columns
+  #### use the 'overlay' function to create the half diallel matrix
+  Z1 <- overlay(HDdata[,c(3:4)])
+  #### Obtain the SCA matrix
+  Z2 <- model.matrix(~as.factor(geno)-1, data=HDdata)
+  #### Define the response variable and run
+  y <- HDdata$sugar
+  ETA <- list(list(Z=Z1), list(Z=Z2)) # Zu component
+  modHD <- mmer(Y=y, Z=ETA, draw=FALSE, silent=TRUE)
+  summary(modHD)
+
 ## ------------------------------------------------------------------------
 data(CPdata)
 CPpheno <- CPdata$pheno
@@ -94,7 +173,7 @@ K1 <- A.mat(marks, ploidy=4)
 # run the model you want
 models <- c("additive","1-dom-alt","1-dom-ref","2-dom-alt","2-dom-ref")
 ans2 <- mmer2(tuber_shape~1, random=~g(Name), G=list(Name=K1), W=marks, 
-              method="EMMA", data=phenotypes2, silent = TRUE)
+              method="EMMA", data=phenotypes2, silent = TRUE, models="additive")
 summary(ans2)
 
 ## ------------------------------------------------------------------------
@@ -183,24 +262,4 @@ ans.A <- mmer2(cbind(color,Firmness)~1, random=~g(id),G=list(id=A),
                MVM=TRUE, data=CPpheno, silent = TRUE, W=CPgeno, IMP=TRUE,
                map=CPdata$map)
 summary(ans.A)
-
-## ---- fig.show='hold'----------------------------------------------------
-data(cornHybrid)
-hybrid2 <- cornHybrid$hybrid # extract cross data
-head(hybrid2)
-### fit the model
-modFD <- mmer2(Yield~1, random=~ GCA2 + at(Location,c("3","4")):GCA2, 
-               data=hybrid2, silent = TRUE)
-summary(modFD)
-
-## ---- fig.show='hold'----------------------------------------------------
-data(cornHybrid)
-hybrid2 <- cornHybrid$hybrid # extract cross data
-## get the covariance structure for GCA2
-A <- cornHybrid$K
-## fit the model
-modFD <- mmer2(Yield~1, random=~ g(GCA2) + at(Location):g(GCA2), 
-              data=hybrid2, G=list(GCA2=A),
-             silent = TRUE, draw=FALSE)
-summary(modFD)
 

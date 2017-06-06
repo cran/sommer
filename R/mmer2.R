@@ -1,4 +1,4 @@
-mmer2 <- function(fixed, random, data, G=NULL, W=NULL, method="NR", REML=TRUE, MVM=FALSE, 
+mmer2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=TRUE, DI=TRUE, MVM=FALSE, 
                   iters=20, draw=FALSE, init=NULL, family=gaussian, silent=FALSE, constraint=TRUE, 
                   sherman=FALSE, EIGEND=FALSE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, 
                   min.n=FALSE, gwas.plots=TRUE, n.cores=1, tolpar = 1e-06, tolparinv = 1e-06, 
@@ -9,7 +9,7 @@ mmer2 <- function(fixed, random, data, G=NULL, W=NULL, method="NR", REML=TRUE, M
     data <- environment(fixed)
     data2 <- environment(random)
     nodata <-TRUE
-    #cat("data argument not provided \n")
+    cat("data argument not provided \n")
   }else{nodata=FALSE} 
   
   
@@ -27,7 +27,7 @@ mmer2 <- function(fixed, random, data, G=NULL, W=NULL, method="NR", REML=TRUE, M
   }
   
   if(!is.null(G) & method == "EM"){
-    cat("With var-cov structures (G) present you may want to try the AI or NR algorithm.\n\n")
+    cat("With dense var-cov structures (G) present you may want to try the AI or NR algorithm.\n")
   }
   ###########################
   ########### useful functions
@@ -116,6 +116,17 @@ mmer2 <- function(fixed, random, data, G=NULL, W=NULL, method="NR", REML=TRUE, M
     }
     
     zvar.names <- gsub(" ", "", strsplit(as.character(random[2]), split = "[+]")[[1]])
+    
+    if(!is.null(G)){
+      ranused <- zvar.names[grep("g\\(",zvar.names)] # g() random effects
+      if(length(ranused)){ # if g() were used 
+        diesel <- setdiff(names(G),apply(data.frame(ranused),1,expi)) # did they forget to add a g() and provided the G var-covar matrix?
+        if(length(diesel)>0){
+          warning(paste("variance-covariance matrices specified in the G argument for:\n",paste(diesel,collapse = ", "),"were not used. Plase use the g() function to use such.\n"), call. = FALSE, immediate. = TRUE)
+        }
+      }
+    }
+    
     #zvar.names <- colnames(V)
     #zvar.names <- zvar.names[which(!duplicated(zvar.names))]
     #print(zvar.names)
@@ -209,7 +220,7 @@ mmer2 <- function(fixed, random, data, G=NULL, W=NULL, method="NR", REML=TRUE, M
                   ki <- G[[ww]][colnames(zix),colnames(zix)]#[uuuz,uuuz]
                 }else{ # no intersection between z and k names
                   
-                  cat(paste("\nNames of Z and K for random effect",vara,"are not the same. \nMake sure they are in the correct order."))
+                  cat(paste("\nLevels for the random effect",vara," do not coincide with the levels in it variance covariance matrix (G argument).\n"))
                   
                   ki <- G[[ww]] 
                 }
@@ -293,7 +304,7 @@ mmer2 <- function(fixed, random, data, G=NULL, W=NULL, method="NR", REML=TRUE, M
                   ki <- G[[ww]][colnames(zix),colnames(zix)]#[uuuz,uuuz]
                 }else{ # no intersection between z and k names
                   
-                  cat(paste("\nNames of Z and K for random effect",vara,"are not the same. \nMake sure they are in the correct order."))
+                  cat(paste("\nNames of Z and K for random effect",vara,"do not all match. Make sure they are in the correct order.\n"))
                   
                   ki <- G[[ww]] 
                 } # end of if g was provided
@@ -335,13 +346,44 @@ mmer2 <- function(fixed, random, data, G=NULL, W=NULL, method="NR", REML=TRUE, M
             #########
             uuuz <- colnames(zi)#levels(as.factor(colnames(zi))) # order of Z
             uuuk <- attr(G[[ww]],"dimnames")[[1]] # order of K
-            inte <- intersect(uuuz,uuuk)
-            if(length(inte)==length(uuuz)){ # the names were the same in Z and K
-              ki <- G[[ww]][colnames(zi),colnames(zi)]#[uuuz,uuuz]
-            }else{ # no intersection between z and k names
-              cat(paste("\nNames of Z and K for random effect",vara,"are not the same. \nMake sure they are in the correct order."))
-              ki <- G[[ww]] 
+            
+            ### ========== sommer 2.8 =========== ###
+            ## no intersection when "Year:" is present
+            dotcheck <- grep(":g\\(",vara) # if user has Year:g(id)
+            if(length(dotcheck)>0){
+              
+              ziplist <- list()
+              kiplist <- list()
+              uuuc <- unique(gsub(":.*","",uuuz)) # number of levesl before :
+              for(h in 1:length(uuuc)){ # now reform Z and form K
+                hehe <- grep(uuuc[h],uuuz)
+                tostore0 <- uuuz[hehe]
+                # form Z 
+                ziplist[[h]] <- zi[,tostore0]
+                # now K
+                tostore1 <- gsub(".*:","",tostore0)
+                kipprov <- G[[ww]][tostore1,tostore1]
+                colnames(kipprov) <- rownames(kipprov) <- tostore0
+                kiplist[[h]] <- kipprov
+              }
+              
+              zi <- do.call("cbind",ziplist)
+              ki <- do.call("adiag1",kiplist)
+              
+            }else{
+              ##$$
+              inte <- intersect(uuuz,uuuk)
+              if(length(inte)==length(uuuz)){ # the names were the same in Z and K
+                ki <- G[[ww]][colnames(zi),colnames(zi)]#[uuuz,uuuz]
+              }else{ # no intersection between z and k names
+                cat(paste("\nNames of Z and K for random effect",vara,"are not the same. \nMake sure they are in the correct order."))
+                ki <- G[[ww]] 
+              }
+              ##$$
             }
+            ### ================================== ###
+            
+            
           }else{ # g was indicated but was not provided, we create a diagonal
             cat(paste("'g(.)' structure indicated for",vara,"but not found in the G parameter.\n"))
             ki <- diag(dim(zi)[2])
@@ -358,6 +400,40 @@ mmer2 <- function(fixed, random, data, G=NULL, W=NULL, method="NR", REML=TRUE, M
     #print(str(Z))
     #names(Z) <- zvar.names
     
+    if(missing(rcov)){ #### MISSING R ARGUMENT
+      R <- NULL
+    }else{ ## USER SPECIFIED RCOV ARGUMENT
+      
+      rvar.names <- gsub(" ", "", strsplit(as.character(rcov[2]), split = "[+]")[[1]])
+      
+      ## control for only units on the meantime
+      uni <- gsub(".*:","",rvar.names)
+      if(uni != "units"){
+        stop("On the meantime the only rcov structures available are:\n 'rcov=~units' or 'rcov=~at(.):units'.",call. = FALSE)
+      }
+      atrcov <- grep("at\\(",rvar.names) #check
+      #if "at" is present:
+      if(length(atrcov)>0){
+        atroz <- expi2(rvar.names) # variable where we defined the at
+        ri <- model.matrix(as.formula(paste("~",atroz,"-1")),data)
+        R <- list()
+        uuur <- as.character(unique(data[,atroz]))#unique(gsub(":.*","",colnames(ri))) # number of levesl before :
+        for(h in 1:length(uuur)){ # now reform Z and form K
+          rprov <- matrix(0,dim(data)[1],dim(data)[1])
+          year <- uuur[h]#gsub(atroz,"",uuur[h]) # level to look for
+          tokeepp <- which(data[,atroz] == year)
+          diag(rprov)[tokeepp] <- 1
+          # form R
+          R[[h]] <- rprov
+        }
+        #print(uuur)
+        names(R) <- paste(uuur,":units",sep="")
+        
+      }else{#if no at present just units
+        R <- NULL
+      }
+      
+    }
     #     if(missing(rcov)){
     #       R <- NULL
     #     }else{
@@ -399,14 +475,34 @@ mmer2 <- function(fixed, random, data, G=NULL, W=NULL, method="NR", REML=TRUE, M
     #     print(str(Z))
     #     print(str(X))
     #     print(str(yvar))
-    res <- mmer(Y=yvar, X=X, Z=Z, W=W, method=method, REML=REML, iters=iters, draw=draw, init=init, 
+    #print(str(R))
+    #print(lapply(R,function(x){which(x==1)}))
+    
+    ### applying check beffore fitting ===============
+    cococo <- names(Z)
+    provided <- lapply(Z, names)
+    for(s in 1:length(provided)){ #for each random effect =============================
+      provided2 <- names(Z[[s]])
+       #----the 's' random effect has two matrices----
+        dido<-lapply(Z[[s]], dim) # dimensions of Z and K
+        condi<-(dido$Z[2] == dido$K[1] & dido$Z[2] == dido$K[2]) 
+        # condition, column size on Z matches with a square matrix K
+        if(!condi){
+          cat(paste("In the",cococo[s],"random effect you have an incidence matrix with dimensions:",dido$Z[1],"rows and",dido$Z[2],"effect levels. \nTherefore the variance-covariance matrix for this random effect in the G argument should be a \nsquare matrix with dimensions",dido$Z[2],"x",dido$Z[2]),", but you provided a",dido$K[1],"x",dido$K[2],"matrix. Please check your matrices in G.")
+          stop()
+        }
+    } #for each random effect end =================================================
+    
+    
+    res <- mmer(Y=yvar, X=X, Z=Z, R=R, W=W, method=method, REML=REML, DI=DI, iters=iters, draw=draw, init=init, 
                 silent=silent, constraint=constraint, sherman=sherman, EIGEND=EIGEND, forced=forced, 
                 map=map, fdr.level=fdr.level, manh.col=manh.col,gwas.plots=gwas.plots,n.cores=n.cores, 
-                MVM=MVM,tolpar = tolpar, tolparinv = tolparinv, IMP=IMP, ploidy=ploidy, models=models)
+                MVM=MVM,tolpar = tolpar, tolparinv = tolparinv, IMP=IMP, ploidy=ploidy, models=models, che=FALSE)
     
   }else{###only fixed effects
     res <- glm(yvars~X, family=family)
   }
   #########
+  #print(str(Z))
   return(res)
 }
