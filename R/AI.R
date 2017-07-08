@@ -280,17 +280,21 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
       ### ----------------------------------------------------------------- ###
       ### ----------------------------------------------------------------- ###
       varo <- as.list(var.com)  # variance components as list, no error included
-      Gspo <- lapply(as.list(c(1:length(ZETA))),function(x,K,v){
-        oo=K[[x]]*as.numeric((v[[x]])); return(oo)
-      }, K=Gs, v=varo) ## K*v(u)
-      Gsp <- as(do.call("adiag1", Gspo),Class="sparseMatrix") # G as diagonal
       
-      Rsp <- R[[1]] * as.numeric(var.com[1 + length(zvar)]) # change
-      if(length(R)>1){
-        for(tu in 2:length(R)){
-          Rsp <- Rsp + as(R[[tu]] *as.numeric(var.com[tu + length(zvar)]),Class="sparseMatrix")
+      Gspo <- lapply(as.list(c(1:length(ZETA))), function(x,K, v) {
+        oo = K[[x]] * as.numeric((v[[x]]))
+        return(oo)
+      }, K = Gs, v = varo)
+      Gsp <- as(do.call("adiag1", Gspo), Class = "sparseMatrix")
+      Rsp <- R[[1]] * as.numeric(var.com[1 + length(zvar)])
+      if (length(R) > 1) {
+        for (tu in 2:length(R)) {
+          Rsp <- Rsp + as(R[[tu]] * as.numeric(var.com[tu + 
+                                                         length(zvar)]), Class = "sparseMatrix")
         }
       }
+      varo <- NULL
+      Gspo <- NULL
       
       varo <- NULL
       Gspo <- NULL
@@ -359,9 +363,9 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
         if(!silent){
           setTxtProgressBar(pb, (tot/tot))### keep filling the progress bar
         }
-        if(wi == iters){ # LAST RESOURCE CHANGE TO EM ALGORITHM
-          boundary <- which(var.com<=0)
-        }
+#         if(wi == iters){ # LAST RESOURCE CHANGE TO EM ALGORITHM when no convergence
+#           boundary <- which(var.com<=0)
+#         }
       }else{
         if(!silent){
           setTxtProgressBar(pb, (count/tot))### keep filling the progress bar
@@ -446,7 +450,8 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
           #print("yes")
           nmm <- length(var.com)
           boundary <- which(var.com<=0)
-          var.com[which(var.com<=0),] <- mean(var.com[(nmm-length(R)+1):nmm]) * (1.011929e-07^2)# -(1e-6) #vcomp[which(var.com<=0)]#
+          #print(boundary)
+          var.com[which(var.com<=0),] <- (1.011929e-07^2) * mean(var.com[(nmm-length(R)+1):nmm]) # -(1e-6) #vcomp[which(var.com<=0)]#
           
         }
         ####***********************************
@@ -488,10 +493,11 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
         fail=FALSE
         ###########
       }
-      
+      #print(boundary)
     }# =====================================  END =======================================
     #####################################################################################
     ####### FOR LOOP FOR ITERATIONS FINISHED ############################################
+    #print(boundary)
     
     #boundary <- which(var.com==mean(var.com[(nmm-length(R)+1):nmm]) * (1.011929e-07^2))
     if(!is.null(forced)){
@@ -499,11 +505,25 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
     }else{
       var.com2 <- var.com*var(y.or,na.rm=TRUE)
     }
+    
     #########################################################
     # perform boosting if there was a var comp close to zero
     # and AI is able to converge
-    
-    
+    #print(boundary)
+    if(constraint & length(boundary)>0){
+      if(!silent){
+        cat("\nOne or more variance components close to zero. Boundary constraint applied.\n")
+      }
+      badd <- boundary
+      goodd <- setdiff(1:length(var.com2),boundary)
+      
+      ZETAXXX <- zeta.or[-badd]
+      
+      var.com2xxx <- NR22(y.or, X=x.or, ZETA=ZETAXXX, R=R.or, init=var.com2[goodd],draw=draw,silent=silent)
+      var.com2[goodd] <- var.com2xxx$vars
+      var.com2[badd] <- 0
+      V <- var.com2xxx$W
+    }
     
     ###### ENF OF APPLY CONSTRAINT 
     ###### END OF APPLY CONSTRAINT 
@@ -522,22 +542,40 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
   #zvar <- which(unlist(lapply(ZETA, function(x){names(x)[1]})) == "Z")
   
   #####################
-  
+  #print(var.com2)
   varo <- as.list(var.com2)  # variance components for random, no error
-  
-  Gspo <- lapply(as.list(c(1:length(ZETA))),function(x,K,v){
-    oo=K[[x]]*as.numeric((v[[x]])); return(oo)
-  }, K=Gs, v=varo) ##
-  Gsp <- as(do.call("adiag1", Gspo),Class="sparseMatrix") # in diagonal
-  
-  Rsp <- R[[1]] * as.numeric(var.com[1 + length(zvar)]) # change
-  if(length(R)>1){
-    for(tu in 2:length(R)){
-      Rsp <- Rsp + as(R[[tu]] *as.numeric(var.com[tu + length(zvar)]),Class="sparseMatrix")
+  #print(str(ZETA))
+  ZKZ <- ZETA[[1]][[1]] %*% (ZETA[[1]][[2]]*as.numeric(var.com2[1])) %*% t(ZETA[[1]][[1]])
+  if(length(ZETA)>1){
+    for(f in 2:length(ZETA)){
+      ZKZ <- ZKZ + ZETA[[f]][[1]] %*% (ZETA[[f]][[2]]*as.numeric(var.com2[f])) %*% t(ZETA[[f]][[1]])
     }
   }
-  varo=NULL
-  Gspo=NULL
+  
+  Rsp <- R[[1]] * as.numeric(var.com2[1 + length(zvar)]) # change
+  if(length(R)>1){
+    for(tu in 2:length(R)){
+      Rsp <- Rsp + as(R[[tu]] *as.numeric(var.com2[tu + length(zvar)]),Class="sparseMatrix")
+    }
+  }
+  
+  varo <- NULL
+  Gspo <- NULL
+  #########################################################
+  #print(varo)
+#   Gspo <- lapply(as.list(c(1:length(ZETA))),function(x,K,v){
+#     oo=K[[x]]*as.numeric((v[[x]])); return(oo)
+#   }, K=Gs, v=varo) ##
+#   Gsp <- as(do.call("adiag1", Gspo),Class="sparseMatrix") # in diagonal
+#   
+#   Rsp <- R[[1]] * as.numeric(var.com[1 + length(zvar)]) # change
+#   if(length(R)>1){
+#     for(tu in 2:length(R)){
+#       Rsp <- Rsp + as(R[[tu]] *as.numeric(var.com[tu + length(zvar)]),Class="sparseMatrix")
+#     }
+#   }
+#  varo=NULL
+#  Gspo=NULL
   #########################################################
   # Sherman-Morrison-Woodbury formula (Seber, 2003, p. 467)
   # R-  --  [R-Z[Z'R-Z+G-]-Z'R-]  #-- means minus
@@ -545,11 +583,11 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
     Rinv=solve(Rsp,sparse=TRUE, tol = 1e-19)
     Ginv=solve(Gsp,sparse=TRUE, tol = 1e-19)
     ZRZG= solve( tZsp%*%Rinv%*%Zsp + Ginv ,sparse=TRUE, tol = 1e-19)
-    vm <- Zsp%*%(Gsp%*%tZsp) + Rsp # V=ZGZ+R
+    vm <- Zsp%*%Gsp%*%t(Zsp) + Rsp # V=ZGZ+R
     Vinv = Rinv - ( Rinv%*%Zsp%*%ZRZG%*%t(Zsp)%*%Rinv)
     #########################################################
   }else{
-    vm <- Zsp%*%crossprod(Gsp,tZsp) + Rsp # ZGZ+R
+    vm <- ZKZ+Rsp#Zsp%*%Gsp%*%t(Zsp) + Rsp # V=ZGZ+R#vm <- Zsp%*%crossprod(Gsp,tZsp) + Rsp # ZGZ+R
     Vinv <- solve(vm,sparse=TRUE, tol = 1e-19)
   }
   #################
@@ -580,14 +618,26 @@ AI <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
       PEV.u[[k]] <- as.numeric(var.com2[k,1]) * ZETA3[[k]][[2]] - Var.u[[k]]  # standard errors (SE) for each individual
     }
   }else{
-    for (k in zvar) { # u = GZ'V- (y- XB)  
+    #print(var.com2)
+    for (h in zvar) { # u = GZ'V- (y- XB)  
       # where GZ'V- is the proportion of the variance, i.e. %, and then multiplied by the residual or random part leftover after removing fixed effects
-      u[[k]] <- ( (ZETA3[[k]][[2]]*as.numeric(var.com2[k,1])) %*% t(ZETA3[[k]][[1]]) %*% Vinv %*% ee )
-      Var.u[[k]] <- (as.numeric(var.com2[k,1])^2) *  ( crossprod(ZETA3[[k]][[1]]%*%ZETA3[[k]][[2]], pm)  %*%  (ZETA3[[k]][[1]]%*%ZETA3[[k]][[2]])   ) # sigma^4 ZKP ZK
-      PEV.u[[k]] <- as.numeric(var.com2[k,1]) * ZETA3[[k]][[2]] - Var.u[[k]]  # standard errors (SE) for each individual
+      u[[h]] <- ( (ZETA3[[h]][[2]]*as.numeric(var.com2[h,1])) %*% t(ZETA3[[h]][[1]]) %*% Vinv %*% ee )
+      ## rrBLUP 
+#       W <- crossprod(xm, (Vinv*(as.numeric(var.com2[h,1]))) %*% xm)
+#       Winv <- solve(W)
+#       KZt <- tcrossprod(ZETA3[[h]][[2]], ZETA3[[h]][[1]])
+#       KZt.Hinv <- KZt %*% (Vinv*(as.numeric(var.com2[h,1])))
+#       WW <- tcrossprod(KZt.Hinv, KZt) # KZ'V- KZ'
+#       WWW <- KZt.Hinv %*% xm  # KZ'V- X
+#       PEV.u[[h]] <- as.numeric(var.com2[h,1]) * (ZETA3[[h]][[2]] - WW + tcrossprod(WWW %*% Winv, WWW)) #
+#       Var.u[[h]] <- (as.numeric(var.com2[h,1])) *  ZETA3[[h]][[2]]
+      Var.u[[h]] <- (as.numeric(var.com2[h,1])^2) *  ( crossprod(ZETA3[[h]][[1]]%*%ZETA3[[h]][[2]], pm)  %*%  (ZETA3[[h]][[1]]%*%ZETA3[[h]][[2]])   ) # sigma^4 ZKP ZK
+      PEV.u[[h]] <- as.numeric(var.com2[h,1]) * ZETA3[[h]][[2]] - Var.u[[h]]  # standard errors (SE) for each individual
     }
   }
   u <- u[zvar]
+  names(Var.u) <- varosss[1:length(ZETA)]
+  names(PEV.u) <- varosss[1:length(ZETA)]
   ###############
   #residuals2 <- (y - (xm %*% beta))
   

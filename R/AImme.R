@@ -343,9 +343,18 @@ AImme <- function(y,X=NULL,ZETA=NULL,R=NULL,iters=30,draw=TRUE,silent=FALSE, con
   ## VarBLUPs
   Var.u <- list()
   for(f in 1:length(ind1g)){
-    Var.u[[f]] <- diag(CMi[ind1g[f]:ind2g[f],ind1g[f]:ind2g[f]])
+    #Var.u[[f]] <- diag(CMi[ind1g[f]:ind2g[f],ind1g[f]:ind2g[f]])
+    Var.u[[f]] <- ZETA[[f]]$K * varcom[f]#diag(CMi[ind1g[f]:ind2g[f],ind1g[f]:ind2g[f]])
     names(Var.u[[f]]) <- colnames(ZETA[[f]]$Z)
   }
+  names(Var.u) <- varosss[1:length(ZETA)]
+  ## PEV.BLUPs
+  Pev.u <- list()
+  for(f in 1:length(ind1g)){
+    Pev.u[[f]] <- diag(CMi[ind1g[f]:ind2g[f],ind1g[f]:ind2g[f]])
+    names(Pev.u[[f]]) <- colnames(ZETA[[f]]$Z)
+  }
+  names(Pev.u) <- varosss[1:length(ZETA)]
   ## betas
   rownames(b) <- colnames(X)
   ## var.betas
@@ -390,7 +399,7 @@ AImme <- function(y,X=NULL,ZETA=NULL,R=NULL,iters=30,draw=TRUE,silent=FALSE, con
     out1[zeros,1] <- 0
   }
   res <- list(var.comp=out1, V.inv = Vinv, u.hat=ulist, Var.u.hat=Var.u, 
-              #PEV.u.hat=PEV.u, 
+              PEV.u.hat=Pev.u, 
               beta.hat=b, Var.beta.hat=xvxi, residuals=ee, cond.residuals=e,
               LL=ll, AIC=AIC, BIC=BIC, fish.inv=aii,fitted.y.good=fit0, 
               X=X.or, Z=Zbind, K=Ksp, ZETA=ZETA,

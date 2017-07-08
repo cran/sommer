@@ -25,7 +25,7 @@ mmer <- function(Y, X=NULL, Z=NULL, R=NULL, W=NULL, method="NR", REML=TRUE, DI=T
   }
   
   my.year <- 2017
-  my.month <- 8 #month when the user will start to get notifications
+  my.month <- 9 #month when the user will start to get notifications the 1st day of next month
   
   datee <- Sys.Date()
   year.mo.day <- as.numeric(strsplit(as.character(datee),"-")[[1]])# <- as.numeric(strsplit(gsub("....-","",datee),"-")[[1]])
@@ -263,7 +263,7 @@ mmer <- function(Y, X=NULL, Z=NULL, R=NULL, W=NULL, method="NR", REML=TRUE, DI=T
   cat("\nInformation contained in this fitted model: \n* Variance components, Residuals, Fitted values\n* BLUEs and BLUPs, Inverse phenotypic variance(V)\n* Variance-covariance matrix for fixed & random effects\n* Predicted error variance (PEV), LogLikelihood\nUse the '$' symbol to access such information\n")
   cat("===========================================================")
   cat("\n  Linear mixed model fit by restricted maximum likelihood\n")
-  cat("**********************  sommer 2.8  ***********************\n")
+  cat("**********************  sommer 2.9  ***********************\n")
   cat("===========================================================")
   #cat(paste("\nMethod:",x$method ))
   #cat(paste("\nConvergence:",x$convergence))
@@ -297,7 +297,7 @@ mmer <- function(Y, X=NULL, Z=NULL, R=NULL, W=NULL, method="NR", REML=TRUE, DI=T
 "summary.mmerM" <- function(object, ...) {
   
   na23 <- names(object)
-  object <- object[-c(which(na23 %in% c("Y","X","Z","R")))]
+  object <- object[-c(which(na23 %in% c("Y","X","Z","R","DI")))]
   
   digits = max(3, getOption("digits") - 3)
   #forget <- length(object)
@@ -351,7 +351,7 @@ mmer <- function(Y, X=NULL, Z=NULL, R=NULL, W=NULL, method="NR", REML=TRUE, DI=T
   cat("Information contained in this structure: \n* Individual results for each response model\nDisplayed: \n* AIC, BIC and Variance component summaries\nUse the '$' sign to access individual models\n")
   cat("=======================================================")
   cat("\nLinear mixed model fit by restricted maximum likelihood\n")
-  cat("********************  sommer 2.8  *********************\n")
+  cat("********************  sommer 2.9  *********************\n")
   cat("=======================================================")
   #cat("\nMethod:")
   #print(x$method)
@@ -472,7 +472,7 @@ mmer <- function(Y, X=NULL, Z=NULL, R=NULL, W=NULL, method="NR", REML=TRUE, DI=T
   cat("Information contained in this structure: \n* Results for a multi response model\nDisplayed: \n* Variance-covariance component summaries\nUse the '$' sign to access parameters\n")
   cat("=======================================================")
   cat("\n    Multivariate Linear Mixed Model fit by REML    \n")
-  cat("********************  sommer 2.8  *********************\n")
+  cat("********************  sommer 2.9  *********************\n")
   cat("=======================================================")
   cat("\nMethod:")
   print((x$method))
@@ -800,7 +800,7 @@ plot.MMERM <- function(x, ...) {
     stop("This package requires R 2.1 or later")
   assign(".sommer.home", file.path(library, pkg),
          pos=match("package:sommer", search()))
-  sommer.version = "2.8 (2017-07-01)" # usually 2 months before it expires
+  sommer.version = "2.9 (2017-08-01)" # usually 2 months before it expires
   
   ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ### check which version is more recent
@@ -816,23 +816,23 @@ plot.MMERM <- function(x, ...) {
   assign(".sommer.version", sommer.version, pos=match("package:sommer", search()))
   if(interactive())
   {
-    packageStartupMessage(paste("[*]================================================================[*]"),appendLF=TRUE)
-    packageStartupMessage(paste("[*]  Solving Mixed Model Equations in R (sommer) ", sommer.version, "  [*]",sep=""),appendLF=TRUE)
-    packageStartupMessage(paste("[*]  ------------ Multivariate Linear Mixed Models --------------  [*]"),appendLF=TRUE)
-    #    packageStartupMessage("[*]  ----- Enabling covariance structures in random effects -----  [*]",appendLF=TRUE)
-    packageStartupMessage("[*]  Author: Giovanny Covarrubias-Pazaran                          [*]",appendLF=TRUE)
-    packageStartupMessage("[*]  Published: PLoS ONE 2016, 11(6):1-15                          [*]",appendLF=TRUE)
-    #    packageStartupMessage("[*]  Supported by the Council of Science and Technology (CONACYT)  [*]", appendLF=TRUE)
-    packageStartupMessage("[*]  Type 'vignette('sommer')' for a short tutorial                [*]",appendLF=TRUE)
-    packageStartupMessage("[*]  Type 'citation('sommer')' to know how to cite sommer          [*]",appendLF=TRUE)
-    packageStartupMessage(paste("[*]================================================================[*]"),appendLF=TRUE)
+    packageStartupMessage(paste("[]================================================================[]"),appendLF=TRUE)
+    packageStartupMessage(paste("[]  Solving Mixed Model Equations in R (sommer) ", sommer.version, "  []",sep=""),appendLF=TRUE)
+    packageStartupMessage(paste("[]  ------------ Multivariate Linear Mixed Models --------------  []"),appendLF=TRUE)
+    #    packageStartupMessage("[]  ----- Enabling covariance structures in random effects -----  []",appendLF=TRUE)
+    packageStartupMessage("[]  Author: Giovanny Covarrubias-Pazaran                          []",appendLF=TRUE)
+    packageStartupMessage("[]  Published: PLoS ONE 2016, 11(6):1-15                          []",appendLF=TRUE)
+    #    packageStartupMessage("[]  Supported by the Council of Science and Technology (CONACYT)  []", appendLF=TRUE)
+    packageStartupMessage("[]  Type 'vignette('sommer')' for a short tutorial                []",appendLF=TRUE)
+    packageStartupMessage("[]  Type 'citation('sommer')' to know how to cite sommer          []",appendLF=TRUE)
+    packageStartupMessage(paste("[]================================================================[]"),appendLF=TRUE)
     packageStartupMessage("UPDATE 'sommer' EVERY 2-MONTHS USING 'install.packages('sommer')'",appendLF=TRUE)
     
     #if(yyy > current){ # yyy < current in CRAN
     #  packageStartupMessage(paste("Version",current,"is now available."),appendLF=TRUE) # version current
     #  packageStartupMessage(paste("Please update 'sommer' installing the new version."),appendLF=TRUE) # version current
     #}
-    
+    #print(image(diag(10),main="sommer 2.9"))
   }
   invisible()
 }

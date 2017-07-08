@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2017-06-06" />
+<meta name="date" content="2017-07-08" />
 
 <title>Quantitative genetics using the sommer package</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Quantitative genetics using the sommer package</h1>
 <h4 class="author"><em>Giovanny Covarrubias-Pazaran</em></h4>
-<h4 class="date"><em>2017-06-06</em></h4>
+<h4 class="date"><em>2017-07-08</em></h4>
 
 
 
@@ -243,9 +243,9 @@ E &lt;-<span class="st"> </span><span class="kw">E.mat</span>(CPgeno) <span clas
 ans.ADE &lt;-<span class="st"> </span><span class="kw">mmer2</span>(color~<span class="dv">1</span>, <span class="dt">random=</span>~<span class="kw">g</span>(id) +<span class="st"> </span><span class="kw">g</span>(idd) +<span class="st"> </span><span class="kw">g</span>(ide), 
                  <span class="dt">G=</span><span class="kw">list</span>(<span class="dt">id=</span>A,<span class="dt">idd=</span>D,<span class="dt">ide=</span>E), <span class="dt">silent =</span> <span class="ot">TRUE</span>, <span class="dt">data=</span>CPpheno)
 (H2 &lt;-<span class="st"> </span><span class="kw">sum</span>(ans.ADE$var.comp[<span class="dv">1</span>:<span class="dv">3</span>,<span class="dv">1</span>])/<span class="kw">sum</span>(ans.ADE$var.comp[,<span class="dv">1</span>]))</code></pre></div>
-<pre><code>## [1] 0.7314517</code></pre>
+<pre><code>## [1] 0.7512293</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">(h2 &lt;-<span class="st"> </span><span class="kw">sum</span>(ans.ADE$var.comp[<span class="dv">1</span>,<span class="dv">1</span>])/<span class="kw">sum</span>(ans.ADE$var.comp[,<span class="dv">1</span>]))</code></pre></div>
-<pre><code>## [1] 0.6033491</code></pre>
+<pre><code>## [1] 0.6215569</code></pre>
 <p>In the previous example we showed how to estimate the additive (<span class="math inline">\(\sigma^2_A\)</span>), dominance (<span class="math inline">\(\sigma^2_D\)</span>), and epistatic (<span class="math inline">\(\sigma^2_I\)</span>) variance components based on markers and estimate broad (<span class="math inline">\(H^2\)</span>) and narrow sense heritability (<span class="math inline">\(h^2\)</span>). Notice that we used the <code>g()</code> function which indicates that the random effect inside the parenthesis (i.e. id, idd or ide) has a covariance matrix (A, D, or E), that will be specified in the G argument in the form of a list and using the name of the random efect to allow the program to recognize which variance covariance matrix belongs to each random effect. Please DO NOT provide the inverse but the original covariance matrix. This is why we have called the function <code>g()</code> and no <code>giv()</code> as the popular software asreml.</p>
 <p>Just to show one more time that you can use your own matrices we will repeat the same calculation using the <code>mmer</code> function:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(CPdata)
@@ -277,10 +277,10 @@ ETA &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">
 ans.ADE &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt">Y=</span>y, <span class="dt">Z=</span>ETA, <span class="dt">silent =</span> <span class="ot">TRUE</span>)
 ans.ADE$var.comp</code></pre></div>
 <pre><code>##              component constraint
-## Var(id)    0.005152659   Positive
-## Var(idd)   0.001094008   Positive
+## Var(id)    0.005200536   Positive
+## Var(idd)   0.001084963   Positive
 ## Var(ide)   0.000000000   Boundary
-## Var(units) 0.002293428   Positive</code></pre>
+## Var(units) 0.002081452   Positive</code></pre>
 </div>
 <div id="specifying-heterogeneous-variances-in-univariate-models" class="section level2">
 <h2>2) Specifying heterogeneous variances in univariate models</h2>
@@ -310,7 +310,7 @@ modFD &lt;-<span class="st"> </span><span class="kw">mmer2</span>(Yield~<span cl
 ## Use the '$' symbol to access such information
 ## ===========================================================
 ##   Linear mixed model fit by restricted maximum likelihood
-## **********************  sommer 2.8  ***********************
+## **********************  sommer 2.9  ***********************
 ## ===========================================================
 ##           logLik      AIC      BIC Method Conv   DI
 ## Params -1382.801 2767.602 2771.594     NR TRUE TRUE
@@ -351,27 +351,27 @@ modFD &lt;-<span class="st"> </span><span class="kw">mmer2</span>(Yield~<span cl
 ## Use the '$' symbol to access such information
 ## ===========================================================
 ##   Linear mixed model fit by restricted maximum likelihood
-## **********************  sommer 2.8  ***********************
+## **********************  sommer 2.9  ***********************
 ## ===========================================================
 ##           logLik      AIC      BIC Method Conv   DI
 ## Params -1375.837 2753.673 2757.665     NR TRUE TRUE
 ## ===========================================================
 ## Random effects:
 ##                            VarComp VarCompSE Zratio constraint
-## Var(g(GCA2))                33.466     13.85 2.4163   Positive
+## Var(g(GCA2))                28.287     13.85 2.0424   Positive
 ## Var(at(Location)1:g(GCA2))   0.000      8.80 0.0000   Boundary
 ## Var(at(Location)2:g(GCA2))   0.000      8.80 0.0000   Boundary
-## Var(at(Location)3:g(GCA2))   8.927     19.72 0.4527   Positive
-## Var(at(Location)4:g(GCA2))  14.291     28.35 0.5040   Positive
-## Var(1:units)               205.067     30.26 6.7761   Positive
-## Var(2:units)               205.067     30.26 6.7761   Positive
-## Var(3:units)               492.304     72.36 6.8034   Positive
-## Var(4:units)               721.310    105.90 6.8114   Positive
+## Var(at(Location)3:g(GCA2))   3.936     19.72 0.1996   Positive
+## Var(at(Location)4:g(GCA2))  10.039     28.35 0.3541   Positive
+## Var(1:units)               187.902     30.26 6.2089   Positive
+## Var(2:units)               187.902     30.26 6.2089   Positive
+## Var(3:units)               497.055     72.36 6.8690   Positive
+## Var(4:units)               727.276    105.90 6.8677   Positive
 ## Number of obs: 400  Groups: 20 20 20 20 20 
 ## ===========================================================
 ## Fixed effects:
 ##              Value Std.Error t.value
-## Intercept 138.3583    1.4079  98.274
+## Intercept 138.3389    1.3246  104.44
 ## ===========================================================
 ## Use the '$' symbol to access all information</code></pre>
 <p>The <code>draw</code> argument allows you to see the progress of the likelihood and the change of the variance components, we just mention it in case you like to do that inspection but this will make the fitting process more time consuming.</p>
@@ -404,7 +404,7 @@ A &lt;-<span class="st"> </span><span class="kw">A.mat</span>(CPgeno)
 ## Use the '$' symbol to access such information
 ## ===========================================================
 ##   Linear mixed model fit by restricted maximum likelihood
-## **********************  sommer 2.8  ***********************
+## **********************  sommer 2.9  ***********************
 ## ===========================================================
 ##          logLik       AIC       BIC Method Conv   DI
 ## Params 790.5537 -1579.107 -1575.216     NR TRUE TRUE
@@ -455,25 +455,25 @@ hybrid2 &lt;-<span class="st"> </span>cornHybrid$hybrid <span class="co"># extra
 ## Use the '$' symbol to access such information
 ## ===========================================================
 ##   Linear mixed model fit by restricted maximum likelihood
-## **********************  sommer 2.8  ***********************
+## **********************  sommer 2.9  ***********************
 ## ===========================================================
 ##           logLik     AIC      BIC Method Conv   DI
 ## Params -1341.685 2691.37 2707.336     NR TRUE TRUE
 ## ===========================================================
 ## Random effects:
 ##            VarComp VarCompSE  Zratio constraint
-## Var(GCA1)    0.000     17.66  0.0000   Boundary
-## Var(GCA2)    5.068     19.30  0.2625   Positive
-## Var(SCA)   211.186     44.68  4.7261   Positive
-## Var(units) 220.693     17.78 12.4134   Positive
+## Var(GCA1)     0.00     17.66  0.0000   Boundary
+## Var(GCA2)     7.19     19.30  0.3725   Positive
+## Var(SCA)    187.75     44.68  4.2016   Positive
+## Var(units)  221.14     17.78 12.4386   Positive
 ## Number of obs: 400  Groups: 20 20 400 
 ## ===========================================================
 ## Fixed effects:
 ##                   Value   Std.Error t.value
-## (Intercept)  1.3792e+02  2.1463e+00 64.2580
-## Location2    2.0250e-13  2.1009e+00  0.0000
-## Location3    7.8353e+00  2.1009e+00  3.7295
-## Location4   -9.0975e+00  2.1009e+00 -4.3302
+## (Intercept)  1.3793e+02  2.1189e+00 65.0960
+## Location2    3.1974e-13  2.1030e+00  0.0000
+## Location3    7.8353e+00  2.1030e+00  3.7257
+## Location4   -9.0975e+00  2.1030e+00 -4.3259
 ## ===========================================================
 ## Use the '$' symbol to access all information</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Vgca &lt;-<span class="st"> </span><span class="kw">sum</span>(modFD$var.comp[<span class="dv">1</span>:<span class="dv">2</span>,<span class="dv">1</span>])
@@ -483,9 +483,9 @@ Va =<span class="st"> </span><span class="dv">4</span>*Vgca
 Vd =<span class="st"> </span><span class="dv">4</span>*Vsca
 Vg &lt;-<span class="st"> </span>Va +<span class="st"> </span>Vd
 (H2 &lt;-<span class="st"> </span>Vg /<span class="st"> </span>(Vg +<span class="st"> </span>(Ve)) )</code></pre></div>
-<pre><code>## [1] 0.7967281</code></pre>
+<pre><code>## [1] 0.7790562</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">(h2 &lt;-<span class="st"> </span>Va /<span class="st"> </span>(Vg +<span class="st"> </span>(Ve)) )</code></pre></div>
-<pre><code>## [1] 0.01867016</code></pre>
+<pre><code>## [1] 0.02873332</code></pre>
 <p>Don’t worry too much about the small h2 value, the data was simulated to be mainly dominance variance, therefore the Va was simulated extremely small leading to such value of narrow sense h2.</p>
 <p>In this second data set we show a small half diallel with 7 parents crossed in one direction. n(n-1)/2 crosses are possible 7(6)/2 = 21 unique crosses. Parents appear as males or females indistictly. Each with two replications in a CRD. For a half diallel design a single GCA variance component for both males and females can be estimated and an SCA as well (<span class="math inline">\(\sigma^2_GCA\)</span> and <span class="math inline">\(\sigma^2_SCA\)</span> respectively), and BLUPs for GCA and SCA of the parents can be extracted. We would show first how to use it with the <code>mmer2</code> function using the <code>and()</code> function and later we will show how to do it creating customized matrices using the <code>overlay</code> and <code>model.matrix</code> functions for the GCA and SCA matrices respectively. The specific model here is:</p>
 <p><span class="math inline">\(y = X\beta + Zu_g + Zu_s + \epsilon\)</span></p>
@@ -514,7 +514,7 @@ modHD &lt;-<span class="st"> </span><span class="kw">mmer2</span>(sugar~<span cl
 ## Use the '$' symbol to access such information
 ## ===========================================================
 ##   Linear mixed model fit by restricted maximum likelihood
-## **********************  sommer 2.8  ***********************
+## **********************  sommer 2.9  ***********************
 ## ===========================================================
 ##          logLik      AIC      BIC Method Conv   DI
 ## Params -58.1779 118.3558 120.0935     NR TRUE TRUE
@@ -570,7 +570,7 @@ Vg &lt;-<span class="st"> </span>Va +<span class="st"> </span>Vd
 ## Use the '$' symbol to access such information
 ## ===========================================================
 ##   Linear mixed model fit by restricted maximum likelihood
-## **********************  sommer 2.8  ***********************
+## **********************  sommer 2.9  ***********************
 ## ===========================================================
 ##          logLik      AIC      BIC Method Conv   DI
 ## Params -58.1779 118.3558 120.0935     NR TRUE TRUE
@@ -680,7 +680,7 @@ ans2 &lt;-<span class="st"> </span><span class="kw">mmer2</span>(tuber_shape~<sp
 ## Use the '$' symbol to access such information
 ## ===========================================================
 ##   Linear mixed model fit by restricted maximum likelihood
-## **********************  sommer 2.8  ***********************
+## **********************  sommer 2.9  ***********************
 ## ===========================================================
 ##           logLik      AIC      BIC Method Conv   DI
 ## Params -192.5206 387.0411 390.2723   EMMA TRUE TRUE
@@ -799,7 +799,7 @@ anss2 &lt;-<span class="st"> </span><span class="kw">mmer2</span>(yield~<span cl
 ## Use the '$' symbol to access such information
 ## ===========================================================
 ##   Linear mixed model fit by restricted maximum likelihood
-## **********************  sommer 2.8  ***********************
+## **********************  sommer 2.9  ***********************
 ## ===========================================================
 ##           logLik      AIC      BIC Method  Conv   DI
 ## Params -53925.37 107852.7 107857.8     EM FALSE TRUE
@@ -857,7 +857,7 @@ ans.A &lt;-<span class="st"> </span><span class="kw">mmer2</span>(<span class="k
 ## Use the '$' sign to access parameters
 ## =======================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ********************  sommer 2.8  *********************
+## ********************  sommer 2.9  *********************
 ## =======================================================
 ## Method:[1] &quot;MNR&quot;
 ##        logLik      AIC      BIC
@@ -958,7 +958,7 @@ ans.A &lt;-<span class="st"> </span><span class="kw">mmer2</span>(<span class="k
 ## Use the '$' sign to access parameters
 ## =======================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ********************  sommer 2.8  *********************
+## ********************  sommer 2.9  *********************
 ## =======================================================
 ## Method:[1] &quot;MNR&quot;
 ##        logLik      AIC     BIC

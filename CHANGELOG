@@ -227,7 +227,7 @@ version 2.7 (2017-05-01)
   + NR algorithm updated to deal with multiple variance components equal to zero
   
 ########################
-version 2.8 (2017-07-01)
+version 2.8 (2017-06-01)
 ########################
   
   + addition of the pin function to the package
@@ -236,11 +236,18 @@ version 2.8 (2017-07-01)
   + EM fixed to don't calculate statistics at the end by direct inversion
   + rcov argument with options 'units' and 'at(.):units' enabled
   + AI MME-based added to sommer
-  + new argument MME=T/F for deciding between MME-based and
+  + new argument DI=TRUE/FALSE for deciding between MME-based and
     Direct inversion algorithms
+    
+########################
+version 2.9 (2017-07-01)
+########################
+
+  + good versions of blocker and fill.design implemented
+  + bug fixed in PEV for D-AI algorithm
+  + minor bug fixes from summary functions in parallel models
 
 ##pendings
-+ AI-MME, for models with no or small covariance structures these models might be more suitable
 + random regression (working on it)
 + fix eigen feature to multivariate NR method
 

@@ -5,11 +5,12 @@
 Dominance relationship matrix
 }
 \description{
-Calculates the realized dominance relationship matrix. It is important to increase the prediction accuracy when 2 conditions are met; 1) The trait has intermediate to high heritability, 2) The population contains a big number of individuals that are full sibs (FS).
+Calculates the realized dominance relationship matrix. Can help to increase the prediction accuracy when 2 conditions are met; 1) The trait has intermediate to high heritability, 2) The population contains a big number of individuals that are half or full sibs (HS & FS).
 }
 \usage{
 D.mat(X,min.MAF=NULL,max.missing=NULL,impute.method="mean",tol=0.02,
-      n.core=1,shrink=FALSE,return.imputed=FALSE, ploidy=2, return.Xd=FALSE)
+      n.core=1,shrink=FALSE,return.imputed=FALSE, ploidy=2, return.Xd=FALSE, 
+      method=1)
 }
 
 \arguments{
@@ -42,10 +43,15 @@ When TRUE, the imputed marker matrix is returned.
 The ploidy of the organism. The default is 2 which means diploid but higher ploidy levels are supported.}
 \item{return.Xd}{
 If TRUE, the function returns the marker matrix converted to a dominant matrix instead of the dominance relationship matrix. The -1 and 1 are converted to 0, and 0's are converted to 1's which is a common incidence matrix for dominance. By default the markers that did not have heterozygote calls are not returned which would mean returning columns of only zeros putting fresh users in a mathematical problem when trying to estimate the variance component. The default for this argument is FALSE, so the function returns a dominant relationship matrix instead of a marker matrix.}
+\item{method}{
+Method 1 is Endelman and Jannink (2012) and method 2 is Su et al. (2012).}
 
 }
 \details{
-At high marker density, the relationship matrix is estimated as \eqn{D=W W'/c}, where \eqn{W_{ik} = X_{ik} + 1 - 2 p_k} and \eqn{p_k} is the frequency of the 1 allele at marker k.  By using a normalization constant of \eqn{c = 2 \sum_k {p_k (1-p_k)}}, the mean of the diagonal elements is \eqn{1 + f} (Endelman and Jannink 2012).
+
+The additive marker coefficients will be used to compute dominance coefficients as: 1-abs(X) for diploids.
+
+At high marker density, the relationship matrix is estimated as \eqn{D=W W'/c}, where \eqn{W_{ik} = 1 - \| X_{ik} \|}. By using a normalization constant of \eqn{c = 2 \sum_k {p_k q_k (1-p_k q_k)}}.
 
 The EM imputation algorithm is based on the multivariate normal distribution and was designed for use with GBS (genotyping-by-sequencing) markers, which tend to be high density but with lots of missing data.  Details are given in Poland et al. (2012). The EM algorithm stops at iteration \eqn{t} when the RMS error = \eqn{n^{-1} \|A_{t} - A_{t-1}\|_2} < tol.  
 

@@ -1,5 +1,6 @@
 D.mat <- function(X,min.MAF=NULL,max.missing=NULL,impute.method="mean",tol=0.02,
-                  n.core=1,shrink=FALSE,return.imputed=FALSE, ploidy=2, return.Xd=FALSE){
+                  n.core=1,shrink=FALSE,return.imputed=FALSE, ploidy=2, return.Xd=FALSE, 
+                  method=1){
   
   #X <- apply(gg,2,function(x){y <- x; y[which(is.na(x))] <- mean(x, na.rm=TRUE); return(y)}); gg2[1:5,1:5]
   
@@ -15,12 +16,38 @@ D.mat <- function(X,min.MAF=NULL,max.missing=NULL,impute.method="mean",tol=0.02,
   # now transform 0 to 1's
   if(ploidy == 2){
     # Aa = 1 and AA|aa = 0
-    X3 <- apply(X2,2,function(x){y <- x; y[which(x == 1 | x==-1)] <- 0; y[which(x == 0)] <- 1; return(y)})
+    X3 <- 1 - abs(X2)#apply(X2,2,function(x){y <- x; y[which(x == 1 | x==-1)] <- 0; y[which(x == 0)] <- 1; return(y)})
     if(return.Xd){
       X6 <- X3
     }else{
-      X6 <- A.mat(X3, min.MAF=min.MAF,max.missing=max.missing,impute.method=impute.method,tol=tol,
-                  n.core=n.core,shrink=shrink,return.imputed=return.imputed)
+      if(method==1){
+        X6 <- A.mat(X3, min.MAF=min.MAF,max.missing=max.missing,impute.method=impute.method,tol=tol,
+                    n.core=n.core,shrink=shrink,return.imputed=return.imputed)
+      }else{
+        
+        M <- scale(X3, center = TRUE, scale = FALSE)
+        K <- tcrossprod(M)
+        
+        bAlleleFrequency <- colMeans(X2+1)/2 # using original -1,0,1 matrix
+        varHW <- sum((2 * bAlleleFrequency * (1 - bAlleleFrequency))^2) 
+        
+        X6 <- K/varHW
+        
+#         pp <- abs(apply(X2,2,function(x){
+#           r <- table(x)
+#           het <- which(names(r)==0)
+#           homo <- which(names(r)!=0)
+#           pq <- ((r[het]/2) + r[homo] )/sum(r)
+#           return(max(pq)) #return p
+#         }))
+#         #plot(pp)
+#         qq <- 1-pp
+#         pq <- 2*pp*qq
+#         pq2 <- sum( (pq) * (1-(pq)) )
+#         X6 <- K/pq2#mean(diag(K))
+        #X6[1:3,1:3]
+      }
+
     }
   }else{
     X3 <- X2 - (ploidy/2)
@@ -34,9 +61,21 @@ D.mat <- function(X,min.MAF=NULL,max.missing=NULL,impute.method="mean",tol=0.02,
     if(return.Xd){
       X6 <- X5
     }else{
-      X6 <- A.mat(X5, min.MAF=min.MAF,max.missing=max.missing,impute.method=impute.method,tol=tol,
-                  n.core=n.core,shrink=shrink,return.imputed=return.imputed)
+      if(method==1){
+        X6 <- A.mat(X5, min.MAF=min.MAF,max.missing=max.missing,impute.method=impute.method,tol=tol,
+                    n.core=n.core,shrink=shrink,return.imputed=return.imputed)
+      }else{
+        M <- scale(X5, center = TRUE, scale = FALSE)
+        K <- tcrossprod(M)
+        
+        bAlleleFrequency <- colMeans(X5+1)/2 # using original -1,0,1 matrix
+        varHW <- sum((2 * bAlleleFrequency * (1 - bAlleleFrequency))^2) 
+        
+        X6 <- K/varHW
+      }
+      
     }
+    
   }
   return(X6)
 }

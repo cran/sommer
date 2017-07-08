@@ -1,10 +1,10 @@
-0dc6b33257cee56f48689f83c7613d17 *CHANGELOG
-6e0fa9bb1d171590a42e6b39be89e584 *DESCRIPTION
+3223c690931c9c3ed414289f3e62b836 *CHANGELOG
+574b9d6058f0a53733a27849eac331d1 *DESCRIPTION
 eea08571bda15a94a14c808273885166 *NAMESPACE
 73e05505dd1dc9ab311fe55027dfa375 *R/A.mat.R
-ab42d29692c1cba15599f0d80899a76f *R/AI.R
-67928a2b9c4b39b2136c419ec1a754dd *R/AImme.R
-fe02b6e5be3347b0cf765102529204f0 *R/D.mat.R
+21c84b0be64075c6efd1603ff48aef05 *R/AI.R
+aa3ea0a0d264460e6b0a1a061f532dc9 *R/AImme.R
+2c8fcdd9af2699cf141e2ae54422c69d *R/D.mat.R
 709318a1c1a7c75dc35e2dd8258f1022 *R/E.mat.R
 fe1f4e6224b347e78848ae7327d52898 *R/EM.R
 026727203cffeaf7870aee1dede0f35e *R/EM2.R
@@ -16,7 +16,7 @@ afd75b61e269d381947f5f3e6afd107b *R/MAIhelp.R
 f528be74f20fbfc696c180920ff210ae *R/MEMMA.R
 960752ed5138c108bc8ccb55f40a17d0 *R/MMERM.R
 8c92de7b072f7c791b6a3fafbdbbb1d5 *R/MNR.R
-88f82d797780aba3cbf0045daa3b531e *R/NR.R
+728833c53b12d5f863d81accc00266bd *R/NR.R
 afe9c119b64e385a9abbfbd0067f479b *R/NR22.R
 7925d5680e7a66c503990624ecff509f *R/PEV.R
 0e272ee25587e667c960e2555ef97ae9 *R/TP.prep.R
@@ -24,13 +24,13 @@ afe9c119b64e385a9abbfbd0067f479b *R/NR22.R
 9bc002f9c4c6a6135968f8fc8c0e87f4 *R/ai2help.R
 d976ac296aef619f2e65a5a2cd8fe550 *R/atcg1234.R
 5efc395dda6d8ef01ace9bc6bfa3a08c *R/big.peaks.col.R
-bd3d22b828bc922dc11b3c5d14067be7 *R/blocker.R
+489f74562880253d37c66f8c1f1ad642 *R/blocker.R
 5658014a4e07c810873c00754e9aba34 *R/brewer.pal.R
 05d572a035d0a6efe08489e310997e5b *R/design.score.R
 3bd92294e89a6a9e1af86a17f3db4319 *R/eigenGWAS.R
 dabdea69a1258a2057f04c6970176653 *R/fdr.R
 97177c738c7a3cf86c9200a101310e26 *R/fdr2.R
-7353cb34e64c1e21cae0294755075db3 *R/fill.design.R
+ea41b62f4f540925da47409caf1c3820 *R/fill.design.R
 2dac1e9b2ba0cd501f928f09bef60fc6 *R/formula_func.R
 872b74e25280857db17dbd2517f86f0d *R/hdm.R
 718b561112ff7be4c18ed617f941ef59 *R/hits.R
@@ -40,7 +40,7 @@ f793b2e78000a1809ee6400d5d1e7282 *R/jet.colors.R
 e06de09a1a68b361eeb409470973a34d *R/map.plot.R
 fd1c548cf7a3bfbedae74b00c9f3b45c *R/matrix.calculations.R
 3f998eed6a53528edceb297d785cb1c9 *R/maxi.qtl.R
-6786c44806596cefc0494b8ab637e9ed *R/mmer.R
+eb16330664ff4ec6a4648d3fc52d411d *R/mmer.R
 659687ebce1a5afc2f00576252d8dc5e *R/mmer2.R
 0135d162e3f7cf22c2afa5ad4c8b8c63 *R/mmerSNOW.R
 cf40b444462afd4065367313aa97f9cf *R/name.change.R
@@ -79,7 +79,7 @@ f16b0f53e83a65cb74545dcb175b55f1 *man/A.mat.Rd
 40d008af643dbd07504dc47515ab0f61 *man/AImme.Rd
 5a9d3567696cdb5c9f02fa02899b44a5 *man/BTdata.Rd
 501448fbc8a982d9f5d90cf9ca767928 *man/CPdata.Rd
-69ae17d4cfc98b680dec04c06451be1d *man/D.mat.Rd
+929ef4e4edacb9bd266ba1ded25129d5 *man/D.mat.Rd
 c82a0b5302705561718559646601574e *man/E.mat.Rd
 5621a2aca64943ae0429f956e4050924 *man/EM.Rd
 e75151c28a96274426e4f4d15c555bc0 *man/EM2.Rd
@@ -122,7 +122,7 @@ e1553b591f3832db88b982efe66970f2 *man/cornHybrid.Rd
 3b3c3fc4fdf52225d49bff99755432dd *man/eigenGWAS.Rd
 3b029a3a5b7a8c1d0a614daffa1d4615 *man/fdr.Rd
 f7cb83d8f6debe7008502544ded71925 *man/fdr2.Rd
-a0e9a8affb442d5fb03e41f990fec56a *man/fill.design.Rd
+3cda1395812558808b756786f041fed6 *man/fill.design.Rd
 18cdec7f64115801195b35948bf8136e *man/fitted.MMERM1.Rd
 e0f43fedab3ac537208bb09fbdb089bb *man/fitted.mmer.Rd
 da1bf50c79f12a9e7ab02b25fcebd8e1 *man/fitted.mmerM.Rd
@@ -140,8 +140,8 @@ eb057de850916cdfede4f42dfe4f78fb *man/manhattan.Rd
 2ddb917a1eb9742e6a3139318822330d *man/map.plot.Rd
 cd6faa1bba2003bd2fd77d04957b1455 *man/matrix.trace.Rd
 8650223c61f75e50cbe29acd6a241f04 *man/maxi.qtl.Rd
-ded18f2d513a66a52d9c41ea9d91a9ce *man/mmer.Rd
-6688b5fa41aace56b1d78e67c8b4e7aa *man/mmer2.Rd
+0e57c6faa1839c8e2c6b657174c8598b *man/mmer.Rd
+cec034e32a9d00a2fe8edc1fb4f3cc8c *man/mmer2.Rd
 e09ef2bb0d6d208d8df5bb0d7b6e4aae *man/mmerSNOW.Rd
 87fb62bca8161963260c9625bd7a6df8 *man/my.colors.Rd
 87ffa8a7b293ba996f8e30fddd37dc51 *man/name.change.Rd
@@ -159,7 +159,7 @@ e299da62cb233b8e5e022288d9532bf9 *man/residuals.mmer.Rd
 3befe34b4b0b04afd7f27ff562f9f319 *man/residuals.mmerM.Rd
 1c57ba2a2cda28a220751447e59c30f5 *man/score.calc.Rd
 de53f242a999bb5482689be949139e9b *man/score.calcMV.Rd
-d9e91e92a8414f8540a3c29fe6212873 *man/sommer-package.Rd
+6b9a43a52496daa5656476150d303bab *man/sommer-package.Rd
 bde54b983e26ab36148461745f93e63f *man/summary.MMERM1.Rd
 bed098c473b5650c9ff7fb601f46d890 *man/summary.mmer.Rd
 a21cd9e79d54a87d4dfab94024d5fa15 *man/summary.mmerM.Rd
@@ -168,4 +168,4 @@ f75098b3a890c9943c86effa94afa5b2 *man/transp.Rd
 b8cff820bd03af6756c270675a28d4e6 *man/wheatLines.Rd
 60bac07787e2725894ff13bfa49d38b6 *man/yates.oats.Rd
 1735fdcd1f90ef0f288bccef86af52ad *vignettes/sommer.Rmd
-0733305907b594083250c43ee800ff95 *vignettes/sommer.html
+e98d1ace8fc50a28a267e792d4002c46 *vignettes/sommer.html

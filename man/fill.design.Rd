@@ -5,7 +5,7 @@
   The fill.design function allows the user to fill the missing rows and ranges from an experiment to run specific designs or apply a post blocking. The data frame requires the presence of 2 numeric columns indicating the x and y coordinates, here denominated rows and ranges. This can be effectively used for multi environment trials by using the `by` argument where you specify the column that indicates the environments. 
 }
 \usage{
-  fill.design(x,rows="ROW",ranges="RANGE",by)
+  fill.design(x,rows="ROW",ranges="RANGE",by, extra)
 }
 
 \arguments{
@@ -13,6 +13,8 @@
   \item{rows}{the name of the numeric column that indicates one direction in the field.}
   \item{ranges}{the name of the numeric column that indicates the other direction in the field.}
   \item{by}{optional argument to indicate the name of the column of the dataframe x that indicates the environments so the field is filled by environment.}
+  \item{extra}{name of the extra columns to be filled in the dataset based. This are filled based on the rows, ranges information.}
+  
 }
 \value{
   \describe{

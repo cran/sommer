@@ -1,4 +1,5 @@
-fill.design <- function(x,rows="ROW",ranges="RANGE",by){
+
+fill.design <- function(x,rows="ROW",ranges="RANGE", by, extra){
   
   checo <- which(colnames(x) %in% c(rows,ranges))
   if(length(checo)!=2){
@@ -12,6 +13,9 @@ fill.design <- function(x,rows="ROW",ranges="RANGE",by){
     stop("Please make sure that the columns; ",rows," and ",ranges," are both numeric.\n",call. = FALSE)
   }
   
+  if(!missing(extra)){
+    extras=TRUE
+  }else{extras=FALSE}
   
   fac <- which(unlist(lapply(x,class))=="factor")
   if(length(fac)>0){
@@ -20,12 +24,19 @@ fill.design <- function(x,rows="ROW",ranges="RANGE",by){
       x[,fac2] <- as.character(x[,fac2])
     }
   }
+  
+  
   # if user has multiple field
-  if(!missing(by)){
+  if(!missing(by)){ # if multiple fields
     y <- split(x,x[,by])
-    xnew <- lapply(y,function(x){
+    xnew <- lapply(y,function(x, extra, extras){ # the data, the additional element, and the T/F
       
-      bybo <- na.omit(unique(x[,by]))
+      x <- x[order(x[,rows], x[,ranges]), ] # order by rows and columns before starint the whole process
+      
+      roro <- x[,which(colnames(x)==rows)]
+      raro <- x[,which(colnames(x)==ranges)]
+      
+      bybo <- na.omit(unique(x[,by])) # level of by
       ## rows needed
       ro1 <- seq(min(roro,na.rm=TRUE),max(roro,na.rm=TRUE))
       ## ranges needed
@@ -60,10 +71,49 @@ fill.design <- function(x,rows="ROW",ranges="RANGE",by){
       head(newf)
       rownames(newf) <- NULL
       newf[,by] <- bybo
+      
+      
+      with(newf, table(FIELDINST, BLOCK, useNA = "always"))
+      dim(newf)
+      with(newf, table(FIELDINST, ROW, useNA = "always"))
+      with(newf, table(FIELDINST, RANGE, useNA = "always"))
+      
+      ### if user wants to fill additional factor columns
+      ### if user wants to fill additional factor columns
+      ### if user wants to fill additional factor columns
+      if(extras){
+        for(u in 1:length(extra)){
+          pextra <- extra[u]
+          pox <- table(newf[,c(rows,ranges,pextra)]) # all zero should be filled in
+          leve <- dim(pox)[3] # levels for the extra factor
+          levelnames <- na.omit(unique(newf[,pextra]))
+          ################
+          for(o in 1:leve){ # for each level of the xtra column figure out which rows and ranges are there
+            ## let's see until which row extends
+            init1 <- which(apply(pox[,,o],1,sum) > 0) #end in row direction
+            stend1 <- c(init1[1],init1[length(init1)]) # start and end in row direction
+            
+            init2 <- which(apply(pox[,,o],2,sum) > 0) #end in row direction
+            stend2 <- c(init2[1],init2[length(init2)]) # start and end in range direction
+            
+            kk <- which(newf[,rows] >= stend1[1] & newf[,rows] <= stend1[2] & newf[,ranges] >= stend2[1] & newf[,ranges] <= stend2[2] )
+            newf[kk,pextra] <- levelnames[o]
+          }
+          ################
+        }
+      }
+      ### if user wants to fill additional factor columns
+      ### if user wants to fill additional factor columns
+      ### if user wants to fill additional factor columns
       return(newf)
-    })
-    xnew <- do.call(rbind(xnew))
+    }, extra=extra, extras=extras)
+    
+    xnew <- do.call(rbind,xnew)
   }else{
+    
+    roro <- x[,which(colnames(x)==rows)]
+    raro <- x[,which(colnames(x)==ranges)]
+    
     cat("Argument 'by' not provided. Single field assumed.\n")
     ro1 <- seq(min(roro,na.rm=TRUE),max(roro,na.rm=TRUE))
     ## ranges needed
@@ -97,7 +147,38 @@ fill.design <- function(x,rows="ROW",ranges="RANGE",by){
     newf[,c(rows,ranges)] <- needed
     head(newf)
     rownames(newf) <- NULL
+    ### if user wants to fill additional factor columns
+    ### if user wants to fill additional factor columns
+    ### if user wants to fill additional factor columns
+    if(extras){
+      for(u in 1:length(extra)){
+        pextra <- extra[u]
+        pox <- table(newf[,c(rows,ranges,pextra)]) # all zero should be filled in
+        leve <- dim(pox)[3] # levels for the extra factor
+        levelnames <- na.omit(unique(newf[,pextra]))
+        ################
+        for(o in 1:leve){ # for each level of the xtra column figure out which rows and ranges are there
+          ## let's see until which row extends
+          init1 <- which(apply(pox[,,o],1,sum) > 0) #end in row direction
+          stend1 <- c(init1[1],init1[length(init1)]) # start and end in row direction
+          
+          init2 <- which(apply(pox[,,o],2,sum) > 0) #end in row direction
+          stend2 <- c(init2[1],init2[length(init2)]) # start and end in range direction
+          
+          kk <- which(newf[,rows] >= stend1[1] & newf[,rows] <= stend1[2] & newf[,ranges] >= stend2[1] & newf[,ranges] <= stend2[2] )
+          newf[kk,pextra] <- levelnames[o]
+        }
+        ################
+      }
+    }
+    ### if user wants to fill additional factor columns
+    ### if user wants to fill additional factor columns
+    ### if user wants to fill additional factor columns
+    
     xnew <- newf
   }
+  
   return(xnew)
 }
+
+

@@ -875,7 +875,7 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
     if(constraint){
       nmm <- length(sigma)
       boundary <- which(sigma<=0)
-      sigma[which(sigma<=0)] <-  mean(sigma[(nmm-length(R)+1):nmm]) * (1.011929e-07^2)# -(1e-6)
+      sigma[which(sigma<=0)] <- (1.011929e-07^2) * mean(sigma[(nmm-length(R)+1):nmm])# -(1e-6)
     }
     ####***********************************
     ####***********************************
@@ -963,11 +963,14 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
   ###*****************************************************************************************
   ###*****************************************************************************************
   ###*****************************************************************************************
-  if(constraint & length(badd) > 0){ # if a variance component was negative and constraint was activated
+  if(constraint & length(boundary)>0){ # if a variance component was negative and constraint was activated
     # recalculate variance components removing such variance component
     if(!silent){
       cat("\nOne or more variance components close to zero. Boundary constraint applied.\n")
     }
+    badd <- boundary
+    goodd <- setdiff(1:length(sigma),boundary)
+    
     ZETAXXX <- ZETA.or[-badd]
     
     sigmaxxx <- NR22(y.or, X=X.or, ZETA=ZETAXXX, R=R.or, init=sigma[goodd],draw=draw,silent=silent)
@@ -1088,9 +1091,21 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
   ZETA2 <- lapply(ZETA, function(x,good){x[[1]] <- x[[1]][good,]; x[[2]]<- x[[2]]; return(x)}, good=good)
   ZETA3 <- lapply(ZETA2, function(x){y=list(Z=as(x[[1]],Class="sparseMatrix"),K=as(x[[2]],Class="sparseMatrix"))})
   for(h in zvar){
+    ## rrBLUP 
+#     W <- crossprod(xm, (Vinv*(as.numeric(var.com2[h,1]))) %*% xm)
+#     Winv <- solve(W)
+#     KZt <- tcrossprod(ZETA3[[h]][[2]], ZETA3[[h]][[1]])
+#     KZt.Hinv <- KZt %*% (Vinv*(as.numeric(var.com2[h,1])))
+#     WW <- tcrossprod(KZt.Hinv, KZt) # KZ'V- KZ'
+#     WWW <- KZt.Hinv %*% xm  # KZ'V- X
+#     PEV.u[[h]] <- as.numeric(var.com2[h,1]) * (ZETA3[[h]][[2]] - WW + tcrossprod(WWW %*% Winv, WWW)) #
+#     Var.u[[h]] <- (as.numeric(var.com2[h,1])) *  ZETA3[[h]][[2]]
+    
     Var.u[[h]] <- (as.numeric(var.com2[h,1])^2) *  ( crossprod(ZETA3[[h]][[1]]%*%ZETA3[[h]][[2]], pm)  %*%  (ZETA3[[h]][[1]]%*%ZETA3[[h]][[2]])   ) # sigma^4 ZKP ZK
     PEV.u[[h]] <- as.numeric(var.com2[h,1]) * ZETA3[[h]][[2]] - Var.u[[h]]  # standard errors (SE) for each individual
   } #(sigma2.u^2) *  ( crossprod(Z%*%K, P)  %*%  (Z%*%K)   )
+  names(Var.u) <- varosss[1:length(ZETA)]
+  names(PEV.u) <- varosss[1:length(ZETA)]
   #################
   ## Random effects
   #u <- list() # we put it up
