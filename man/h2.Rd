@@ -60,10 +60,7 @@ head(h2)
 
 #ans1 <- mmer(Y=Y,Z=ETA)
 #vc <- ans1$var.comp
-#V_E <- vc[2,1];V_GE <- vc[3,1];V_G <- vc[1,1];Ve <- vc[5,1]
-#n.env <- length(levels(h2$Env))
-#h2c <- V_G/(V_G + V_GE/n.env + Ve/(2*n.env)) #the 2 is a reference for block#
-#h2c
+
 }
 \keyword{datasets}
 \seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

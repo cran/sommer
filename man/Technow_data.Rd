@@ -59,13 +59,9 @@ pheno$hy <- paste(pheno$dent, pheno$flint, sep=":");head(pheno);dim(pheno)
 # vv2 <- sample(vv1, 100)
 # y.trn[vv2,"yield"] <- NA
 # anss2 <- mmer2(yield~1, random=~g(gcad) + g(gcaf), G=list(gcad=A.dent, gcaf=A.flint), 
-#                method="EM", data=y.trn) 
+#                method="NR", data=y.trn) 
 # summary(anss2)
 # cor(anss2$fitted.y[vv2], hybs$yield[vv2])
-
-#### try EM algorithm as well if only 2 variance components
-#### you can try adding SCA effects by adding SCA=list(Z=Z3, K=DD)
-#### to the random effects but will slow down the model a lot
 
 
 ############################################
@@ -104,7 +100,7 @@ pheno$hy <- paste(pheno$dent, pheno$flint, sep=":");head(pheno);dim(pheno)
 # MGF <- cbind(M.dent[pheno$dent,],M.flint[pheno$flint,]); dim(MGF) 
 # 
 # mox <- mmer2(GY~1, random=~g(dent) + and(g(flint)), 
-#              G=list(dent=Adf, flint=Adf), method="EM",
+#              G=list(dent=Adf, flint=Adf), method="NR",
 #              W=MGF, data=pheno)
 # summary(mox)
 

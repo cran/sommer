@@ -155,8 +155,11 @@ ETA <- list(GCA1=list(Z=Z1, K=K1),
 # S <- kronecker(K1, K2) ; dim(S)   
 # rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 # 
-# ans <- mmer2(cbind(TY,PH) ~ Location, random = ~ g(GCA2) + g(SCA), 
-#       G=list(GCA2=K2, SCA=S),data=hybrid2, MVM=TRUE)
+# ans <- mmer2(cbind(TY,PH) ~ Location, 
+#              random = ~ us(trait):g(GCA2) + us(trait):g(SCA), 
+#              rcov = ~ us(trait):units, 
+#              G=list(GCA2=K2, SCA=S),
+#              data=hybrid2)
 # summary(ans)
 
 }

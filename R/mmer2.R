@@ -1,10 +1,12 @@
-mmer2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=TRUE, DI=TRUE, MVM=FALSE, 
-                  iters=20, draw=FALSE, init=NULL, family=gaussian, silent=FALSE, constraint=TRUE, 
-                  sherman=FALSE, EIGEND=FALSE, forced=NULL, map=NULL, fdr.level=0.05, manh.col=NULL, 
-                  min.n=FALSE, gwas.plots=TRUE, n.cores=1, tolpar = 1e-06, tolparinv = 1e-06, 
-                  IMP=TRUE, n.PC=0, P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05){
+mmer2 <- function(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
+                  init=NULL,iters=20,tolpar = 1e-06, tolparinv = 1e-06, 
+                  draw=FALSE, silent=FALSE,
+                  constraint=TRUE, EIGEND=FALSE,
+                  forced=NULL,IMP=FALSE, complete=TRUE, restrained=NULL){
   #rcov <- missing
   #gss=TRUE
+  
+  
   if(missing(data)){
     data <- environment(fixed)
     data2 <- environment(random)
@@ -25,32 +27,118 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=T
     if (length(random) != 2) 
       stop("\nRandom model formula must be of form \" ~ pred\"")
   }
-  
-  if(!is.null(G) & method == "EM"){
-    cat("With dense var-cov structures (G) present you may want to try the AI or NR algorithm.\n")
-  }
+
   ###########################
-  ########### useful functions
-  at <- function(x, levs){ # how you handle x
-    dd <- model.matrix(~x - 1,data.frame(x))
-    colnames(dd) <- substring(colnames(dd),2)
-    dd <- dd[,levs]
-    return(dd)
-  }
-  diagc <- grep("diag\\(", random)
-  if(length(diagc)){ # if user fits a diagonal model is the same than at
-    random <- as.formula(paste(gsub("diag","at",random),collapse = ""))
-  }
-  g <- function(x){x}
-  and <- function(x){x}
+  ## reduce the random formula
   
   expi <- function(j){gsub("[\\(\\)]", "", regmatches(j, gregexpr("\\(.*?\\)", j))[[1]])}
   expi2 <- function(x){gsub("(?<=\\()[^()]*(?=\\))(*SKIP)(*F)|.", "", x, perl=T)}
   
-  #   uscheck <- grep("us\\(", random)
-  #   if(length(uscheck)>0){
-  #     stop("The us(.) function is not available in sommer yet. \n",call. = FALSE)
-  #   }
+  # see if any of the random terms has eig or group
+  #rtermss <-strsplit(as.character(random[2]), split = "[+]")[[1]] #)  gsub(" ", "", 
+  
+  yuyu <- strsplit(as.character(random[2]), split = "[+]")[[1]]
+  rtermss <- apply(data.frame(yuyu),1,function(x){
+    strsplit(as.character((as.formula(paste("~",x)))[2]), split = "[+]")[[1]]
+  })
+  
+  eigcheck <- grep("eig\\(",rtermss)# apply(data.frame(rtermss),2,function(x){grep("eig",x)})
+  if(length(eigcheck)>0){
+    EIGEND=TRUE
+    if(length(eigcheck)>1){stop("Eigen decomposition is only possible for one random effect.\n", call. = FALSE)}
+    f1 <- strsplit(rtermss[eigcheck],":")[[1]]
+    f00 <- grep("trait",f1) # position of structure for trait
+    f0 <- f1[f00] # structure for eigend
+    f2 <- f1[setdiff(1:length(f1),f00)]
+    f3 <- paste("g(",expi2(f2),")",sep="")
+    if(length(f0)>0){f3 <- paste(f0,f3,sep=":")}
+    rtermss <- c(f3,rtermss[-eigcheck])
+    random <- as.formula(paste("~",paste(rtermss, collapse = " + "))) # new random
+    random <- as.formula(paste(as.character(random),collapse=""))
+    #print(random)
+  }
+  grpcheck <- grep("grp\\(",rtermss)# apply(data.frame(rtermss),2,function(x){grep("eig",x)})
+  if(length(grpcheck)>0){
+    f1 <- strsplit(rtermss[grpcheck],":")[[1]]
+    f00 <- grep("trait",f1) # position of structure for trait
+    if(length(f00)>0){
+      ZKgrouping.str <- f1[f00]
+    }else{
+      ZKgrouping.str <- rep("diag(trait)",length(f1)) 
+    }
+    f0 <- f1[f00] # structure for eigend
+    f2 <- f1[setdiff(1:length(f1),f00)]
+    #if(length(f0)>0){f2 <- paste(f0,f2,sep=":")}
+    random <- as.formula(paste("~",paste(rtermss[-grpcheck], collapse = " + "))) # new random
+    random <- as.formula(paste(as.character(random),collapse=""))
+    namere <- expi2(f2) # name of the random effect to look in to grouping argument
+    ZKgrouping <- list()
+    cous <- 0
+    cous2 <- numeric()
+    #ZKgrouping.str <- character()
+    for(u in 1:length(namere)){
+      cous <- cous+1
+      cous2[u] <- cous
+      grpu <- which(names(grouping)==namere[u])
+      Zgrpu <- grouping[[grpu]]
+      if(is.null(Zgrpu)){stop("Random effect specified with the grp() function not specified in the grouping argument.\n",call. = FALSE)}
+      Gu <- which(names(G)==namere[u])
+      if(length(Gu) > 0){
+        Kgrp <- G[[Gu]]
+        cat("Ignore warning messages about variance-covariance matrices specified in the \nG argument not used for your grouping effects.\n")
+      }else{ Kgrp <- diag(ncol(Zgrpu))}
+      ZKgrouping[[u]] <- list(Z=Zgrpu, K=Kgrp)
+      names(ZKgrouping)[u] <- namere[u]
+    }
+  }
+  
+  ## for us structures
+ # apply(data.frame(rtermss),2,function(x){grep("eig",x)})
+  # if(length(usscheck)>0 & constraint){
+  #   cat("Setting 'constraint' argument to FALSE for unstructured model. \nPlease be carefult with results",call. = FALSE)
+  #   constraint=FALSE
+  # }
+    
+  if(missing(rcov)){rcovi <- NULL}else{rcovi<-rcov}
+  ttt <- vctable.help(random = random, rcov = rcovi) # extract trait structure
+  random <- ttt$random # update random term
+  random <- as.formula(paste(as.character(random),collapse=""))
+  
+  rcov <- ttt$rcov # update rcov term
+  
+  
+  # change the trait structure for residuals from 'at' to 'diag'
+  # no valid for me to make 'at' and assume that traits share the same residual value
+  ttt$rcov.trt.str <- gsub("at","diag",ttt$rcov.trt.str)
+  
+  usscheck <- grep("us\\(",strsplit(as.character(random[2]), split = "[+]")[[1]])
+  ###########################
+  ########### useful functions
+  at <- function(x, levs){ 
+    dd <- model.matrix(~x - 1,data.frame(x))
+    colnames(dd) <- substring(colnames(dd),2)
+    dd <- dd[,levs]
+  }
+  
+  diagc <- grep("diag\\(", random)
+  if(length(diagc)){ # if user fits a diagonal model is the same than at
+    random <- as.formula(paste(gsub("diag","at",random),collapse = ""))
+    random <- as.formula(paste(as.character(random),collapse=""))
+  }
+  
+  if(!missing(rcov)){
+    diagr <- grep("diag\\(", rcov)
+    if(length(diagr)){ # if user fits a diagonal model is the same than at
+      rcov <- as.formula(paste(gsub("diag","at",rcov),collapse = ""))
+    }
+  }
+  
+  us <- function(x){x}
+  g <- function(x){x}
+  and <- function(x){x}
+  eig <- function(x){x}
+  perc.na <- function(x){length(which(is.na(x)))/length(x)}
+    
   ###########################
   ############## impute data
   ginvcheck <- grep("ginv\\(",random)
@@ -64,16 +152,17 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=T
     stop("Please provide the 'data' argument.\n", call. = FALSE)
   }
   for(i in 1:dim(data2)[2]){
+    classdata <- unlist(lapply(data2,class))
     x <- data2[,i]
-    if(is.numeric(x)){
+    if(classdata[i]=="numeric"){
       isNA <- which(is.na(x))
-      if(length(isNA) >0){x[isNA] <- mean(x,na.rm=TRUE)}
-    }else if(is.factor(x)){
+      if(length(isNA) >0 & perc.na(x) < 1){x[isNA] <- mean(x,na.rm=TRUE)}
+    }else if(classdata[i]=="factor"){
       isNA <- which(is.na(x))
-      if(length(isNA) >0){x[isNA] <- as.factor(names(which(table(x) == max(table(x)))[1]))}
-    }else if(is.character(x)){
+      if(length(isNA) >0 & perc.na(x) < 1){x[isNA] <- as.factor(names(which(table(x) == max(table(x)))[1]))}
+    }else if(classdata[i]=="character"){
       isNA <- which(is.na(x))
-      if(length(isNA) >0){x[isNA] <- as.character(names(which(table(x) == max(table(x)))[1]))}
+      if(length(isNA) >0 & perc.na(x) < 1){x[isNA] <- as.character(names(which(table(x) == max(table(x)))[1]))}
     }
     data2[,i] <- x
   }
@@ -87,17 +176,11 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=T
   mf <- eval(mf, parent.frame())
   mfna <- eval(mfna, parent.frame())
   
-  #which(!duplicated(t(mfna)))
-  # response Y
   yvar <- model.response(mfna)
+  #print(str(yvar))
   
-  #yvar <- gsub(" ", "", as.character(fixed[2]))
-  ### Xb in 'formula'
-  #print(str(mf))
-  #print(fixed)
   X <- model.matrix(fixed, mf)
   
-  #xvar <- gsub(" ", "", strsplit(as.character(fixed[3]), split = "[+]")[[1]])
   ### Zu in formula
   
   if(!is.null(random)){
@@ -115,7 +198,11 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=T
       V <- eval(V, parent.frame()) 
     }
     
-    zvar.names <- gsub(" ", "", strsplit(as.character(random[2]), split = "[+]")[[1]])
+    yuyu <- strsplit(as.character(random[2]), split = "[+]")[[1]]
+    zvar.names <- apply(data.frame(yuyu),1,function(x){
+      strsplit(as.character((as.formula(paste("~",x)))[2]), split = "[+]")[[1]]
+    })
+    #zvar.names <- strsplit(as.character(random[2]), split = "[+]")[[1]] #) gsub(" ", "", 
     
     if(!is.null(G)){
       ranused <- zvar.names[grep("g\\(",zvar.names)] # g() random effects
@@ -127,27 +214,16 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=T
       }
     }
     
-    #zvar.names <- colnames(V)
-    #zvar.names <- zvar.names[which(!duplicated(zvar.names))]
-    #print(zvar.names)
-    zvar <- V #names(V)
-    #     for(i in 1:dim(zvar)[2]){
-    #       zvar[,i] <- as.factor(zvar[,i])
-    #     }
-    #zvar <- apply(zvar,2,as.factor)
-    #zvar.names <- names(V)
-    #zvar <- gsub(" ", "", strsplit(as.character(random[2]), split = "[+]")[[1]])
-    #varsss <- c(xvar,zvar)
     
-    ### filters to apply at, us, diag, g
-    #     atc <- grep("at",zvar.names)
-    #     if(length(atc)>0){
-    #       apply(data.frame(zvar.names[atc]),1,function(x){gsub("[\\(\\)]", "", regmatches(x, gregexpr("\\(.*?\\)", x))[[1]])})
-    #       
-    #     }
+    zvar <- V #names(V)
+    
     
     Z <- list()
     counter <- 0
+    counterl <- numeric() # to store the names of the random effects for each random effect specified by
+    #i=2
+    
+    # users, specially for interaction where a single term (i.e. at(location):gca) can produce several
     for(i in 1:length(zvar.names)){
       ## incidence matrix
       vara <- zvar.names[i]
@@ -155,11 +231,12 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=T
       # data.frame(factor(V[,vara],levels=V[,vara],ordered=T))
       zi <- model.matrix(as.formula(paste("~",vara,"-1")),zvar)
       
-      ### check for overlay matrices
+       ### check for overlay matrices
       andc <- grep("and\\(",vara)
       if(length(andc)>0){
         
-        if(!is.factor(zvar[,vara])){stop(paste("Random effect",vara,"needs to be a factor if used as random. \nPlease convert using as.factor() function and fit again.\n"), call.=FALSE)}
+        #as.formula(paste("~",vara))
+        #if(!is.factor(zvar[,vara])){stop(paste("Random effect",vara,"needs to be a factor if used as random. \nPlease convert using as.factor() function and fit again.\n"), call.=FALSE)}
         
         if(i==1){
           stop("To use the overlay a random effect must preceed the and(.) function.", call. = FALSE)
@@ -188,13 +265,13 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=T
           j1 <- colnames(zi)
           j2 <- gsub(":.*","",j1) # remove everything after the : to all names
           j3 <- gsub(".*:","",vara) # part removed
-          j2 <- gsub(" ","", j2)
+          #j2 <- gsub(" ","", j2)
           k1 <- gsub(":.*","",vara) # to remove in next step
           #regexpr("\\((.*)\\)", j2[1])
           orx <- gsub(k1,"",j2, fixed = TRUE) # order of columns by location
           where <- as.matrix(apply(data.frame(unique(orx)),1,function(x,y){which(y==x)},y=orx)) # each column says indeces for each level of at()
           colnames(where) <- unique(j2)
-          for(u in 1:dim(where)[2]){
+          for(u in 1:dim(where)[2]){ # u=1
             counter <- counter+1
             zix <- zi[,where[,u]]
             ##
@@ -237,17 +314,18 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=T
             ###
             elem <- list(Z=zix, K=ki)
             Z[[counter]] <- elem
+            
             names(Z)[counter] <- paste(colnames(where)[u],":",j3,sep="")
           }
         }
         #### end of if atc()
         if(length(usc)>0){ ##$$ IF USER HAS us()$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-          constraint=FALSE #there can be negative covariance components
+          #constraint=FALSE #there can be negative covariance components
           
           j1 <- colnames(zi)
           j2 <- gsub(":.*","",j1) # remove everything after the : to all names
           j3 <- gsub(".*:","",vara) # part removed
-          j2 <- gsub(" ","", j2)
+          #j2 <- gsub(" ","", j2)
           k1 <- gsub(":.*","",vara) # to remove in next step
           #regexpr("\\((.*)\\)", j2[1])
           orx <- gsub(k1,"",j2, fixed = TRUE) # order of columns by location
@@ -257,16 +335,6 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=T
           df1 <- expand.grid(colnames(where),colnames(where))
           df1 <- df1[!duplicated(t(apply(df1, 1, sort))),]
           rownames(df1) <- NULL
-          
-          #           if(is.null(init)){
-          #           arevar <- which(df1[,1]==df1[,2])
-          #           arecovar <- which(df1[,1]!=df1[,2])
-          #           lolo<-sum(length(arecovar)+length(arevar))+1
-          #           init <- rep(var(yvar, na.rm = TRUE)/lolo,lolo)
-          #           init[arecovar] <- (init[arecovar]^2)/1000
-          #           print(init)
-          #           # first fit a model with no covariance effects and then use those as initial
-          #           }
           
           for(u in 1:dim(df1)[1]){
             counter <- counter+1
@@ -319,10 +387,25 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=T
               ki <- diag(dim(zix)[2])
             }
             ###
-            #elem <- list(K=(zix%*%ki%*%t(zixt)))#, Zt=zixt)
-            elem <- list(Z=zix, K=ki, Zt=zixt)
+            vc.check <- as.character(unlist(df1[u,]))
+            if(vc.check[1] == vc.check[2]){# is variance
+              elem <- list(Z=zix, K=ki)
+            }else{# is covariance
+              ki0 <- ki*0
+              zix.cov <- cbind(zix,zixt)
+              ki.cov <- rbind(cbind(ki0,ki),cbind(ki,ki0))
+              elem <- list(Z=zix.cov, K=ki.cov)
+            }
+            
+            #elem <- list(Z=zix, K=ki)
             Z[[counter]] <- elem
-            names(Z)[counter] <- paste(paste(as.character(unlist(df1[u,])),collapse = ":"),":",j3,sep="")
+            # Env:Name!ca:fl
+            env <- expi2(as.character(unlist(df1[u,])))[1]# 
+            env.name <- paste(env,j3,sep=":") # Env
+            inter <- gsub(paste("us\\(",env,")",sep=""),"",paste(as.character(unlist(df1[u,])),collapse = ":"))
+            names(Z)[counter] <- paste(env.name,paste(env,inter,sep="."),sep="!")
+            
+            #names(Z)[counter] <- paste(paste(as.character(unlist(df1[u,])),collapse = ":"),":",j3,sep="")
           }
           ##specify inital values if unstructured model
           
@@ -393,18 +476,26 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=T
         }
         elem <- list(Z=zi, K=ki)
         Z[[counter]] <- elem
+        
         names(Z)[counter] <- vara # add the name of the random effect
       }
-      
+      counterl[i] <- counter
     }
-    #print(str(Z))
-    #names(Z) <- zvar.names
+    
+    if(length(grpcheck)>0){
+      #added <- length(Z):(length(Z)+length(ZKgrouping))
+      #Z[[added]] <- ZKgrouping
+      Z <- c(Z,ZKgrouping)
+      cous2 <- max(counter) + cous2
+      counterl <- c(counterl,cous2)
+      ttt$ran.trt.str <- c(ttt$ran.trt.str,ZKgrouping.str)
+    }
     
     if(missing(rcov)){ #### MISSING R ARGUMENT
       R <- NULL
     }else{ ## USER SPECIFIED RCOV ARGUMENT
       
-      rvar.names <- gsub(" ", "", strsplit(as.character(rcov[2]), split = "[+]")[[1]])
+      rvar.names <- strsplit(as.character(rcov[2]), split = "[+]")[[1]]#) gsub(" ", "", 
       
       ## control for only units on the meantime
       uni <- gsub(".*:","",rvar.names)
@@ -434,73 +525,117 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, method="NR", REML=T
       }
       
     }
-    #     if(missing(rcov)){
-    #       R <- NULL
-    #     }else{
-    #       rvar.names <- gsub(" ", "", strsplit(as.character(rcov[2]), split = "[+]")[[1]])
-    #       R <- list()
-    #       for(n in 1:length(rvar.names)){ #Ri
-    #         req.ris <- strsplit(rvar.names[n],":")[[1]] # required Rij's
-    #         # 1) ar1, 2) cs, 3) arma
-    #         typ.r <- gsub("\\(.*","",req.ris) # type of correlation matrix
-    #         typ.v <- gsub(".*\\(","",req.ris); typ.v <- gsub("\\)","",typ.v) # for which variable
-    #         Ri <- list() # to store Rij's
-    #         rit <- vector(mode="character")# to store type of correlation matrices
-    #         for(o in 1:length(typ.r)){#Rij
-    #           if(typ.r[o]=="ar1"){
-    #             nr <- length(table(data[,typ.v[o]]))
-    #             Ri[[o]] <- AR1.mat(.25,nr)
-    #             rit[o] <- "AR1"
-    #           }else if(typ.r[o]=="cs"){
-    #             nr <- length(table(data[,typ.v[o]]))
-    #             Ri[[o]] <- CS.mat(.25,nr)
-    #             rit[o] <- "CS"
-    #           }else if(typ.r[o]=="arma"){
-    #             nr <- length(table(data[,typ.v[o]]))
-    #             Ri[[o]] <- AR1.mat(.25,nr)
-    #             rit[o] <- "AR1"
-    #           }else if(typ.r[o]=="id"){
-    #             nr <- length(table(data[,typ.v[o]]))
-    #             Ri[[o]] <- diag(nr)
-    #             rit[o] <- "ID"
-    #           }
-    #         }
-    #         ## once we filled Ri put Ri in R
-    #         R[[n]] <- Ri
-    #         R[[n]]$type <- rit
-    #         #names(R[[n]])[o+1] <- "type"
-    #       }## Ri
-    #       
-    #     } # end for rcov present or not
-    #     print(str(Z))
-    #     print(str(X))
-    #     print(str(yvar))
-    #print(str(R))
-    #print(lapply(R,function(x){which(x==1)}))
     
     ### applying check beffore fitting ===============
     cococo <- names(Z)
     provided <- lapply(Z, names)
     for(s in 1:length(provided)){ #for each random effect =============================
       provided2 <- names(Z[[s]])
-       #----the 's' random effect has two matrices----
-        dido<-lapply(Z[[s]], dim) # dimensions of Z and K
-        condi<-(dido$Z[2] == dido$K[1] & dido$Z[2] == dido$K[2]) 
-        # condition, column size on Z matches with a square matrix K
-        if(!condi){
-          cat(paste("In the",cococo[s],"random effect you have an incidence matrix with dimensions:",dido$Z[1],"rows and",dido$Z[2],"effect levels. \nTherefore the variance-covariance matrix for this random effect in the G argument should be a \nsquare matrix with dimensions",dido$Z[2],"x",dido$Z[2]),", but you provided a",dido$K[1],"x",dido$K[2],"matrix. Please check your matrices in G.")
-          stop()
-        }
+      #----the 's' random effect has two matrices----
+      dido<-lapply(Z[[s]], dim) # dimensions of Z and K
+      condi<-(dido$Z[2] == dido$K[1] & dido$Z[2] == dido$K[2]) 
+      # condition, column size on Z matches with a square matrix K
+      if(!condi){
+        cat(paste("In the",cococo[s],"random effect you have an incidence matrix with dimensions:",dido$Z[1],"rows and",dido$Z[2],"effect levels. \nTherefore the variance-covariance matrix for this random effect in the G argument should be a \nsquare matrix with dimensions",dido$Z[2],"x",dido$Z[2]),", but you provided a",dido$K[1],"x",dido$K[2],"matrix. Please check your matrices in G.")
+        stop()
+      }
     } #for each random effect end =================================================
     
+    yvar <- as.matrix(yvar); 
+    if(ncol(yvar) == 1){ # to make sure that even for single trait we get the colnames
+      dog <- as.character(fixed[[2]]); 
+      dog <- setdiff(dog,"cbind")
+      colnames(yvar) <- dog
+    }
     
-    res <- mmer(Y=yvar, X=X, Z=Z, R=R, W=W, method=method, REML=REML, DI=DI, iters=iters, draw=draw, init=init, 
-                silent=silent, constraint=constraint, sherman=sherman, EIGEND=EIGEND, forced=forced, 
-                map=map, fdr.level=fdr.level, manh.col=manh.col,gwas.plots=gwas.plots,n.cores=n.cores, 
-                MVM=MVM,tolpar = tolpar, tolparinv = tolparinv, IMP=IMP, ploidy=ploidy, models=models, che=FALSE)
+    ## do the parameter restrain based on trait structures made at the beggining
+    rs <- length(Z) # random effects
+    rrs <- length(R) # residual random effects
+    if(rrs==0){rrs <- 1}
+    mapping <- as.data.frame(vctable(ncol(yvar), rs, rrs))
+    #mapping$stru <- NA
+    
+    strmapping <- data.frame(x=c(counterl[1],diff(counterl),rrs),y=c(ttt$ran.trt.str,ttt$rcov.trt.str))
+    ttt.all <- as.vector(unlist(apply(strmapping,1,function(x){rep(x[2],x[1])})))
+#     for(m in 1:length(strmapping)){
+#       mapping$stru[which(mapping$res == m)] <- strmapping[m]
+#     }
+    
+    #ttt.all <- c(ttt$ran.trt.str, ttt$rcov.trt.str) # structures for each random effect
+    torestrain <- numeric()
+    for(f in 1:length(ttt.all)){
+      structure <- gsub("\\(.*","",ttt.all[f]) # trait structure of the RE
+      if(structure == "diag"){
+        torestrain <- c(torestrain,which(mapping$t1 != mapping$t2 & mapping$res == f))
+      }else if(structure == "us"){
+        # if us there's nothing to restrain
+      }else{
+        stop("Structure for trait not recognized", call. = FALSE)
+      }
+    }
+    if(length(torestrain)==0){torestrain <- NULL}
+    
+    #print(names(Z))
+    if(length(usscheck)>0){ # provide good initial values
+      termos <- gsub(".*:","",rtermss[usscheck]) #obtain the re where us is being applied
+      ussnames <- apply(data.frame(termos),1,function(x){gsub(paste(":",x,sep=""),"",names(Z))}) # names without the terms
+      covars <- apply(data.frame(ussnames),1,function(x){uuu <- strsplit(x,":")[[1]]; return(uuu[1]==uuu[2])})# TRUES are variances, FALSE are covariances
+      inicio <- rep(list(var(yvar,na.rm = TRUE)/(length(covars)*.5)),rs+rrs)
+      toreduce <- which(!covars) # covariance components need to be reduced
+      for(k in 1:length(toreduce)){
+        inicio[[toreduce[k]]] <- inicio[[toreduce[k]]]/3
+      }
+      init <- inicio
+    }else{
+      termos <- gsub(".*:","",names(Z)) #remove everything before the 1st ':'
+      
+      rtermss2 <- apply(data.frame(rtermss),1,function(x,yy){
+        for(o in 1:length(yy)){
+          x <- gsub(yy[o],"",x)
+        }
+        return(x)
+      },yy=unique(termos))
+      rtermss2 <-gsub(":","",rtermss2)
+      rtermss3 <-gsub("diag\\(","diag\\\\(",rtermss2)
+      rtermss4 <-gsub("at\\(","at\\\\(",rtermss2) # form1
+      rtermss5 <-gsub("diag\\(","at\\\\(",rtermss2) # form2
+      rtermss6 <-gsub("at\\(","diag\\\\(",rtermss2) #form3
+      rtermss7 <-c(rtermss3,rtermss4,rtermss5,rtermss6)
+      rtermss7 <-trimws(rtermss7)
+      
+      expi3 <- function(j){gsub("[diag\\(\\)]", "", regmatches(j, gregexpr("\\(.*?\\)", j))[[1]])}
+      expi4 <- function(x){gsub("(?<=diag\\()[^()]*(?=\\))(*SKIP)(*F)|.", "", x, perl=T)}
+      
+      expi3(names(Z))
+      
+      apply(data.frame(names(Z)),1,function(x,yy){
+        for(o in 1:length(yy)){
+          x <- gsub(yy[o],"",x)
+        }
+        return(x)
+      },yy=rtermss7)
+    }
+    #print(torestrain)
+    #print(str(Z))
+    
+    vara2 <- gsub( " *diag\\(.*?\\)) *", "", names(Z))
+    vara2 <- gsub( " *at\\(.*?\\)) *", "", vara2)
+    vara2 <- gsub( " *us\\(.*?\\)) *", "", vara2)
+    vara2 <- gsub("diag\\s*\\([^\\)]+\\)","",vara2)
+    vara2 <- gsub("at\\s*\\([^\\)]+\\)","",vara2)
+    vara2 <- gsub("us\\s*\\([^\\)]+\\)","",vara2)
+    names(Z) <- vara2
+    
+    
+    res <- mmer(Y=yvar, X=X, Z=Z, R=R, method=method, init=init,
+                iters=iters,tolpar=tolpar,
+                tolparinv = tolparinv,draw=draw,silent=silent, 
+                constraint = constraint,EIGEND = EIGEND,
+                forced=forced,IMP=IMP,complete=complete,restrained=torestrain)
+    
     
   }else{###only fixed effects
-    res <- glm(yvars~X, family=family)
+    res <- glm(yvars~X)
   }
   #########
   #print(str(Z))

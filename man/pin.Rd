@@ -38,8 +38,6 @@ The calculations are based on the estimated variance parameters and their varian
 ####=========================================####
 ####=========================================####
 data(CPdata)
-CPpheno <- CPdata$pheno
-CPgeno <- CPdata$geno
 #### create the variance-covariance matrix 
 A <- A.mat(CPgeno)
 #### look at the data and fit the model

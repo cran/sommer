@@ -1,21 +1,29 @@
-NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE, iters=15, 
-               constraint=TRUE, init=NULL, sherman=FALSE, che=TRUE, EIGEND=FALSE, Fishers=FALSE, 
-               gss=TRUE, forced=NULL, identity=TRUE, kernel=NULL, start=NULL, taper=NULL,
-               verbose=0, gamVals=NULL, tolpar = 1e-04, tolparinv = 1e-06){
+MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,iters=20,tolpar=1e-3,
+                tolparinv=1e-6,draw=FALSE,silent=FALSE, constraint=TRUE, 
+                EIGEND=FALSE, forced=NULL, IMP=FALSE, complete=TRUE, 
+                che=FALSE, restrained=NULL){
   
-  ###########################
-  ## y is a vector for the response variable
-  ## X is an incidence matrix for fixed effects
-  ## Z is a list of lists for each random effect
-  # the list of Z can or cannot include the covariance matrix for such random effect
-  # if provided must be provided as Z=list(list(Z=Z1,K=K1),list(Z=Z2,K=K2), etc) 
-  ############################
-  if(EIGEND){
-    #cat("EIGEND feature not enabled yet for 'NR' method. Please try with method='AI'\n")
-    cat("EIGEND feature activated. Eigen decomposition of K will be performed\n")
-    
+  up.to.vec <- function(x){
+    if(dim(as.matrix(x))[1]>1){aa <- upper.tri(x); diag(aa) <- TRUE
+    babas <- which(aa,arr.ind = TRUE); babas <- babas[ order(babas[,1], babas[,2]), ]
+    x2 <- x[babas]; names(x2) <- paste(rownames(x)[babas[,1]],rownames(x)[babas[,2]],sep=".")
+    }else{x2 <- as.matrix(x)}
+    return(x2)
   }
-  
+  make.full <- function(X) {
+    svd.X <- svd(X)
+    r <- max(which(svd.X$d > 1e-08))
+    return(as.matrix(svd.X$u[, 1:r]))
+  }
+  copying <- function(m) { # copy upper triangular in lower triangular
+    m[lower.tri(m)] <- t(m)[lower.tri(m)]
+    m
+  }
+  copying2 <- function(m) { # copy lower triangular in upper triangular
+    m[upper.tri(m)] <- t(m)[upper.tri(m)]
+    m
+  }
+  ############################
   if(che){ # if coming from mmer don't check
     if(is.list(ZETA)){
       if(is.list(ZETA[[1]])){ # if was provided as a two level list
@@ -25,1220 +33,685 @@ NR <- function(y, X=NULL, ZETA=NULL, R=NULL, draw=TRUE, REML=TRUE, silent=FALSE,
       }
     }else{
       #stop;
-      cat("\nThe random effects need to be provided in a list format, please see examples")
+      stop(cat("\nThe random effects need to be provided in a list format, please see examples"), call. = FALSE)
     }
+    ZETA <- lapply(ZETA, function(x){
+      if(length(x) == 1){
+        provided <- names(x)
+        if(provided == "Z"){
+          y <- list(Z=x[[1]],K=diag(dim(x[[1]])[2]))
+        }else if(provided == "K"){
+          y <- list(Z=diag(length(y)),K=x[[1]])
+        }else{
+          stop(call.=FALSE)
+          cat("Names of matrices provided can only be 'Z' or 'K', the names you provided don't match the arguments required")
+        }
+      }else{y <- x}; 
+      return(y)
+    })
   }
   ###########################
-  # if X matrix is not present
-  if(is.null(X) & is.null(ZETA)){ # nothing in the model
-    cat("No random effects specified. please use lm function.\n")
-    jkl <- c(23,18,9,20,20,5,14, NA,2,25,NA,7,9,15,22,1,14,14,25,NA,3,15,22,1,18,18,21,2,9,1,19)
-    oh.yeah <- paste(letters[jkl],collapse = "")
-    stop(call.=FALSE)
-  }else{
-    #     if(is.null(X) & !is.null(ZETA)){ # only random effects present
-    #       tn = length(y); xm <- matrix(1,tn,1)
-    #     }else if(!is.null(X) & !is.null(ZETA)){ # both present, extract xm from X, check double list
-    #       if(is.list(X)){
-    #         if(is.list(X[[1]])){
-    #           xm=X[[1]][[1]]
-    #         }else{
-    #           xm=X[[1]]
-    #         }
-    #       }else{
-    #         xm=as.matrix(X) 
-    #       }
-    #     }
-    
-    if(EIGEND) y <- imputev(y)
-    
-    y.or <- y
-    n.or <- length(y)
-    
-    ZETA.or <- ZETA
-    R.or <- R
-    
-    good <- which(!is.na(y))
-    y <- y.or[good]
-    n <- length(y)
-    if(!is.null(X)){
-      X.or <- X
-      X <- as.matrix(X.or[good,])
-    }else{
-      X <- as.matrix(rep(1,length(y.or)))
-      X.or <- X
-      X <- as.matrix(X.or[good,])
-    }
-    x.full <- X.or
-    ZETA <- lapply(ZETA.or, function(x,good){x[[1]] <- x[[1]][good,]; x[[2]]<- x[[2]]; return(x)}, good=good)
-    if(!is.null(R)){
-      R <- lapply(R.or, function(x,good){x <- x[good,good]; return(x)}, good=good) 
-    }
-    #     print(str(X))
-    #     print(str(X.or))
-    ################# if EIGEND
-    ################# if EIGEND
-    if(EIGEND==TRUE){
-      ## asume K is in the 1st random effect
-      EIGENS <- lapply(ZETA, function(x){eigen(x[[2]])}) # eigen decomposition of K
-      Us <- lapply(EIGENS, function(x){x$vectors}) # extract eigen vectors U
-      Usp <- as(do.call("adiag1", Us),Class="sparseMatrix") # U'G as diagonal
-      Ds <- lapply(EIGENS, function(x){diag(x$values)}) # extract eigen values D
-      Dsp <- as(do.call("adiag1", Ds),Class="sparseMatrix") # U'G as diagonal
-      ZETA[[1]]$K <- Ds[[1]]
-      ## now adjust X and y
-      y <- imputev(y) # decomposition cannot take missing data
-      y <- as.vector(t(Usp) %*% as.matrix(y,ncol=1))
-      xm <- as.matrix(t(Usp) %*% xm)
-      txm <- t(xm)
-      X <- xm
-      #print("good")
-      #ZETA <- lapply(as.list(1:length(ZETA)),function(x,zz,kk){list(Z=zz[[x]][[1]], K=kk[[x]])}, zz=ZETA, kk=Ds)
-    }
-    ################# if EIGEND end
-    ################# if EIGEND end
-    
-    
-    ############################################
-    ## if K matrices are not present in ZETA
-    # add an identity matrix to all effects in ETA that did not provide a var-cov matrix
-    if(is.null(R)){R <- list(units=diag(length(y)));identity<-FALSE}else{identity<-FALSE}
-    
-    if(che){ # if needs to be checked, else just skip
-      ZETA <- lapply(ZETA, function(x){
-        if(length(x) == 1){
-          provided <- names(x)
-          if(provided == "Z"){
-            y <- list(Z=x[[1]],K=diag(dim(x[[1]])[2]))
-          }
-          else if(provided == "K"){
-            y <- list(Z=diag(length(y)),K=x[[1]])
-          }else{
-            stop("Names of matrices provided can only be 'Z' or 'K', the names you provided don't match the arguments required",call.=FALSE)
-            
-          }
-        }else{y <- x}; 
-        return(y)
-      })
-    }
+  if(EIGEND){
+    IMP <- TRUE
+    cat("EIGEND feature activated. Eigen decomposition of K will be performed\n")
+    Vmat.type <- "sparseMatrix" # if K will be sparse then V will be sparse
+  }else{Vmat.type <- "dgeMatrix"} # if K will be dense V will be dense to be used in the algorithm
+  Y <- as.matrix(Y); 
+  if(is.null(colnames(Y))){colnames(Y) <- paste("T",1:ncol(Y),sep="")}
+  traitnames <- colnames(Y)
+  if(IMP){
+    Y <- as.matrix(apply(Y,2,imputev))#
   }
-  ###%%%%%%%%%%%%%%%%%%%%%%%%
-  nanod <- colnames(X)
-  ## when two matrices are passed to regress this is also called
-  ## to evaluate the REML at certain values of gamma and find a
-  ## good place to start the regress algorithm
-  SWsolve <- function(S,K,D,Dinv=NULL,b) {
-    ## solve(a,b) where a has the form SKS' + D using the Sherman Morrison Woodbury identities where D is an easily inverted matrix
-    
-    if(is.matrix(K) & is.matrix(D) & !is.null(Dinv)) {
-      ## Case 1 - all are matrices and D is already inverted
-      tSDi <- crossprod(S,Dinv)
-      Kinv <- solve(K)
-      ret <- solve(Kinv + tSDi %*% S, tSDi)
-      ret <- Dinv - crossprod(tSDi,ret)
-      if(!missing(b)) ret <- ret %*% b
-      return(ret)
-    }
-    
-    if(is.numeric(K) & !is.null(Dinv)) {
-      ## Case 2 - K is a number, ie first variance component is block random effect, random effects are iid
-      tSDi <- crossprod(S,Dinv)
-      ret <- solve(1/K * diag(ncol(S)) + tSDi %*% S, tSDi)
-      ret <- Dinv - crossprod(tSDi,ret)
-      if(!missing(b)) ret <- ret %*% b
-      return(ret)
-    }
-    
-    if(is.numeric(D) & is.matrix(K)) {
-      ## diagonal D with a vector of entries along diagonal supplied
-      ret <- 1/D * diag(nrow(S)) - 1/D^2 * S %*% solve(solve(K) + 1/D * crossprod(S),t(S))
-      if(!missing(b)) ret <- ret %*% b
-      return(ret)
-    }
-    
-    if(is.numeric(K) & is.numeric(D)) {
-      ret <- 1/D * diag(nrow(S)) - 1/D^2 * S %*% solve(1/K * diag(ncol(S)) + 1/D * crossprod(S),t(S))
-      if(!missing(b)) ret <- ret %*% b
-      return(ret)
-    }
+  if(complete){# even IMP=FALSE imputes incomplete cases
+    nona <- sort(unique(as.vector(unlist(apply(as.matrix(Y),2,function(x){which(!is.na(x))})))))
+    Y[nona,] <- apply(as.matrix(Y[nona,]),2,imputev)
   }
-  
-  SWsolve2 <- function(Zlist,clist,b) {
-    ## implementation of solve(Sigma,b) where Sigma is of the form sum [ clist[i] tcrossprod(Zlist[[ii]])) ] + diagonal with constant values along diagonal
-    ## Invert a matrix of the form sum [ clist[i] tcrossprod(Zlist[[ii]])) ] using Sherman Morrison Woodbury Identities
-    if(length(Zlist)!=(length(clist)-1)) stop()
-    k <- length(Zlist)
-    D <- clist[1] * tcrossprod(Zlist[[1]])
-    diag(D) <- diag(D) + clist[k+1]
-    Dinv <- SWsolve(Zlist[[1]],clist[1],clist[k+1])
-    if(k==1) {
-      if(!missing(b)) Dinv <- Dinv %*% b
-      return(Dinv)
-    }
-    for(ii in 2:k) {
-      Dinv <- SWsolve(Zlist[[ii]],clist[ii],D,Dinv)
-      D <- D + clist[ii]*tcrossprod(Zlist[[ii]])
-    }
-    if(!missing(b)) Dinv <- Dinv %*% b
-    return(Dinv)
+  ###########################
+  convergence <- FALSE
+  #### %%%%%%%%%%%%%%%%%%%%%%%%
+  #### %%%%%%%%%%%%%%%%%%%%%%%%
+  #### fix that some initially were not specified
+  if(is.null(X)){
+    X <- matrix(1,nrow=nrow(as.matrix(Y)))
+    colnames(X) <- "(Intercept)"
   }
-  
-  reml <- function(lambda, y, X, V0, V1,verbose=0){
-    
-    if(is.null(dim(y)))
-    {
-      isNA <- is.na(y)
-      y <- y[isNA==F]
-    } else {
-      isNA <- apply(y,1,is.na)
-      
-      if(is.matrix(isNA))  {
-        isNA <- as.logical(apply(isNA,2,sum))
-      }
-      y <- y[isNA==F,]
-    }
-    V0 <- V0[isNA==F,isNA==F]
-    V1 <- V1[isNA==F,isNA==F]
-    X <- X[isNA==F,]
-    X <- as.matrix(X)
-    
-    qr <- qr(X)
-    ##print(qr$rank)
-    n <- dim(as.matrix(y))[1]
-    In <- diag(1,n)
-    
-    X <- matrix(X[, qr$pivot[1:qr$rank]],n,qr$rank)
-    llik <- rep(0, length(lambda))
-    if(is.null(dim(y))) q <- 1 else q <- dim(y)[2]
-    
-    n <- dim(X)[1]
-    if(missing(V0)) V0 <- diag(rep(1, n), n, n)
-    rank <- n - qr$rank
-    ##if(verbose==1) cat("n-p =",n,"-",qr$rank,"=",rank,"\n")
-    for(i in 1:length(lambda))
-    {
-      if(verbose>=2) cat(lambda[i],"\n")
-      
-      Sigma <- (1-lambda[i])*V0 + lambda[i] * V1
-      ##cholesky <- try(chol(Sigma, pivot=FALSE), silent=TRUE)
-      ##if(class(cholesky) == "try-error" || min(diag(cholesky)) < 1e-9) return(1e+32)
-      ##W <- chol2inv(cholesky)
-      ##WX <- W %*% X
-      WX <- solve(Sigma,cbind(X,In))
-      W <- WX[,(dim(X)[2]+1):dim(WX)[2]]
-      WX <- WX[,1:dim(X)[2]]
-      XtWX <- t(X)%*%WX
-      WQ <- W - WX%*%solve(XtWX,t(WX))
-      rss <- t(y) %*% WQ %*% y
-      logdetrss <- sum(log(eigen(rss)$values[1:q]))
-      eVals <- eigen(WQ,symmetric=TRUE,only.values=TRUE)$values[1:rank]
-      ldet <- sum(log(eVals))
-      llik[i] <- Re(ldet*q/2 - rank*logdetrss/2)
-    }
-    imax <- sort.list(-llik)[1]
-    lambdamax <- lambda[imax]
-    curv <- 0
-    if(imax > 1 && imax < length(lambda)){
-      delta <- (lambda[imax+1] - lambda[imax-1])/2
-      slope <-  (llik[imax+1] - llik[imax-1])/2
-      curv <- llik[imax-1] -2*llik[imax] + llik[imax+1]
-      lambdamax <- lambdamax - slope/curv * delta
-      curv <- -curv/delta^2
-    }
-    lamMax <- lambdamax
-    Sigma <- (1-lamMax)*V0 + lamMax * V1
-    ##cholesky <- try(chol(Sigma, pivot=FALSE), silent=TRUE)
-    ##if(class(cholesky) == "try-error" || min(diag(cholesky)) < 1e-9) return(1e+32)
-    ##W <- chol2inv(cholesky)
-    ##WX <- W %*% X
-    WX <- solve(Sigma,cbind(X,In))
-    W <- WX[,(dim(X)[2]+1):dim(WX)[2]]
-    WX <- WX[,1:dim(X)[2]]
-    XtWX <- t(X)%*%WX
-    FItWX <- solve(XtWX,t(WX))
-    WQ <- W - WX%*%FItWX
-    rss <- t(y) %*% WQ %*% y
-    beta <- FItWX %*% y
-    
-    list(llik=as.numeric(llik),rms=rss/rank, beta=beta, gamma=lambda, gamMax=lambdamax,W=W)
+  if(is.null(R)){
+    R <- list(units=diag(nrow(as.matrix(Y))))
   }
+  fixnames <- colnames(X)
+  Y.or <- Y
+  X.or <- X # completly original same in dimensions
+  #qr.Xor <- qr(X.or)
   
-  remlOptimize <- function(y, X, V0, V1,verbose=0,...){
-    
-    if(is.null(dim(y)))
-    {
-      isNA <- is.na(y)
-      y <- y[isNA==F]
-    } else {
-      isNA <- apply(y,1,is.na)
-      
-      if(is.matrix(isNA))  {
-        isNA <- as.logical(apply(isNA,2,sum))
-      }
-      y <- y[isNA==F,]
-    }
-    V0 <- V0[isNA==F,isNA==F]
-    V1 <- V1[isNA==F,isNA==F]
-    X <- X[isNA==F,]
-    X <- as.matrix(X)
-    
-    qr <- qr(X)
-    ##print(qr$rank)
-    n <- dim(as.matrix(y))[1]
-    In <- diag(1,n)
-    
-    X <- matrix(X[, qr$pivot[1:qr$rank]],n,qr$rank)
-    if(is.null(dim(y))) q <- 1 else q <- dim(y)[2]
-    
-    n <- dim(X)[1]
-    if(missing(V0)) V0 <- diag(rep(1, n), n, n)
-    rank <- n - qr$rank
-    ##if(verbose==1) cat("n-p =",n,"-",qr$rank,"=",rank,"\n")
-    
-    f <- function(lambda,verbose=verbose) {
-      if(verbose>=2) cat(lambda,"\n")
-      Sigma <- (1-lambda)*V0 + lambda * V1
-      ##cholesky <- try(chol(Sigma, pivot=FALSE), silent=TRUE)
-      ##if(class(cholesky) == "try-error" || min(diag(cholesky)) < 1e-9) return(1e+32)
-      ##W <- chol2inv(cholesky)
-      ##WX <- W %*% X
-      WX <- solve(Sigma,cbind(X,In))
-      W <- WX[,(dim(X)[2]+1):dim(WX)[2]]
-      WX <- WX[,1:dim(X)[2]]
-      XtWX <- t(X)%*%WX
-      WQ <- W - WX%*%solve(XtWX,t(WX))
-      rss <- t(y) %*% WQ %*% y
-      logdetrss <- sum(log(eigen(rss)$values[1:q]))
-      eVals <- eigen(WQ,symmetric=TRUE,only.values=TRUE)$values[1:rank]
-      ldet <- sum(log(eVals))
-      llik <- Re(ldet*q/2 - rank*logdetrss/2)
-      llik
-    }
-    
-    res <- optimize(f,interval=c(0,1),maximum=TRUE,verbose=verbose,...)
-    lamMax <- res$maximum
-    llikMax <- res$objective
-    
-    Sigma <- (1-lamMax)*V0 + lamMax * V1
-    ##cholesky <- try(chol(Sigma, pivot=FALSE), silent=TRUE)
-    ##if(class(cholesky) == "try-error" || min(diag(cholesky)) < 1e-9) return(1e+32)
-    ##W <- chol2inv(cholesky)
-    ##WX <- W %*% X
-    WX <- solve(Sigma,cbind(X,In))
-    W <- WX[,(dim(X)[2]+1):dim(WX)[2]]
-    WX <- WX[,1:dim(X)[2]]
-    XtWX <- t(X)%*%WX
-    FItWX <- solve(XtWX,t(WX))
-    WQ <- W - WX%*%FItWX
-    rss <- t(y) %*% WQ %*% y
-    beta <- FItWX %*% y
-    
-    list(llik=as.numeric(llikMax),rms=rss/rank, beta=beta, gamMax=lamMax,W=W)
-  }
-  
-  ####%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  
+  ZETA.or <- ZETA
+  R.or <- R
   if(is.null(names(ZETA))){
-    varosss <- c(paste("u.",1:length(ZETA), sep=""))
+    varosss <- c(paste("u",1:length(ZETA), sep=""))
   }else{
-    varosss <- as.character(names(ZETA))
-  }
-  
+    varosss <- c(names(ZETA))
+  }; varosssZ <- varosss
   if(is.null(names(R))){
-    varosss <- c(varosss,paste("Res.",1:length(R),sep=""))
+    varosss <- c(varosss,paste("Res",1:length(R),sep=""))
   }else{
     varosss <- c(varosss,names(R))
   }
-  
-  good <- which(!is.na(y))
-  xoxo <- lapply(ZETA.or, function(x,good){x[[1]] <- x[[1]][good,]; x[[2]]<- x[[2]]; return(x)}, good=good)
-  Zs <- lapply(xoxo, function(x){x[[1]]})
-  Gs <- lapply(xoxo, function(x){x[[2]]})
-  Zsp <- as(do.call("cbind", Zs),Class="sparseMatrix") # column bind Z=[Z1 Z2 Z3]
-  tZsp <- t(Zsp)
-  Ksp <- as(do.call("adiag1", Gs),Class="sparseMatrix") # G as diagonal
-  #R <- diag(length(good))
-  xoxo <- NULL
-  
-  #####%%%%%%%%%%%%%^^^^^^^^^^^&&&&&&&&&&&***********(((((((())))))))
-  if(!is.null(forced)){
-    iters=1
-  }
-  
-  
-  # model has fixed and random effects
-  if(!is.null(X) & !is.null(ZETA)){ 
-    ZETA <- lapply(ZETA, function(x){y=list(Z=as(x[[1]],Class="sparseMatrix"),K=as(x[[2]],Class="sparseMatrix"))})
-    R <- lapply(R, function(x){as(x,Class="sparseMatrix")})
-    KKK <- list()
-    for(h in 1:(length(ZETA))){
-      if(is.square.matrix(as.matrix(ZETA[[h]][[1]]))){
-        if(is.diagonal.matrix(ZETA[[h]][[1]])){
-          KKK[[h]] <- (ZETA[[h]][[2]])
-        }else{
-          KKK[[h]] <- tcrossprod(ZETA[[h]][[1]], ZETA[[h]][[1]] %*% (ZETA[[h]][[2]]) ) 
-        }
-      }else{
-        KKK[[h]] <- tcrossprod(ZETA[[h]][[1]], ZETA[[h]][[1]] %*% (ZETA[[h]][[2]]) ) 
-      }
+  #### %%%%%%%%%%%%%%%%%%%%%%%%
+  #### %%%%%%%%%%%%%%%%%%%%%%%%
+  ## if EIGEND (data is complete no missing data)
+  if(EIGEND==TRUE){
+    dias <- unlist(lapply(ZETA, function(x){is.diagonal.matrix(x$K)}))
+    
+    EIGENS <- eigen(ZETA[[1]]$K) # ONLY FOR THE 1ST K (only one covariance mat is allowed)
+    Us <- EIGENS$vectors # extract eigen vectors U
+    ###Usp <- as(do.call("adiag1", Us),Class="sparseMatrix") # U'G as diagonal
+    Ds <- diag(EIGENS$values) # extract eigen values D
+    ###Dsp <- as(do.call("adiag1", Ds),Class="sparseMatrix") # U'G as diagonal
+    # transform ZETA
+    ZETA[[1]]$K <- Ds
+    tUs <- t(Us)
+    tUsi <- solve(tUs) # inverse
+    # controls
+    if(length(which(!dias)) > 1){
+      stop("Eigen decomposition only works for one dense relationship matrix.", call. = FALSE)
     }
-    KKK <- c(KKK,R)
-    KKK <- lapply(KKK,as.matrix)
-    formula = as.formula(y~X) 
-    Vformula = as.formula(paste("~ ",paste(paste("KKK[[",1:length(KKK),"]]",sep=""), collapse="+")))
-  }else if(is.null(X) & !is.null(ZETA)){
-    ZETA <- lapply(ZETA, function(x){y=list(Z=as(x[[1]],Class="sparseMatrix"),K=as(x[[2]],Class="sparseMatrix"))})
-    R <- lapply(R, function(x){as(x,Class="sparseMatrix")})
-    KKK <- list()
-    for(h in 1:(length(ZETA))){
-      if(is.square.matrix(ZETA[[h]][[1]])){
-        if(is.diagonal.matrix(ZETA[[h]][[1]])){
-          KKK[[h]] <- (ZETA[[h]][[2]])
-        }else{
-          KKK[[h]] <- tcrossprod(ZETA[[h]][[1]], ZETA[[h]][[1]] %*% (ZETA[[h]][[2]]) ) 
-        }
-      }else{
-        KKK[[h]] <- tcrossprod(ZETA[[h]][[1]], ZETA[[h]][[1]] %*% (ZETA[[h]][[2]]) ) 
-      }
+    if(which(dias != TRUE) != 1){ # FALSE should be the 1st position
+      stop("The random effect corresponding to the relationship matrix needs to be in the first position.", call. = FALSE)
     }
-    KKK <- c(KKK,R)
-    KKK <- lapply(KKK,as.matrix)
-    formula = as.formula(y~1) 
-    Vformula = as.formula(paste("~ ",paste(paste("KKK[[",1:length(KKK),"]]",sep=""), collapse="+")))
-  }
-  
-  
-  ## Vformula can just be something like ~ V0 + V1
-  ## or leave it out or Vformula=NULL
-  ## assume its in the form ~ V1 + V2 + ... + Vn or missing or Vformula=NULL
-  ## for random effects and random interactions for factors A and B include
-  ## ~ A + B + I(A:B)
-  
-  if(verbose>9) cat("Extracting objects from call\n")
-  #if(missing(data)) 
-  data <- environment(formula)
-  mf <- model.frame(formula,data=data,na.action=na.pass)
-  mf <- eval(mf,parent.frame())
-  y <- model.response(mf)
-  
-  model <- list()
-  model <- c(model,mf)
-  
-  if(missing(Vformula)) Vformula <- NULL
-  
-  ## Find missing values in fixed part of the model :: Change Aui Mar 1 2012
-  isNA <-  apply(is.na(mf), 1, any)
-  
-  if(!is.null(Vformula))
-  {
-    V <- model.frame(Vformula,data=data,na.action=na.pass)
-    V <- eval(V, parent.frame())
-    # find missings in random part of the model Aui Mar 1 2012
-    mfr <- is.na(V)
-    if(ncol(mfr) == 1){
-      isNA <- isNA | mfr
-    } else {
-      isNA <- isNA | apply(mfr[,!apply(mfr,2,all)], 1, any) # use only columns of the matrix with some nonmissing values
+    if(dim(X)[1]!=dim(Us)[1]){
+      stop("Eigen decomposition only works for square models (non-replicated experiments).", call. = FALSE)
     }
-    rm(mfr)
-    Vcoef.names <- names(V)
-    V <- as.list(V)
-    k <- length(V)
-  } else {
-    V <- NULL
-    k <- 0
-    Vcoef.names=NULL
+    # transformX
+    X <- tUs %*% X
+    # transform other Z's
+    if(length(ZETA)>1){
+      ZETA[-c(1)] <- lapply(ZETA[-c(1)], function(x){x$Z <- tUs%*%x$Z; return(x)})
+    }
+    # transform y
+    Y <- tUs %*% as.matrix(Y)
   }
-  
-  if(ncol(mf)==1) mf <- cbind(mf,1)
-  
-  Xcolnames <- dimnames(X)[[2]]
-  if(is.null(Xcolnames)) {
-    Xcolnames <- paste("X.column",c(1:dim(as.matrix(X))[2]),sep="")
-  }
-  
-  #X <- matrix(X, n, length(X)/n)
+  Y.for.eigend <- Y
+  #### %%%%%%%%%%%%%%%%%%%%%%%%
+  #### %%%%%%%%%%%%%%%%%%%%%%%%
+  #### now reduce the original inputs
+  good0 <- apply(as.matrix(Y),2,function(x){which(!is.na(x))})
+  if(is.matrix(good0)){good<- sort(Reduce(intersect,split(good0, rep(1:ncol(good0), each = nrow(good0)))))
+  }else{good<- sort(Reduce(intersect,good0))}
+  if(!complete){nona<-good} # to store which where the indexes of the reduced dataset
+  Y <- as.matrix(Y[good,]); colnames(Y) <- traitnames
+  Y.red.noscale.ordim <- Y # Y reduced no scaled original dimensions
+  Y <- scale(Y); colnames(Y) <- traitnames # Y reduced but scaled
+  Y.red.scale.ordim <- Y
+  X <- as.matrix(X[good,])
+  X.noeigen <- as.matrix(X.or[good,])
+  X.red.ordim <- X
+  ZETA <- lapply(ZETA, function(x,good){x$Z <- x$Z[good,]; x$K<- x$K; return(x)}, good=good)
+  R <- lapply(R, function(x,good){x <- x[good,good]; return(x)}, good=good)
+  #### get sizes of reduced
+  nz <- length(ZETA)
+  nr <- length(R)
+  #nx <- dim(X)[2]
+  n <- nrow(Y)
+  #k <- nz+nr
+  #In <- as(diag(n),Class="sparseMatrix")
   qr <- qr(X)
-  rankQ <- n-qr$rank
-  if(qr$rank) {
-    X <- matrix(X[, qr$pivot[1:qr$rank]],n,qr$rank)
-    Xcolnames <- Xcolnames[qr$pivot[1:qr$rank]]
-  } else {
-    cat("\nERROR: X has rank 0\n\n")
-  }
-  
-  if(verbose>9) cat("Setting up kernel\n")
-  
-  if(missing(kernel)){
-    K <- X
-    colnames(K) <- Xcolnames
-    reml <- TRUE
-    kernel <- NULL
-  } else {
-    if(length(kernel)==1 && kernel>0){
-      K <- matrix(rep(1, n), n, 1)
-      colnames(K) <- c("1")
-    }
-    if(length(kernel)==1 && kernel<=0) {
-      K <- Kcolnames <- NULL
-      KX <- X
-      rankQK <- n
-    }
-    if(length(kernel) > 1) {
-      ##K is a matrix I hope :: Change Aui Mar 1 2012
-      if(is.matrix(kernel)) {
-        K <- kernel[!isNA,]
-      } else {
-        K <- model.frame(kernel, data=data, na.action=na.pass)
-        K <- eval(K, parent.frame())
-        if(ncol(K) == 1){
-          dimNamesK <- dimnames(K)
-          K <- K[!isNA, ]
-          dimNamesK[[1]] <- dimNamesK[[1]][!isNA]
-          K <- data.frame(V1 = K)
-          dimnames(K) <- dimNamesK
-        } else {
-          K <- K[!isNA, ]
+  #ranx <- qr$rank # length(good)
+  #rankQ <- n-qr$rank
+  X <- matrix(X[, qr$pivot[1:qr$rank]],n,qr$rank)
+  #### %%%%%%%%%%%%%%%%%%%%%%%%
+  #### %%%%%%%%%%%%%%%%%%%%%%%%
+  ## move everything to sparse matrices
+  #print(str(ZETA))
+  ZETA <- lapply(ZETA, function(x){ 
+    x$Z <- as(x$Z,Class="sparseMatrix");
+    x$K <- as(x$K,Class="sparseMatrix");
+    return(x)
+  })
+  R <- lapply(R, function(x){as(x,Class="sparseMatrix")})
+  #### %%%%%%%%%%%%%%%%%%%%%%%%
+  #### %%%%%%%%%%%%%%%%%%%%%%%%
+  ## form c(ZKZ,R)
+  ZKZ <- lapply(ZETA,function(x){
+    if(is.square.matrix(as.matrix(x$Z))){
+      if(is.diagonal.matrix(x$Z)){
+        res <- (x$K)
+      }else{
+        if(length(x)==3){ # user gave Zt for example for unstructured models
+          res <- tcrossprod(x$Zt, x$Z %*% (x$K) ) 
+        }else{ # user only provided Z and K
+          res <- tcrossprod(x$Z, x$Z %*% (x$K) )  
         }
-        K <- model.matrix(kernel, K)
+      }
+    }else{ # if z$Z is not square
+      if(length(x)==3){ # user gave Zt for example for unstructured models
+        res <- tcrossprod(x$Zt, x$Z %*% (x$K) ) 
+      }else{ # user only provided Z and K
+        res <- tcrossprod(x$Z, x$Z %*% (x$K) )  
       }
     }
-    reml <- FALSE
-  }
+    return(res)
+  })
+  ZKZ <- c(ZKZ,R)
   
-  if(!is.null(K)){
-    Kcolnames <- colnames(K)
-    qr <- qr(K)
-    rankQK <- n - qr$rank
-    if(qr$rank == 0) K <- NULL else {
-      K <- matrix(K[, qr$pivot[1:qr$rank]],n,qr$rank)
-      Kcolnames <- Kcolnames[qr$pivot[1:qr$rank]]
-      KX <- cbind(K, X) # Spanning K + X: Oct 12 2011
-      qr <- qr(KX)
-      KX <- matrix(KX[, qr$pivot[1:qr$rank]],n,qr$rank) # basis of K+X
-    }
-  }
+  #no. of individuals originally
+  if(IMP==FALSE){
+    n <- dim(ZETA.or[[1]]$Z)[1]#no. of individuals in K matrix
+  }else{n <- dim(ZETA[[1]]$Z)[1]} # not sure the else is needed ( i have modified too much)
   
-  if(missing(iters)) iters <- 50
-  if(missing(tolpar)) tolpar <- 1e-4
-  delta <- 1
+  dimos <- dim(as.matrix(Y))
+  ts <- dimos[2]
+  inds <- dimos[1] #no. of individuals
+  base.var <- var(as.matrix(Y.or),na.rm=TRUE) # original var
+  if(EIGEND){base.var <- var(as.matrix(Y.for.eigend),na.rm=TRUE)} # for EIGEND we need the variance after transformation
+  sc.var <- var(as.matrix(Y),na.rm=TRUE)# scaled var
   
-  if(verbose>9) cat("Removing parts of random effects corresponding to missing values\n")
+  ###############
+  # LINEARIZE
+  ###############
+  # impute phenotypes
+  # decompose in a vector
+  Y <- as.matrix(as.vector(Y)); #colnames(Y) <- traitnames #dim(Y) # Y scaled and linearized
+  Y.red.noscale.lin <- as.matrix(as.vector(Y.red.noscale.ordim)) # Y reduced no scaled linearized
+  tY <- t(Y); dim(tY) #get transpose
+  X <- do.call("adiag1", rep(list(X), ts)); #dim(X) # X multivariate
+  X.red.lindim <- X
+  X.red.lin.noeigen <- do.call("adiag1", rep(list(X.noeigen), ts));# dim(X) # X multivariate
+  tX <- t(X); #dim(tX)
+  qr <- qr(X)
+  rankX <- dim(X)[1]-qr$rank; #rankX
   
-  #########
-  #V.or <- V
-  
-  ## remove missing values
-  for(i in 1:k){
-    if(is.matrix(V[[i]]))
-    {
-      V[[i]] <- V[[i]][!isNA, !isNA]
-    }
-    if(is.factor(V[[i]]))
-    {
-      V[[i]] <- V[[i]][!isNA]
-    }
-  }
-  
-  #In <- diag(rep(1,n),n,n)
-  
-  if(identity) {
-    V[[k+1]] <- as.factor(1:n)
-    names(V)[k+1] <- "In"
-    k <- k+1
-    
-    Vcoef.names <- c(Vcoef.names,"In")
-    Vformula <- as.character(Vformula)
-    Vformula[1] <- "~"
-    Vformula[2] <- paste(Vformula[2],"+In")
-    Vformula <- as.formula(Vformula)
-  }
-  
-  model <- c(model,V)
-  model$formula <- formula
-  model$Vformula <- Vformula
-  
-  ## specify which parameters are positive and which are negative
-  ## pos = c(1,1,0) means first two parameters are positive, third is either
-  
-  #if(!missing(pos)) pos <- as.logical(pos)
-  pos <- rep(FALSE,k)
-  #if(length(pos) < k) cat("Warning: argument pos is only partially specified; additional terms (n=",k-length(pos),") set to FALSE internally.\n",sep="")
-  #pos <- c(pos,rep(FALSE,k))
-  #pos <- pos[1:k]
-  ## Sherman Morrison Woodbury identities for matrix inverses can be brought to bear here
-  if(verbose>9) cat("Checking if we can apply the Sherman Morrison Woodbury identites for matrix inversion\n")
-  if (all(sapply(V, is.factor)) & k>2 ) {  # Contribution by Hans Jurgen Auinger
-    SWsolveINDICATOR <- TRUE
-  } else SWsolveINDICATOR <- FALSE
-  Z <- list()
-  for (i in 1:length(V)) {
-    if (is.factor(V[[i]])) {
-      Vi <- model.matrix(~V[[i]] - 1)
-      colnames(Vi) <- levels(V[[i]])
-      Z[[i]] <- Vi
-      V[[i]] <- tcrossprod(Vi)
-    } else{
-      Z[[i]] <- V[[i]]
-    }
-  }
-  names(Z) <- names(V)
-  
-  ## So V is always a list of variance coavriance matrices, Z contains
-  ## the model matrices of factors when we need to invoke the Sherman
-  ## Woodbury identities
-  
-  ## Expected Fisher Information
-  A <- matrix(rep(0, k^2), k, k)
-  entries <- expand.grid(1:k,1:k)
-  
-  x <- rep(0,k)
-  sigma <- c(1,rep(0, k)) ## modified for sommer 2.8 sigma <- c(1,rep(0, k-1))
-  
-  stats <- rep(0, 0)
-  
-  ## START ALGORITHM
-  
-  # taper is the steps to take 0-1
-  if(missing(taper)){
-    taper <- rep(0.9, iters)
-    if(missing(start) && k>1) taper[1:2] <- c(0.5, 0.7)
-  } else {
-    taper <- pmin(abs(taper), 1)
-    if((l <- length(taper)) < iters) taper <- c(taper, rep(taper[l], iters-l))
-  }
-  
-  if(!is.null(start)) {
-    ## pad start with zeros if required
-    start <- c(start, rep(1,k))
-    start <- start[1:k]
-  }
-  # starting values for the random effects
-  if(k>2 && is.null(start)) start <- rep(var(y,na.rm=TRUE),k)
-  if(k==1 && is.null(start)) start <- var(y,na.rm=TRUE)
-  
-  if(EIGEND){start <- rep(var(y,na.rm=TRUE)/10,k)}
-  # skip this
-  convergence <- FALSE
-  ###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  ###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  if(is.null(start) && k==2) {
-    if(missing(gamVals)) {
-      gamVals <- seq(0.01,0.02,length=3)^2
-      gamVals <- sort(c(gamVals,seq(0.1,0.9,length=3),1-gamVals))
-      gamVals <- 0.5
-    }
-    if(length(gamVals)>1) {
-      if(verbose>=1) cat("Evaluating the llik at gamma = \n")
-      if(verbose>=1) cat(gamVals)
-      if(verbose>=1) cat("\n")
-      reg.obj <- reml(gamVals,y,X,V[[1]],V[[2]],verbose=verbose)
-      llik <- reg.obj$llik
-      llik <- as.double(llik)
-      if(verbose>=2) cat(llik,"\n")
-      gam <- gamVals[llik==max(llik)]
-      gam <- gam[1]
-      if(verbose>=2) cat("MLE is near",gam,"and llik =",max(llik),"there\n")
-    }
-    if(length(gamVals)==1) {
-      ## go straight to the Newton Raphson at gamVals
-      gam <- gamVals[1]
-      reg.obj <- list(rms=var(y))
-    }
-    start <- c(1-gam,gam)*reg.obj$rms
-    ## it tends to take huge steps when starting at gam=0.9999
-    if(gam==0.9999) {
-      taper[1] <- taper[1]/100
-      iters <- iters*10
-    }
-    if(verbose>=1) cat(c("start algorithm at",round(start,4),"\n"))
-  }
-  
-  if(is.null(start) & k>2) {
-    ## Never gets here by default - but this could be implemented,
-    ## though it does add on a few extra iterations at the
-    ## start.... not necessary in basic examples
-    
-    LLvals <- NULL
-    ## equal weights
-    V2 <- V[[2]]
-    for(ii in 3:k) V2 <- V2 + V[[ii]]
-    LLvals <- c(LLvals,reml(0.5,y,X,V[[1]],V2)$llik)
-    ## Most at one end
-    V2 <- V[[1]] + V2 ## total of all Vs
-    for(ii in 1:k) {
-      V2 <- V2 - V[[ii]]
-      LLvals <- c(LLvals,reml(0.75,y,X,V2,V[[ii]])$llik)
-    }
-    best <- which.max(LLvals)
-    if(verbose) {
-      cat("Checking starting points\n")
-      cat("llik values of", LLvals, "\n")
-    }
-    if(best==1) {
-      start <- rep(var(y,na.rm=TRUE),k)
-    } else {
-      start <- rep(0.25,k)
-      start[best] <- 0.75
-    }
-  }
-  ###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  ###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ###############
+  # INITIAL VAR VALUES
+  ###############
+  ## define variance-covariance components, each list is a var.comp
   if(is.null(init)){
-    sigma <- coef <- start
+    (sigma <- rep(list(sc.var),nz+nr)) #original variance values
   }else{
-    sigma <- coef <- init
+    sigma <- init
   }
-  ## reparameterise so everything will get into the correct spot after exp
-  coef[pos] <- log(sigma[pos])
-  coef[!pos] <- sigma[!pos]
+  if(!is.null(forced)){
+    iters <- 1
+    sigma <- forced
+  }
+  names(sigma) <- varosss
+  # decompose in a vector
+  varos <- lapply(sigma,up.to.vec)
+  sigma2 <- as.matrix(unlist(varos)) # current values of vc
+  coef2 <- sigma2
+  sigma3 <- sigma2
+  pos <- rep(FALSE,length(sigma2))
   
-  ## Set the memory requirements beforehand
-  T <- vector("list", length=k)
-  for(ii in 1:k) T[[ii]] <- matrix(NA,n,n)
+  taper <- rep(0.9, iters) # weighting parameter
+  taper[1:2] <- c(0.5, 0.7)
+  k <- length(sigma2)
+  llstore <- numeric()
+  ###################
+  # MAT FOR DERIVS
+  ###################
+  ## trait combinations
+  traitm <- expand.grid(1:ts,1:ts)
+  if(ts > 1){
+    traitm <- (traitm[!duplicated(t(apply(traitm, 1, sort))),])[,c(2,1)]; colnames(traitm) <- c("t1","t2")
+  }else{
+    traitm <- as.matrix(cbind(traitm,traitm)[,1:2]) # when single trait we have issues
+    colnames(traitm) <- c("t1","t2")
+  }
+  pos.mats <- list()
+  ## for each trait-combo fill a dummy matrix for derivatives
+  namos <- rownames(sigma[[1]]) #names of traits
+  for(i in 1:dim(traitm)[1]){ 
+    temp.mat <- matrix(0,ts,ts); 
+    i1 <- traitm[i,1]
+    i2 <- traitm[i,2]
+    colnames(temp.mat) <- rownames(temp.mat) <- namos
+    temp.mat[i1,i2] <- 1
+    temp.mat[i2,i1] <- 1
+    pos.mats[[i]] <- temp.mat
+    names(pos.mats)[i] <- paste("Deriva",namos[i1],namos[i2], sep=".")
+  }
+  posmats.list.vc <- rep(list(pos.mats),nz+nr) # THIS DERIVATIVES ARE NEEDED FOR EVERY RANDOM EFFECT
+  names(posmats.list.vc) <- varosss
   
-  logL2.stored <- numeric()
-  record <- as.matrix(sigma)#matrix(NA,nrow=length(sigma), ncol=)
-  
-  ##################
-  ## progress bar
+  ####################
+  ## mapper to know which terms un the linearized var.comp are diagonal
+  diagss <- which(traitm[,1] == traitm[,2]) # this terms are diagonal or ti-ti
+  offdiagss <- which(traitm[,1] != traitm[,2]) # this terms are diagonal or ti-ti
+  diagss <- rep(list(diagss), nz+nr)
+  offdiagss <- rep(list(offdiagss), nz+nr)
+  all <- rep(list(traitm), nz+nr)
+  for(u in 2:length(diagss)){
+    diagss[[u]] <- diagss[[u]] + diagss[[u-1]][length(diagss[[u-1]])]
+    offdiagss[[u]] <- offdiagss[[u]] + offdiagss[[u-1]][length(offdiagss[[u-1]])]
+    all[[u]] <- all[[u]] + max(all[[u-1]])
+  }
+  names(diagss) <- varosss
+  names(offdiagss) <- varosss
+  diagss2 <- unlist(diagss)
+  offdiagss2 <- unlist(offdiagss)
+  all2 <- do.call(rbind,all); rownames(all2) <- NULL
+  ####################
+  var.comp.ret<- list()
+  convergence <- FALSE
   if(!silent){
     count <- 0
-    tot <- 15
+    tot <- iters
     pb <- txtProgressBar(style = 3)
     setTxtProgressBar(pb, 0)
   }
-  
-  ################## ==========================================================================
-  ################## ==========================================================================
-  ################## ==========================================================================
-  ################## ======================= START VAR.COMP ESTIMATION ========================
-  for(cycle in 1:iters){
-    
+  ## ============================================================================
+  ## ============================================================================
+  ## ============================================================================
+  ####### algorithm
+  ## ============================================================================
+  ## ============================================================================
+  ## ============================================================================  
+  for(cycle in 1:iters){ # cycle <- 1
+    #print(restrained)
     if(!silent){
       count <- count + 1
     }
-    ## Limit how far out we go on the logarithmic scale
-    ind <- which(pos)
-    if(length(ind)) {
-      coef[ind] <- pmin(coef[ind],20)
-      coef[ind] <- pmax(coef[ind],-20) ## so on regular scale everything is between exp(-20) and exp(20)
-      sigma[ind] <- exp(coef[ind])
+    
+    varos <- lapply(sigma,up.to.vec)
+    sigma2 <- as.matrix(unlist(varos)) # current values of vc
+    #####################
+    ## Expand ZKZ to multitrait
+    ## form each T * ZKZ where T is the trait matrix; i.e. sigma[[1]]
+    listGs <- list()
+    for(i in 1:(nz+nr)){ # for each random effect
+      listGs[[i]] <- Matrix::kronecker(sigma[[i]],as.matrix(ZKZ[[i]]))
+      # each random effect ZKZ has its own sigma, length of ZKZ and sigma are equal
+    }
+    #####################
+    ### For V and V.inv matrices by adding up all multitrait ZKZ'
+    W <- matrix(0,dimos[1]*dimos[2],dimos[1]*dimos[2])
+    for(l in 1:length(listGs)){ W <- W + listGs[[l]]};#(W[1:5,1:5]);dim(W)
+    
+    V <- try(solve(as(W, Class=Vmat.type),sparse=FALSE), silent = TRUE)
+    if(class(V) == "try-error"){
+      V <- try(solve(as(W + tolparinv * diag(dim(W)[2]), Class=Vmat.type),sparse=FALSE), silent = TRUE)
+    }
+    W<-NULL
+    #####################
+    ### PROJECTION MATRIX
+    # P = V-  -  V-X [X' V- X]-1 XV- =  WQK
+    VX <- V %*% X # V- X
+    
+    tXVXVX <- try(solve(t(X)%*%VX, t(VX)),silent = TRUE)
+    if(class(tXVXVX) == "try-error"){
+      tXVXVX <- try(solve((t(X)%*%VX + (tolparinv * diag(dim(t(X)%*%VX)[2]))),t(VX)), silent = TRUE)
     }
     
-    if(verbose) {
-      cat(cycle, "sigma =",sigma)
-      ##cat(sigma)
-    }
+    P <- V - VX %*% tXVXVX #WQK
+    V <- NULL
+    # y'Py
+    rss <- as.numeric(t(Y) %*% P %*% Y)
     
-    if(!SWsolveINDICATOR) {
-      Sigma <- 0
-      ## can we get rid of this loop? multiplies each var-cov for its variance component
-      ## additionally sums up each var-cov V = ZKZ + ZKZ + ... + ZRZ
-      for(i in 1:k) Sigma <- Sigma + V[[i]]*sigma[i]
-      # solves V to get V.inverse using In (identity matrix) as response
-      W <- solve(Sigma)
-    } else {
-      W <- SWsolve2(Z[1:(k-1)],sigma)
-    }
-    # K is the X matrix for fixed effects
-    if(is.null(K)){
-      WQK <- W
-    }else{ # our case, use sherman
-      WK <- W %*% K # V.inv X
-      WQK <- W - WK %*% solve(t(K)%*%WK, t(WK)) # V.inv - V.inv X [X' V.inv X]-1
-    }
-    ## WQK and WQX
-    if(reml){ # REML
-      WQX <- WQK
-    }else{ # ML
-      WX <- W %*% KX        # including the kernel (Oct 12 2011)
-      WQX <- W - WX %*% solve(t(KX)%*%WX, t(WX))
-    }
+    sigma2 <- sigma2 *rss/rankX
+    coef2[!pos] <- sigma2[!pos] # FALSE are copied
+    coef2[pos] <- log(sigma2[pos]) # TRUE are copied
+    P <- P * rankX/rss # P * [r(X) / yPy] #WQX <- WQX * rankQK/rss
+    rss <- rankX 
+    eig <- sort(eigen(P,symmetric=TRUE,only.values=TRUE)$values, decreasing=TRUE)[1:rankX]
     
-    # y' [parameter space] y
-    rss <- as.numeric(t(y) %*% WQX %*% y)
-    
-    ##if(verbose>9) cat("Sigma[1:5]",Sigma[1:5],"\n")
-    ##if(verbose>9) cat("RSS",rss,"WQX[1:5]",WQX[1:5],"\n")
-    sigma <- sigma * rss/rankQK
-    coef[!pos] <- sigma[!pos]
-    coef[pos] <- log(sigma[pos])
-    WQK <- WQK * rankQK/rss
-    WQX <- WQX * rankQK/rss
-    rss <- rankQK ## looks bad but the rss is absorbed into WQK so the rss term comes out of eig below
-    
-    eig <- sort(eigen(WQK,symmetric=TRUE,only.values=TRUE)$values, decreasing=TRUE)[1:rankQK]
     if(any(eig < 0)){
-      #eig[which(eig<0)]<-0.001
-      #print(eig)
-      WQK <- WQK + (tolparinv - min(eig))*diag(dim(WQK)[1])
-      eig <- eig + tolparinv - min(eig)
-      #print(eig)
-    }
-    ldet <- sum(log(eig))
-    
-    llik <- ldet/2 - rss/2
-    if(cycle == 1) llik0 <- llik
-    delta.llik <- llik - llik0
-    llik0 <- llik
-    
-    ## From Jean-Luc Jannick to fix excess carriage returns
-    if (verbose){
-      if (reml) cat(" resid llik =", llik, "\n") else cat(" llik =", llik, "\n")
-      cat(cycle, "adjusted sigma =", sigma)
-      if (cycle > 1){
-        if (reml) cat(" delta.llik =", delta.llik, "\n") else cat(" delta.llik =", delta.llik, "\n")
-      } else cat("\n")
+      P <- P + (tolpar - min(eig))*diag(dim(P)[1])
+      eig <- eig + tolpar - min(eig)
     }
     
-    ## now the fun starts, derivative and expected fisher info
-    ## the 0.5 multiple is ignored, it is in both and they cancel
-    #print("yyooyo")
-    ##T <- list(NULL)
-    x <- NULL
+    ldet <- sum(log(eig)) 
+    llik <- ldet/2 - rss/2 #.5 [log(det(eigen(P))) - yPy]
     
-    ## derivatives are now D[[i]] = var.components[i]*V[[i]]
-    var.components <- rep(1,k)
-    ind <- which(pos)
-    if(length(ind)) var.components[ind] <- sigma[ind]
+    if(cycle == 1) llik0 <- llik #keep first log likelihood
+    delta.llik <- llik - llik0 # increase of likelihood with respect to initial LL
+    llik0 <- llik # update likelihood to current iteration
     
-    ## Slow part - order k n-squared
-    if(!SWsolveINDICATOR) {
-      if(identity) {
-        T[[k]] <- WQK
-        if(k>1) {
-          for(ii in (k-1):1) T[[ii]] <- WQK %*% V[[ii]] ## # V.inv - V.inv X [X' V.inv X]-1 * ZKZi
-        }
-      } else { ## in 2.8 we force to identity=FALSE always
-        for(ii in 1:k) T[[ii]] <- WQK %*% V[[ii]]
-      }
-    } else {
-      if(identity) {
-        T[[k]] <- WQK
-        if(k>1) {
-          for(ii in (k-1):1) T[[ii]] <- tcrossprod(WQK %*% Z[[ii]],Z[[ii]])
-        }
-      } else {
-        for(ii in 1:k) T[[ii]] <- tcrossprod(WQK %*% Z[[ii]],Z[[ii]])
-      }
-    }
+    x <- NULL # a clean x
+    var.components <- rep(1,k) # variance components
+    ind <- which(pos) # which are TRUE
+    if(length(ind)) var.components[ind] <- sigma2[ind] #update
     
-    # V.inv - V.inv X [X' V.inv X]-1, adjust +- variance components
-    x <- sapply(T,function(x) as.numeric(t(y) %*% x %*% WQX %*% y - sum(diag(x))))
+    #####################
+    ## Multivariate PVi ; where Vi is the derivative ZKZ'
+    deriv.list.vc <- list()
+    for(v in 1:(nz+nr)){ ## For each random effect obtain all P %*% (T * ZKZ') = P Vi
+      deriva <- ZKZ[[v]] # ZKZ
+      deriv.list.vc[[v]] <- lapply(posmats.list.vc[[v]],function(x,y){P %*% as(Matrix::kronecker(x,y),Class="sparseMatrix")},y=as.matrix(deriva))# P (T * ZKZ)
+    } #tcrossprod(ZETA[[v]]$Z %*% ZETA[[v]]$K, (ZETA[[v]]$Z)) == Vi or dV/ds
+    ### convert a 2 level list into a 1 level list
+    TT <- do.call(list, unlist(deriv.list.vc, recursive=FALSE))# list of PVi
+    #length(TT)
+    
+    #####################
+    ## obtain first derivatives
+    # Vi = dV/ds  ..... y' P Vi P y - tr(P Vi)  same than -tr(PVi) - y'PViPy
+    x <- sapply(TT,function(x) as.numeric(t(Y) %*% x %*% P %*% Y - sum(diag(x))))
+    ## theta(k) * dL/ds  ..... are scalar values
     x <- x * var.components
     
-    ## See nested for loops commented out below - evaluating the Expected Fisher Information, A
-    ff <- function(x) sum(T[[x[1]]] * t(T[[x[2]]])) * var.components[x[1]] * var.components[x[2]]
-    aa <- apply(entries,1,ff)
-    # A is the Fishers information matrix
+    #####################
+    ## second derivatives .... [theta(i) * 1st.deriv(i)] * [theta(j) * 1st.deriv(j)]  * sigma(i) * sigma(j)
+    A <- matrix(rep(0, k^2), k, k)
+    entries <- expand.grid(1:k,1:k) # indices to be filled
+    entries <- entries[!duplicated(t(apply(entries, 1, sort))),] # only for lower triangular
+    ## Fisher's Information tr(PVi * PVi) .... A*=Vi=dV/ds .... [Vi Vj'] si sj ; TT is the list of derivatives for all random effects - trait combos
+    ff <- function(x) sum(TT[[x[1]]] * t(TT[[x[2]]])) * var.components[x[1]] * var.components[x[2]]
+    aa <- apply(entries,1,ff) # matrix of combinations of var.comp 
     A[as.matrix(entries)] <- aa
+    A <- copying2(A) # copy lower in upper triangular
+    A.svd <- ginv(A) # Inverse of Fishers
     
+    #stats <- c(stats, llik, sigma[1:k], x[1:k]) # keep statistics LL, sigma, x * var.components
+    ## F- * sigma(k) * dL/ds
+    newx <- A.svd %*% x #update 
+    #coef is a copy of sigma to be updated
     
-    stats <- c(stats, llik, sigma[1:k], x[1:k])
-    if(verbose>=9) {
-      ##cat(c(rllik1, rllik2, sigma[1:k], x[1:k]),"\n")
-    }
-    
-    logL2.stored[cycle] <- llik
-    record <- cbind(record,as.matrix(sigma))
-    A.svd <- ginv(A)
-    x <- A.svd %*% x
-    
-    if(qr(A)$rank < k){
-      if(cycle==1) {
-        if(verbose) {
-          cat("Warning: Non identifiable dispersion model\n")
-          ##print(round(A,6))
-          cat(sigma)
-          cat("\n")
-        }
-      }
-    }
-    
-    ## end of newton-raphson step
-    ## x is  -l'(sigma)/l''(sigma)
-    ## hence we add instead of subtract
-    ## taper controls the proportion of each step to take
-    ## for some reason 0.5 works very well
-    
-    ##if(all(pos==1)) x <- sign(x) * pmin(abs(x),5) ## limit maximum shift we can take in one step to 5 units on log scale
-    coef <- coef + taper[cycle] * x
-    sigma[!pos] <- coef[!pos]
-    sigma[pos] <- exp(coef[pos])
-    
-    ####***********************************
-    ####***********************************
-    ######### modified for sommer 2.7
-    #### the idea is that vc that are negative are set to almost zero
-    #### but negative  to make sure that is refitted
+    ######################################
+    ######################################
+    ## constraint to silence zero var comps
+    #diagss; traitm
+    try1 <- coef2 + taper[cycle] * newx # sigma + f[s*F-*dL/ds] ..... = coef + taper[x]
     if(constraint){
-      nmm <- length(sigma)
-      boundary <- which(sigma<=0)
-      sigma[which(sigma<=0)] <- (1.011929e-07^2) * mean(sigma[(nmm-length(R)+1):nmm])# -(1e-6)
-    }
-    ####***********************************
-    ####***********************************
-    
-    if(draw){# draw
-      ylim <- max(unlist(record), na.rm=TRUE)
-      my.palette <- brewer.pal(7,"Accent")
-      layout(matrix(1:2,2,1))
-      plot(logL2.stored,type="l", main="logLikelihood", col=my.palette[7],lwd=3, las=2, xaxt="n", ylab="logLikelihood value", xlab="Iterations processed", cex.axis=0.5) 
-      axis(1, las=1, at=0:10000, labels=0:10000, cex.axis=.8)
-      legend("bottomright", legend = round(llik,3), bty="n", cex=0.7)
-      plot(record[1,],ylim=c(0,ylim),type="l", las=2, xaxt="n",main="Newton-Raphson algorithm results", col=my.palette[1],lwd=3, ylab="Value of the variance component", xlab="Iterations processed", cex.axis=0.5) 
-      axis(1, las=1, at=0:10000, labels=0:10000, cex.axis=.8)
-      for(t in 1:(dim(record)[1])){
-        lines(record[t,],col=my.palette[t],lwd=3)
-      } 
-      ww <- dim(record)[1]
-      lege <- list()
-      #lege2 <- list()
-      for(ka in 1:length(sigma)){
-        #           if(ka == length(sigma)){
-        #             lege[[ka]] <- paste("Var(e):",round(record[ka,cycle+1],4), sep="")
-        #             #lege2[[k]] <- paste("Var(e):")
-        #           }else{
-        lege[[ka]] <- paste("Var(",varosss[ka],"):",round(record[ka,cycle+1],4), sep="")
-        #lege2[[k]] <- paste("Var(u",k,"):",sep="")
-        #}
-      }
-      legend("topright",bty="n", cex=0.7, col=my.palette, lty=1, lwd=3, legend=unlist(lege))
+      bad <- diagss2[which(try1[diagss2,] <= 0)]
+      #^^^^^ if user wants to set some variance components to zero we will restrain them
+      if(!is.null(restrained)){bad <- sort(unique(c(bad,restrained)))}
       
-    }########end draw
+      if(length(bad) > 0){
+        #cat("\nRestraining parameters")
+        ## find which random effect it is and silence
+        badRE <- which(unlist(lapply(diagss, function(x,y){length(which(x%in%y))}, y=bad)) != 0)
+        restrain <- list()
+        for(b in badRE){# identify diags and off-diags to silence
+          bad.diagon <- diagss[[b]][which(diagss[[b]] %in% badRE)] # bad diagonal elements
+          # which offdiags correspond to that bad diagonal element
+          restrain[[b]] <- sort(unique(which(all2[,1] %in% bad.diagon | all2[,2] %in% bad.diagon)))
+          #restrain[[b]] <- sort(c(,offdiagss[[b]])) # varcomp to restrain
+        }
+        restrain <- unlist(restrain)
+        #^^^^^ if user wants to set some variance components to zero we will restrain them
+        if(!is.null(restrained)){restrain <- sort(unique(c(restrain,restrained)))}
+        
+        no.restrain <- setdiff(1:length(try1), restrain)
+        A.svd.good <- ginv(A[no.restrain,no.restrain]) # Inverse of Fishers only for good ones
+        newx.good <- A.svd.good %*% x[no.restrain] #update 
+        newx[no.restrain] <- newx.good
+        newx[restrain] <- 0
+      }
+    }
+    ######################################
+    ## end of parameter restraining
+    ######################################
     
+    coef2 <- coef2 + taper[cycle] * newx # sigma + f[s*F-*dL/ds] ..... = coef + taper[x]
+    if(constraint){if(length(bad) > 0){coef2[restrain,1] <- 0}} ## make sure you set to zero the bad varcomp
+    sigma2[!pos] <- coef2[!pos] # FALSES are replaced
+    sigma2[pos] <- exp(coef2[pos]) # TRUES are replaced
+    
+    ### reaccomodate var.com from vector to list of matrices
+    no.var <- lapply(deriv.list.vc,function(x){length(x)})
+    #print(no.var)
+    sigma3<-cbind(sigma3,sigma2)
+    sigmaxxx <- sigma2
+    for(r in 1:length(no.var)){
+      si <- 1:no.var[[r]]
+      newmat <- matrix(NA,ts,ts)
+      sq <- upper.tri(newmat)
+      diag(sq) <- TRUE
+      babas2 <- which(sq,arr.ind = TRUE)
+      babas2 <- babas2[ order(babas2[,1], babas2[,2]), ]
+      newmat[babas2] <- sigma2[si,1]
+      sigma[[r]] <- copying(newmat)
+      sigma2 <- matrix(sigma2[-si,])
+    }
+    sigma <- lapply(sigma, function(x){colnames(x) <- rownames(x) <- namos; return(x)})
+    # sigma 2 must finish empty
+    # sigma is again filled as the original sigma but with new estimates
+    
+    var.comp.ret[[cycle]] <- lapply(sigma, function(x,y,z){(x*y)/z},y=base.var,z=sc.var)
+    
+    if(cycle > 1 & (delta.llik) < tolpar) {#tolpar*10
+      if(!silent){
+        setTxtProgressBar(pb, ((tot-1)/tot))### keep filling the progress bar
+      }
+      convergence <- TRUE
+      break
+    }
+    #cat(paste("LL=",llik,"iter=",cycle))
+    llstore[cycle] <- llik
+    ############ draw
+    if(draw){
+      layout(matrix(1:2,2,1))
+      plot(llstore,type="l",lwd=2,bty="n",col="cadetblue",las=2,xaxt="n",main="LogLikelihood",ylab="LL", xlab="Iteration")
+      axis(1,at=1:iters,labels = 1:iters)
+      legend("topleft",legend=round(llik,3),bty="n",cex=0.8)
+      plot(sigma3[1,],type="l",lwd=2,bty="n",ylim=c(min(sigma3),max(sigma3)),col="white",las=2,xaxt="n",main="Var-Covar components",ylab="scaled var.comp",xlab="Iteration")
+      for(u in 1:dim(sigma3)[1]){
+        lines(sigma3[u,],col="red",lty=u)
+      }
+      axis(1,at=1:iters,labels = 1:iters)
+    }
+    ########## end of draw
+    
+    ## end of one cycle
     if(!silent){
       setTxtProgressBar(pb, (count/tot))### keep filling the progress bar
     }
     
-    ###### controls
-    #vv <- which(sigma < 0)
-    #if(length(vv)>0){
-    #  sigma[vv] <- abs(sigma[vv])
-    #}
-    
-    
-    ## check the change in llik is small
-    if(cycle > 1 & abs(delta.llik) < tolpar*10) {
-      if(!silent){
-        setTxtProgressBar(pb, (tot/tot))### keep filling the progress bar
-      }
-      if(abs(delta.llik) < tolpar*10){ #if convergence was achieved
-        convergence <- TRUE
-      }
-      break
-    }
-    if(max(abs(x)) < tolpar) {
-      if(!silent){
-        setTxtProgressBar(pb, (tot/tot))### keep filling the progress bar
-      }
-      break
-    }
   }
+  #############################
+  ### END OF CYCLES
+  #############################
+  #print(var.comp.ret)
+  sigma.scaled <- sigma
+  good <- which(llstore==max(llstore))
+  theta <- var.comp.ret[[good]]
+  #theta <- var.comp.ret[[length(var.comp.ret)]]
+  ############################################
+  ############################################
+  ############################################
+  ############################################
+  ############################################
   
-  ################
-  ############### ========================= FINISH VAR.COMP ESTIMATED =============== #############
-  ############### ========================= ========================= ========================= 
-  ############### ========================= ========================= ========================= 
-  ############### ========================= ========================= ========================= 
-  #n <- n.or
-  
-  BAD <- FALSE
-  if(sigma[length(sigma)] < 0 & constraint & (length(sigma) > 2) ){
-    cat("\nModel is overspecified. A model with no error variance (or negative) is not reliable.\nReturning maximum likelihood estimators. Optionally, you could remove some random \neffects or try a different algorithm.\n")
-    constraint=FALSE
-    BAD <- TRUE
-    #stop()
-  }
-  
-  badd <- which(sigma[1:(length(sigma)-1)] < 0 )
-  if(length(badd) == length(ZETA)){
-    constraint=FALSE
-    sigma[badd] <-0
-  }
-  
-  goodd <- which(sigma > 0 )
-  ###*****************************************************************************************
-  ###*****************************************************************************************
-  ###*****************************************************************************************
-  ###*****************************************************************************************
-  if(constraint & length(boundary)>0){ # if a variance component was negative and constraint was activated
-    # recalculate variance components removing such variance component
-    if(!silent){
-      cat("\nOne or more variance components close to zero. Boundary constraint applied.\n")
-    }
-    badd <- boundary
-    goodd <- setdiff(1:length(sigma),boundary)
-    
-    ZETAXXX <- ZETA.or[-badd]
-    
-    sigmaxxx <- NR22(y.or, X=X.or, ZETA=ZETAXXX, R=R.or, init=sigma[goodd],draw=draw,silent=silent)
-    sigma[goodd] <- sigmaxxx$vars
-    sigma[badd] <- 0
-    W <- sigmaxxx$W
-    
-  }### END OF RECALCULATING VAR.COMP WHEN NEGATIVE
-  ###*****************************************************************************************
-  ###*****************************************************************************************
-  ###*****************************************************************************************
-  if(!is.null(forced)){
-    sigma <- forced
-  }
-  
-  #enf of forced
-  
-  
-  if(is.null(X)){ # when forced this would be true
-    tn = length(y.or); X <- matrix(1,tn,1)
-    X.or <- X
-  }
-  
-  if(EIGEND){
-    y <- y.or
-    ZETA <-ZETA.or
-    X <- X.or #<- X
-    ##
-    y.or <- y
-    ZETA.or <-ZETA
-    X.or <- X #<- X
-  }
-  
-  xm <- as.matrix(X)
-  txm <- t(xm)
-  zvar <- 1:length(ZETA)
-  var.com2 <- as.matrix(sigma)
-  #print(var.com2)
-  ################################
-  ################################
-  # RANDOM VARIABLES
-  ### Coeficcient matrix
-  ################################
-  AIC = as.vector((-2 * llik ) + ( 2 * dim(X)[2]))
-  BIC = as.vector((-2 * llik ) + ( log(length(y)) * dim(X)[2]))
-  
-  #zvar <- which(unlist(lapply(ZETA, function(x){names(x)[1]})) == "Z")
-  #print(X)
+  sigma <- theta 
+  if(!is.null(forced)){sigma <- forced}
+  #print(sigma)
   #####################
+  ## recalculate Vinv with original scale sigma
+  listGs <- list()
+  for(i in 1:(nz+nr)){listGs[[i]] <- Matrix::kronecker(as.matrix(ZKZ[[i]]),sigma[[i]])}
+  W <- matrix(0,dimos[1]*dimos[2],dimos[1]*dimos[2])
+  for(l in 1:length(listGs)){ W <- W + listGs[[l]]}#;(W[1:5,1:5]);dim(W)
+  V <- try(solve(as(W, Class=Vmat.type),sparse=TRUE), silent = TRUE)
+  if(class(V) == "try-error"){
+    V <- try(solve(as(W + tolparinv * diag(ncol(W)), Class=Vmat.type),sparse=FALSE), silent = TRUE)
+  }
+  W <- NULL
+  ######################
+  ## AIC & BIC
+  AIC = as.vector((-2 * llik ) + ( 2 * dim(X)[2]))
+  BIC = as.vector((-2 * llik ) + ( log(length(Y)) * dim(X)[2]))
   
+  ######################
+  ## variance components
+  #out1 <- sigma 
+  #sigma <- lapply(sigma,function(x){round(x,5)})
+  ######################
+  ## beta
   
+  ## real variance for fixed effects
+  V2 <-V
+  indexes <- numeric()
   
-  #############
-  varo <- as.list(var.com2)  # variance components for random, no error
-  #print(varo)
-  #print(varo)
-  Gspo <- lapply(as.list(c(1:length(ZETA))),function(x,K,v){
-    oo=K[[x]]*as.numeric((v[[x]])); return(oo)
-  }, K=Gs, v=varo) ##
-  Gsp <- as(do.call("adiag1", Gspo),Class="sparseMatrix") # in diagonal
-  
-  
-  Rsp <- R[[1]] * as.numeric(varo[[1 + length(zvar)]]) # change
-  if(length(R)>1){
-    for(tu in 2:length(R)){
-      Rsp <- Rsp + as(R[[tu]] *as.numeric(varo[[tu + length(zvar)]]),Class="sparseMatrix")
-    }
+  # print(ncol(V2))
+  # print(ts)
+  # print(indexes)
+  for(o in 1:ts){
+    indexes <- c(indexes,seq(o,ncol(V2),ts))
+  }
+  V2 <- V2[indexes,indexes]
+  XVX2 <- crossprod(X, V2 %*% X)
+  XVXi2 <- try(solve(XVX2), silent = TRUE) # variance of fixed effects
+  if(class(XVXi2) == "try-error"){
+    XVXi2 <- try(solve((XVX2 + tolparinv * diag(dim(XVX)[2]))), silent = TRUE)
   }
   
-  #Rsp <- as(R*as.numeric(var.com2[length(var.com2)]),Class="sparseMatrix")
-  varo=NULL
-  Gspo=NULL
-  #########################################################
-  # Sherman-Morrison-Woodbury formula (Seber, 2003, p. 467)
-  # R-  --  [R-Z[Z'R-Z+G-]-Z'R-]  #-- means minus
+  XVX <- crossprod(X, V %*% X)
+  XVXi <- try(solve(XVX), silent = TRUE) # variance of fixed effects
+  if(class(XVXi) == "try-error"){
+    XVXi <- try(solve((XVX + tolparinv * diag(dim(XVX)[2]))), silent = TRUE)
+  }
+  P <- V - V %*% X %*% solve(XVX, crossprod(X, V))
+  beta <- (XVXi %*% crossprod((X), V %*% Y.red.noscale.lin)) # (XVX)-XV-Y .... Y.or3 %*% X %*% solve(crossprod(X))#
+  beta <- as.matrix(beta)
   
-  #if(is.null(forced)){ #NOT FORCED
-  Vinv <- W
-  #}
-  #   else{#FORCED
-  #     good <- which(!is.na(y.or))
-  #     #print(dim(xm))
-  #     #xm <- matrix(xm[good,])
-  #     #print(dim(xm))
-  #     txm <- t(xm)
-  #     y <- y[good]
-  #     #print(dim(Gsp))
-  #     #print(dim(Zsp))
-  #     #print(dim(Rsp))
-  #     #print(dim(xm))
-  #     #print(length(y))
-  #     vm <- Zsp%*%crossprod(Gsp,tZsp) + Rsp # ZGZ+R
-  #     #print(dim(vm))
-  #     Vinv <- solve(vm,sparse=TRUE, tolpar = 1e-19)
-  #   }
-  #print(Vinv[1:3,1:3])
-  #################
-  #Vinv2 <- Vinv
-  ## Fixed effects
-  # B=(X'X V- XVy)-
-  xvx <- crossprod(xm, Vinv %*% xm)
-  xvxi <- solve(xvx) # variance of fixed effects
-  beta <- xvxi %*% crossprod(xm, Vinv %*% y)
-  #################
-  Var.u <- vector(mode="list", length = length(zvar))
-  PEV.u <- Var.u
-  u <- Var.u
-  #xvx=t(xm)%*%Vinv%*%xm # X'V-X
-  #xvxi=solve(xvx) # (X'V-X)-
-  #Vinv.xm <- Vinv%*%xm
-  #xvx=txm%*%Vinv.xm # X'V-X
-  #xvxi=solve(xvx, sparse=TRUE, tolpar = 1e-19) # (X'V-X)-
-  #s1=Vinv%*%xm # in steps to make computations faster
-  #s2=xvxi%*%txm%*%Vinv 
-  #pm=Vinv-crossprod(t(Vinv.xm),s2) #Vinv-s1%*%s2#
-  
-  pm=Vinv-Vinv%*%xm%*%(xvxi%*%txm%*%(Vinv))
-  ZETA2 <- lapply(ZETA, function(x,good){x[[1]] <- x[[1]][good,]; x[[2]]<- x[[2]]; return(x)}, good=good)
-  ZETA3 <- lapply(ZETA2, function(x){y=list(Z=as(x[[1]],Class="sparseMatrix"),K=as(x[[2]],Class="sparseMatrix"))})
-  for(h in zvar){
-    ## rrBLUP 
-#     W <- crossprod(xm, (Vinv*(as.numeric(var.com2[h,1]))) %*% xm)
-#     Winv <- solve(W)
-#     KZt <- tcrossprod(ZETA3[[h]][[2]], ZETA3[[h]][[1]])
-#     KZt.Hinv <- KZt %*% (Vinv*(as.numeric(var.com2[h,1])))
-#     WW <- tcrossprod(KZt.Hinv, KZt) # KZ'V- KZ'
-#     WWW <- KZt.Hinv %*% xm  # KZ'V- X
-#     PEV.u[[h]] <- as.numeric(var.com2[h,1]) * (ZETA3[[h]][[2]] - WW + tcrossprod(WWW %*% Winv, WWW)) #
-#     Var.u[[h]] <- (as.numeric(var.com2[h,1])) *  ZETA3[[h]][[2]]
+  ######################
+  ## residuals and fitted
+  XB <- X%*%beta
+  fitted.y.good <- matrix(XB, nrow = nrow(Y.red.noscale.ordim), byrow = FALSE); #in a dataframe xb
+  ee <- Y.red.noscale.ordim - fitted.y.good
+  ee.lin.int <- matrix(t(Y.red.noscale.ordim) - (t(fitted.y.good)), ncol = 1, byrow = FALSE) # residuals transposed and mixed
+  Vi.ee <- V %*%  ee.lin.int # V-(y-Xb)' ... nxn %*% linearized(txn) intercaled
+  ######################
+  ## Multivariate K == T * K
+  varvecG <- list()
+  for (k in 1:nz) {
+    K <-  ZETA[[k]]$K 
+    varvecG[[k]] <- Matrix::kronecker(as.matrix(K), as(sigma[[k]],Class="denseMatrix"))
+  }
+  ######################
+  ######################
+  ## BLUPs, Var and PEV blups
+  ulist <- list()
+  Zulist <- list()
+  Zulist.ordim <- list()
+  Var.u <- list()
+  PEV.u <- list()
+  Zforvec.list <- list()
+  for (a in 1:nz) { # u = GZ'V- (y- XB)  # (30x30) (30x100) (100x100) (100x1)
     
-    Var.u[[h]] <- (as.numeric(var.com2[h,1])^2) *  ( crossprod(ZETA3[[h]][[1]]%*%ZETA3[[h]][[2]], pm)  %*%  (ZETA3[[h]][[1]]%*%ZETA3[[h]][[2]])   ) # sigma^4 ZKP ZK
-    PEV.u[[h]] <- as.numeric(var.com2[h,1]) * ZETA3[[h]][[2]] - Var.u[[h]]  # standard errors (SE) for each individual
-  } #(sigma2.u^2) *  ( crossprod(Z%*%K, P)  %*%  (Z%*%K)   )
-  names(Var.u) <- varosss[1:length(ZETA)]
-  names(PEV.u) <- varosss[1:length(ZETA)]
-  #################
-  ## Random effects
-  #u <- list() # we put it up
-  ee <-  (y - (xm %*% beta))
+    lev.re <- dim(ZETA[[a]]$Z)[2] # levels of the random effect
+    Zforvec <- as(Matrix::kronecker(t(as.matrix(ZETA[[a]]$Z)),diag(ts)), Class="sparseMatrix") # Z' for GZ'
+    Zforvec.list[[a]] <-  Zforvec
+    Zforvec2 <- as(Matrix::kronecker(as.matrix(ZETA[[a]]$Z),diag(ts)), Class="sparseMatrix") ## Z for Zu
+    Zforvec3 <- as(Matrix::kronecker(as.matrix(ZETA.or[[a]]$Z),diag(ts)), Class="sparseMatrix") ## Z.or for Zu.or
+    
+    ZKforvec <- varvecG[[a]] %*% Zforvec # GZ'
+    provi <- ZKforvec %*% Vi.ee # u.hat = GZ'V-(y-Xb) 
+    
+    ulist[[a]] <- matrix(provi, nrow = lev.re, byrow = TRUE); colnames(ulist[[a]]) <- colnames(Y.red.noscale.ordim) # u
+    Var.u[[a]] <- ZKforvec %*% tcrossprod(P, ZKforvec) # var.u.hat = ZGPZ'G ... sigma^4 ZKP ZK
+    PEV.u[[a]] <- varvecG[[a]] - Var.u[[a]] #PEV.u.hat = G - ZGPGZ'
+    Zulist[[a]] <- matrix(Zforvec2 %*% provi, nrow = nrow(Y.red.noscale.ordim), byrow = TRUE); colnames(Zulist[[a]]) <- colnames(Y.red.noscale.ordim) # Zu reduced
+    Zulist.ordim[[a]] <- matrix(Zforvec3 %*% provi, nrow = nrow(Y.or), byrow = TRUE); colnames(Zulist.ordim[[a]]) <- colnames(Y.or) # Zu fitted
+    
+    Var.u.bytraits <- list()
+    PEV.u.bytraits <- list()
+    for(h in 1:ts){ # Var.u and PEV.u are mixed for all traits, we need to split them by traits
+      name.trait <- traitnames[h]
+      rowcol.totake <- seq(h,ncol(Var.u[[a]]),ts)
+      Var.u.bytraits[[name.trait]] <- Var.u[[a]][rowcol.totake,rowcol.totake]
+      PEV.u.bytraits[[name.trait]] <- PEV.u[[a]][rowcol.totake,rowcol.totake]
+    }
+    Var.u[[a]] <- Var.u.bytraits
+    PEV.u[[a]] <- PEV.u.bytraits
+    
+    if(EIGEND & a == 1){
+      ulist[[a]] <- tUsi %*% matrix(provi, nrow = lev.re, byrow = TRUE); colnames(ulist[[a]]) <- colnames(Y.red.noscale.ordim) # u
+      Var.u[[a]] <- lapply(Var.u[[a]], function(x){tUsi %*% tcrossprod(x, tUsi)}) 
+      PEV.u[[a]] <- lapply(PEV.u[[a]], function(x){tUsi %*% tcrossprod(x, tUsi)})  # standard errors (SE) for each individual
+      # for fitted values
+      Zulist[[a]] <- tUsi %*%  matrix(Zforvec2 %*% provi, nrow = nrow(Y.red.noscale.ordim), byrow = TRUE); colnames(Zulist[[a]]) <- colnames(Y.red.noscale.ordim) # Zu reduced
+      Zulist.ordim[[a]] <- tUsi %*% matrix(Zforvec3 %*% provi, nrow = nrow(Y.or), byrow = TRUE); colnames(Zulist.ordim[[a]]) <- colnames(Y.or) # Zu fitted
+    }
+    
+    indnames <- colnames(ZETA.or[[a]]$Z)
+    if(!is.null(indnames)){
+      rownames(ulist[[a]]) <- indnames
+    }
+  };#(sigma2.u^2) *  ( crossprod(Z%*%K, P)  %*%  (Z%*%K)   )
+  names(ulist) <- varosssZ
+  names(Var.u) <- varosssZ
+  names(PEV.u) <- varosssZ
   
-  
-  for (aaa in zvar) { # u = KZ'V- (y- XB)
-    u[[aaa]] <- ( (ZETA3[[aaa]][[2]]*as.numeric(var.com2[aaa,1])) %*% t(ZETA3[[aaa]][[1]]) %*% Vinv %*% ee )
+  ######################
+  ## conditional residuals
+  Zu <- 0
+  Zu.ordim <- 0
+  for(h in 1:length(Zulist)){
+    Zu <- Zu + Zulist[[h]]
+    Zu.ordim <- Zu.ordim + Zulist.ordim[[h]]
   }
-  
-  u <- u[zvar]
-  ###############
-  #residuals2 <- (y - (xm %*% beta))
-  
-  
-  fitted.u <- 0
-  for(h in 1:length(ZETA.or)){
-    #fitted.y <- fitted.y + (zeta.or[[h]][[1]] %*% u[[h]])
-    fitted.u <- fitted.u + (ZETA.or[[h]][[1]] %*% u[[h]])
-  }
-  #   print(str(X.or))
-  #   print(str(beta))
-  fitted.y <- (X.or %*% beta) + fitted.u
-  fitted.y.good <- fitted.y[good]
-  residuals3 <- y - fitted.y[good] # conditional residuals
-  ###################
-  rownames(beta) <- colnames(xm)
-  for(i in 1:length(ZETA)){
-    rownames(u[[i]]) <- colnames(ZETA[[i]][[1]])
-  }
-  ###################
-  ####### FISHER's INFORMATION 
-  
-  #only possible when we do all calculations
-  sigma.cov <- (A.svd[1:k, 1:k] * 2) 
-  FI <- A/2
-  ## convert FI using pos
+  ee.cond <- Y.red.noscale.ordim - fitted.y.good - Zu # Y - XB - ZU
+  ######################
+  ## Fisher inverse
+  sigma.cov <- ((A.svd) * 2) 
+  FI <- (A)/2
+  #### convert FI using pos
   FI.c <- matrix(0,dim(FI)[1],dim(FI)[2])
-  FI.c <- FI / tcrossprod((sigma-1)*pos+1)
-  #print(A.svd)
-  names(sigma) <- Vcoef.names
-  sigma.cov <- try(ginv(FI.c),silent=TRUE)
-  error1 <- (class(sigma.cov)=="try-error")
-  if(error1) {
-    cat("Warning: solution lies on the boundary; check sigma & pos\nNo standard errors for variance components returned\n")
-    sigma.cov <- matrix(NA,k,k)
-  }
-  if(!error1) {
-    if(any(sigma[pos]^2 < 1e-4)) cat("Warning: solution lies close to zero for some positive variance components, their standard errors may not be valid\n")
-  }
+  FI.c <- FI / tcrossprod((sigmaxxx-1)*pos+1)
+  sigma.cova <- try(ginv(FI.c),silent=TRUE)
   
-  
-  
-  #   else{ # if we forced variance components
-  #     sigma.cov <- NULL
-  #     eig <- 0
-  #     if(is.null(names(ZETA))){
-  #       names(sigma) <- c(paste("V(u.",1:length(ZETA),")",sep=""),paste("V(u.",1:length(R),")",sep=""))
-  #     }else{
-  #       names(sigma) <- c(names(ZETA),names(R))
-  #     }
-  #   }
-  ####################
-  ###################
-  ###################
-  if(!is.null(names(ZETA))){
-    names(u) <- names(ZETA)
-    names(Var.u) <- names(ZETA)
-    names(PEV.u) <- names(ZETA)
-  }
-  logL <- as.vector(llik)
-  ###################
-  
-  
-  ##for(i in 1:dim(FI)[1])
-  ##  for(j in 1:dim(FI)[2])
-  ##    FI.c[i,j] <- FI[i,j]/(((sigma[i]-1)*pos[i]+1)*((sigma[j]-1)*pos[j]+1))
-  
-  
-  #if(is.null(forced)){
-  rownames(sigma.cov) <- colnames(sigma.cov) <- Vcoef.names
-  #}
-  
-  ## Additional warning if any pos entries are TRUE and the corresponding term is close to zero
-  ## Only give this warning it I haven't given the previous one.
-  
-  #######
-  #if(is.null(nanod)){
-  #  nanod <- paste("x",1:dim(xm)[1],sep=".")
-  #}
-  colnames(xm) <- nanod
-  rownames(beta) <- nanod
-  rownames(xvxi) <- nanod
-  colnames(xvxi) <- nanod
-  
-  
-  out1 <- as.matrix(var.com2, ncol=1); colnames(out1) <- "component" # variance components
-  rownames(out1) <- c(paste("Var(",varosss,")",sep=""))
-  
-  #if(is.null(forced)){
-  rownames(sigma.cov) <- rownames(out1)
-  colnames(sigma.cov) <- rownames(out1)
-  #}
-  
-  if(any(eig < 0)){
-    if(!silent){
-      cat("\nError: Sigma is not positive definite on contrasts: range(eig)=", range(eig), "\n")
+  ################################
+  ################################
+  # PARAMETERS USING ORIGINAL DATA
+  ################################
+  dado <- lapply(ZETA, function(x){dim(x$Z)})
+  ######################
+  ## Fitted values and
+  ## conditional residuals
+  take <- qr$pivot[1:qr$rank]
+  rankdeficient <- ncol(X.or) - length(take)
+  if(rankdeficient > 0){
+    warning(paste("fixed-effect model matrix is rank deficient so dropping", rankdeficient*ts, "columns / coefficients"), call. = FALSE)
+    if(ncol(X.or)>1){ # if other than intercept
+      X.or <- as.matrix(X.or[,take]) # added to make sure is finished when no full rank
     }
   }
+  ncolxor <- ncol(X.or)
+  # print(length(take))
+  # print(take)
+  # print(dim(X.or))
+  #X.or <- as.matrix(X.or)
   
+  X.or <- do.call("adiag1", rep(list(X.or), ts));
+  
+  XB.ordim <- matrix(X.or%*%beta, nrow = nrow(Y.or), byrow = FALSE); #in a dataframe xb
+  Y.fitted <- XB.ordim + Zu.ordim
+  
+  layout(matrix(1,1,1))
   if(!silent){
     setTxtProgressBar(pb, (tot/tot))### keep filling the progress bar
   }
-  #if(is.null(forced)){
-  fofo <- FALSE
-  #}else{
-  #  fofo <- TRUE
-  #}
-  ### let user knows the constraints
-  out1 <- as.data.frame(out1)
-  out1[,"constraint"] <- "Positive"
-  if(length(boundary)>0){
-    out1[boundary,"constraint"] <- "Boundary"
-    out1[boundary,1] <- 0
-  }
-  res <- list(var.comp=out1, V.inv = Vinv, u.hat=u, Var.u.hat=Var.u, 
-              PEV.u.hat=PEV.u, beta.hat=beta, Var.beta.hat=xvxi, 
-              LL=logL, AIC=AIC, BIC=BIC, X=xm, fitted.y=fitted.y, 
-              fitted.u=fitted.u, residuals=ee, cond.residuals=residuals3,
-              fitted.y.good=fitted.y.good, Z=Zsp, K=Ksp, fish.inv=sigma.cov,
-              convergence=convergence)
+  if(is.null(forced)){fofo <- FALSE}else{fofo<- TRUE}
   
-  layout(matrix(1,1,1))
-  #if(BAD){plot(sigma)}
-  return(res)
+  #beta <- matrix(beta,ncol=length(traitnames),nrow=length(fixnames), byrow=FALSE)
+  beta <- matrix(beta,ncol=length(traitnames),nrow=ncolxor, byrow=FALSE)
+  
+  #print(beta)
+  
+  if(rankdeficient > 0){
+    rownames(beta) <- fixnames[take]
+  }else{  rownames(beta) <- fixnames}
+
+  colnames(beta) <- traitnames
+  
+  
+  #monitor
+  var.mon <- lapply(var.comp.ret,function(x){
+    xq <- lapply(x,up.to.vec)
+    xq2 <- as.matrix(unlist(xq))
+    return(xq2)
+  })
+  var.mon2 <- do.call(cbind,var.mon)
+  monitor <- rbind(llstore[1:ncol(var.mon2)],var.mon2)
+  
+  return(list(var.comp=sigma, V.inv=V, u.hat = ulist , Var.u.hat = Var.u, 
+              beta.hat = beta, Var.beta.hat = XVXi2, fish.inv=sigma.cova,
+              PEV.u.hat = PEV.u, residuals=ee, cond.residuals=ee.cond,
+              LL=llik, AIC=AIC, BIC=BIC, X=X, Y= Y.red.noscale.ordim,
+              Zforvec= Zforvec.list, varvecG=varvecG,
+              Ylin=Y.red.noscale.lin,dimos=dado, sigma.scaled=sigmaxxx,
+              fitted.y=Y.fitted, fitted.u=Zu.ordim, ZETA=ZETA, good=nona,
+              method="MNR",choco=varosssZ, forced=fofo, convergence=convergence,
+              monitor=monitor, restrained=restrained, V.inv2=V2))
 }
+
+## correct XVX and therfore P used for Var.u.hat

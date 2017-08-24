@@ -90,10 +90,10 @@ fill.design <- function(x,rows="ROW",ranges="RANGE", by, extra){
           ################
           for(o in 1:leve){ # for each level of the xtra column figure out which rows and ranges are there
             ## let's see until which row extends
-            init1 <- which(apply(pox[,,o],1,sum) > 0) #end in row direction
+            init1 <- which(apply(as.matrix(pox[,,o]),1,sum) > 0) #end in row direction
             stend1 <- c(init1[1],init1[length(init1)]) # start and end in row direction
             
-            init2 <- which(apply(pox[,,o],2,sum) > 0) #end in row direction
+            init2 <- which(apply(as.matrix(pox[,,o]),2,sum) > 0) #end in row direction
             stend2 <- c(init2[1],init2[length(init2)]) # start and end in range direction
             
             kk <- which(newf[,rows] >= stend1[1] & newf[,rows] <= stend1[2] & newf[,ranges] >= stend2[1] & newf[,ranges] <= stend2[2] )
@@ -159,10 +159,10 @@ fill.design <- function(x,rows="ROW",ranges="RANGE", by, extra){
         ################
         for(o in 1:leve){ # for each level of the xtra column figure out which rows and ranges are there
           ## let's see until which row extends
-          init1 <- which(apply(pox[,,o],1,sum) > 0) #end in row direction
+          init1 <- which(apply(as.matrix(pox[,,o]),1,sum) > 0) #end in row direction
           stend1 <- c(init1[1],init1[length(init1)]) # start and end in row direction
           
-          init2 <- which(apply(pox[,,o],2,sum) > 0) #end in row direction
+          init2 <- which(apply(as.matrix(pox[,,o]),2,sum) > 0) #end in row direction
           stend2 <- c(init2[1],init2[length(init2)]) # start and end in range direction
           
           kk <- which(newf[,rows] >= stend1[1] & newf[,rows] <= stend1[2] & newf[,ranges] >= stend2[1] & newf[,ranges] <= stend2[2] )

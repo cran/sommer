@@ -12,7 +12,7 @@ D.mat <- function(X,min.MAF=NULL,max.missing=NULL,impute.method="mean",tol=0.02,
     stop()
   }
   
-  X2 <- X[,vv]# only good markers with heterozygote plants
+  X2 <- X#[,vv]# only good markers with heterozygote plants
   # now transform 0 to 1's
   if(ploidy == 2){
     # Aa = 1 and AA|aa = 0
@@ -23,7 +23,7 @@ D.mat <- function(X,min.MAF=NULL,max.missing=NULL,impute.method="mean",tol=0.02,
       if(method==1){
         X6 <- A.mat(X3, min.MAF=min.MAF,max.missing=max.missing,impute.method=impute.method,tol=tol,
                     n.core=n.core,shrink=shrink,return.imputed=return.imputed)
-      }else{
+      }else if (method==2){
         
         M <- scale(X3, center = TRUE, scale = FALSE)
         K <- tcrossprod(M)
@@ -32,20 +32,16 @@ D.mat <- function(X,min.MAF=NULL,max.missing=NULL,impute.method="mean",tol=0.02,
         varHW <- sum((2 * bAlleleFrequency * (1 - bAlleleFrequency))^2) 
         
         X6 <- K/varHW
+      }else if(method==3){
+        print("using")
+        #X3 <- 1 - abs(X2)
+        n <- dim(X2)[1]
+        p <- colSums(X2+1)/(2*n) # from marker marix in 0,1,2 format
+        q <- 1-p
+        varHW <- sum(2*p*q * (1-(2*p*q)) )
         
-#         pp <- abs(apply(X2,2,function(x){
-#           r <- table(x)
-#           het <- which(names(r)==0)
-#           homo <- which(names(r)!=0)
-#           pq <- ((r[het]/2) + r[homo] )/sum(r)
-#           return(max(pq)) #return p
-#         }))
-#         #plot(pp)
-#         qq <- 1-pp
-#         pq <- 2*pp*qq
-#         pq2 <- sum( (pq) * (1-(pq)) )
-#         X6 <- K/pq2#mean(diag(K))
-        #X6[1:3,1:3]
+        X3pq <- X3 - (2*p*q)
+        X6 <- tcrossprod(X3pq)/varHW
       }
 
     }
@@ -64,7 +60,8 @@ D.mat <- function(X,min.MAF=NULL,max.missing=NULL,impute.method="mean",tol=0.02,
       if(method==1){
         X6 <- A.mat(X5, min.MAF=min.MAF,max.missing=max.missing,impute.method=impute.method,tol=tol,
                     n.core=n.core,shrink=shrink,return.imputed=return.imputed)
-      }else{
+      }else if (method==2){
+        
         M <- scale(X5, center = TRUE, scale = FALSE)
         K <- tcrossprod(M)
         
@@ -72,6 +69,15 @@ D.mat <- function(X,min.MAF=NULL,max.missing=NULL,impute.method="mean",tol=0.02,
         varHW <- sum((2 * bAlleleFrequency * (1 - bAlleleFrequency))^2) 
         
         X6 <- K/varHW
+      }else if(method==3){
+        #X3 <- 1 - abs(X2)
+        n <- dim(X5)[1]
+        p <- colSums(X5+1)/(2*n) # from marker marix in 0,1,2 format
+        q <- 1-p
+        varHW <- sum(2*p*q * (1-(2*p*q)) )
+        
+        X5pq <- X5 - (2*p*q)
+        X6 <- tcrossprod(X5pq)/varHW
       }
       
     }

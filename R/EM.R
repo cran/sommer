@@ -180,7 +180,7 @@ EM <- function(y,X=NULL,ZETA=NULL,R=NULL,iters=30,draw=TRUE,silent=FALSE, constr
       ypy <- (L[1,1]^2); ypy
       logdc <- 2* sum(log(diag(L)[-1])); logdc
     }
-   
+    
     
     logda <- sum(unlist(lapply(ZETA,function(x){determinant(x$K, logarithm = TRUE)$modulus[[1]]})))
     nlogsu <- log(varcomz)*unlist(dimzs) # n*log(su)
@@ -280,7 +280,7 @@ EM <- function(y,X=NULL,ZETA=NULL,R=NULL,iters=30,draw=TRUE,silent=FALSE, constr
     ai[upper.tri(ai)] <- t(ai)[upper.tri(ai)]
     aii <- solve(ai)
   }
-
+  
   
   ## plot likelihood
   if(draw){

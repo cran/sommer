@@ -20,10 +20,12 @@ Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits u
 
 }
 \examples{
+
 ####=========================================####
 #### For CRAN time limitations most lines in the 
 #### examples are silenced with one '#' mark, 
 #### remove them and run the examples
+####=========================================####
 
 ####=========================================####
 ####=========================================####
@@ -36,23 +38,26 @@ head(BTdata)
 # mix4 <- mmer2(tarsus ~ sex, random = ~ dam + fosternest,
 #               data = BTdata) 
 # summary(mix4)
-#### calculate the ratio and its SE
+# ### calculate the ratio and its SE
 # pin(mix4, dam.prop ~ V1 / ( V1 + V2 + V3 ) )
 
-#   ####=========================================####
-#   ####=========================================####
-#   ####=========================================####
-#   #### EXAMPLE 2
-#   #### more complex multivariate model
-#   ####=========================================####
-#   ####=========================================####
-#   data(BTdata)
-#   mix3 <- mmer2(cbind(tarsus, back) ~ sex,
-#                 random = ~ dam + fosternest,
-#                 data = BTdata, MVM=TRUE)
-#   summary(mix3)
-#   #### calculate the genetic correlation
-#   pin(mix3, gen.cor ~ V2 / sqrt(V1*V3))
+####=========================================####
+####=========================================####
+####=========================================####
+#### EXAMPLE 2
+#### more complex multivariate model
+####=========================================####
+####=========================================####
+# data(BTdata)
+# mix3 <- mmer2(cbind(tarsus, back) ~ sex,
+#                 random = ~ us(trait):dam + us(trait):fosternest,
+#                 rcov= ~ diag(trait):units,
+#                 data = BTdata)
+# summary(mix3)
+# #### calculate the genetic correlation
+# pin(mix3, gen.cor ~ V2 / sqrt(V1*V3))
+
+
 
 }
 \keyword{datasets}

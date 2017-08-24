@@ -1,6 +1,7 @@
 score.calcMV <- function(marks,Y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,max.geno.freq,silent=FALSE,P3D=TRUE) {
   # needs to be modified to work if Hinv is not provided, not in a hurry, normally wouldn't be possible
   #
+  Y <- as.matrix(Y)
   namesY <- names(Y)
   if(is.null(namesY)){
     namesY <- paste("T",1:dim(as.matrix(Y))[2],sep="")
@@ -98,8 +99,11 @@ score.calcMV <- function(marks,Y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,max.geno.f
     }
     ################################
   }
-  colnames(scores) <- marks
+  
+  
   scores <- scores[where.betas,]
+  scores <- matrix(scores, nrow=ncol(Y), byrow = TRUE)
   rownames(scores) <- namesY
+  colnames(scores) <- marks
   return(list(score=scores,beta=beta.out))			
 }

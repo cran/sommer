@@ -48,8 +48,6 @@ Giovanny Covarrubias-Pazaran
 #### remove them and run the examples
 ###=========================================####
 data(CPdata)
-CPpheno <- CPdata$pheno
-CPgeno <- CPdata$geno
 
 ####=========================================####
 #### convert markers to numeric format
@@ -89,69 +87,6 @@ y.trn[ww] <- NA
 #cor(ans.A$fitted.y[ww], y[ww], use="pairwise.complete.obs") # GBLUP
 #cor(ans.AF$fitted.y[ww], y[ww], use="pairwise.complete.obs") # hitsging-GBLUP
 #### little increase in prediction accuracy
-
-
-############################################
-############################################
-############################################
-############################################
-############################################
-############################################
-
-####=========================================####
-####=========================================####
-#### EXAMPLE 2
-#### simulate genotypic data
-#### random population of 200 lines with 1000 markers
-####=========================================####
-M <- matrix(rep(0,200*1000),1000,200)
-for (i in 1:200) {
-  M[,i] <- ifelse(runif(1000)<0.5,-1,1)
-}
-####=========================================####
-#### simulate phenotypes with h2=0.5
-####=========================================####
-QTL <- 100*(1:5) #pick 5 QTL
-u <- rep(0,1000) #marker effects
-u[QTL] <- 1
-g <- as.vector(crossprod(M,u))
-h2 <- 0.5
-y <- g + rnorm(200,mean=0,sd=sqrt((1-h2)/h2*var(g)))
-M <- t(M)
-####=========================================####
-#### Define random effects
-####=========================================####
-Z1 <- diag(length(y))
-ETA <- list( list(Z=Z1, K=A.mat(M)))
-####=========================================####
-#### GWAS to extract hits matrix
-####=========================================####
-#ans <- mmer(Y=y, Z=ETA, method="EMMA", W=M)
-#X1 <- hits(gwasm=ans, nmar=10)
-
-#iters=20
-#res <- numeric(iters) # store results from GBLUP
-#res2 <- numeric(iters) # store results from hitsGBLUP
-#for(i in 1:iters){
-#  y.trn <- y
-#  ww <- sample(1:length(y),round(length(y)/5)) # delete 1/5 of the pop to predict
-#  y.trn[ww] <- NA
-#  ans <- mmer(Y=y.trn, Z=ETA, method="EMMA", silent=TRUE)
-#  res[i] <- cor(ans$fitted.y[ww],y[ww])
-#  ans2 <- mmer(Y=y.trn, X=X1, Z=ETA, method="EMMA", silent=TRUE)
-#  res2[i] <- cor(ans2$fitted.y[ww],y[ww])
-#}
-#### compare predictive ability of the 2 methods
-#boxplot(data.frame(GBLUP=res,hitsGBLUP=res2), col=2:3)
-#### given the simulated h2 this should be the mean accuracy
-#sqrt(.5)
-#### but we got:
-#apply(data.frame(GBLUP=res,hitsGBLUP=res2),2,mean)
-
-#### The extreme difference in this example is because the QTLs 
-#### simulated have no linkage disequilibrium with the neighboring 
-#### markers. In the reality this wouldn't occur, and altough an 
-#### increase is expected will not be higher than 0-10 percent)
 
 }
 \seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

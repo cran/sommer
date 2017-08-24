@@ -39,8 +39,6 @@
 #### command + shift + C |OR| control + shift + C
 ####=========================================####
 data(CPdata)
-CPpheno <- CPdata$pheno#[,-c(1:4)]
-CPgeno <- CPdata$geno
 #### look at the data
 head(CPpheno)
 #### fill the design

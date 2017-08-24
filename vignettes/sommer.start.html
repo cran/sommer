@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Giovanny Covarrubias-Pazaran" />
+
+<meta name="date" content="2017-08-23" />
+
+<title>Quick start for the sommer package</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Quick start for the sommer package</h1>
+<h4 class="author"><em>Giovanny Covarrubias-Pazaran</em></h4>
+<h4 class="date"><em>2017-08-23</em></h4>
+
+
+
+<p>The sommer package was developed to provide R users a powerful and reliable multivariate mixed model solver. The package is focused in problems of the type p &gt; n (more random effect levels than observations). This package allows the user to fit mixed models with the advantage of specifying the variance-covariance structure for the random effects, and specify heterogeneous variances, and obtain other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc.</p>
+<p>The purpose of this quick start guide is to show the flexibility of the package under certain common scenarios:</p>
+<ol style="list-style-type: decimal">
+<li>Univariate homogeneous variance models</li>
+<li>Univariate heterogeneous variance models</li>
+<li>Multivariate homogeneous variance models</li>
+<li>Multivariate heterogeneous variance models</li>
+</ol>
+<div id="background" class="section level2">
+<h2>Background</h2>
+<p>The core of the package are the <code>mmer2</code> (formula-based) and <code>mmer</code> (matrix-based) functions which solve the mixed model equations. The functions are an interface to call the <code>NR</code> Direct-Inversion Newton-Raphson (Tunnicliffe 1989; Gilmour et al. 1995; Lee et al. 2015) or the <code>EMMA</code> efficient mixed model association algorithm (Kang et al. 2008).</p>
+<p>Since version 2.0 sommer can handle multivariate models. These have the form:</p>
+<p><br></p>
+<p><span class="math inline">\(Y = X\beta + Zu + \epsilon\)</span></p>
+<p><br></p>
+<p>with:</p>
+<p><br></p>
+<p><span class="math display">\[\mathbf{Y} = \left[\begin{array}
+{r}
+y_1 \\
+y_2 \\
+... \\
+y_t \\
+\end{array}\right]
+\]</span></p>
+<p><br></p>
+<p><span class="math display">\[\mathbf{X} = \left[\begin{array}
+{rrr}
+X &amp; ... &amp; ... \\
+... &amp; ... &amp; ...\\
+... &amp; ... &amp; X \\
+\end{array}\right]
+\]</span></p>
+<p><br></p>
+<p><span class="math display">\[\mathbf{V} = \left[\begin{array}
+{rrr}
+Z_1 G_1 Z_1' + ... + Z_1 R_1 Z_1' &amp; ... &amp; Z_1 H_1 Z_t' + ... + Z_1 S_1 Z_t' \\
+ ... &amp; ... &amp; ...\\
+Z_t H_1 Z_1' + ... + Z_t S_1 Z_1' &amp; ... &amp; Z_t G_1 Z_t' + ... + Z_t R_1 Z_t' \\
+\end{array}\right]
+\]</span></p>
+<p><br></p>
+<p>for ‘t’ traits, where G are H are variance and covariance matrices among random effects for the “t” trait, and R and S are variance and covariance matrices among residuals. Here R=S=I<span class="math inline">\(\sigma_\epsilon\)</span> , where I is an identity matrix. We can specify the covariance matrices. BLUPs will also be corrected for such covariances usually leading to more accurate predictions.</p>
+<p>In the following section we will go on quick examples with the same dataset of corn hybrids tested in 4 different environments.</p>
+<p><br></p>
+</div>
+<div id="univariate-homogeneous-variance-models" class="section level2">
+<h2>1) Univariate homogeneous variance models</h2>
+<p>This type of models refer to single response models where a variable of interest (i.e. genotypes) needs to be analized as interacting with a 2nd random effect (i.e. environments), but you assume that across environments the genotypes have the same variance component. This is the so-called compound simmetry (CS) model.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(sommer)
+<span class="kw">data</span>(example)
+<span class="kw">head</span>(example)</code></pre></div>
+<pre><code>##                   Name     Env Loc Year     Block Yield    Weight
+## 33  Manistee(MSL292-A) CA.2013  CA 2013 CA.2013.1     4 -1.904711
+## 65          CO02024-9W CA.2013  CA 2013 CA.2013.1     5 -1.446958
+## 66  Manistee(MSL292-A) CA.2013  CA 2013 CA.2013.2     5 -1.516271
+## 67            MSL007-B CA.2011  CA 2011 CA.2011.2     5 -1.435510
+## 68           MSR169-8Y CA.2013  CA 2013 CA.2013.1     5 -1.469051
+## 103         AC05153-1W CA.2013  CA 2013 CA.2013.1     6 -1.307167</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ans1 &lt;-<span class="st"> </span><span class="kw">mmer2</span>(Yield~Env, 
+              <span class="dt">random=</span> ~<span class="st"> </span>Name +<span class="st"> </span>Env:Name,
+              <span class="dt">rcov=</span> ~<span class="st"> </span>units,
+              <span class="dt">data=</span>example, <span class="dt">silent =</span> <span class="ot">TRUE</span>)
+<span class="kw">summary</span>(ans1)</code></pre></div>
+<pre><code>## ==================================================
+##     Multivariate Linear Mixed Model fit by REML    
+## ******************  sommer 3.0  ****************** 
+## ==================================================
+##          logLik      AIC      BIC Method Converge
+## Value -20.14537 46.29075 55.95182    MNR     TRUE
+## ==================================================
+## Variance-Covariance components:
+##                      VarComp VarCompSE Zratio
+## Name.Yield-Yield       3.682     1.691  2.177
+## Env:Name.Yield-Yield   5.173     1.495  3.459
+## units.Yield-Yield      4.366     0.647  6.749
+## ==================================================
+## Fixed effects:
+## 
+## $Yield
+##              Estimate Std. Error   t value
+## (Intercept) 16.496351  0.6855001 24.064695
+## EnvCA.2012  -5.776759  0.7558178 -7.643057
+## EnvCA.2013  -6.380479  0.7960514 -8.015159
+## 
+## ==================================================
+## Groups and observations:
+##          Observ Groups
+## Name        185     41
+## Env:Name    185    123
+## ==================================================
+## Use the '$' sign to access results and parameters</code></pre>
+</div>
+<div id="univariate-heterogeneous-variance-models" class="section level2">
+<h2>2) Univariate heterogeneous variance models</h2>
+<p>Very often in multi-environment trials, the assumption that the genetic variance or the residual variance is the same across locations may be too naive. Because of that, specifying a general genetic component and a location specific genetic variance is the way to go. This require a CS+DIAG model.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(example)
+<span class="kw">head</span>(example)</code></pre></div>
+<pre><code>##                   Name     Env Loc Year     Block Yield    Weight
+## 33  Manistee(MSL292-A) CA.2013  CA 2013 CA.2013.1     4 -1.904711
+## 65          CO02024-9W CA.2013  CA 2013 CA.2013.1     5 -1.446958
+## 66  Manistee(MSL292-A) CA.2013  CA 2013 CA.2013.2     5 -1.516271
+## 67            MSL007-B CA.2011  CA 2011 CA.2011.2     5 -1.435510
+## 68           MSR169-8Y CA.2013  CA 2013 CA.2013.1     5 -1.469051
+## 103         AC05153-1W CA.2013  CA 2013 CA.2013.1     6 -1.307167</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ans1 &lt;-<span class="st"> </span><span class="kw">mmer2</span>(Yield~Env, 
+              <span class="dt">random=</span> ~Name +<span class="st"> </span><span class="kw">at</span>(Env):Name,
+              <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">at</span>(Env):units,
+              <span class="dt">data=</span>example, <span class="dt">silent =</span> <span class="ot">TRUE</span>)
+<span class="kw">summary</span>(ans1)</code></pre></div>
+<pre><code>## ===================================================
+##      Multivariate Linear Mixed Model fit by REML     
+## ******************  sommer 3.0  ****************** 
+## ===================================================
+##          logLik      AIC      BIC Method Converge
+## Value -15.42982 36.85964 46.52071    MNR     TRUE
+## ===================================================
+## Variance-Covariance components:
+##                           VarComp VarCompSE Zratio
+## Name.Yield-Yield            2.962    1.4963  1.980
+## CA.2011:Name.Yield-Yield   10.148    4.5108  2.250
+## CA.2012:Name.Yield-Yield    1.879    1.8699  1.005
+## CA.2013:Name.Yield-Yield    6.629    2.5027  2.649
+## CA.2013:units.Yield-Yield   2.560    0.6398  4.001
+## CA.2011:units.Yield-Yield   4.943    1.5246  3.242
+## CA.2012:units.Yield-Yield   5.725    1.3119  4.364
+## ===================================================
+## Fixed effects:
+## 
+## $Yield
+##              Estimate Std. Error   t value
+## (Intercept) 16.507678  0.8268665 19.964138
+## EnvCA.2012  -5.816890  0.8575814 -6.782902
+## EnvCA.2013  -6.412433  0.9356490 -6.853460
+## 
+## ===================================================
+## Groups and observations:
+##              Observ Groups
+## Name            185     41
+## CA.2011:Name    185     41
+## CA.2012:Name    185     41
+## CA.2013:Name    185     41
+## ===================================================
+## Use the '$' sign to access results and parameters</code></pre>
+<p>As you can see the special function <code>at</code> or <code>diag</code> can be used to indicate that there’s a different variance for the genotypes in each environment. Same was done for the residual. The difference between <code>at</code> and <code>diag</code> is that the <code>at</code> function can be used to specify the levels or specific environments where the variance is different.</p>
+</div>
+<div id="multivariate-homogeneous-variance-models" class="section level2">
+<h2>3) Multivariate homogeneous variance models</h2>
+<p>Currently there’s a great push for multi-response models. This is motivated by the correlation that certain variables hide and that could benefit in the prediction perspective. In sommer to specify multivariate models the response requires the use of the <code>cbind()</code> function in the response, and the <code>us(trait)</code>, <code>diag(trait)</code>, or <code>at(trait)</code> functions in the random part of the model.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(example)
+<span class="kw">head</span>(example)</code></pre></div>
+<pre><code>##                   Name     Env Loc Year     Block Yield    Weight
+## 33  Manistee(MSL292-A) CA.2013  CA 2013 CA.2013.1     4 -1.904711
+## 65          CO02024-9W CA.2013  CA 2013 CA.2013.1     5 -1.446958
+## 66  Manistee(MSL292-A) CA.2013  CA 2013 CA.2013.2     5 -1.516271
+## 67            MSL007-B CA.2011  CA 2011 CA.2011.2     5 -1.435510
+## 68           MSR169-8Y CA.2013  CA 2013 CA.2013.1     5 -1.469051
+## 103         AC05153-1W CA.2013  CA 2013 CA.2013.1     6 -1.307167</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ans1 &lt;-<span class="st"> </span><span class="kw">mmer2</span>(<span class="kw">cbind</span>(Yield, Weight) ~<span class="st"> </span>Env, 
+              <span class="dt">random=</span> ~<span class="st"> </span><span class="kw">us</span>(trait):Name +<span class="st"> </span><span class="kw">us</span>(trait):Env:Name,
+              <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">us</span>(trait):units,
+              <span class="dt">data=</span>example, <span class="dt">silent =</span> <span class="ot">TRUE</span>)
+<span class="kw">summary</span>(ans1)</code></pre></div>
+<pre><code>## ==================================================
+##     Multivariate Linear Mixed Model fit by REML    
+## ******************  sommer 3.0  ****************** 
+## ==================================================
+##         logLik       AIC       BIC Method Converge
+## Value 167.0252 -322.0505 -298.5695    MNR     TRUE
+## ==================================================
+## Variance-Covariance components:
+##                        VarComp VarCompSE Zratio
+## Name.Yield-Yield        3.7091   1.68159  2.206
+## Name.Yield-Weight       0.9071   0.37954  2.390
+## Name.Weight-Weight      0.2244   0.08777  2.556
+## Env:Name.Yield-Yield    5.0922   1.47905  3.443
+## Env:Name.Yield-Weight   1.0269   0.30773  3.337
+## Env:Name.Weight-Weight  0.2101   0.06663  3.153
+## units.Yield-Yield       4.3838   0.64953  6.749
+## units.Yield-Weight      0.9078   0.14148  6.416
+## units.Weight-Weight     0.2280   0.03378  6.750
+## ==================================================
+## Fixed effects:
+## 
+## $Yield
+##              Estimate Std. Error   t value
+## (Intercept) 14.741985  0.6783206 21.733063
+## EnvCA.2012  -3.199172  0.7474097 -4.280347
+## EnvCA.2013  -4.003349  0.7850509 -5.099477
+## 
+## $Weight
+##               Estimate Std. Error   t value
+## (Intercept)  0.5847374  0.1497090  3.905826
+## EnvCA.2012  -0.9711517  0.1592564 -6.098038
+## EnvCA.2013  -1.1643244  0.1681079 -6.926052
+## 
+## ==================================================
+## Groups and observations:
+##          Observ Groups
+## Name        185     41
+## Env:Name    185    123
+## ==================================================
+## Use the '$' sign to access results and parameters</code></pre>
+<p>You may notice that we have added the <code>us(trait)</code> behind the random effects. This is to indicate the structure that should be assume in the multivariate model. The <code>diag(trait)</code> used behind a random effect (i.e. Name) indicates that for the traits modeled (Yield and Weight) there’s no a covariance component and should not be estimated, whereas <code>us(trait)</code> assumes that for such random effect, there’s a covariance component to be estimated (i.e. covariance between Yield and Weight for the random effect Name). Same applies for the residual part (rcov).</p>
+</div>
+<div id="multivariate-heterogeneous-variance-models" class="section level2">
+<h2>4) Multivariate heterogeneous variance models</h2>
+<p>This is just an extension of the univariate heterogeneous variance models but at the multivariate level. This would be a CS+DIAG multivariate model:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(example)
+<span class="kw">head</span>(example)</code></pre></div>
+<pre><code>##                   Name     Env Loc Year     Block Yield    Weight
+## 33  Manistee(MSL292-A) CA.2013  CA 2013 CA.2013.1     4 -1.904711
+## 65          CO02024-9W CA.2013  CA 2013 CA.2013.1     5 -1.446958
+## 66  Manistee(MSL292-A) CA.2013  CA 2013 CA.2013.2     5 -1.516271
+## 67            MSL007-B CA.2011  CA 2011 CA.2011.2     5 -1.435510
+## 68           MSR169-8Y CA.2013  CA 2013 CA.2013.1     5 -1.469051
+## 103         AC05153-1W CA.2013  CA 2013 CA.2013.1     6 -1.307167</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ans1 &lt;-<span class="st"> </span><span class="kw">mmer2</span>(<span class="kw">cbind</span>(Yield, Weight) ~<span class="st"> </span>Env, 
+              <span class="dt">random=</span> ~<span class="st"> </span><span class="kw">us</span>(trait):Name +<span class="st"> </span><span class="kw">us</span>(trait):<span class="kw">at</span>(Env):Name,
+              <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">us</span>(trait):<span class="kw">at</span>(Env):units,
+              <span class="dt">data=</span>example, <span class="dt">silent =</span> <span class="ot">TRUE</span>)
+<span class="kw">summary</span>(ans1)</code></pre></div>
+<pre><code>## =====================================================
+##       Multivariate Linear Mixed Model fit by REML      
+## ********************  sommer 3.0  ******************** 
+## =====================================================
+##         logLik       AIC       BIC Method Converge
+## Value 177.8154 -343.6309 -320.1498    MNR     TRUE
+## =====================================================
+## Variance-Covariance components:
+##                             VarComp VarCompSE Zratio
+## Name.Yield-Yield            3.32291   1.45386 2.2856
+## Name.Yield-Weight           0.79475   0.32648 2.4343
+## Name.Weight-Weight          0.19103   0.07509 2.5442
+## CA.2011:Name.Yield-Yield    8.69943   4.00992 2.1695
+## CA.2011:Name.Yield-Weight   1.77753   0.83835 2.1203
+## CA.2011:Name.Weight-Weight  0.35939   0.17885 2.0094
+## CA.2012:Name.Yield-Yield    2.57327   1.95113 1.3189
+## CA.2012:Name.Yield-Weight   0.33267   0.39866 0.8345
+## CA.2012:Name.Weight-Weight  0.03842   0.08600 0.4467
+## CA.2013:Name.Yield-Yield    5.46657   2.16184 2.5287
+## CA.2013:Name.Yield-Weight   1.34662   0.50455 2.6689
+## CA.2013:Name.Weight-Weight  0.32893   0.12203 2.6954
+## CA.2013:units.Yield-Yield   2.56131   0.63996 4.0023
+## CA.2013:units.Yield-Weight  0.44569   0.12645 3.5246
+## CA.2013:units.Weight-Weight 0.12232   0.03057 4.0009
+## CA.2011:units.Yield-Yield   4.93845   1.52314 3.2423
+## CA.2011:units.Yield-Weight  0.99446   0.32150 3.0932
+## CA.2011:units.Weight-Weight 0.23982   0.07394 3.2433
+## CA.2012:units.Yield-Yield   5.73841   1.31504 4.3637
+## CA.2012:units.Yield-Weight  1.27999   0.30150 4.2454
+## CA.2012:units.Weight-Weight 0.31804   0.07285 4.3657
+## =====================================================
+## Fixed effects:
+## 
+## $Yield
+##              Estimate Std. Error   t value
+## (Intercept) 14.498157  0.7889029 18.377621
+## EnvCA.2012  -3.009537  0.8264035 -3.641728
+## EnvCA.2013  -3.731629  0.8754507 -4.262524
+## 
+## $Weight
+##               Estimate Std. Error   t value
+## (Intercept)  0.5746062  0.1682642  3.414905
+## EnvCA.2012  -0.9334404  0.1697663 -5.498384
+## EnvCA.2013  -1.1375574  0.1914161 -5.942851
+## 
+## =====================================================
+## Groups and observations:
+##              Observ Groups
+## Name            185     41
+## CA.2011:Name    185     41
+## CA.2012:Name    185     41
+## CA.2013:Name    185     41
+## =====================================================
+## Use the '$' sign to access results and parameters</code></pre>
+<p>Any number of random effects can be specified with different structures.</p>
+</div>
+<div id="including-special-functions" class="section level2">
+<h2>5) Including special functions</h2>
+<p>Several random effects require the use of covariance structures that specify an special relationship among the levels of such random effect. The sommer package includes the <code>g()</code> function to include such known covariance structures:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(example)
+<span class="kw">head</span>(example)</code></pre></div>
+<pre><code>##                   Name     Env Loc Year     Block Yield    Weight
+## 33  Manistee(MSL292-A) CA.2013  CA 2013 CA.2013.1     4 -1.904711
+## 65          CO02024-9W CA.2013  CA 2013 CA.2013.1     5 -1.446958
+## 66  Manistee(MSL292-A) CA.2013  CA 2013 CA.2013.2     5 -1.516271
+## 67            MSL007-B CA.2011  CA 2011 CA.2011.2     5 -1.435510
+## 68           MSR169-8Y CA.2013  CA 2013 CA.2013.1     5 -1.469051
+## 103         AC05153-1W CA.2013  CA 2013 CA.2013.1     6 -1.307167</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">K[<span class="dv">1</span>:<span class="dv">4</span>,<span class="dv">1</span>:<span class="dv">4</span>]</code></pre></div>
+<pre><code>##                    Manistee(MSL292-A) CO02024-9W MSL007-B MSR169-8Y
+## Manistee(MSL292-A)                  1          0        0         0
+## CO02024-9W                          0          1        0         0
+## MSL007-B                            0          0        1         0
+## MSR169-8Y                           0          0        0         1</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ans1 &lt;-<span class="st"> </span><span class="kw">mmer2</span>(Yield ~<span class="st"> </span>Env, 
+              <span class="dt">random=</span> ~<span class="st"> </span><span class="kw">g</span>(Name) +<span class="st"> </span><span class="kw">at</span>(Env):<span class="kw">g</span>(Name),
+              <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">at</span>(Env):units,
+              <span class="dt">G=</span><span class="kw">list</span>(<span class="dt">Name=</span>K),
+              <span class="dt">data=</span>example, <span class="dt">silent =</span> <span class="ot">TRUE</span>)
+<span class="kw">summary</span>(ans1)</code></pre></div>
+<pre><code>## =====================================================
+##       Multivariate Linear Mixed Model fit by REML      
+## ********************  sommer 3.0  ******************** 
+## =====================================================
+##          logLik      AIC      BIC Method Converge
+## Value -15.42982 36.85964 46.52071    MNR     TRUE
+## =====================================================
+## Variance-Covariance components:
+##                             VarComp VarCompSE Zratio
+## g(Name).Yield-Yield           2.962    1.4963  1.980
+## CA.2011:g(Name).Yield-Yield  10.148    4.5108  2.250
+## CA.2012:g(Name).Yield-Yield   1.879    1.8699  1.005
+## CA.2013:g(Name).Yield-Yield   6.629    2.5027  2.649
+## CA.2013:units.Yield-Yield     2.560    0.6398  4.001
+## CA.2011:units.Yield-Yield     4.943    1.5246  3.242
+## CA.2012:units.Yield-Yield     5.725    1.3119  4.364
+## =====================================================
+## Fixed effects:
+## 
+## $Yield
+##              Estimate Std. Error   t value
+## (Intercept) 16.507678  0.8268665 19.964138
+## EnvCA.2012  -5.816890  0.8575814 -6.782902
+## EnvCA.2013  -6.412433  0.9356490 -6.853460
+## 
+## =====================================================
+## Groups and observations:
+##                 Observ Groups
+## g(Name)            185     41
+## CA.2011:g(Name)    185     41
+## CA.2012:g(Name)    185     41
+## CA.2013:g(Name)    185     41
+## =====================================================
+## Use the '$' sign to access results and parameters</code></pre>
+<p>and for multivariate models:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(example)
+<span class="kw">head</span>(example)</code></pre></div>
+<pre><code>##                   Name     Env Loc Year     Block Yield    Weight
+## 33  Manistee(MSL292-A) CA.2013  CA 2013 CA.2013.1     4 -1.904711
+## 65          CO02024-9W CA.2013  CA 2013 CA.2013.1     5 -1.446958
+## 66  Manistee(MSL292-A) CA.2013  CA 2013 CA.2013.2     5 -1.516271
+## 67            MSL007-B CA.2011  CA 2011 CA.2011.2     5 -1.435510
+## 68           MSR169-8Y CA.2013  CA 2013 CA.2013.1     5 -1.469051
+## 103         AC05153-1W CA.2013  CA 2013 CA.2013.1     6 -1.307167</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">K[<span class="dv">1</span>:<span class="dv">4</span>,<span class="dv">1</span>:<span class="dv">4</span>]</code></pre></div>
+<pre><code>##                    Manistee(MSL292-A) CO02024-9W MSL007-B MSR169-8Y
+## Manistee(MSL292-A)                  1          0        0         0
+## CO02024-9W                          0          1        0         0
+## MSL007-B                            0          0        1         0
+## MSR169-8Y                           0          0        0         1</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ans1 &lt;-<span class="st"> </span><span class="kw">mmer2</span>(<span class="kw">cbind</span>(Yield, Weight) ~<span class="st"> </span>Env, 
+              <span class="dt">random=</span> ~<span class="st"> </span><span class="kw">us</span>(trait):<span class="kw">g</span>(Name) +<span class="st"> </span><span class="kw">us</span>(trait):<span class="kw">at</span>(Env):<span class="kw">g</span>(Name),
+              <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">us</span>(trait):<span class="kw">at</span>(Env):units,
+              <span class="dt">G=</span><span class="kw">list</span>(<span class="dt">Name=</span>K),
+              <span class="dt">data=</span>example, <span class="dt">silent =</span> <span class="ot">TRUE</span>)
+<span class="kw">summary</span>(ans1)</code></pre></div>
+<pre><code>## =======================================================
+##        Multivariate Linear Mixed Model fit by REML       
+## ********************  sommer 3.0  ******************** 
+## =======================================================
+##         logLik       AIC       BIC Method Converge
+## Value 177.8154 -343.6309 -320.1498    MNR     TRUE
+## =======================================================
+## Variance-Covariance components:
+##                               VarComp VarCompSE Zratio
+## g(Name).Yield-Yield           3.32291   1.45386 2.2856
+## g(Name).Yield-Weight          0.79475   0.32648 2.4343
+## g(Name).Weight-Weight         0.19103   0.07509 2.5442
+## CA.2011:g(Name).Yield-Yield   8.69943   4.00992 2.1695
+## CA.2011:g(Name).Yield-Weight  1.77753   0.83835 2.1203
+## CA.2011:g(Name).Weight-Weight 0.35939   0.17885 2.0094
+## CA.2012:g(Name).Yield-Yield   2.57327   1.95113 1.3189
+## CA.2012:g(Name).Yield-Weight  0.33267   0.39866 0.8345
+## CA.2012:g(Name).Weight-Weight 0.03842   0.08600 0.4467
+## CA.2013:g(Name).Yield-Yield   5.46657   2.16184 2.5287
+## CA.2013:g(Name).Yield-Weight  1.34662   0.50455 2.6689
+## CA.2013:g(Name).Weight-Weight 0.32893   0.12203 2.6954
+## CA.2013:units.Yield-Yield     2.56131   0.63996 4.0023
+## CA.2013:units.Yield-Weight    0.44569   0.12645 3.5246
+## CA.2013:units.Weight-Weight   0.12232   0.03057 4.0009
+## CA.2011:units.Yield-Yield     4.93845   1.52314 3.2423
+## CA.2011:units.Yield-Weight    0.99446   0.32150 3.0932
+## CA.2011:units.Weight-Weight   0.23982   0.07394 3.2433
+## CA.2012:units.Yield-Yield     5.73841   1.31504 4.3637
+## CA.2012:units.Yield-Weight    1.27999   0.30150 4.2454
+## CA.2012:units.Weight-Weight   0.31804   0.07285 4.3657
+## =======================================================
+## Fixed effects:
+## 
+## $Yield
+##              Estimate Std. Error   t value
+## (Intercept) 14.498157  0.7889029 18.377621
+## EnvCA.2012  -3.009537  0.8264035 -3.641728
+## EnvCA.2013  -3.731629  0.8754507 -4.262524
+## 
+## $Weight
+##               Estimate Std. Error   t value
+## (Intercept)  0.5746062  0.1682642  3.414905
+## EnvCA.2012  -0.9334404  0.1697663 -5.498384
+## EnvCA.2013  -1.1375574  0.1914161 -5.942851
+## 
+## =======================================================
+## Groups and observations:
+##                 Observ Groups
+## g(Name)            185     41
+## CA.2011:g(Name)    185     41
+## CA.2012:g(Name)    185     41
+## CA.2013:g(Name)    185     41
+## =======================================================
+## Use the '$' sign to access results and parameters</code></pre>
+<p>Notice that the <code>g()</code> function is applied at the random effect called “Name”, and the covariance structure is provided in the argument “G”. In the example, we used a diagonal covariance structure for demonstration purposes but any dense covariance matrix can be used.</p>
+<p>Other special functions such as <code>and()</code> for overlay models, <code>eig()</code> for an eigen decomposition of the covariance matrix, <code>grp()</code> for customized random effects providing an incidence matrix.</p>
+<p>Keep in mind that sommer uses direct inversion (DI) algorithm which can be very slow for large datasets. The package is focused in problems of the type p &gt; n (more random effect levels than observations) and models with dense covariance structures. For example, for experiment with dense covariance structures with low-replication (i.e. 2000 records from 1000 individuals replicated twice with a covariance structure of 1000x1000) sommer will be faster than MME-based software. Also for genomic problems with large number of random effect levels, i.e. 300 individuals (n) with 100,000 genetic markers (p). For highly replicated trials with small covariance structures or n &gt; p (i.e. 2000 records from 200 individuals replicated 10 times with covariance structure of 200x200) asreml or other MME-based algorithms will be much faster and we recommend you to opt for those software.</p>
+</div>
+<div id="literature" class="section level2">
+<h2>Literature</h2>
+<p>Covarrubias-Pazaran G. 2016. Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6):1-15.</p>
+<p>Bernardo Rex. 2010. Breeding for quantitative traits in plants. Second edition. Stemma Press. 390 pp.</p>
+<p>Gilmour et al. 1995. Average Information REML: An efficient algorithm for variance parameter estimation in linear mixed models. Biometrics 51(4):1440-1450.</p>
+<p>Henderson C.R. 1975. Best Linear Unbiased Estimation and Prediction under a Selection Model. Biometrics vol. 31(2):423-447.</p>
+<p>Kang et al. 2008. Efficient control of population structure in model organism association mapping. Genetics 178:1709-1723.</p>
+<p>Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: <a href="http://dx.doi.org/10.1101/027201" class="uri">http://dx.doi.org/10.1101/027201</a>.</p>
+<p>Searle. 1993. Applying the EM algorithm to calculating ML and REML estimates of variance components. Paper invited for the 1993 American Statistical Association Meeting, San Francisco.</p>
+<p>Yu et al. 2006. A unified mixed-model method for association mapping that accounts for multiple levels of relatedness. Genetics 38:203-208.</p>
+<p>Abdollahi Arpanahi R, Morota G, Valente BD, Kranis A, Rosa GJM, Gianola D. 2015. Assessment of bagging GBLUP for whole genome prediction of broiler chicken traits. Journal of Animal Breeding and Genetics 132:218-228.</p>
+<p>Tunnicliffe W. 1989. On the use of marginal likelihood in time series model estimation. JRSS 51(1):15-27.</p>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

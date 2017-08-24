@@ -246,8 +246,30 @@ version 2.9 (2017-07-01)
   + good versions of blocker and fill.design implemented
   + bug fixed in PEV for D-AI algorithm
   + minor bug fixes from summary functions in parallel models
+  + going back to zero constraint where a model is fitted again witout the random
+    effect close to the boundary.
+    
+########################
+version 3.0 (2017-09-01)
+########################  
 
+  + D.mat function now provides 3 different calculation methods
+  + cleaner version of NR and AI algorithms
+  + fixed EIGEND feature 
+  + AI algorithms now takes EM steps for better initial var.comp values
+  + MME-base algorithms removed from mmer functions
+  + remove of several function 
+  + move of GWAS functionality to a different function called GWAS and GWAS2
+  + change of examples to show the flexibility
+  + implementation of us(trait) and diag(trait) functionalities in mmer2
+  
 ##pendings
 + random regression (working on it)
-+ fix eigen feature to multivariate NR method
++ implementation of lsmeans package
+* residuals and fitted from eigen are not usable
 
++ use samm example for rcpp, pass everything to Rcpp
++ add at(trait)
+## when using at()
+## if only one level is specified the summary names are messed up
++ fix map and scores output from GWAS functions

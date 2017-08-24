@@ -5,7 +5,7 @@
 Genotypic and Phenotypic data for a potato polyploid population
 }
 \description{
-This dataset contains phenotpic data for 18 traits measured in 187 individuals from a potato diversity panel. In addition contains genotypic data for 221 individuals genotyped with 3522 SNP markers. Please if using this data for your own research cite Rosyara's (2015) publication (see References).
+This dataset contains phenotpic data for 18 traits measured in 187 individuals from a potato diversity panel. In addition contains genotypic data for 221 individuals genotyped with 3522 SNP markers. Please if using this data for your own research make sure you cite Rosyara's (2015) publication (see References).
 
 }
 \usage{data("PolyData")}
@@ -50,28 +50,20 @@ phenotypes <- PolyData$PPheno
 # ###=========================================####
 # marks <- numo[common,]; marks[1:5,1:5]
 # phenotypes2 <- phenotypes[match(common,phenotypes$Name),];
-# phenotypes2[1:5,1:5]
-# 
-# ###=========================================####
-# ### response variable
-# ###=========================================####
-# yy.trn <- phenotypes2
-# set.seed(1234)
-# ww <- sample(1:187,38)
-# yy.trn[ww,"tuber_shape"] <- NA
+# phenotypes2 <- as.data.frame(phenotypes2)
+# phenotypes2[1:5,]
 # 
 # ###=========================================####
 # ###### Additive relationship matrix, specify ploidy
 # ###=========================================####
-# A <- A.mat(marks, ploidy=4); dim(K1);K1[1:5,1:5]
+# A <- A.mat(marks, ploidy=4)
 # D <- D.mat(marks, ploidy=4)
 # E <- E.mat(marks, ploidy=4)
 # ###=========================================####
-# ### run the genomic selection model
+# ### run as mixed model
 # ###=========================================####
-# ans <- mmer2(tuber_shape~1, random=~g(Name), 
-#              G=list(Name=A), data=yy.trn)
-# cor(phenotypes2[ww,"tuber_shape"],ans$fitted.y[ww])
+# ans <- mmer2(tuber_shape~1, random=~g(Name),
+#              G=list(Name=A), data=phenotypes2)
 # summary(ans)
 # 
 # ###=========================================####
@@ -79,17 +71,9 @@ phenotypes <- PolyData$PPheno
 # ###=========================================####
 # my.map <- PolyData$map
 # models <- c("additive","1-dom-alt","1-dom-ref","2-dom-alt","2-dom-ref")
-# ans2 <- mmer2(tuber_shape~1, random=~g(Name), models = "additive",
+# ans2 <- GWAS2(tuber_shape~1, random=~g(Name), models = "additive",
 #              G=list(Name=A), W=marks, data=phenotypes2)
 # summary(ans2)
-# 
-# ###=========================================####
-# ### compare to GWAS including dominance
-# ###=========================================####
-# phenotypes2$Named <- phenotypes2$Name
-# ans3 <- mmer2(tuber_shape~1, random=~g(Name) + g(Named), models = "additive",
-#               G=list(Name=A, Named=D), W=marks, data=phenotypes2)
-# summary(ans3)
 }
 \keyword{datasets}
 \seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

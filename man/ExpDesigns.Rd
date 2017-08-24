@@ -193,9 +193,10 @@ head(data.car1)
 ## set of males: "set"
 mix.car1 <- mmer2(yield~set,random=~ set:rep + set:male 
                   +set:male:female + set:male:female:rep, data=data.car1)
-summary(mix.car1)
-(Var.A <- 4*mix.car1$var.comp[2,1])
-(Var.D <- 4*mix.car1$var.comp[3,1] - 4*mix.car1$var.comp[2,1])
+(suma <- summary(mix.car1))
+
+(Var.A <- 4*suma$var.comp.table[2,1])
+(Var.D <- 4*suma$var.comp.table[3,1] - 4*suma$var.comp.table[2,1])
 
 #### =================================== ####
 #### ===== North Carolina Design II ==== ####
@@ -210,10 +211,10 @@ head(data.car2)
 ## set of males: "set"
 mix.car2 <- mmer2(yield ~ 1, random=~ set + set:rep + set:male
                   + set:female + set:male:female, data=data.car2)
-summary(mix.car2)
-(Var.Am <- 4*mix.car2$var.comp[3,1])
-(Var.Af <- 4*mix.car2$var.comp[4,1])
-(Var.D <- 4*mix.car2$var.comp[5,1])
+(suma <- summary(mix.car2))
+(Var.Am <- 4*suma$var.comp.table[3,1])
+(Var.Af <- 4*suma$var.comp.table[4,1])
+(Var.D <- 4*suma$var.comp.table[5,1])
 
 #### =================================== ####
 #### ==== North Carolina Design III ==== ####
@@ -228,9 +229,10 @@ head(data.car3)
 ## set of males: "set"
 mix.car3 <- mmer2(yield ~ set + set:rep, random=~ set:male
                   + set:female + set:male:female, data=data.car3)
-summary(mix.car3)
-(Var.A <- 4*mix.car3$var.comp[1,1]) # var males
-(Var.D <- 2*mix.car3$var.comp[3,1]) # var females in males
+(suma <- summary(mix.car3))
+(Var.A <- 4*suma$var.comp.table[1,1]) # var males
+(Var.D <- 2*suma$var.comp.table[3,1]) # var females in males
+
 
 
 }

@@ -44,7 +44,7 @@ The ploidy of the organism. The default is 2 which means diploid but higher ploi
 \item{return.Xd}{
 If TRUE, the function returns the marker matrix converted to a dominant matrix instead of the dominance relationship matrix. The -1 and 1 are converted to 0, and 0's are converted to 1's which is a common incidence matrix for dominance. By default the markers that did not have heterozygote calls are not returned which would mean returning columns of only zeros putting fresh users in a mathematical problem when trying to estimate the variance component. The default for this argument is FALSE, so the function returns a dominant relationship matrix instead of a marker matrix.}
 \item{method}{
-Method 1 is Endelman and Jannink (2012) and method 2 is Su et al. (2012).}
+Method 1 is Endelman and Jannink (2012) used for A.mat, method 2 is  Nishio ans Satoh. (2014), method 3 is Su et al. (2012). See references.}
 
 }
 \details{
@@ -75,11 +75,12 @@ If return.imputed = TRUE, the function returns a list containing
 
 Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6): doi:10.1371/journal.pone.0156744 
 
-Su G, Christensen OF, Ostersen T, Henryon M, Lund MS. 2012. Estimating Additive and Non-Additive Genetic Variances and Predicting Genetic Merits Using Genome-Wide Dense Single Nucleotide Polymorphism Markers. PLoS ONE 7(9): e45293. doi:10.1371/journal.pone.0045293
-
 Endelman, J.B., and J.-L. Jannink. 2012. Shrinkage estimation of the realized relationship matrix. G3:Genes, Genomes, Genetics. 2:1405-1413. doi: 10.1534/g3.112.004259
 
-Poland, J., J. Endelman et al. 2012. Genomic selection in wheat breeding using genotyping-by-sequencing. Plant Genome 5:103-113. doi: 10.3835/plantgenome2012.06.0006
+Nishio M and Satoh M. 2014. Including Dominance Effects in the Genomic BLUP Method for Genomic Evaluation. Plos One 9(1), doi:10.1371/journal.pone.0085792
+
+Su G, Christensen OF, Ostersen T, Henryon M, Lund MS. 2012. Estimating Additive and Non-Additive Genetic Variances and Predicting Genetic Merits Using Genome-Wide Dense Single Nucleotide Polymorphism Markers. PLoS ONE 7(9): e45293. doi:10.1371/journal.pone.0045293
+
 }
 
 \examples{
@@ -108,8 +109,6 @@ D <- D.mat(X)
 #### remove them and run the examples
 ####=========================================####
 data(CPdata)
-CPpheno <- CPdata$pheno
-CPgeno <- CPdata$geno
 #### look at the data
 head(CPpheno)
 CPgeno[1:5,1:5]
@@ -119,7 +118,7 @@ CPgeno[1:5,1:5]
 #Zd <- diag(length(y))
 #Ze <- diag(length(y))
 #A <- A.mat(CPgeno) # additive relationship matrix
-#D <- D.mat(CPgeno) # dominant relationship matrix
+#D <- D.mat(CPgeno) # dominance relationship matrix
 
 #y.trn <- y # for prediction accuracy
 #ww <- sample(c(1:dim(Za)[1]),72) # delete data for 1/5 of the population

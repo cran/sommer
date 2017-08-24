@@ -9,12 +9,12 @@
 }
 
 \arguments{
-  \item{x}{a column of a dusaframe.}
+  \item{x}{a column of a dataframe.}
 }
 \value{
   \describe{
     
-    \item{$dd}{ an incidence musrix with columns for the specific levels specified.}
+    \item{$dd}{ an incidence musrix with columns for the specific levels.}
   }
 }
 \references{
@@ -23,5 +23,14 @@
 }
 \author{
   Giovanny Covarrubias-Pazaran
+}
+\examples{
+
+data(example)
+mix <- mmer2(Yield~1, 
+              random=~at(Env):Block + us(Env):Name, 
+              rcov=~at(Env):units, data=example)
+summary(mix)
+## compare with asreml, you'll get the same result
 }
 \seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}
