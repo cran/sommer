@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2017-08-23" />
+<meta name="date" content="2017-10-29" />
 
 <title>Quick start for the sommer package</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Quick start for the sommer package</h1>
 <h4 class="author"><em>Giovanny Covarrubias-Pazaran</em></h4>
-<h4 class="date"><em>2017-08-23</em></h4>
+<h4 class="date"><em>2017-10-29</em></h4>
 
 
 
@@ -79,17 +79,24 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <ol style="list-style-type: decimal">
 <li>Univariate homogeneous variance models</li>
 <li>Univariate heterogeneous variance models</li>
+<li>Univariate unstructured variance models</li>
 <li>Multivariate homogeneous variance models</li>
 <li>Multivariate heterogeneous variance models</li>
 </ol>
 <div id="background" class="section level2">
 <h2>Background</h2>
-<p>The core of the package are the <code>mmer2</code> (formula-based) and <code>mmer</code> (matrix-based) functions which solve the mixed model equations. The functions are an interface to call the <code>NR</code> Direct-Inversion Newton-Raphson (Tunnicliffe 1989; Gilmour et al. 1995; Lee et al. 2015) or the <code>EMMA</code> efficient mixed model association algorithm (Kang et al. 2008).</p>
-<p>Since version 2.0 sommer can handle multivariate models. These have the form:</p>
+<p>The core of the package are the <code>mmer2</code> (formula-based) and <code>mmer</code> (matrix-based) functions which solve the mixed model equations. The functions are an interface to call the <code>NR</code> Direct-Inversion Newton-Raphson (Tunnicliffe 1989; Gilmour et al. 1995; Lee et al. 2016) or the <code>EMMA</code> efficient mixed model association algorithm (Kang et al. 2008). Since version 2.0 sommer can handle multivariate models. Following Maier et al. (2015), the multivariate (and by extension the univariate) mixed model implemented has the form:</p>
 <p><br></p>
-<p><span class="math inline">\(Y = X\beta + Zu + \epsilon\)</span></p>
+<p><span class="math inline">\(y_1 = X_1\beta_1 + Z_1u_1 + \epsilon_1\)</span></p>
+<p><span class="math inline">\(y_2 = X_2\beta_2 + Z_2u_2 + \epsilon_2\)</span></p>
+<p>…</p>
+<p><span class="math inline">\(y_i = X_i\beta_i + Z_iu_i + \epsilon_i\)</span></p>
 <p><br></p>
-<p>with:</p>
+<p>where <span class="math inline">\(y_i\)</span> is a vector of trait phenotypes, <span class="math inline">\(\beta_i\)</span> is a vector of fixed effects, <span class="math inline">\(u_i\)</span> is a vector of random effects for individuals and <span class="math inline">\(e_i\)</span> are residuals for trait ‘i’ (i = 1, …, t). The random effects (<span class="math inline">\(u_1\)</span> … <span class="math inline">\(u_i\)</span> and <span class="math inline">\(e_i\)</span>) are assumed to be normally distributed with mean zero. X and Z are incidence matrices for fixed and random effects respectively. The distribution of the multivariate response and the phenotypic variance covariance (V) are:</p>
+<p><br></p>
+<p><span class="math inline">\(Y = X\beta + ZU + \epsilon_i\)</span></p>
+<p><br></p>
+<p>Y ~ MVN(<span class="math inline">\(X\beta\)</span>, V)</p>
 <p><br></p>
 <p><span class="math display">\[\mathbf{Y} = \left[\begin{array}
 {r}
@@ -102,22 +109,31 @@ y_t \\
 <p><br></p>
 <p><span class="math display">\[\mathbf{X} = \left[\begin{array}
 {rrr}
-X &amp; ... &amp; ... \\
+X_1 &amp; ... &amp; ... \\
 ... &amp; ... &amp; ...\\
-... &amp; ... &amp; X \\
+... &amp; ... &amp; X_t \\
 \end{array}\right]
 \]</span></p>
 <p><br></p>
 <p><span class="math display">\[\mathbf{V} = \left[\begin{array}
 {rrr}
-Z_1 G_1 Z_1' + ... + Z_1 R_1 Z_1' &amp; ... &amp; Z_1 H_1 Z_t' + ... + Z_1 S_1 Z_t' \\
+Z_1 K{\sigma^2_{g_{1}}} Z_1' + Z_1 I{\sigma^2_{\epsilon_{1}}} Z_1' &amp; ... &amp; Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' \\
  ... &amp; ... &amp; ...\\
-Z_t H_1 Z_1' + ... + Z_t S_1 Z_1' &amp; ... &amp; Z_t G_1 Z_t' + ... + Z_t R_1 Z_t' \\
+Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' &amp; ... &amp; Z_t K{\sigma^2_{g_{t}}} Z_t' + Z_t I{\sigma^2_{\epsilon_{t}}} Z_t' \\
 \end{array}\right]
 \]</span></p>
 <p><br></p>
-<p>for ‘t’ traits, where G are H are variance and covariance matrices among random effects for the “t” trait, and R and S are variance and covariance matrices among residuals. Here R=S=I<span class="math inline">\(\sigma_\epsilon\)</span> , where I is an identity matrix. We can specify the covariance matrices. BLUPs will also be corrected for such covariances usually leading to more accurate predictions.</p>
-<p>In the following section we will go on quick examples with the same dataset of corn hybrids tested in 4 different environments.</p>
+<p>where K is the relationship or covariance matrix for the kth random effect (u=1,…,k), and R=I is an identity matrix for the residual term. The terms <span class="math inline">\(\sigma^2_{g_{i}}\)</span> and <span class="math inline">\(\sigma^2_{\epsilon_{i}}\)</span> denote the genetic (or any of the kth random terms) and residual variance of trait ‘i’, respectively and <span class="math inline">\(\sigma_{g_{_{ij}}}\)</span> and <span class="math inline">\(\sigma_{\epsilon_{_{ij}}}\)</span> the genetic (or any of the kth random terms) and residual covariance between traits ‘i’ and ‘j’ (i=1,…,t, and j=1,…,t). The algorithm implemented optimizes the log likelihood:</p>
+<p><br></p>
+<p><span class="math inline">\(logL = 1/2 * ln(|V|) + ln(X'|V|X) + Y'PY\)</span></p>
+<p><br></p>
+<p>where || is the determinant of a matrix. And the REML estimates are updated using a Newton optimization algorithm of the form:</p>
+<p><br></p>
+<p><span class="math inline">\(\theta^{k+1} = \theta^{k} + (H^{k})^{-1}*\frac{dL}{d\sigma^2_i}|\theta^k\)</span></p>
+<p><br></p>
+<p>Where, <span class="math inline">\(\theta\)</span> is the vector of variance components for random effects and covariance components among traits, <span class="math inline">\(H^{-1}\)</span> is the inverse of the Hessian matrix of second derivatives for the kth cycle, <span class="math inline">\(\frac{dL}{d\sigma^2_i}\)</span> is the vector of first derivatives of the likelihood with respect to the variance-covariance components. The Eigen decomposition of the relationship matrix proposed by Lee and Van Der Werf (2016) was included in the Newton-Raphson algorithm to improve time efficiency. Additionally, the popular pin function to estimate standard errors for linear combinations of variance components (i.e. heritabilities and genetic correlations) was added to the package as well.</p>
+<p>The function <code>mmer</code> takes the Zs and Ks for each random effect and construct the neccesary structure inside and estimates the variance components by ML/REML using any of the 4 methods available in sommer. The <code>mmer2</code> function is enabled to work in a model-based fashion so user don’t have to build the Z’s and K matrices. Please refer to the canonical papers listed in the Literature section to check how the algorithms work. We have tested widely the methods to make sure they provide the same solution when the likelihood behaves well but for complex problems they might lead to slightly different answers. If you have any concern please contact me at <a href="mailto:cova_ruber@live.com.mx">cova_ruber@live.com.mx</a>.</p>
+<p>In the following section we will go in detail over several examples on how to use mixed models in univariate and multivariate case and their use in quantitative genetics.</p>
 <p><br></p>
 </div>
 <div id="univariate-homogeneous-variance-models" class="section level2">
@@ -140,7 +156,7 @@ Z_t H_1 Z_1' + ... + Z_t S_1 Z_1' &amp; ... &amp; Z_t G_1 Z_t' + ... + Z_t R_1 Z
 <span class="kw">summary</span>(ans1)</code></pre></div>
 <pre><code>## ==================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ******************  sommer 3.0  ****************** 
+## ******************  sommer 3.1  ****************** 
 ## ==================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -20.14537 46.29075 55.95182    MNR     TRUE
@@ -186,7 +202,7 @@ Z_t H_1 Z_1' + ... + Z_t S_1 Z_1' &amp; ... &amp; Z_t G_1 Z_t' + ... + Z_t R_1 Z
 <span class="kw">summary</span>(ans1)</code></pre></div>
 <pre><code>## ===================================================
 ##      Multivariate Linear Mixed Model fit by REML     
-## ******************  sommer 3.0  ****************** 
+## ******************  sommer 3.1  ****************** 
 ## ===================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -15.42982 36.85964 46.52071    MNR     TRUE
@@ -220,8 +236,65 @@ Z_t H_1 Z_1' + ... + Z_t S_1 Z_1' &amp; ... &amp; Z_t G_1 Z_t' + ... + Z_t R_1 Z
 ## Use the '$' sign to access results and parameters</code></pre>
 <p>As you can see the special function <code>at</code> or <code>diag</code> can be used to indicate that there’s a different variance for the genotypes in each environment. Same was done for the residual. The difference between <code>at</code> and <code>diag</code> is that the <code>at</code> function can be used to specify the levels or specific environments where the variance is different.</p>
 </div>
+<div id="unstructured-variance-models" class="section level2">
+<h2>3) Unstructured variance models</h2>
+<p>A more relaxed asumption than the CS+DIAG model is the unstructured model (US) which assumes that among the levels of certain factor (i.e. Environments) there’s a covariance struture of a second random effect (i.e. Genotypes). This can be done in sommer using the <code>us(.)</code> function:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(example)
+<span class="kw">head</span>(example)</code></pre></div>
+<pre><code>##                   Name     Env Loc Year     Block Yield    Weight
+## 33  Manistee(MSL292-A) CA.2013  CA 2013 CA.2013.1     4 -1.904711
+## 65          CO02024-9W CA.2013  CA 2013 CA.2013.1     5 -1.446958
+## 66  Manistee(MSL292-A) CA.2013  CA 2013 CA.2013.2     5 -1.516271
+## 67            MSL007-B CA.2011  CA 2011 CA.2011.2     5 -1.435510
+## 68           MSR169-8Y CA.2013  CA 2013 CA.2013.1     5 -1.469051
+## 103         AC05153-1W CA.2013  CA 2013 CA.2013.1     6 -1.307167</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ans3 &lt;-<span class="st"> </span><span class="kw">mmer2</span>(Yield~Env,
+             <span class="dt">random=</span>~<span class="st"> </span><span class="kw">us</span>(Env):Name,
+             <span class="dt">rcov=</span>~<span class="kw">at</span>(Env):units, 
+             <span class="dt">data=</span>example, <span class="dt">silent=</span><span class="ot">TRUE</span>)
+<span class="kw">summary</span>(ans3)</code></pre></div>
+<pre><code>## ==================================================================
+##             Multivariate Linear Mixed Model fit by REML            
+## **************************  sommer 3.1  ************************** 
+## ==================================================================
+##         logLik      AIC      BIC Method Converge
+## Value -11.4997 28.99939 38.66046    MNR     TRUE
+## ==================================================================
+## Variance-Covariance components:
+##                                          VarComp VarCompSE Zratio
+## Env:Name!Env.CA.2011:CA.2011.Yield-Yield 15.6650    5.4206 2.8899
+## Env:Name!Env.CA.2012:CA.2011.Yield-Yield  6.1109    2.4858 2.4583
+## Env:Name!Env.CA.2013:CA.2011.Yield-Yield  6.3841    3.0659 2.0823
+## Env:Name!Env.CA.2012:CA.2012.Yield-Yield  4.5309    1.8217 2.4872
+## Env:Name!Env.CA.2013:CA.2012.Yield-Yield  0.3916    1.5244 0.2569
+## Env:Name!Env.CA.2013:CA.2013.Yield-Yield  8.5978    2.4844 3.4607
+## CA.2013:units.Yield-Yield                 2.5570    0.6391 4.0008
+## CA.2011:units.Yield-Yield                 4.9699    1.5323 3.2434
+## CA.2012:units.Yield-Yield                 5.6723    1.3001 4.3631
+## ==================================================================
+## Fixed effects:
+## 
+## $Yield
+##              Estimate Std. Error   t value
+## (Intercept) 16.331260  0.8137093 20.070141
+## EnvCA.2012  -5.695867  0.7403739 -7.693229
+## EnvCA.2013  -6.271133  0.8191001 -7.656125
+## 
+## ==================================================================
+## Groups and observations:
+##                              Observ Groups
+## Env:Name!Env.CA.2011:CA.2011    185     41
+## Env:Name!Env.CA.2012:CA.2011    185     82
+## Env:Name!Env.CA.2013:CA.2011    185     82
+## Env:Name!Env.CA.2012:CA.2012    185     41
+## Env:Name!Env.CA.2013:CA.2012    185     82
+## Env:Name!Env.CA.2013:CA.2013    185     41
+## ==================================================================
+## Use the '$' sign to access results and parameters</code></pre>
+<p>As can be seen the <code>us(Env)</code> indicates that the genotypes (Name) can have a covariance structure among environments (Env).</p>
+</div>
 <div id="multivariate-homogeneous-variance-models" class="section level2">
-<h2>3) Multivariate homogeneous variance models</h2>
+<h2>4) Multivariate homogeneous variance models</h2>
 <p>Currently there’s a great push for multi-response models. This is motivated by the correlation that certain variables hide and that could benefit in the prediction perspective. In sommer to specify multivariate models the response requires the use of the <code>cbind()</code> function in the response, and the <code>us(trait)</code>, <code>diag(trait)</code>, or <code>at(trait)</code> functions in the random part of the model.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(example)
 <span class="kw">head</span>(example)</code></pre></div>
@@ -239,7 +312,7 @@ Z_t H_1 Z_1' + ... + Z_t S_1 Z_1' &amp; ... &amp; Z_t G_1 Z_t' + ... + Z_t R_1 Z
 <span class="kw">summary</span>(ans1)</code></pre></div>
 <pre><code>## ==================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ******************  sommer 3.0  ****************** 
+## ******************  sommer 3.1  ****************** 
 ## ==================================================
 ##         logLik       AIC       BIC Method Converge
 ## Value 167.0252 -322.0505 -298.5695    MNR     TRUE
@@ -280,7 +353,7 @@ Z_t H_1 Z_1' + ... + Z_t S_1 Z_1' &amp; ... &amp; Z_t G_1 Z_t' + ... + Z_t R_1 Z
 <p>You may notice that we have added the <code>us(trait)</code> behind the random effects. This is to indicate the structure that should be assume in the multivariate model. The <code>diag(trait)</code> used behind a random effect (i.e. Name) indicates that for the traits modeled (Yield and Weight) there’s no a covariance component and should not be estimated, whereas <code>us(trait)</code> assumes that for such random effect, there’s a covariance component to be estimated (i.e. covariance between Yield and Weight for the random effect Name). Same applies for the residual part (rcov).</p>
 </div>
 <div id="multivariate-heterogeneous-variance-models" class="section level2">
-<h2>4) Multivariate heterogeneous variance models</h2>
+<h2>5) Multivariate heterogeneous variance models</h2>
 <p>This is just an extension of the univariate heterogeneous variance models but at the multivariate level. This would be a CS+DIAG multivariate model:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(example)
 <span class="kw">head</span>(example)</code></pre></div>
@@ -298,7 +371,7 @@ Z_t H_1 Z_1' + ... + Z_t S_1 Z_1' &amp; ... &amp; Z_t G_1 Z_t' + ... + Z_t R_1 Z
 <span class="kw">summary</span>(ans1)</code></pre></div>
 <pre><code>## =====================================================
 ##       Multivariate Linear Mixed Model fit by REML      
-## ********************  sommer 3.0  ******************** 
+## ********************  sommer 3.1  ******************** 
 ## =====================================================
 ##         logLik       AIC       BIC Method Converge
 ## Value 177.8154 -343.6309 -320.1498    MNR     TRUE
@@ -353,7 +426,7 @@ Z_t H_1 Z_1' + ... + Z_t S_1 Z_1' &amp; ... &amp; Z_t G_1 Z_t' + ... + Z_t R_1 Z
 <p>Any number of random effects can be specified with different structures.</p>
 </div>
 <div id="including-special-functions" class="section level2">
-<h2>5) Including special functions</h2>
+<h2>6) Including special functions</h2>
 <p>Several random effects require the use of covariance structures that specify an special relationship among the levels of such random effect. The sommer package includes the <code>g()</code> function to include such known covariance structures:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(example)
 <span class="kw">head</span>(example)</code></pre></div>
@@ -378,7 +451,7 @@ Z_t H_1 Z_1' + ... + Z_t S_1 Z_1' &amp; ... &amp; Z_t G_1 Z_t' + ... + Z_t R_1 Z
 <span class="kw">summary</span>(ans1)</code></pre></div>
 <pre><code>## =====================================================
 ##       Multivariate Linear Mixed Model fit by REML      
-## ********************  sommer 3.0  ******************** 
+## ********************  sommer 3.1  ******************** 
 ## =====================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -15.42982 36.85964 46.52071    MNR     TRUE
@@ -434,7 +507,7 @@ Z_t H_1 Z_1' + ... + Z_t S_1 Z_1' &amp; ... &amp; Z_t G_1 Z_t' + ... + Z_t R_1 Z
 <span class="kw">summary</span>(ans1)</code></pre></div>
 <pre><code>## =======================================================
 ##        Multivariate Linear Mixed Model fit by REML       
-## ********************  sommer 3.0  ******************** 
+## ********************  sommer 3.1  ******************** 
 ## =======================================================
 ##         logLik       AIC       BIC Method Converge
 ## Value 177.8154 -343.6309 -320.1498    MNR     TRUE
@@ -487,7 +560,7 @@ Z_t H_1 Z_1' + ... + Z_t S_1 Z_1' &amp; ... &amp; Z_t G_1 Z_t' + ... + Z_t R_1 Z
 ## =======================================================
 ## Use the '$' sign to access results and parameters</code></pre>
 <p>Notice that the <code>g()</code> function is applied at the random effect called “Name”, and the covariance structure is provided in the argument “G”. In the example, we used a diagonal covariance structure for demonstration purposes but any dense covariance matrix can be used.</p>
-<p>Other special functions such as <code>and()</code> for overlay models, <code>eig()</code> for an eigen decomposition of the covariance matrix, <code>grp()</code> for customized random effects providing an incidence matrix.</p>
+<p>Other special functions such as <code>and()</code> for overlay models, <code>eig()</code> for an eigen decomposition of the covariance matrix, <code>grp()</code> for customized random effects providing an incidence matrix, are available. Take a look a the help page for each of these special functions.</p>
 <p>Keep in mind that sommer uses direct inversion (DI) algorithm which can be very slow for large datasets. The package is focused in problems of the type p &gt; n (more random effect levels than observations) and models with dense covariance structures. For example, for experiment with dense covariance structures with low-replication (i.e. 2000 records from 1000 individuals replicated twice with a covariance structure of 1000x1000) sommer will be faster than MME-based software. Also for genomic problems with large number of random effect levels, i.e. 300 individuals (n) with 100,000 genetic markers (p). For highly replicated trials with small covariance structures or n &gt; p (i.e. 2000 records from 200 individuals replicated 10 times with covariance structure of 200x200) asreml or other MME-based algorithms will be much faster and we recommend you to opt for those software.</p>
 </div>
 <div id="literature" class="section level2">
@@ -498,6 +571,7 @@ Z_t H_1 Z_1' + ... + Z_t S_1 Z_1' &amp; ... &amp; Z_t G_1 Z_t' + ... + Z_t R_1 Z
 <p>Henderson C.R. 1975. Best Linear Unbiased Estimation and Prediction under a Selection Model. Biometrics vol. 31(2):423-447.</p>
 <p>Kang et al. 2008. Efficient control of population structure in model organism association mapping. Genetics 178:1709-1723.</p>
 <p>Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: <a href="http://dx.doi.org/10.1101/027201" class="uri">http://dx.doi.org/10.1101/027201</a>.</p>
+<p>Maier et al. 2015. Joint analysis of psychiatric disorders increases accuracy of risk prediction for schizophrenia, bipolar disorder, and major depressive disorder. Am J Hum Genet; 96(2):283-294.</p>
 <p>Searle. 1993. Applying the EM algorithm to calculating ML and REML estimates of variance components. Paper invited for the 1993 American Statistical Association Meeting, San Francisco.</p>
 <p>Yu et al. 2006. A unified mixed-model method for association mapping that accounts for multiple levels of relatedness. Genetics 38:203-208.</p>
 <p>Abdollahi Arpanahi R, Morota G, Valente BD, Kranis A, Rosa GJM, Gianola D. 2015. Assessment of bagging GBLUP for whole genome prediction of broiler chicken traits. Journal of Animal Breeding and Genetics 132:218-228.</p>

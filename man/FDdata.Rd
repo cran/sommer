@@ -54,16 +54,18 @@ summary(mix2)
 # data(FDdata)
 # head(FDdata)
 # 
-# mix <- mmer2(cbind(stems,pods,seeds)~1, 
-#              random=~female+male, MVM=TRUE,data=FDdata)
+# mix <- mmer2(cbind(stems,pods,seeds)~1,
+#              random=~us(trait):female + us(trait):male,
+#              rcov=~diag(trait):units,
+#              data=FDdata)
 # summary(mix)
 # #### genetic variance covariance
 # gvc <- mix$var.comp$female
-# #### extract variances (diagonals) and get standard deviations 
+# #### extract variances (diagonals) and get standard deviations
 # sd.gvc <- as.matrix(sqrt(diag(gvc)))
 # #### get possible products sd(Vgi) * sd(Vgi')
 # prod.sd <- sd.gvc %*% t(sd.gvc)
-# #### genetic correlations cov(gi,gi')/[sd(Vgi) * sd(Vgi')] 
+# #### genetic correlations cov(gi,gi')/[sd(Vgi) * sd(Vgi')]
 # (gen.cor <- gvc/prod.sd)
 # #### pods and seeds have a strong negative genetic covariance (-.79)
 # #### more pods, less seeds

@@ -10,7 +10,7 @@ Genome Wide Association Analysis using the multivariate mixed model solver `mmer
 GWAS(Y, X=NULL, Z=NULL, R=NULL, W=NULL, 
      method="NR", tolpar = 1e-06, tolparinv = 1e-06, 
      draw=FALSE, silent=FALSE, iters=15, 
-     init=NULL, che=TRUE, EIGEND=FALSE, forced=NULL, 
+     init=NULL, check.model=TRUE, EIGEND=FALSE, forced=NULL, 
      
      P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, 
      gwas.plots=TRUE, map=NULL,manh.col=NULL,
@@ -88,7 +88,7 @@ The dashed line in the Manhattan plots corresponds to an FDR rate of 0.05 and is
   \item{iters}{Maximum number of iterations allowed.  Default value is
     15.}
   \item{init}{initial values for the variance components. By default this is NULL and variance components are estimated by the method selected, but in case the user want to provide initial values this argument is functional. It has to be provided as a list, where each list element is one variance component and if multitrait model is pursued each element of the list is a matrix of variance covariance components among traits.}
-  \item{che}{a TRUE/FALSE value indicating if list structure provided by the user is correct to fix it. The default is TRUE but is turned off to FALSE within the mmer function which would imply a double check.}
+  \item{check.model}{a TRUE/FALSE value indicating if list structure provided by the user is correct to fix it. The default is TRUE but is turned off to FALSE within the mmer function which would imply a double check.}
  \item{EIGEND}{a TRUE/FALSE value indicating if an eigen decomposition for the additive relationship matrix should be performed or not. This is based on Lee (2015). The limitations of this methos are:
   1) can only be applied to one relationship matrix
   2) The system needs to be squared and no missing data is allowed (then missing data is imputed with the median).
@@ -147,7 +147,7 @@ If all parameters are correctly indicated the program will return a list with th
 
 \emph{scores}: which are the -log10 p values for each marker
 
-\emph{beta}: which are the GLS estimates of the marker effects, beta= (X'V-X)-X'V-Y.
+\emph{beta}: which are the GLS estimates; beta= (X'V-X)-X'V-Y. Where beta contains the effect for the intercept (first row) and the effect for the marker (second row). For multiple traits they will be rbinded in sets of two.
 
 }
 \item{map}{the map with scores if a map was provided in the GWAS function.}

@@ -4,14 +4,21 @@
 \author{
 Giovanny Covarrubias-Pazaran
 }
-\title{\strong{So}lving \strong{M}ixed \strong{M}odel \strong{E}quations in \strong{R}}
+\title{
+
+\strong{So}lving \strong{M}ixed \strong{M}odel \strong{E}quations in \strong{R}
+\cr
+
+\if{html}{\figure{mai.png}{options: height="10\%" alt="Figure: mai.png"}}
+
+}
 \description{
 
 Structural multivariate-univariate linear mixed model solver for multiple random effects allowing the specification of variance covariance structures. ML/REML estimates can be obtained using the Direct-Inversion Newton-Raphson and Efficient Mixed Model Association algorithms. Designed for genomic prediction and genome wide association studies (GWAS) to include additive, dominance and epistatic relationship structures or other covariance structures, but also functional as a regular mixed model program.  
 
-The sommer package has been developed to provide R users with open-source code to understand how most popular likelihood algorithms in mixed model analysis work, but at the same time allowing to perform their real analysis in diploid and polyploid organisms with small and medium-size data sets (<10,000 observations for average computers). The package is focused in the p > n problem and dense covariance structure where the direct-inversion algorithms become faster than MME-based algorithms. The core of the package are the \strong{\code{\link{mmer2}}} (formula-based) and \code{\link{mmer}} (matrix-based) functions that fit the multivariate linear mixed models.We highly recommend the use of the formula-based \code{\link{mmer2}} function since offers the same flexibility but makes easier the tedious work of building the matrices. This package returns variance-covariance components, BLUPs, BLUEs, residuals, fitted values, variances-covariances for fixed and random effects, etc. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices for diploid and polyploid organisms. The package provides flexibility to fit other genetic models such as full and half diallel models as well. In addition the \code{\link{pin}} function can be used to estimate standard errors for linear combinations of variance components (i.e. ratios like h2). A good converter from letter code to numeric format is implemented in the function \code{\link{atcg1234}}, which supports higher ploidy levels than diploid.
+The sommer package has been developed to provide R users with open-source code to understand how most popular likelihood algorithms in mixed model analysis work, but at the same time allowing to perform their real analysis in diploid and polyploid organisms with small and medium-size data sets (<10,000 observations for average computers). The package is focused in the p > n problem and dense covariance structure where the direct-inversion algorithms become faster than MME-based algorithms. \strong{ The core of the package are the \code{\link{mmer2}} (formula-based) and \code{\link{mmer}} (matrix-based) functions} that fit the multivariate linear mixed models.We highly recommend the use of the formula-based \code{\link{mmer2}} function since offers the same flexibility but makes easier the tedious work of building the matrices. This package returns variance-covariance components, BLUPs, BLUEs, residuals, fitted values, variances-covariances for fixed and random effects, etc. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices for diploid and polyploid organisms. The package provides flexibility to fit other genetic models such as full and half diallel models as well. In addition the \code{\link{pin}} function can be used to estimate standard errors for linear combinations of variance components (i.e. ratios like h2). A good converter from letter code to numeric format is implemented in the function \code{\link{atcg1234}}, which supports higher ploidy levels than diploid.
 
-Starting with this version the GWAS models that use the W argument have their own functions \code{\link{GWAS}} and \code{\link{GWAS2}} and are not part of the \code{\link{mmer}} type of functions.
+Starting with version 3.0 the GWAS models that use the W argument have their own functions \code{\link{GWAS}} and \code{\link{GWAS2}} and are not part of the \code{\link{mmer}} type of functions.
 }
 
 \section{Getting started}{
@@ -26,6 +33,7 @@ The package has been equiped with several datasets to learn how to use the somme
 * \code{\link{wheatLines}} dataset to do genomic prediction in single crosses in species displaying only additive effects.
 
 * \code{\link{CPdata}} dataset to fit genomic prediction models within a biparental population coming from 2 highly heterozygous parents including additive, dominance and epistatic effects. 
+
 * \code{\link{PolyData}} to fit genomic prediction and GWAS analysis in polyploids. 
 
 * \code{\link{gryphondata}} data contains an example of an animal model including pedigree information.
@@ -64,28 +72,50 @@ install.packages("sommer")
 
 \section{Models Enabled}{
 
-The mmer-type of functions fit multivariate linear mixed models by likelihood methods allowing the used of known covariance structures for random effects. If not provided independence is conferred. This program focuses in the mixed model of the form:
+
+The core of the package are the `mmer2` (formula-based) and `mmer` (matrix-based) functions which solve the mixed model equations. The functions are an interface to call the `NR` Direct-Inversion Newton-Raphson (Tunnicliffe 1989; Gilmour et al. 1995; Lee et al. 2016) or the `EMMA` efficient mixed model association algorithm (Kang et al. 2008). Since version 2.0 sommer can handle multivariate models. Following Maier et al. (2015), the multivariate (and by extension the univariate) mixed model implemented has the form:
 
 
-\deqn{Y = X \beta + Z U + \epsilon}
 
 
-with:
-
-\deqn{Var(Y) = Var(ZU+\epsilon) = ZGZ + R = V}
-
-where the multivariate V is;
+\if{html}{\figure{form1.png}{options: height="10\%" alt="Figure: form1.png"}}
 
 
-\tabular{rrrrr}{
- Z_1 G_1 Z_1' + ... + Z_1 R_1 Z_1' \tab \tab ... \tab \tab Z_1 H_1 Z_t' + ... + Z_1 S_1 Z_t' \cr
-  ... \tab \tab ... \tab \tab ... \cr
- Z_t H_1 Z_1' + ... + Z_t S_1 Z_1' \tab \tab ... \tab \tab Z_t G_1 Z_t' + ... + Z_t R_1 Z_t' \cr
- 
-}
+
+where y_i is a vector of trait phenotypes, \eqn{\beta_i} is a vector of fixed effects, u_i is a vector of random effects for individuals and e_i are residuals for trait i (i = 1,..., t). The random effects (u_1 ... u_i and e_i) are assumed to be normally distributed with mean zero. X and Z are incidence matrices for fixed and random effects respectively. The distribution of the multivariate response and the phenotypic variance covariance (V) are:
 
 
-for 't' traits, where G are H are variance and covariance matrices among random effects for the "t" trait, and R and S are variance and covariance matrices among residuals. Here \eqn{R = S = I * \sigma2 \epsilon} , where I is an identity matrix. We can specify the covariance matrices. BLUPs will also be corrected for such covariances usually leading to more accurate predictions. The equations are solved by direct inversion.
+
+
+\if{html}{\figure{form2.png}{options: height="10\%" alt="Figure: form2.png"}}
+
+
+
+
+where K is the relationship or covariance matrix for the kth random effect (u=1,...,k), and R=I is an identity matrix for the residual term. The terms \eqn{\sigma^2_{g_{i}}} and \eqn{\sigma^2_{\epsilon_{i}}} denote the genetic (or any of the kth random terms) and residual variance of trait i, respectively and \eqn{\sigma_{g_{_{ij}}}} and \eqn{\sigma_{\epsilon_{_{ij}}}} the genetic (or any of the kth random terms) and residual covariance between traits i and j (i=1,...,t, and j=1,...,t). The algorithm implemented optimizes the log likelihood:
+
+
+
+
+\if{html}{\figure{form3.png}{options: height="10\%" alt="Figure: form3.png"}}
+
+
+
+
+where || is the determinant of a matrix. And the REML estimates are updated using a Newton optimization algorithm of the form:
+
+
+
+
+\if{html}{\figure{form4.png}{options: height="10\%" alt="Figure: form4.png"}}
+
+
+
+
+Where, \eqn{\theta} is the vector of variance components for random effects and covariance components among traits, H^{-1} is the inverse of the Hessian matrix of second derivatives for the kth cycle, dL/d\eqn{\sigma^2_i} is the vector of first derivatives of the likelihood with respect to the variance-covariance components. The Eigen decomposition of the relationship matrix proposed by Lee and Van Der Werf (2016) was included in the Newton-Raphson algorithm to improve time efficiency. Additionally, the popular pin function to estimate standard errors for linear combinations of variance components (i.e. heritabilities and genetic correlations) was added to the package as well.
+
+The EMMA method is the one proposed by Kang et al. (2008). Please refer to the canonical paper for further details.
+
 
 }
 
@@ -101,9 +131,9 @@ where \eqn{\beta} is a vector of fixed effects that can model both environmental
 The variable \eqn{g} models the genetic background of each line as a random effect with \eqn{Var[g] = K \sigma^2}.  
 The variable \eqn{\tau} models the additive SNP effect as a fixed effect.  The residual variance is \eqn{Var[\varepsilon] = I \sigma_e^2}
   
-  For unbalanced designs where phenotypes come from different environments, the environment mean can be modeled using the fixed option (e.g., fixed="env" if the column in the pheno data.frame is called "env").  When principal components are included (P+K model), the loadings are determined from an eigenvalue decomposition of the K matrix.
+  When principal components are included (P+K model), the loadings are determined from an eigenvalue decomposition of the K matrix and are used in the fixed effect part.
 
-The argument "P3D" was introduced by Zhang et al. (2010).  When P3D=FALSE, this function is equivalent to EMMA with REML (Kang et al. 2008).  When P3D=TRUE, it is equivalent to EMMAX (Kang et al. 2010).  The P3D=TRUE option is faster but can underestimate significance compared to P3D=FALSE.
+The argument "P3D" introduced by Zhang et al. (2010) can be used with the P3D argument.  When P3D=FALSE, this function is equivalent to EMMA//NR with REML where the variance components are estimated for each SNP or marker tested (Kang et al. 2008).  When P3D=TRUE, it is equivalent to EMMAX//NR (Kang et al. 2010) where the assumption is that variance components for all SNP/markers are the same and therefore the variance components are estimated only once (and markers are tested in a WLS framework being the the weight matrix (W) the inverse of the phenotypic variance matrix (V)).  Therefore, P3D=TRUE option is faster but can underestimate significance compared to P3D=FALSE.
 
 Multivariate GWAS are based in Covarrubias-Pazaran et al. (2017, Submitted), which adjusts betas for all response variables and then does the regular GWAS with such adjusted betas or marker effects.
 
@@ -134,6 +164,8 @@ Henderson C.R. 1975. Best Linear Unbiased Estimation and Prediction under a Sele
 Kang et al. 2008. Efficient control of population structure in model organism association mapping. Genetics 178:1709-1723.
 
 Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: http://dx.doi.org/10.1101/027201.
+
+Maier et al. 2015. Joint analysis of psychiatric disorders increases accuracy of risk prediction for schizophrenia, bipolar disorder, and major depressive disorder. Am J Hum Genet; 96(2):283-294.
 
 Searle. 1993. Applying the EM algorithm to calculating ML and REML estimates of variance components. Paper invited for the 1993 American Statistical Association Meeting, San Francisco.
 
@@ -181,7 +213,10 @@ ans2 <- mmer2(Yield~Env,
               data=example)
 summary(ans2)
 
-# ## Unstructured (US) model
+####===========================================####
+####  Univariate unstructured variance models  ####
+####===========================================####
+
 # ans3 <- mmer2(Yield~Env, 
 #              random=~ us(Env):Name, 
 #              rcov=~at(Env):units, data=example)
@@ -209,7 +244,10 @@ summary(ans2)
 #               data=example)
 # summary(ans5)
 # 
-# ## Multivariate Unstructured (US) model
+# ####===========================================####
+# #### Multivariate unstructured variance models ####
+# ####===========================================####
+# 
 # ans6 <- mmer2(cbind(Yield, Weight) ~ Env,
 #               random= ~ us(trait):us(Env):Name,
 #               rcov= ~ us(trait):at(Env):units,

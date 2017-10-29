@@ -41,7 +41,7 @@
 
 data(yates.oats)
 head(yates.oats)
-m3 <- mmer2(fixed=Y ~ V*N, random = ~ B + B:MP,
+m3 <- mmer2(fixed=Y ~ V + N + V:N, random = ~ B + B:MP,
             data = yates.oats)
 summary(m3)       
 m3$var.comp

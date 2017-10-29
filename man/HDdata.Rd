@@ -28,8 +28,6 @@ Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits u
 #### examples are silenced with one '#' mark, 
 #### remove them and run the examples
 ####=========================================####
-data(HDdata)
-head(HDdata)
 
 ####=========================================####
 #### Example 1 (formula-based)
@@ -44,15 +42,23 @@ HDdata$geno <- as.factor(HDdata$geno)
 modh <- mmer2(sugar~1, random=~female + and(male) + geno, 
               data=HDdata)
 summary(modh)
+
 #### model using overlay [and(.)] and covariance structures [g(.)]
 
 # A <- diag(7); A[1,2] <- 0.5; A[2,1] <- 0.5 # fake covariance structure
 # colnames(A) <- as.character(1:7); rownames(A) <- colnames(A);A
 # 
-# modh2 <- mmer2(sugar~1, random=~g(female) + and(g(male)) + geno, 
+# modh2 <- mmer2(sugar~1, random=~g(female) + and(g(male)) + geno,
 #                G=list(female=A, male=A),data=HDdata)
 # summary(modh2)
-# 
+
+########################################################
+########################################################
+########################################################
+########################################################
+########################################################
+########################################################
+
 # ####=========================================####
 # #### Example 2 (matrix-based)
 # #### using overlay with mmer function

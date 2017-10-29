@@ -1,6 +1,7 @@
 \name{adiag1}
 \alias{adiag1}
 \title{Binds arrays corner-to-corner}
+
 \description{
   Array generalization of blockdiag()
 }

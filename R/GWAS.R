@@ -1,7 +1,7 @@
 GWAS <- function (Y, X=NULL, Z=NULL, R=NULL, W=NULL, 
                   method="NR", tolpar = 1e-06, tolparinv = 1e-06, 
                   draw=FALSE, silent=FALSE, iters=15, 
-                  init=NULL, che=TRUE, EIGEND=FALSE, forced=NULL, 
+                  init=NULL, check.model=TRUE, EIGEND=FALSE, forced=NULL, 
                   P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, 
                   gwas.plots=TRUE, map=NULL,manh.col=NULL,
                   fdr.level=0.05, constraint=TRUE, n.PC=0, 
@@ -14,7 +14,7 @@ GWAS <- function (Y, X=NULL, Z=NULL, R=NULL, W=NULL,
   }
   
   if(!silent){
-    cat("Always make sure that phenotypes in the dataset and marker matrix are in the same order.\nMeaning; phenotype of the i.th row corresponds to the i.th row in the marker matrix(W).\n")
+    cat("Always make sure that the response (y) and marker matrix (W argument) are in the same order.\nMeaning; response in the i.th row should correspond to the i.th row in the marker matrix(W).\n")
   }
   
   #varss <- apply(W, 2, var)
@@ -62,7 +62,7 @@ GWAS <- function (Y, X=NULL, Z=NULL, R=NULL, W=NULL,
   ####
 
   ### fix the input of the user
-  if(che){
+  if(check.model){
     if(is.list(Z)){
       if(is.list(Z[[1]])){ ### -- if is a 2 level list -- ##
         provided <- lapply(Z, names)
@@ -129,12 +129,17 @@ GWAS <- function (Y, X=NULL, Z=NULL, R=NULL, W=NULL,
     }
   }
   ###**********************************
-
+  
+  if(!is.null(ncol(Y))){
+    if(ncol(Y) >1){
+    stop("The multivariate GWAS is under maintenance. Please wait until a new version to use it.",call. = FALSE)
+    }
+  }
   ####-----------------------
   ####-----------------------
   if(method=="EMMA"){
     if(length(Z)>1){cat("\nFor multivariate models with multiple random effect\nplease use method='NR' or 'AI'.")}
-    res <- MEMMA(Y=Y, X=X, ZETA=Z, tolpar = tolpar, tolparinv = tolparinv, che=che)
+    res <- MEMMA(Y=Y, X=X, ZETA=Z, tolpar = tolpar, tolparinv = tolparinv, check.model=check.model)
     class(res)<-c("MMERM")
   }else if(method=="AI"){
     stop("AI method has been discontinued because of its instability. Try 'NR'.\nSee details in the sommer help page. ", call. = FALSE)
@@ -144,6 +149,7 @@ GWAS <- function (Y, X=NULL, Z=NULL, R=NULL, W=NULL,
   }else{
     stop("Unrecognized method. Please select one of the methods; 'NR', 'EMMA'.",call. = FALSE)
   }
+  
   ##################
   ### now get scores
   ##################
@@ -182,7 +188,7 @@ GWAS <- function (Y, X=NULL, Z=NULL, R=NULL, W=NULL,
     if(!silent){
       cat("\nPerforming GWAS\n")
     }
-    W.scores <- score.calcMV(marks=marks,Y=Y,Z=Z,X=X,K=K,ZZ=ZZ,M=M,Hinv=Hinv,min.MAF=min.MAF,model=models[1],max.geno.freq=max.geno.freq,silent=silent,P3D=TRUE,ploidy=ploidy)
+    W.scores <- score.calcMV(marks=marks,Y=Y,Z=Z,X=X,K=K,ZZ=ZZ,M=M,Hinv=Hinv,min.MAF=min.MAF,model=models[1],max.geno.freq=max.geno.freq,silent=silent,P3D=P3D,ploidy=ploidy)
     res$W <- W
     res$W.scores <- W.scores
     ########################
@@ -265,6 +271,9 @@ GWAS <- function (Y, X=NULL, Z=NULL, R=NULL, W=NULL,
       }
       map3 <-NA
       res$map <- map3
+    }else{
+      dd <- t(W.scores$score)#matrix(W.scores$score)
+      ffr <- apply(dd,2,function(x,y){fdr(x,fdr.level = y)$fdr.10},y=fdr.level)
     }
   }
   res$fdr <- ffr

@@ -263,13 +263,39 @@ version 3.0 (2017-09-01)
   + change of examples to show the flexibility
   + implementation of us(trait) and diag(trait) functionalities in mmer2
   
+########################
+version 3.1 (2017-11-01)
+######################## 
+
+  + pin function improved to don't work with scaled parameters
+  + dominance relationship matrices corrected
+  + general maintenance to several algorithms for minor bugs
+  + constrained parameters in multivariate models not included in the summary as
+    expected
+  + better documentation about multivariate models
+  
 ##pendings
 + random regression (working on it)
 + implementation of lsmeans package
-* residuals and fitted from eigen are not usable
+
 
 + use samm example for rcpp, pass everything to Rcpp
 + add at(trait)
 ## when using at()
 ## if only one level is specified the summary names are messed up
 + fix map and scores output from GWAS functions
++ IMPLEMENT WALD TEST
++ IMPLEMENT PREDICTION FUNCTION
++ ADD the initial values table in asreml format where user can specify if var-covar comp
+  can be fixed to a value or not
++ make sure the program can run even if the only random effect is a grp() effect
++ more than one grp() term and used at the at() and diag() levels
++ move to c++
++ exp(-(K/theta[i])^2) for gaussian kernels, where theta[i] is the value with max LL
++ (theta <- setdiff(seq(0, max(dist(M)), length.out = 11),0)); M is the marker matrix
+
+
+\if{html}{\figure{mai.png}{options: width="45\%" alt="Figure: mai.png"}}
+\if{latex}{\figure{mai.pdf}{options: width=10cm}}
+
+ 

@@ -1,7 +1,7 @@
 MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,iters=20,tolpar=1e-3,
                 tolparinv=1e-6,draw=FALSE,silent=FALSE, constraint=TRUE, 
                 EIGEND=FALSE, forced=NULL, IMP=FALSE, complete=TRUE, 
-                che=FALSE, restrained=NULL){
+                check.model=FALSE, restrained=NULL, REML=TRUE){
   
   up.to.vec <- function(x){
     if(dim(as.matrix(x))[1]>1){aa <- upper.tri(x); diag(aa) <- TRUE
@@ -24,7 +24,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,iters=20,tolpar=1e-3,
     m
   }
   ############################
-  if(che){ # if coming from mmer don't check
+  if(check.model){ # if coming from mmer don't check
     if(is.list(ZETA)){
       if(is.list(ZETA[[1]])){ # if was provided as a two level list
         ZETA=ZETA
@@ -702,16 +702,22 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,iters=20,tolpar=1e-3,
   })
   var.mon2 <- do.call(cbind,var.mon)
   monitor <- rbind(llstore[1:ncol(var.mon2)],var.mon2)
+  rownames(monitor)[1] <- "llik"
+  colnames(monitor) <- paste("iter",1:ncol(monitor))
+  ## bring var.comp and fish.inv to non-scale 
+  sigma.nonscale <- unlist(lapply(sigma,function(x){up.to.vec(x)}))
+  dd <- rep(up.to.vec(base.var),length(sigma))
+  ee <- rep(up.to.vec(sc.var),length(sigma))
+  fish.inv.nonscale <- ( sigma.cova * (dd%*%t(dd)) ) / ((ee%*%t(ee)))
   
   return(list(var.comp=sigma, V.inv=V, u.hat = ulist , Var.u.hat = Var.u, 
-              beta.hat = beta, Var.beta.hat = XVXi2, fish.inv=sigma.cova,
+              beta.hat = beta, Var.beta.hat = XVXi2, fish.inv=sigma.cova, 
+              fish.inv.nonscale=fish.inv.nonscale,
               PEV.u.hat = PEV.u, residuals=ee, cond.residuals=ee.cond,
               LL=llik, AIC=AIC, BIC=BIC, X=X, Y= Y.red.noscale.ordim,
-              Zforvec= Zforvec.list, varvecG=varvecG,
-              Ylin=Y.red.noscale.lin,dimos=dado, sigma.scaled=sigmaxxx,
-              fitted.y=Y.fitted, fitted.u=Zu.ordim, ZETA=ZETA, good=nona,
-              method="MNR",choco=varosssZ, forced=fofo, convergence=convergence,
-              monitor=monitor, restrained=restrained, V.inv2=V2))
+              #Zforvec= Zforvec.list, varvecG=varvecG,Ylin=Y.red.noscale.lin,
+              dimos=dado, sigma.scaled=sigmaxxx, sigma= sigma.nonscale,
+              fitted.y=Y.fitted, fitted.u=Zu.ordim, ZETA=ZETA, used.observations=nona,
+              method="MNR",random.effs=varosssZ, forced=fofo, convergence=convergence,
+              monitor=monitor, restrained=restrained))
 }
-
-## correct XVX and therfore P used for Var.u.hat

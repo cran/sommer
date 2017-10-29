@@ -1,7 +1,7 @@
 #############
 ## EXPORTS
 #############
-export(adiag1, A.mat, and, at, atcg1234, hits, big.peaks.col, bathy.colors, blocker, blockerL, blockerT, brewer.pal, D.mat, design.score, eig, E.mat, fdr, fdr2, fill.design, g, grp, GWAS, GWAS2, hadamard.prod, hdm, imputev, is.diagonal.matrix, is.square.matrix, jet.colors, manhattan, matrix.trace, map.plot, maxi.qtl, mmer,MEMMA, MNR, mmer2, nna, overlay, phase.F1, pin, score.calcMV, transp, us, vctable, vctable.help)
+export(adiag1, A.mat, and, at, atcg1234, hits, big.peaks.col, bathy.colors, blocker, blockerL, blockerT, brewer.pal, D.mat, design.score, eig, E.mat, fdr, fdr2, fill.design, g, grp, GWAS, GWAS2, hadamard.prod, hdm, imputev, is.diagonal.matrix, is.square.matrix, jet.colors, manhattan, matrix.trace, map.plot, maxi.qtl, mmer,MEMMA, MNR, mmer2, nna, overlay, pedtoK, phase.F1, pin, score.calcMV, transp, us, vctable, vctable.help)
 
 export(summary.MMERM, residuals.MMERM, fitted.MMERM, plot.MMERM, anova.MMERM, coef.MMERM, randef)
 

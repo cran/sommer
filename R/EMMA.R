@@ -1,4 +1,4 @@
-MEMMA <- function (Y, X=NULL, ZETA=NULL, tolpar = 1e-06, tolparinv = 1e-06, che=TRUE, silent=TRUE) {
+MEMMA <- function (Y, X=NULL, ZETA=NULL, tolpar = 1e-06, tolparinv = 1e-06, check.model=TRUE, silent=TRUE) {
   
   Y <- as.matrix(Y)
   if(is.null(colnames(Y))){
@@ -9,7 +9,7 @@ MEMMA <- function (Y, X=NULL, ZETA=NULL, tolpar = 1e-06, tolparinv = 1e-06, che=
   }
   respo <- colnames(Y)
   
-  if(che){ # if needs to be checked, else just skip
+  if(check.model){ # if needs to be checked, else just skip
     ZETA <- lapply(ZETA, function(x){
       if(length(x) == 1){
         provided <- names(x)

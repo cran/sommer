@@ -14,9 +14,9 @@ GWAS2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, grouping=NULL, meth
     stop("GWAS function needs the W argument (markers) to be different than NULL.\n", call. = FALSE)
   }
   
-  if(!silent){
-    cat("Always make sure that phenotypes in the dataset and marker matrix are in the same order.\nMeaning; phenotype of the i.th row corresponds to the i.th row in the marker matrix(W)")
-  }
+  # if(!silent){
+  #   cat("Always make sure that phenotypes in the dataset and marker matrix are in the same order.\nMeaning; phenotype of the i.th row corresponds to the i.th row in the marker matrix(W)")
+  # }
   
   if(missing(data)){
     data <- environment(fixed)

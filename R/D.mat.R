@@ -1,15 +1,23 @@
 D.mat <- function(X,min.MAF=NULL,max.missing=NULL,impute.method="mean",tol=0.02,
                   n.core=1,shrink=FALSE,return.imputed=FALSE, ploidy=2, return.Xd=FALSE, 
-                  method=1){
+                  method=3){
   
   #X <- apply(gg,2,function(x){y <- x; y[which(is.na(x))] <- mean(x, na.rm=TRUE); return(y)}); gg2[1:5,1:5]
   
-  ty <- apply(X, 2, function(x){length(table(x))})
-  vv <- which(ty > 2)
   
-  if(length(vv)==0){
+  # ty <- apply(X, 2, function(x){length(table(x))})
+  # vv <- which(ty > 2)
+  # if(length(vv)==0){}
+  
+  # check if markers have dominant calls (0's)
+  ty <- apply(X, 2, function(x){ 
+    if(length(which(x==0) > 0)){
+      return(1)}else{ # 1's are markers with dominance calls
+        return(0)} # 0's are markers with only 1's or/and -1's
+  }) 
+  if(length(which(ty == 1)) < 2){ # there should be at least 2 markers with dominance calls to calculate the dominance relationship matrix
     cat("No heterozygous markers detected in the data. You might be using inbred lines.\nIf so, divide the markers in heterotic groups and do the kronecker product \namong A.mat's of the 2 groups to obtain a dominance relationship matrix\n")
-    stop()
+    stop(call. = FALSE)
   }
   
   X2 <- X#[,vv]# only good markers with heterozygote plants
@@ -33,15 +41,16 @@ D.mat <- function(X,min.MAF=NULL,max.missing=NULL,impute.method="mean",tol=0.02,
         
         X6 <- K/varHW
       }else if(method==3){
-        print("using")
+        #print("using")
         #X3 <- 1 - abs(X2)
         n <- dim(X2)[1]
         p <- colSums(X2+1)/(2*n) # from marker marix in 0,1,2 format
         q <- 1-p
         varHW <- sum(2*p*q * (1-(2*p*q)) )
         
-        X3pq <- X3 - (2*p*q)
-        X6 <- tcrossprod(X3pq)/varHW
+        X3pq <- apply(X3, 1, function(x){ x - (2 * p * q)})
+        X6 <- crossprod(X3pq)/varHW
+        
       }
 
     }
@@ -76,8 +85,9 @@ D.mat <- function(X,min.MAF=NULL,max.missing=NULL,impute.method="mean",tol=0.02,
         q <- 1-p
         varHW <- sum(2*p*q * (1-(2*p*q)) )
         
-        X5pq <- X5 - (2*p*q)
-        X6 <- tcrossprod(X5pq)/varHW
+        X5pq <- apply(X5, 1, function(x){ x - (2 * p * q)})
+        X6 <- crossprod(X5pq)/varHW
+        
       }
       
     }

@@ -73,11 +73,11 @@ cor(newyates$Y, newyates$nnx)
 
 #### now fit the models and compare #####
 
-m3 <- mmer2(fixed=Y ~ V*N, random = ~ B + B:MP,
+m3 <- mmer2(fixed=Y ~ V+N+V:N, random = ~ B + B:MP,
             data = yates.oats)
 yates.oats$res <- residuals(m3)
 
-m4 <- mmer2(fixed=Y ~ V*N + nnx, random = ~ B + B:MP,
+m4 <- mmer2(fixed=Y ~ V+N+V:N + nnx, random = ~ B + B:MP,
             data = newyates)
 newyates$res <- residuals(m4)
 

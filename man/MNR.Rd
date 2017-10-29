@@ -8,7 +8,7 @@ This function is used internally in the function \code{\link{mmer}} when MORE th
 MNR(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,iters=20,tolpar=1e-3,
     tolparinv=1e-6,draw=FALSE,silent=FALSE, constraint=TRUE, 
     EIGEND=FALSE, forced=NULL, IMP=FALSE, complete=TRUE, 
-    che=FALSE, restrained=NULL)
+    check.model=FALSE, restrained=NULL, REML=TRUE)
 }
 \arguments{
   \item{Y}{a matrix or data frame of response variables}
@@ -71,8 +71,10 @@ MNR(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,iters=20,tolpar=1e-3,
     \item{forced}{a list of values for variance-covariance components to be used if the user wants to force those values.}
     \item{IMP}{a TRUE/FALSE statement if the function should impute the Y matrix/dataframe with the median value or should get rid of missing values for the estimation of variance components.}
    \item{complete}{a TRUE/FALSE statement to indicate if the function should impute the cases where at least for one trait there's an observation.}
-   \item{che}{a TRUE/FALSE statement to indicate if the function should check the input parameters from the user.}
+   \item{check.model}{a TRUE/FALSE statement to indicate if the function should check the input parameters from the user.}
    \item{restrained}{a numeric argument specifying which variance-covariance parameters should be restrained.}
+   \item{REML}{a TRUE/FALSE value to indicate if REML or ML should be used for optimization. Not functional yet. Only REML available.}
+   
 }
 \details{
 

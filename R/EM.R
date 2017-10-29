@@ -39,7 +39,7 @@ EM <- function(y,X=NULL,ZETA=NULL,R=NULL,iters=30,draw=TRUE,silent=FALSE, constr
   nz <- length(ZETA)
   nr <- length(R)
   nx <- dim(X)[2]
-  dimzs <- lapply(ZETA,function(x){dim(x$Z)[2]})
+  dimzs <- lapply(ZETA,function(x){dim(as.matrix(x$Z))[2]})
   dimrs <- lapply(R,function(x){dim(x)[1]})
   N <- length(y)
   

@@ -163,7 +163,7 @@ If all parameters are correctly indicated the program will return a list with th
 
 \emph{scores}: which are the -log10 p values for each marker
 
-\emph{beta}: which are the GLS estimates of the marker effects, beta= (X'V-X)-X'V-Y.
+\emph{beta}: which are the GLS estimates; beta= (X'V-X)-X'V-Y. Where beta contains the effect for the intercept (first row) and the effect for the marker (second row). For multiple traits they will be rbinded in sets of two.
 
 }
 \item{map}{the map with scores if a map was provided in the GWAS function.}

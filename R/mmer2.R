@@ -1,8 +1,10 @@
-mmer2 <- function(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
+mmer2 <- function(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR", 
                   init=NULL,iters=20,tolpar = 1e-06, tolparinv = 1e-06, 
                   draw=FALSE, silent=FALSE,
                   constraint=TRUE, EIGEND=FALSE,
-                  forced=NULL,IMP=FALSE, complete=TRUE, restrained=NULL){
+                  forced=NULL, complete=TRUE, restrained=NULL,
+                  na.method.X="exclude", na.method.Y="exclude",
+                  REML=TRUE){
   #rcov <- missing
   #gss=TRUE
   
@@ -27,7 +29,7 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
     if (length(random) != 2) 
       stop("\nRandom model formula must be of form \" ~ pred\"")
   }
-
+  
   ###########################
   ## reduce the random formula
   
@@ -37,6 +39,50 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
   # see if any of the random terms has eig or group
   #rtermss <-strsplit(as.character(random[2]), split = "[+]")[[1]] #)  gsub(" ", "", 
   
+  ################
+  #### NA.METHOD.X
+  if(na.method.X == "exclude"){
+    fufu <- strsplit(as.character(fixed[3]), split = "[+]")[[1]]
+    fufu <- apply(data.frame(fufu),1,function(x){
+      strsplit(as.character((as.formula(paste("~",x)))[2]), split = "[+]")[[1]]
+    })
+    fufu <- unique(unlist(apply(data.frame(fufu),1,function(x){strsplit(x,":")[[1]]})))
+    fufu <- setdiff(fufu,"1")
+    if(length(fufu) >0){
+      missing1 <- sort(unique(as.vector(unlist(apply(data.frame(data[,fufu]),2,function(x){as.vector(which(is.na(x)))})))))
+      if(length(missing1) > 0){
+        data <- droplevels(data[-missing1,])
+      }
+    }
+  }else if(na.method.X == "include"){
+    fufu <- strsplit(as.character(fixed[3]), split = "[+]")[[1]]
+    fufu <- apply(data.frame(fufu),1,function(x){
+      strsplit(as.character((as.formula(paste("~",x)))[2]), split = "[+]")[[1]]
+    })
+    fufu <- setdiff(fufu,"1")
+    if(length(fufu) >0){
+      for(u in fufu){
+        v <- which(is.na(data[,u]))
+        if(length(v) > 0){ # if there's missing data impute
+          #print("imputing")
+          data[,u] <- imputev(data[,u])
+        }
+      }
+    }
+  }else{
+    stop("na.method.X not recognized for sommer", call. = FALSE)
+  }
+  ##########
+  ## NA.METHOD.Y
+  if(na.method.Y == "exclude"){
+    IMP=FALSE
+  }else if(na.method.Y == "include"){
+    IMP=TRUE
+  }else{
+    stop("na.method.Y not recognized for sommer", call. = FALSE)
+  }
+  
+  ######
   yuyu <- strsplit(as.character(random[2]), split = "[+]")[[1]]
   rtermss <- apply(data.frame(yuyu),1,function(x){
     strsplit(as.character((as.formula(paste("~",x)))[2]), split = "[+]")[[1]]
@@ -85,7 +131,7 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
       Gu <- which(names(G)==namere[u])
       if(length(Gu) > 0){
         Kgrp <- G[[Gu]]
-        cat("Ignore warning messages about variance-covariance matrices specified in the \nG argument not used for your grouping effects.\n")
+        cat("Ignore warning messages about variance-covariance matrices specified in the \nG argument not used for your grouping effects. They will be used.\n")
       }else{ Kgrp <- diag(ncol(Zgrpu))}
       ZKgrouping[[u]] <- list(Z=Zgrpu, K=Kgrp)
       names(ZKgrouping)[u] <- namere[u]
@@ -93,12 +139,12 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
   }
   
   ## for us structures
- # apply(data.frame(rtermss),2,function(x){grep("eig",x)})
+  # apply(data.frame(rtermss),2,function(x){grep("eig",x)})
   # if(length(usscheck)>0 & constraint){
   #   cat("Setting 'constraint' argument to FALSE for unstructured model. \nPlease be carefult with results",call. = FALSE)
   #   constraint=FALSE
   # }
-    
+  
   if(missing(rcov)){rcovi <- NULL}else{rcovi<-rcov}
   ttt <- vctable.help(random = random, rcov = rcovi) # extract trait structure
   random <- ttt$random # update random term
@@ -138,7 +184,7 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
   and <- function(x){x}
   eig <- function(x){x}
   perc.na <- function(x){length(which(is.na(x)))/length(x)}
-    
+  
   ###########################
   ############## impute data
   ginvcheck <- grep("ginv\\(",random)
@@ -231,7 +277,7 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
       # data.frame(factor(V[,vara],levels=V[,vara],ordered=T))
       zi <- model.matrix(as.formula(paste("~",vara,"-1")),zvar)
       
-       ### check for overlay matrices
+      ### check for overlay matrices
       andc <- grep("and\\(",vara)
       if(length(andc)>0){
         
@@ -291,6 +337,7 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
                 #########
                 uuuz <- colnames(zix)#levels(as.factor(colnames(zi))) # order of Z
                 uuuk <- attr(G[[ww]],"dimnames")[[1]] # order of K
+                if(is.null(uuuk)){uuuk <- dimnames(G[[ww]])[[1]]}
                 inte <- intersect(uuuz,uuuk)
                 #print(length(inte)==length(uuuz))
                 if(length(inte)==length(uuuz)){ # the names were the same in Z and K
@@ -366,6 +413,7 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
                 ######### just one is needed since z and z' have the same g
                 uuuz <- colnames(zix)#levels(as.factor(colnames(zi))) # order of Z
                 uuuk <- attr(G[[ww]],"dimnames")[[1]] # order of K
+                if(is.null(uuuk)){uuuk <- dimnames(G[[ww]])[[1]]}
                 inte <- intersect(uuuz,uuuk)
                 #print(length(inte)==length(uuuz))
                 if(length(inte)==length(uuuz)){ # the names were the same in Z and K
@@ -429,7 +477,8 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
             #########
             uuuz <- colnames(zi)#levels(as.factor(colnames(zi))) # order of Z
             uuuk <- attr(G[[ww]],"dimnames")[[1]] # order of K
-            
+            if(is.null(uuuk)){uuuk <- dimnames(G[[ww]])[[1]]}
+            #print(uuuk)
             ### ========== sommer 2.8 =========== ###
             ## no intersection when "Year:" is present
             dotcheck <- grep(":g\\(",vara) # if user has Year:g(id)
@@ -557,9 +606,9 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
     
     strmapping <- data.frame(x=c(counterl[1],diff(counterl),rrs),y=c(ttt$ran.trt.str,ttt$rcov.trt.str))
     ttt.all <- as.vector(unlist(apply(strmapping,1,function(x){rep(x[2],x[1])})))
-#     for(m in 1:length(strmapping)){
-#       mapping$stru[which(mapping$res == m)] <- strmapping[m]
-#     }
+    #     for(m in 1:length(strmapping)){
+    #       mapping$stru[which(mapping$res == m)] <- strmapping[m]
+    #     }
     
     #ttt.all <- c(ttt$ran.trt.str, ttt$rcov.trt.str) # structures for each random effect
     torestrain <- numeric()
@@ -627,12 +676,14 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
     names(Z) <- vara2
     
     
-    res <- mmer(Y=yvar, X=X, Z=Z, R=R, method=method, init=init,
+    res <- mmer(Y=yvar, X=X, Z=Z, R=R, method=method, REML=REML, init=init,
                 iters=iters,tolpar=tolpar,
                 tolparinv = tolparinv,draw=draw,silent=silent, 
                 constraint = constraint,EIGEND = EIGEND,
                 forced=forced,IMP=IMP,complete=complete,restrained=torestrain)
-    
+    if(!is.null(res$restrained)){
+      names(res$restrained) <- rownames(res$sigma.scaled)[res$restrained] 
+    }
     
   }else{###only fixed effects
     res <- glm(yvars~X)

@@ -123,8 +123,8 @@ head(data.spd)
 ##
 ## more replication in whole plot treatments (A)
 ## less replication in sub plot treatments (B)
-mix.split <- mmer2(yield ~block + A + B ,random=~ A:B, data=data.spd)
-summary(mix.split)
+# mix.split <- mmer2(yield ~block + A + B ,random=~ A:B, data=data.spd)
+# summary(mix.split)
 
 #### =================================== ####
 #### ==== Split-Split Plot Design  ===== ####
@@ -147,11 +147,11 @@ head(data.sspd)
 ##[]==================================[]
 ##
 head(data.sspd)
-mix.sspd <- mmer2(yield ~1,random=~ block + nitrogen + management + 
-                    variety + nitrogen:management + variety:nitrogen +
-                    variety:management + variety:nitrogen:management,
-                  data=data.sspd)
-summary(mix.sspd)
+# mix.sspd <- mmer2(yield ~1,random=~ block + nitrogen + management + 
+#                     variety + nitrogen:management + variety:nitrogen +
+#                     variety:management + variety:nitrogen:management,
+#                   data=data.sspd)
+# summary(mix.sspd)
 
 #### =================================== ####
 #### ======= Latin Square Design  ====== ####
@@ -173,8 +173,8 @@ head(data.lsd)
 ##[]=============[]
 ##   c1 c2 c3 c4
 ##
-mix.lsd <- mmer2(yield ~ variety ,random=~ row + col, data=data.lsd)
-summary(mix.lsd)
+# mix.lsd <- mmer2(yield ~ variety ,random=~ row + col, data=data.lsd)
+# summary(mix.lsd)
 
 # library(agridat)
 # desplot(yield ~ row*col, data.lsd, main="LSD",
@@ -191,12 +191,12 @@ head(data.car1)
 ## female indicator: "female"
 ## replication: "rep"
 ## set of males: "set"
-mix.car1 <- mmer2(yield~set,random=~ set:rep + set:male 
-                  +set:male:female + set:male:female:rep, data=data.car1)
-(suma <- summary(mix.car1))
+# mix.car1 <- mmer2(yield~set,random=~ set:rep + set:male 
+#                   +set:male:female + set:male:female:rep, data=data.car1)
+# (suma <- summary(mix.car1))
 
-(Var.A <- 4*suma$var.comp.table[2,1])
-(Var.D <- 4*suma$var.comp.table[3,1] - 4*suma$var.comp.table[2,1])
+# (Var.A <- 4*suma$var.comp.table[2,1])
+# (Var.D <- 4*suma$var.comp.table[3,1] - 4*suma$var.comp.table[2,1])
 
 #### =================================== ####
 #### ===== North Carolina Design II ==== ####
@@ -209,29 +209,30 @@ head(data.car2)
 ## female indicator: "female"
 ## replication: "rep"
 ## set of males: "set"
-mix.car2 <- mmer2(yield ~ 1, random=~ set + set:rep + set:male
-                  + set:female + set:male:female, data=data.car2)
-(suma <- summary(mix.car2))
-(Var.Am <- 4*suma$var.comp.table[3,1])
-(Var.Af <- 4*suma$var.comp.table[4,1])
-(Var.D <- 4*suma$var.comp.table[5,1])
+# mix.car2 <- mmer2(yield ~ 1, random=~ set + set:rep + set:male
+#                   + set:female + set:male:female, data=data.car2)
+# (suma <- summary(mix.car2))
+# (Var.Am <- 4*suma$var.comp.table[3,1])
+# (Var.Af <- 4*suma$var.comp.table[4,1])
+# (Var.D <- 4*suma$var.comp.table[5,1])
 
 #### =================================== ####
 #### ==== North Carolina Design III ==== ####
 #### =================================== ####
 data(ExpDesigns)
 data.car3 <- ExpDesigns$car3
+data.car3$setrep <- paste(data.car3$set,data.car3$rep,sep=":")
 head(data.car3)
 ## response variable: "yield"
 ## male indicator: "male"
 ## female indicator: "female"
 ## replication: "rep"
 ## set of males: "set"
-mix.car3 <- mmer2(yield ~ set + set:rep, random=~ set:male
-                  + set:female + set:male:female, data=data.car3)
-(suma <- summary(mix.car3))
-(Var.A <- 4*suma$var.comp.table[1,1]) # var males
-(Var.D <- 2*suma$var.comp.table[3,1]) # var females in males
+# mix.car3 <- mmer2(yield ~ set + setrep, random=~ set:male
+#                   + set:female + set:male:female, data=data.car3)
+# (suma <- summary(mix.car3))
+# (Var.A <- 4*suma$var.comp.table[1,1]) # var males
+# (Var.D <- 2*suma$var.comp.table[3,1]) # var females in males
 
 
 

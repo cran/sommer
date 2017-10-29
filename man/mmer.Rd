@@ -1,8 +1,14 @@
 \name{mmer}
 \alias{mmer}
-\title{\strong{m}ixed \strong{m}odel \strong{e}quations in \strong{R}}
+\title{
+
+\strong{m}ixed \strong{m}odel \strong{e}quations in \strong{R}
+
+}
 \description{
-This function solves univariate and multivariate linear mixed models by likelihood methods. It has been \strong{implemented to work directly with incidence and variance covariance matrices} for each random effect. The optimization \strong{methods} are; \strong{Direct-Inversion Newton-Raphson (NR)} (Tunnicliffe 1989; Lee et al. 2015), and \strong{Efficient Mixed Model Association (EMMA)} (Kang et al. 2008), ideal for problems of the type p > n. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices. With sparse matrices (meaning when dense covariance structures don't exist), or problems with n > p, the MME-based algorithms are faster and we recommend to shift to the use of MME-based software (i.e. lme4, breedR, or asreml-R).
+Fits a multivariate or univariate linear mixed model by likelihood methods (REML). It has been \strong{implemented to work directly with incidence and variance covariance matrices} for each random effect. For a formula-based specification please use the \code{\link{mmer2}} function. The optimization methods are; Direct-Inversion Newton-Raphson (NR) (Tunnicliffe 1989; Lee et al. 2015), and Efficient Mixed Model Association (EMMA) (Kang et al. 2008). These algorithms are \strong{intended to be used for problems of the type p > n}. For problems with sparse covariance structures, or problems of the type n > p, the MME-based algorithms are faster and we recommend to shift to the use of MME-based software (i.e. lme4, breedR, or asreml-R). 
+
+The package also provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices to model the covariance among genotypes in plant and animal breeding problems.
 
 \strong{For a short tutorial} of how to perform different genetic analysis with sommer please type:
 
@@ -13,7 +19,7 @@ This function solves univariate and multivariate linear mixed models by likeliho
 mmer(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,
     tolpar=1e-3, tolparinv=1e-6,draw=FALSE,silent=FALSE, 
     constraint=TRUE, EIGEND=FALSE, forced=NULL, IMP=FALSE, 
-    complete=TRUE, che=TRUE, restrained=NULL)
+    complete=TRUE, check.model=TRUE, restrained=NULL, REML=TRUE)
 }
 \arguments{
   \item{Y}{a matrix or data frame of response variables}
@@ -60,7 +66,7 @@ mmer(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,
   '
   
   You can see the examples at the bottom to have a clearer idea how to fit your models. }
- \item{R}{list of R matrices for residual effects.}
+ \item{R}{list of R matrices for residual effects. If multiple residual structures are provided a direct sum will be applied and the user has to keep in mind that all matrices have to be of the order NxN (neing N the number of observations) even though they will be full of zeros in certain parts of the matrix. Good knowledge of linear algebra is required to use this argument.}
   \item{method}{this refers to the method or algorithm to be used for estimating variance components. Sommer now focus only in 2 algorithms; Direct-inversion Newton-Raphson \strong{NR} (Tunnicliffe 1989; Gilmour et al. 1995; Lee et al. 2015), and \strong{EMMA} efficient mixed model association (Kang et al. 2008). Average Information has been discontinued because of the instability for very complex models requiring EM-type of algorithms to work.}
   \item{init}{initial values for the variance components. By default this is NULL and variance components are estimated by the method selected, but in case the user want to provide initial values this argument is functional. It has to be provided as a list, where each list element is one variance component and if multitrait model is pursued each element of the list is a matrix of variance covariance components among traits.}
   \item{iters}{Maximum number of iterations allowed.  Default value is
@@ -73,12 +79,14 @@ mmer(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,
     \item{EIGEND}{a TRUE/FALSE value indicating if an eigen decomposition for the additive relationship matrix should be performed or not. This is based on Lee (2015). The limitations of this method are:
       1) can only be applied to one relationship matrix
       2) The system needs to be squared and no missing data is allowed (then missing data is imputed with the median).
-   The default is FALSE to avoid the user get into trouble but experimented users can take advantage from this feature to fit big models, i.e. 5000 individuals in 555 seconds = 9 minutes in a MacBook 4GB RAM.}
+   The default is FALSE to avoid the user get into trouble but experimented users can take advantage from this feature to fit big models, i.e. 5000 individuals in 555 seconds = 9 minutes in a MacBook 4GB RAM. If you use this feature keep in mind that residuals and fitted values cannot be used given the roation of the data.}
     \item{forced}{a list of values for variance-covariance components to be used if the user wants to force those values. The format is the same than the init argument.}
     \item{IMP}{a TRUE/FALSE statement if the function should impute the Y matrix/dataframe with the median value or should get rid of missing values for the estimation of variance components. Default is FALSE (although please see the 'complete' argument.)}
    \item{complete}{a TRUE/FALSE statement to indicate if the function should impute the cases where at least for one trait there's an observation. Default is TRUE in order to use all data points where at least one observation exist across traits.}
-   \item{che}{a TRUE/FALSE statement to indicate if the function should check the input parameters from the user.}
+   \item{check.model}{a TRUE/FALSE statement to indicate if the function should check the input parameters from the user.}
    \item{restrained}{a numeric argument specifying which variance-covariance parameters should be restrained. Please see \code{\link{vctable}} and \code{\link{vctable.help}} functions if you want to use it although you shouldn't since is made for the \code{\link{mmer2}} function.}
+   \item{REML}{a TRUE/FALSE value to indicate if REML or ML should be used for optimization. Not functional yet. Only REML available.}
+    
 }
 \details{
 
@@ -116,7 +124,7 @@ If all parameters are correctly indicated the program will return a list with th
 \item{PEV.u.hat}{a list (one element for each random effect) with the predicted error variance matrix for trait BLUPs.}
 \item{beta.hat}{a data frame for trait BLUEs (fixed effects).}
 \item{Var.beta.hat}{a variance-covariance matrix for trait BLUEs}
-\item{fish.inv}{inverse of the Fisher's information or average information matrices to obtain variance-covariance of the variance components.}
+\item{fish.inv}{inverse of the Fisher's information.}
 \item{residuals}{Residual values e = Y - XB}
 \item{cond.residuals}{Conditional residual e.cond = Y - (XB + ZU)}
 \item{LL}{LogLikelihood}
@@ -129,7 +137,6 @@ If all parameters are correctly indicated the program will return a list with th
 \item{fitted.u}{ Fitted values only across random effects u.hat=Zu.1+....+Zu.i}
 \item{ZETA}{Original incidence and variance covariance matrices used in the model fit.}
 \item{K}{ variance-covariance matrix for random effects. If more than one random effect this will be the diagonal binding of individual K matrices.}
-\item{fish.inv}{ If was set to TRUE the Fishers information matrix will be in this slot.}
 \item{method}{The method for extimation of variance components specified by the user.}
 \item{forced}{a TRUE/FALSE statement indicating if user used the forced argument.}
 \item{convergence}{a TRUE/FALSE statement indicating if the model converged.}
@@ -150,6 +157,8 @@ Gilmour et al. 1995. Average Information REML: An efficient algorithm for varian
 Kang et al. 2008. Efficient control of population structure in model organism association mapping. Genetics 178:1709-1723.
 
 Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: http://dx.doi.org/10.1101/027201.
+
+Maier et al. 2015. Joint analysis of psychiatric disorders increases accuracy of risk prediction for schizophrenia, bipolar disorder, and major depressive disorder. Am J Hum Genet; 96(2):283-294.
 
 Searle. 1993. Applying the EM algorithm to calculating ML and REML estimates of variance components. Paper invited for the 1993 American Statistical Association Meeting, San Francisco.
 

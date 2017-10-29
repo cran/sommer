@@ -72,12 +72,6 @@ fill.design <- function(x,rows="ROW",ranges="RANGE", by, extra){
       rownames(newf) <- NULL
       newf[,by] <- bybo
       
-      
-      with(newf, table(FIELDINST, BLOCK, useNA = "always"))
-      dim(newf)
-      with(newf, table(FIELDINST, ROW, useNA = "always"))
-      with(newf, table(FIELDINST, RANGE, useNA = "always"))
-      
       ### if user wants to fill additional factor columns
       ### if user wants to fill additional factor columns
       ### if user wants to fill additional factor columns

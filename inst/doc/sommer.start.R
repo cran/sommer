@@ -25,6 +25,17 @@ summary(ans1)
 
 data(example)
 head(example)
+ans3 <- mmer2(Yield~Env,
+             random=~ us(Env):Name,
+             rcov=~at(Env):units, 
+             data=example, silent=TRUE)
+summary(ans3)
+
+
+## ------------------------------------------------------------------------
+
+data(example)
+head(example)
 ans1 <- mmer2(cbind(Yield, Weight) ~ Env, 
               random= ~ us(trait):Name + us(trait):Env:Name,
               rcov= ~ us(trait):units,

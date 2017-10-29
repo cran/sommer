@@ -1,7 +1,7 @@
 mmer <- function(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,tolpar=1e-3,
                  tolparinv=1e-6,draw=FALSE,silent=FALSE, constraint=TRUE, 
                  EIGEND=FALSE, forced=NULL, IMP=FALSE, complete=TRUE, 
-                 che=TRUE, restrained=NULL){
+                 check.model=TRUE, restrained=NULL, REML=TRUE){
   #R=NULL
   if (inherits(Y, "formula")){
     stop("\nYou have to use mmer2 function for formula-based models.\n", call. = FALSE)
@@ -22,9 +22,9 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,tolpar=1e
     stop("Please when specifying a random effect use the names; \n'Z' for incidence and 'K' for variance-covariance matrices.\nFor example for 1 random effect (i.e. named 'A') model do:\n    ETA <- list( A=list( Z=M1, K=M2) )\n    mod <- mmer(Y=y, Z=ETA)\nSpecifying at least one; Z or K. You need to specify if is a 'Z' or 'K' \nsince this is the only way the program distinguishes between matrices.",call. = FALSE)
   }
   
-  my.year <- 2017
-  my.month <- 10 #month when the user will start to get notifications the 1st day of next month
-  
+  my.year <- 2018
+  my.month <- 1 #month when the user will start to get notifications the 1st day of next month
+  # if my month = 3, user will start to get notification in april 1st
   datee <- Sys.Date()
   year.mo.day <- as.numeric(strsplit(as.character(datee),"-")[[1]])# <- as.numeric(strsplit(gsub("....-","",datee),"-")[[1]])
   your.year <- year.mo.day[1]
@@ -82,7 +82,7 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,tolpar=1e
   }
   #if(!silent){cat("Running multivariate model\n")}
   
-  if(che){
+  if(check.model){
     if(is.list(Z)){
       if(is.list(Z[[1]])){ ### -- if is a 2 level list -- ##
         provided <- lapply(Z, names)
@@ -153,12 +153,12 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,tolpar=1e
     RES <- MNR(Y=Y,X=X,ZETA=Z,R=R,init=init,iters=iters,tolpar=tolpar,
                tolparinv = tolparinv,draw=draw,silent=silent, 
                constraint = constraint,EIGEND = EIGEND,
-               forced=forced,IMP=IMP,restrained=restrained)
+               forced=forced,IMP=IMP,restrained=restrained, REML=REML)
     class(RES)<-c("MMERM")
   }else if(method == "EMMA"){
     if(length(Z)>1){stop("EMMA method only works for one random effect other than error.\n Please select NR or AI methods.", call. = FALSE)}
     RES <- MEMMA(Y=Y,X=X,ZETA=Z,tolpar=tolpar,
-               tolparinv = tolparinv,che=che,silent=silent)
+               tolparinv = tolparinv,check.model=check.model,silent=silent)
     class(RES)<-c("MMERM")
   }else if(method == "AI"){
     stop("AI method has been discontinued because of its instability. Try 'NR'.\nSee details in the sommer help page. ", call. = FALSE)
@@ -195,7 +195,7 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,tolpar=1e
   colnames(groupss.nn) <- c("Observ","Groups")
   
   if(object$method == "MNR"){
-    nano <- object$choco
+    nano <- object$random.effs
   }else{
     nano <- names(object$ZETA)
   }
@@ -302,6 +302,9 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,tolpar=1e
     }
   }
   
+  if(!is.null(object$restrained)){
+    w2 <- w2[-object$restrained,]
+  }
   output <- list(groups=groupss.nn, var.comp=w,var.comp.table=w2, betas=seti, method=method,logo=LLAIC)
   attr(output, "class")<-c("summary.MMERM", "list")
   return(output)
@@ -326,8 +329,8 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,tolpar=1e
   cat(paste(rep("=",nmaxchar), collapse = ""))
   #cat("\n   Multivariate Linear Mixed Model fit by REML      \n")
   cat(paste("\n",rlt,"Multivariate Linear Mixed Model fit by REML",rlt,"\n", collapse = ""))
-  #cat("***********************  sommer 3.0  ***********************\n")
-  cat(paste(rlh," sommer 3.0 ",rlh, "\n", collapse = ""))
+  #cat("***********************  sommer 3.1  ***********************\n")
+  cat(paste(rlh," sommer 3.1 ",rlh, "\n", collapse = ""))
   #cat("============================================================")
   cat(paste(rep("=",nmaxchar), collapse = ""))
   cat("\n")
@@ -469,8 +472,9 @@ anova.MMERM <- function(object, object2=NULL, ...) {
       stop("Error! When comparing models please use the same method for the fitted models.")
     }else{
       yu <- summary(object)
+      yu2 <- summary(object2)
       dis=c(dim(yu$var.comp.table)[1]+dim(object$beta.hat)[1]*dim(object$beta.hat)[2],
-            dim(yu$var.comp.table)[1]+dim(object2$beta.hat)[1]*dim(object2$beta.hat)[2]) # dimensions
+            dim(yu2$var.comp.table)[1]+dim(object2$beta.hat)[1]*dim(object2$beta.hat)[2]) # dimensions
       mods=c("mod1","mod2")
       lls=c(object$LL, object2$LL) # likelihoods
       aics=c(object$AIC, object2$AIC) # AIC's
@@ -499,7 +503,7 @@ anova.MMERM <- function(object, object2=NULL, ...) {
     }
     #}
   }
-  return(result)
+  #return(result)
 }
 #### =========== ####
 ## PLOTING FUNCTION #
@@ -514,8 +518,8 @@ plot.MMERM <- function(x, ...) {
   traits <- ncol(x$fitted.y)
   layout(matrix(1:4,2,2))
   for(i in 1:traits){
-  plot(x$fitted.y[x$good,i], scale(x$cond.residuals[,i]), pch=20, col=transp("cadetblue"), ylab="Std Residuals", xlab="Fitted values", main="Residual vs Fitted", bty="n", ...); grid()
-  plot(x$fitted.y[x$good,i], sqrt(abs((scale(x$cond.residuals[,i])))), pch=20, col=transp("thistle4"), ylab="Sqrt Abs Std Residuals", xlab="Fitted values", main="Scale-Location",bty="n", ...);grid()
+  plot(x$fitted.y[x$used.observations,i], scale(x$cond.residuals[,i]), pch=20, col=transp("cadetblue"), ylab="Std Residuals", xlab="Fitted values", main="Residual vs Fitted", bty="n", ...); grid()
+  plot(x$fitted.y[x$used.observations,i], sqrt(abs((scale(x$cond.residuals[,i])))), pch=20, col=transp("thistle4"), ylab="Sqrt Abs Std Residuals", xlab="Fitted values", main="Scale-Location",bty="n", ...);grid()
   qqnorm(scale(x$cond.residuals), pch=20, col=transp("tomato1"), ylab="Std Residuals", bty="n",...); grid()
   hat <- x$X%*%solve(t(x$X)%*%x$V.inv%*%x$X)%*%t(x$X)%*%x$V.inv # leverage including variance from random effects H= X(X'V-X)X'V-
   plot(diag(hat), scale(x$cond.residuals), pch=20, col=transp("springgreen3"), ylab="Std Residuals", xlab="Leverage", main="Residual vs Leverage", bty="n", ...); grid()
@@ -534,7 +538,7 @@ plot.MMERM <- function(x, ...) {
     stop("This package requires R 2.1 or later")
   assign(".sommer.home", file.path(library, pkg),
          pos=match("package:sommer", search()))
-  sommer.version = "3.0 (2017-09-01)" # usually 2 months before it expires
+  sommer.version = "3.1 (2017-11-01)" # usually 2 months before it expires
   
   ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ### check which version is more recent
@@ -566,7 +570,7 @@ plot.MMERM <- function(x, ...) {
     #  packageStartupMessage(paste("Version",current,"is now available."),appendLF=TRUE) # version current
     #  packageStartupMessage(paste("Please update 'sommer' installing the new version."),appendLF=TRUE) # version current
     #}
-    #print(image(diag(10),main="sommer 3.0"))
+    #print(image(diag(10),main="sommer 3.1"))
   }
   invisible()
 }

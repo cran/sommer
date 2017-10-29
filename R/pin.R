@@ -5,7 +5,7 @@ pin <- function (object, transform){
   }
   
   if(object$method %in% c("MNR","MAI","MEMMA")){
-    pframe <- as.list(object$sigma.scaled)#as.list(summary(object)[[3]][,1])
+    pframe <- as.list(object$sigma)#as.list(summary(object)[[3]][,1])
   }else{
     pframe <- as.list(object$var.comp[,1])
   }
@@ -21,7 +21,7 @@ pin <- function (object, transform){
   i <- rep(1:n, 1:n)
   j <- sequence(1:n)
   k <- 1 + (i > j)
-  Vmat <- object$fish.inv
+  Vmat <- object$fish.inv.nonscale
   toext <- upper.tri(Vmat)
   diag(toext) <- TRUE
   Vmat <- Vmat[which(toext,arr.ind = TRUE)]

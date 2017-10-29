@@ -10,7 +10,7 @@ Calculates the realized dominance relationship matrix. Can help to increase the 
 \usage{
 D.mat(X,min.MAF=NULL,max.missing=NULL,impute.method="mean",tol=0.02,
       n.core=1,shrink=FALSE,return.imputed=FALSE, ploidy=2, return.Xd=FALSE, 
-      method=1)
+      method=3)
 }
 
 \arguments{
