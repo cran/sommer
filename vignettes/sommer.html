@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2017-10-29" />
+<meta name="date" content="2018-01-09" />
 
 <title>Quantitative genetics using the sommer package</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Quantitative genetics using the sommer package</h1>
 <h4 class="author"><em>Giovanny Covarrubias-Pazaran</em></h4>
-<h4 class="date"><em>2017-10-29</em></h4>
+<h4 class="date"><em>2018-01-09</em></h4>
 
 
 
@@ -144,9 +144,9 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' &amp; ... &am
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(sommer)</code></pre></div>
 <pre><code>## Loading required package: Matrix</code></pre>
 <pre><code>## Loading required package: MASS</code></pre>
-<pre><code>## Loading required package: parallel</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(h2)
-<span class="kw">head</span>(h2)</code></pre></div>
+<pre><code>## Loading required package: lattice</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(h2example)
+<span class="kw">head</span>(h2example)</code></pre></div>
 <pre><code>##                 Name     Env Loc Year     Block y
 ## 1            W8822-3 FL.2012  FL 2012 FL.2012.1 2
 ## 2            W8867-7 FL.2012  FL 2012 FL.2012.2 2
@@ -157,17 +157,17 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' &amp; ... &am
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ans1 &lt;-<span class="st"> </span><span class="kw">mmer2</span>(y~<span class="dv">1</span>, 
               <span class="dt">random =</span> ~Name +<span class="st"> </span>Env +<span class="st"> </span>Name:Env +<span class="st"> </span>Block,
               <span class="dt">rcov =</span> ~units,
-              <span class="dt">data=</span>h2, <span class="dt">silent =</span> <span class="ot">TRUE</span>)
+              <span class="dt">data=</span>h2example, <span class="dt">silent =</span> <span class="ot">TRUE</span>)
 
 suma &lt;-<span class="st"> </span><span class="kw">summary</span>(ans1)
-n.env &lt;-<span class="st"> </span><span class="kw">length</span>(<span class="kw">levels</span>(h2$Env))
+n.env &lt;-<span class="st"> </span><span class="kw">length</span>(<span class="kw">levels</span>(h2example$Env))
 <span class="kw">pin</span>(ans1, h2 ~<span class="st"> </span>V1 /<span class="st"> </span>( V1 +<span class="st"> </span>(V3/n.env) +<span class="st"> </span>(V5/(<span class="dv">2</span>*n.env)) ) )</code></pre></div>
 <pre><code>##     Estimate         SE
-## h2 0.8594805 0.03517521</code></pre>
+## h2 0.8594794 0.03517549</code></pre>
 <p>The same model can be fitted with the <code>mmer</code> function that is actually used by the <code>mmer2</code> function in the background. This is just to show that you can create your customized matrices and use the mixed model solver. This is how you would do it:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(sommer)
-<span class="kw">data</span>(h2)
-<span class="kw">head</span>(h2)</code></pre></div>
+<span class="kw">data</span>(h2example)
+<span class="kw">head</span>(h2example)</code></pre></div>
 <pre><code>##                 Name     Env Loc Year     Block y
 ## 1            W8822-3 FL.2012  FL 2012 FL.2012.1 2
 ## 2            W8867-7 FL.2012  FL 2012 FL.2012.2 2
@@ -175,12 +175,12 @@ n.env &lt;-<span class="st"> </span><span class="kw">length</span>(<span class="
 ## 4         CO00270-7W FL.2012  FL 2012 FL.2012.2 3
 ## 5 Manistee(MSL292-A) FL.2013  FL 2013 FL.2013.2 3
 ## 6           MSM246-B FL.2012  FL 2012 FL.2012.2 3</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Z1 &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(~Name<span class="dv">-1</span>, h2)
-Z2 &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(~Env<span class="dv">-1</span>, h2)
-Z3 &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(~Env:Name<span class="dv">-1</span>, h2)
-Z4 &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(~Block<span class="dv">-1</span>, h2)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Z1 &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(~Name<span class="dv">-1</span>, h2example)
+Z2 &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(~Env<span class="dv">-1</span>, h2example)
+Z3 &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(~Env:Name<span class="dv">-1</span>, h2example)
+Z4 &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(~Block<span class="dv">-1</span>, h2example)
 ETA &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">name=</span><span class="kw">list</span>(<span class="dt">Z=</span>Z1),<span class="dt">env=</span><span class="kw">list</span>(<span class="dt">Z=</span>Z2),<span class="dt">name.env=</span><span class="kw">list</span>(<span class="dt">Z=</span>Z3),<span class="dt">block=</span><span class="kw">list</span>(<span class="dt">Z=</span>Z4))
-y &lt;-<span class="st"> </span>h2$y
+y &lt;-<span class="st"> </span>h2example$y
 ans1 &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt">Y=</span>y, <span class="dt">Z=</span>ETA, <span class="dt">silent =</span> <span class="ot">TRUE</span>)
 vc &lt;-<span class="st"> </span>ans1$var.comp</code></pre></div>
 <p>Recently with markers becoming cheaper, thousand of markers can be run in the breeding materials. When markers are available, an special design is not neccesary to disect the additive genetic variance. The availability of the additive, dominance and epistatic relationship matrices allow us to estimate <span class="math inline">\(\sigma^2_A\)</span>, <span class="math inline">\(\sigma^2_D\)</span> and <span class="math inline">\(\sigma^2_I\)</span>.</p>
@@ -222,9 +222,9 @@ ans.ADE &lt;-<span class="st"> </span><span class="kw">mmer2</span>(color~<span 
                  <span class="dt">silent =</span> <span class="ot">TRUE</span>, <span class="dt">data=</span>CPpheno)
 suma &lt;-<span class="st"> </span><span class="kw">summary</span>(ans.ADE)$var.comp.table
 (H2 &lt;-<span class="st"> </span><span class="kw">sum</span>(suma[<span class="dv">1</span>:<span class="dv">3</span>,<span class="dv">1</span>])/<span class="kw">sum</span>(suma[,<span class="dv">1</span>]))</code></pre></div>
-<pre><code>## [1] 0.7224984</code></pre>
+<pre><code>## [1] 0.7224969</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">(h2 &lt;-<span class="st"> </span><span class="kw">sum</span>(suma[<span class="dv">1</span>,<span class="dv">1</span>])/<span class="kw">sum</span>(suma[,<span class="dv">1</span>]))</code></pre></div>
-<pre><code>## [1] 0.4827261</code></pre>
+<pre><code>## [1] 0.4827271</code></pre>
 <p>In the previous example we showed how to estimate the additive (<span class="math inline">\(\sigma^2_A\)</span>), dominance (<span class="math inline">\(\sigma^2_D\)</span>), and epistatic (<span class="math inline">\(\sigma^2_I\)</span>) variance components based on markers and estimate broad (<span class="math inline">\(H^2\)</span>) and narrow sense heritability (<span class="math inline">\(h^2\)</span>). Notice that we used the <code>g()</code> function which indicates that the random effect inside the parenthesis (i.e. id, idd or ide) has a covariance matrix (A, D, or E), that will be specified in the G argument in the form of a list and using the name of the random efect to allow the program to recognize which variance covariance matrix belongs to each random effect. Please DO NOT provide the inverse but the original covariance matrix. This is why we have called the function <code>g()</code> and no <code>giv()</code> as the popular software asreml.</p>
 <p>Just to show one more time that you can use your own matrices we will repeat the same calculation using the <code>mmer</code> function:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(CPdata)
@@ -256,11 +256,11 @@ ans.ADE &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="
 ans.ADE$var.comp</code></pre></div>
 <pre><code>## $id
 ##             T1
-## T1 0.003664777
+## T1 0.003668396
 ## 
 ## $idd
 ##             T1
-## T1 0.001820402
+## T1 0.001820039
 ## 
 ## $ide
 ##    T1
@@ -268,7 +268,7 @@ ans.ADE$var.comp</code></pre></div>
 ## 
 ## $units
 ##             T1
-## T1 0.002106253</code></pre>
+## T1 0.002105616</code></pre>
 </div>
 <div id="specifying-heterogeneous-variances-in-univariate-models" class="section level2">
 <h2>2) Specifying heterogeneous variances in univariate models</h2>
@@ -292,25 +292,25 @@ modFD &lt;-<span class="st"> </span><span class="kw">mmer2</span>(Yield~<span cl
 <span class="kw">summary</span>(modFD)</code></pre></div>
 <pre><code>## ==================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ******************  sommer 3.1  ****************** 
+## ******************  sommer 3.2  ****************** 
 ## ==================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -164.6839 331.3677 335.3592    MNR     TRUE
 ## ==================================================
 ## Variance-Covariance components:
 ##                     VarComp VarCompSE Zratio
-## 3:GCA2.Yield-Yield    62.41     53.39  1.169
+## 3:GCA2.Yield-Yield    62.42     53.40  1.169
 ## 4:GCA2.Yield-Yield    98.02     79.59  1.232
 ## 1:units.Yield-Yield  216.82     30.76  7.048
 ## 2:units.Yield-Yield  216.82     30.76  7.048
-## 3:units.Yield-Yield  493.08     77.29  6.380
+## 3:units.Yield-Yield  493.07     77.29  6.380
 ## 4:units.Yield-Yield  711.98    111.64  6.378
 ## ==================================================
 ## Fixed effects:
 ## 
 ## $Yield
 ##           Estimate Std. Error  t value
-## Intercept 138.1129  0.9441644 146.2806
+## Intercept 138.1129  0.9441655 146.2804
 ## 
 ## ==================================================
 ## Groups and observations:
@@ -334,20 +334,20 @@ modFD &lt;-<span class="st"> </span><span class="kw">mmer2</span>(Yield~<span cl
 <span class="kw">summary</span>(modFD)</code></pre></div>
 <pre><code>## ==================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ******************  sommer 3.1  ****************** 
+## ******************  sommer 3.2  ****************** 
 ## ==================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -157.4751 316.9502 320.9417    MNR     TRUE
 ## ==================================================
 ## Variance-Covariance components:
 ##                       VarComp VarCompSE Zratio
-## g(GCA2).Yield-Yield    28.179     12.49 2.2567
+## g(GCA2).Yield-Yield    28.180     12.49 2.2566
 ## 1:g(GCA2).Yield-Yield   0.000       NaN 0.0000
 ## 2:g(GCA2).Yield-Yield   0.000       NaN 0.0000
 ## 3:g(GCA2).Yield-Yield   3.925     18.43 0.2130
-## 4:g(GCA2).Yield-Yield  10.069     27.89 0.3611
-## 1:units.Yield-Yield   187.926     29.07 6.4642
-## 2:units.Yield-Yield   187.926     29.07 6.4642
+## 4:g(GCA2).Yield-Yield  10.068     27.89 0.3611
+## 1:units.Yield-Yield   187.925     29.07 6.4642
+## 2:units.Yield-Yield   187.925     29.07 6.4642
 ## 3:units.Yield-Yield   497.124     76.36 6.5104
 ## 4:units.Yield-Yield   727.368    111.74 6.5093
 ## ==================================================
@@ -355,7 +355,7 @@ modFD &lt;-<span class="st"> </span><span class="kw">mmer2</span>(Yield~<span cl
 ## 
 ## $Yield
 ##           Estimate Std. Error  t value
-## Intercept 138.3383   1.321402 104.6906
+## Intercept 138.3383   1.321406 104.6903
 ## 
 ## ==================================================
 ## Groups and observations:
@@ -391,7 +391,7 @@ A &lt;-<span class="st"> </span><span class="kw">A.mat</span>(CPgeno)
 <span class="kw">summary</span>(mix1)</code></pre></div>
 <pre><code>## ==================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ******************  sommer 3.1  ****************** 
+## ******************  sommer 3.2  ****************** 
 ## ==================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -110.7406 223.4812 227.3728    MNR     TRUE
@@ -405,7 +405,7 @@ A &lt;-<span class="st"> </span><span class="kw">A.mat</span>(CPgeno)
 ## 
 ## $color
 ##            Estimate  Std. Error  t value
-## Intercept 0.1825652 0.002754967 66.26763
+## Intercept 0.1825652 0.002754956 66.26792
 ## 
 ## ==================================================
 ## Groups and observations:
@@ -416,7 +416,7 @@ A &lt;-<span class="st"> </span><span class="kw">A.mat</span>(CPgeno)
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">#### run the pin function
 <span class="kw">pin</span>(mix1, h2 ~<span class="st"> </span>V1 /<span class="st"> </span>( V1 +<span class="st"> </span>V2 ) )</code></pre></div>
 <pre><code>##     Estimate         SE
-## h2 0.6512661 0.06109168</code></pre>
+## h2 0.6512726 0.06109097</code></pre>
 <p>The same can be used for multivariate models. Please check the documentation of the <code>pin</code> function to see more examples.</p>
 </div>
 <div id="half-and-full-diallel-designs" class="section level2">
@@ -444,7 +444,7 @@ hybrid2 &lt;-<span class="st"> </span>cornHybrid$hybrid <span class="co"># extra
 (suma &lt;-<span class="st"> </span><span class="kw">summary</span>(modFD))</code></pre></div>
 <pre><code>## ==================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ******************  sommer 3.1  ****************** 
+## ******************  sommer 3.2  ****************** 
 ## ==================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -132.5889 273.1777 289.1436    MNR     TRUE
@@ -452,16 +452,16 @@ hybrid2 &lt;-<span class="st"> </span>cornHybrid$hybrid <span class="co"># extra
 ## Variance-Covariance components:
 ##                   VarComp VarCompSE  Zratio
 ## GCA1.Yield-Yield    0.000       NaN  0.0000
-## GCA2.Yield-Yield    7.299     18.88  0.3866
-## SCA.Yield-Yield   187.654     41.62  4.5083
+## GCA2.Yield-Yield    7.302     18.88  0.3867
+## SCA.Yield-Yield   187.652     41.62  4.5083
 ## units.Yield-Yield 221.142     18.15 12.1861
 ## ==================================================
 ## Fixed effects:
 ## 
 ## $Yield
 ##                  Estimate Std. Error       t value
-## (Intercept)  1.379350e+02   2.121462  6.501886e+01
-## Location2    1.350031e-13   2.103057  6.419375e-14
+## (Intercept)  1.379351e+02   2.121492  6.501796e+01
+## Location2   -1.669775e-13   2.103057 -7.939753e-14
 ## Location3    7.835337e+00   2.103057  3.725689e+00
 ## Location4   -9.097455e+00   2.103057 -4.325824e+00
 ## 
@@ -480,9 +480,9 @@ Va =<span class="st"> </span><span class="dv">4</span>*Vgca
 Vd =<span class="st"> </span><span class="dv">4</span>*Vsca
 Vg &lt;-<span class="st"> </span>Va +<span class="st"> </span>Vd
 (H2 &lt;-<span class="st"> </span>Vg /<span class="st"> </span>(Vg +<span class="st"> </span>(Ve)) )</code></pre></div>
-<pre><code>## [1] 0.779069</code></pre>
+<pre><code>## [1] 0.7790693</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">(h2 &lt;-<span class="st"> </span>Va /<span class="st"> </span>(Vg +<span class="st"> </span>(Ve)) )</code></pre></div>
-<pre><code>## [1] 0.02916874</code></pre>
+<pre><code>## [1] 0.02917923</code></pre>
 <p>Don’t worry too much about the small h2 value, the data was simulated to be mainly dominance variance, therefore the Va was simulated extremely small leading to such value of narrow sense h2.</p>
 <p>In this second data set we show a small half diallel with 7 parents crossed in one direction. n(n-1)/2 crosses are possible 7(6)/2 = 21 unique crosses. Parents appear as males or females indistictly. Each with two replications in a CRD. For a half diallel design a single GCA variance component for both males and females can be estimated and an SCA as well (<span class="math inline">\(\sigma^2_GCA\)</span> and <span class="math inline">\(\sigma^2_SCA\)</span> respectively), and BLUPs for GCA and SCA of the parents can be extracted. We would show first how to use it with the <code>mmer2</code> function using the <code>and()</code> function and later we will show how to do it creating customized matrices using the <code>overlay</code> and <code>model.matrix</code> functions for the GCA and SCA matrices respectively. The specific model here is:</p>
 <p><span class="math inline">\(y = X\beta + Zu_g + Zu_s + \epsilon\)</span></p>
@@ -506,7 +506,7 @@ modHD &lt;-<span class="st"> </span><span class="kw">mmer2</span>(sugar~<span cl
 <span class="kw">summary</span>(modHD)</code></pre></div>
 <pre><code>## ==================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ******************  sommer 3.1  ****************** 
+## ******************  sommer 3.2  ****************** 
 ## ==================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -5.674408 13.34882 15.08649    MNR     TRUE
@@ -521,7 +521,7 @@ modHD &lt;-<span class="st"> </span><span class="kw">mmer2</span>(sugar~<span cl
 ## 
 ## $sugar
 ##           Estimate Std. Error  t value
-## Intercept 10.33318   1.818941 5.680879
+## Intercept 10.33318   1.818944 5.680868
 ## 
 ## ==================================================
 ## Groups and observations:
@@ -538,9 +538,9 @@ Va =<span class="st"> </span><span class="dv">4</span>*Vgca
 Vd =<span class="st"> </span><span class="dv">4</span>*Vsca
 Vg &lt;-<span class="st"> </span>Va +<span class="st"> </span>Vd
 (H2 &lt;-<span class="st"> </span>Vg /<span class="st"> </span>(Vg +<span class="st"> </span>(Ve/<span class="dv">2</span>)) ) <span class="co"># 2 technical reps</span></code></pre></div>
-<pre><code>## [1] 0.9494881</code></pre>
+<pre><code>## [1] 0.9494886</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">(h2 &lt;-<span class="st"> </span>Va /<span class="st"> </span>(Vg +<span class="st"> </span>(Ve/<span class="dv">2</span>)) )</code></pre></div>
-<pre><code>## [1] 0.7140855</code></pre>
+<pre><code>## [1] 0.7140843</code></pre>
 <p>Notice how the <code>and()</code> argument makes the overlay possible making sure that male and female are joint into a single random effect. The same can be done using the <code>mmer</code> argument by creating the incidence and covariance matrices in case you want to see what is doing <code>mmer2</code> in the background.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">  <span class="kw">data</span>(HDdata)
   <span class="kw">head</span>(HDdata)</code></pre></div>
@@ -563,22 +563,22 @@ Vg &lt;-<span class="st"> </span>Va +<span class="st"> </span>Vd
   <span class="kw">summary</span>(modHD)</code></pre></div>
 <pre><code>## ==================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ******************  sommer 3.1  ****************** 
+## ******************  sommer 3.2  ****************** 
 ## ==================================================
 ##          logLik      AIC      BIC Method Converge
-## Value -5.674409 13.34882 15.08649    MNR     TRUE
+## Value -5.674413 13.34883 15.08649    MNR     TRUE
 ## ==================================================
 ## Variance-Covariance components:
 ##             VarComp VarCompSE Zratio
-## u1.T1-T1      5.505    3.5747  1.540
-## u2.T1-T1      1.818    1.3648  1.332
-## units.T1-T1   3.117    0.9618  3.241
+## u1.T1-T1      5.507     3.577  1.539
+## u2.T1-T1      1.820     1.367  1.331
+## units.T1-T1   3.116     0.961  3.242
 ## ==================================================
 ## Fixed effects:
 ## 
 ## $T1
 ##           Estimate Std. Error  t value
-## Intercept 10.33318   1.818323 5.682808
+## Intercept 10.33318   1.818652 5.681781
 ## 
 ## ==================================================
 ## Groups and observations:
@@ -626,7 +626,7 @@ ans &lt;-<span class="st"> </span><span class="kw">mmer2</span>(X1~<span class="
              <span class="dt">G=</span><span class="kw">list</span>(<span class="dt">id=</span>K), <span class="dt">method=</span><span class="st">&quot;NR&quot;</span>, 
              <span class="dt">data=</span>y.trn, <span class="dt">silent =</span> <span class="ot">TRUE</span>) <span class="co"># kinship based</span>
 <span class="kw">cor</span>(ans$u.hat$<span class="st">`</span><span class="dt">g(id)</span><span class="st">`</span>[vv,],Y[vv,<span class="st">&quot;X1&quot;</span>])</code></pre></div>
-<pre><code>## [1] 0.4885689</code></pre>
+<pre><code>## [1] 0.4885693</code></pre>
 </div>
 <div id="single-cross-prediction" class="section level2">
 <h2>6) Single cross prediction</h2>
@@ -684,22 +684,22 @@ anss2 &lt;-<span class="st"> </span><span class="kw">mmer2</span>(yield~<span cl
 <span class="kw">summary</span>(anss2)</code></pre></div>
 <pre><code>## ==================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ******************  sommer 3.1  ****************** 
+## ******************  sommer 3.2  ****************** 
 ## ==================================================
 ##         logLik       AIC       BIC Method Converge
 ## Value 121.6303 -241.2605 -236.2095    MNR     TRUE
 ## ==================================================
 ## Variance-Covariance components:
 ##                     VarComp VarCompSE Zratio
-## g(gcad).yield-yield   16.18    2.6079  6.206
-## g(gcaf).yield-yield   11.27    2.1500  5.242
+## g(gcad).yield-yield   16.19    2.6079  6.206
+## g(gcaf).yield-yield   11.27    2.1501  5.242
 ## units.yield-yield     17.65    0.8068 21.878
 ## ==================================================
 ## Fixed effects:
 ## 
 ## $yield
 ##            Estimate Std. Error   t value
-## Intercept 0.1245167  0.2035401 0.6117551
+## Intercept 0.1245116  0.2035404 0.6117291
 ## 
 ## ==================================================
 ## Groups and observations:
@@ -709,7 +709,7 @@ anss2 &lt;-<span class="st"> </span><span class="kw">mmer2</span>(yield~<span cl
 ## ==================================================
 ## Use the '$' sign to access results and parameters</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">cor</span>(anss2$fitted.y[vv2], hybs$yield[vv2])</code></pre></div>
-<pre><code>## [1] 0.8797644</code></pre>
+<pre><code>## [1] 0.8797643</code></pre>
 <p>In the previous model we only used the GCA effects (GCA1 and GCA2) for practicity, altough it’s been shown that the SCA effect doesn’t actually help that much in increasing prediction accuracy and increase a lot the computation intensity required since the variance covariance matrix for SCA is the kronecker product of the variance covariance matrices for the GCA effects, resulting in a 10578x10578 matrix that increases in a very intensive manner the computation required.</p>
 <p>A model without covariance structures would show that the SCA variance component is insignificant compared to the GCA effects. This is why including the third random effect doesn’t increase the prediction accuracy.</p>
 </div>
@@ -745,14 +745,14 @@ ans.A &lt;-<span class="st"> </span><span class="kw">mmer2</span>(<span class="k
 <span class="kw">summary</span>(ans.A)</code></pre></div>
 <pre><code>## ==================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ******************  sommer 3.1  ****************** 
+## ******************  sommer 3.2  ****************** 
 ## ==================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -286.6437 577.2875 586.4626    MNR     TRUE
 ## ==================================================
 ## Variance-Covariance components:
 ##                     VarComp VarCompSE  Zratio
-## g(id).color-color 5.116e-03 1.037e-03  4.9332
+## g(id).color-color 5.116e-03 1.037e-03  4.9331
 ## g(id).color-Yield 3.544e-01 4.303e-01  0.8236
 ## g(id).Yield-Yield 6.497e+02 3.235e+02  2.0082
 ## units.color-color 2.738e-03 2.994e-04  9.1477
@@ -763,11 +763,11 @@ ans.A &lt;-<span class="st"> </span><span class="kw">mmer2</span>(<span class="k
 ## 
 ## $color
 ##             Estimate  Std. Error   t value
-## Intercept -0.7887671 0.002746644 -287.1748
+## Intercept -0.7887719 0.002746636 -287.1775
 ## 
 ## $Yield
 ##           Estimate Std. Error  t value
-## Intercept 135.1766   3.327663 40.62208
+## Intercept 135.1766   3.327659 40.62214
 ## 
 ## ==================================================
 ## Groups and observations:
@@ -785,12 +785,12 @@ prod.sd &lt;-<span class="st"> </span>sd.gvc %*%<span class="st"> </span><span c
 ## genetic correlations cov(gi,gi')/[sd(Vgi) * sd(Vgi')]
 (gen.cor &lt;-<span class="st"> </span>gvc/prod.sd)</code></pre></div>
 <pre><code>##           color     Yield
-## color 1.0000000 0.1943594
-## Yield 0.1943594 1.0000000</code></pre>
+## color 1.0000000 0.1943762
+## Yield 0.1943762 1.0000000</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## heritabilities
 (h2 &lt;-<span class="st"> </span><span class="kw">diag</span>(gvc) /<span class="st"> </span><span class="kw">diag</span>(<span class="kw">cov</span>(CPpheno[,<span class="kw">names</span>(<span class="kw">diag</span>(gvc))], <span class="dt">use =</span> <span class="st">&quot;complete.obs&quot;</span>)))</code></pre></div>
 <pre><code>##     color     Yield 
-## 0.7699759 0.1439014</code></pre>
+## 0.7699871 0.1439069</code></pre>
 <p>Keep in mind that sommer uses direct inversion (DI) algorithm which can be very slow for large datasets. The package is focused in problems of the type p &gt; n (more random effect levels than observations) and models with dense covariance structures. For example, for experiment with dense covariance structures with low-replication (i.e. 2000 records from 1000 individuals replicated twice with a covariance structure of 1000x1000) sommer will be faster than MME-based software. Also for genomic problems with large number of random effect levels, i.e. 300 individuals (n) with 100,000 genetic markers (p). For highly replicated trials with small covariance structures or n &gt; p (i.e. 2000 records from 200 individuals replicated 10 times with covariance structure of 200x200) asreml or other MME-based algorithms will be much faster and we recommend you to opt for those software.</p>
 </div>
 <div id="literature" class="section level2">

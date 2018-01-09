@@ -19,7 +19,8 @@ The package also provides kernels to estimate additive (\code{\link{A.mat}}), do
 mmer(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,
     tolpar=1e-3, tolparinv=1e-6,draw=FALSE,silent=FALSE, 
     constraint=TRUE, EIGEND=FALSE, forced=NULL, IMP=FALSE, 
-    complete=TRUE, check.model=TRUE, restrained=NULL, REML=TRUE)
+    complete=TRUE, check.model=TRUE, restrained=NULL, REML=TRUE,
+    init.equal=TRUE)
 }
 \arguments{
   \item{Y}{a matrix or data frame of response variables}
@@ -86,6 +87,7 @@ mmer(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,
    \item{check.model}{a TRUE/FALSE statement to indicate if the function should check the input parameters from the user.}
    \item{restrained}{a numeric argument specifying which variance-covariance parameters should be restrained. Please see \code{\link{vctable}} and \code{\link{vctable.help}} functions if you want to use it although you shouldn't since is made for the \code{\link{mmer2}} function.}
    \item{REML}{a TRUE/FALSE value to indicate if REML or ML should be used for optimization. Not functional yet. Only REML available.}
+   \item{init.equal}{a TRUE/FALSE value to indicate if the program should use the same initial values for all variance-covariance components in the multivariate models. Default is TRUE, otherwise the function will calculate the variance-covariance with the raw data and use them as initial values.}
     
 }
 \details{
@@ -94,7 +96,7 @@ The package has been equiped with several datasets to learn how to use the somme
 
 * \code{\link{HDdata}} and \code{\link{FDdata}} datasets have examples to fit half and full diallel designs. 
 
-* \code{\link{h2}} to calculate heritability
+* \code{\link{h2example}} to calculate heritability
 
 * \code{\link{cornHybrid}} and \code{\link{Technow_data}} datasets to perform genomic prediction in hybrid single crosses 
 
@@ -107,7 +109,7 @@ The package has been equiped with several datasets to learn how to use the somme
 
 * \code{\link{BTdata}} dataset contains an animal (birds) model.
 
-If you need to use pedigree you need to convert your pedigree into a relationship matrix (use the `getA` function from the pedigreemm package). Other functions such as \code{\link{summary}}, \code{\link{fitted}}, \code{\link{randef}} (notice here is randef not ranef), \code{\link{anova}}, \code{\link{residuals}}, \code{\link{coef}} and \code{\link{plot}} applicable to typical linear models can also be applied to models fitted using the mmer-type of functions. Additional functions for genetic analysis have been included such as False Discovery Rate calculation (\code{\link{fdr}}), plot of genetic maps (\code{\link{map.plot}}), creation of manhattan plots (\code{\link{manhattan}}), phasing F1 or CP populations (\code{\link{phase.F1}}). We have also included the famous \code{\link{transp}} function to get transparent colors. Useful functions for analyzing such designs are included such as the \code{\link{blocker}} and \code{\link{fill.design}}.
+If you need to use pedigree you need to convert your pedigree into a relationship matrix (use the `getA` function from the pedigreemm package). Other functions such as \code{\link{summary}}, \code{\link{fitted}}, \code{\link{randef}} (notice here is randef not ranef), \code{\link{anova}}, \code{\link{variogram}}, \code{\link{residuals}}, \code{\link{coef}} and \code{\link{plot}} applicable to typical linear models can also be applied to models fitted using the mmer-type of functions. Additional functions for genetic analysis have been included such as False Discovery Rate calculation (\code{\link{fdr}}), build a genotypic hybrid marker matrix (\code{\link{build.HMM}}), plot of genetic maps (\code{\link{map.plot}}), creation of manhattan plots (\code{\link{manhattan}}), phasing F1 or CP populations (\code{\link{phase.F1}}). We have also included the popular \code{\link{transp}} function to get transparent colors. Useful functions for analyzing field trials are included such as the \code{\link{blockerT}}, \code{\link{blockerL}}, and \code{\link{fill.design}}.
 
 \strong{MODELS ENABLED}
 

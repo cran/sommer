@@ -274,6 +274,15 @@ version 3.1 (2017-11-01)
     expected
   + better documentation about multivariate models
   
+########################
+version 3.2 (2018-01-01)
+######################## 
+
+  + spl2D function to fit 2 dimensional spline model has been added and documented
+  + variogram and plot.variogram functions enabled to visualize the residuals or the
+    spatial model fitted (in case of 2D spline models)
+  
+    
 ##pendings
 + random regression (working on it)
 + implementation of lsmeans package
@@ -286,13 +295,15 @@ version 3.1 (2017-11-01)
 + fix map and scores output from GWAS functions
 + IMPLEMENT WALD TEST
 + IMPLEMENT PREDICTION FUNCTION
-+ ADD the initial values table in asreml format where user can specify if var-covar comp
-  can be fixed to a value or not
++ START LOOKING AT GENERALIZED MODELS
++ add update function
+
 + make sure the program can run even if the only random effect is a grp() effect
 + more than one grp() term and used at the at() and diag() levels
 + move to c++
-+ exp(-(K/theta[i])^2) for gaussian kernels, where theta[i] is the value with max LL
-+ (theta <- setdiff(seq(0, max(dist(M)), length.out = 11),0)); M is the marker matrix
+
+* exp(-(K/theta[i])^2) for gaussian kernels, where theta[i] is the value with max LL
+* (theta <- setdiff(seq(0, max(dist(M)), length.out = 11),0)); M is the marker matrix
 
 
 \if{html}{\figure{mai.png}{options: width="45\%" alt="Figure: mai.png"}}

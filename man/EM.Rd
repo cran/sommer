@@ -25,36 +25,62 @@ EM(y,X=NULL,ZETA=NULL,R=NULL,iters=30,draw=TRUE,silent=FALSE,
 }
 \details{
 This algorithm is based on Searle (1993) and Bernanrdo (2010). This handles models of the form:
-.
+
+
+
 y = Xb + Zu + e
-.
+
+
+
+
 b ~ N[b.hat, 0]  ............zero variance because is a fixed term
+
 u ~ N[0, K*sigma(u)]  .......where: K*sigma(u) = G
+
 e ~ N[0, I*sigma(e)]  .......where: I*sigma(e) = R
+
 y ~ N[Xb, var(Zu+e)]   ......where;
+
 var(y) = var(Zu+e) = ZGZ+R = V which is the phenotypic variance
+
 .
+
 The function allows the user to specify the incidence matrices with their respective variance-covariance matrix in a 2 level list structure. For example imagine a mixed model with the following design:
+
 .
+
 fixed = only intercept....................................b ~ N[b.hat, 0]
+
 random = GCA1 + GCA2 + SCA.................u ~ N[0, G]       
+
 .
+
 where G is:
+
 .
+
 |K*sigma(gca1).....................0..........................0.........|
     
 |.............0.............S*sigma(gca2).....................0.........| = G
 |.............0....................0......................W*sigma(sca)..|
+
 .
+
 The function is based on useing initial values for variance components, i.e.:
+
 .
+
 var(e) <- 100      
 var(u1) <- 100      with incidence matrix Z1
 var(u2) <- 100      with incidence matrix Z2
 var(u3) <- 100      with incidence matrix Z3
+
 .
+
 and estimates the lambda(vx) values in the mixed model equations (MME) developed by Henderson (1975), i.e. consider the 3 random effects stated above, the MME are:
+
 .
+
 |...............X'*R*X...............X'*R*Z1.............X'*R*Z2...................X'*R*Z3 ..............|   |...X'Ry...|
 
 |.............Z1'*R*X.........Z1'*R*Z1+K1*v1.....Z1'*R*Z2..................Z1'*R*Z3.............|   |...Z1'Ry...| 
@@ -63,7 +89,9 @@ and estimates the lambda(vx) values in the mixed model equations (MME) developed
 |.............Z3'*R*X.............Z3'*R*Z1.............Z3'*R*Z2.............Z3'*R*Z3+K3*v3......|   |...Z3'Ry...|
 .
 ..............................................................C.inv...................................................................RHS
+
 .
+
 where "*"" is a matrix product, R is the inverse of the var-cov matrix for the errors, Z1, Z2, Z3 are incidence matrices for random effects, X is the incidence matrix for fixed effects, K1,K2, K3 are the var-cov matrices for random effects and v1,v2,v3 are the estimates of variance components.
 .
 The algorithm can be summarized in the next steps:
@@ -132,6 +160,6 @@ S <- kronecker(K1, K2) ; dim(S)
 rownames(S) <- colnames(S) <- levels(hybrid2$SCA)
 
 ETA <- list(list(Z=Z1, K=K1), list(Z=Z2, K=K2), list(Z=Z3, K=S))
-#ans <- EM(y=y, ZETA=ETA, iters=3)
+#ans <- EM(y=y, ZETA=ETA, iters=20)
 }
 \seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}

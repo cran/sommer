@@ -4,7 +4,7 @@
 Genome Wide Association Analysis
 }
 \description{
-Genome Wide Association Analysis using the multivariate mixed model solver `mmer`. For details about the generalized least squares (GLS) strategy using the V matrix from the mixed model go to the sommer help page. Please make sure that the marker matrix (W) is sorted correctly and aligned with the phenotypes (Y) for all individuals. \strong{The function will assume that the genotypes in the dataset and marker matrix are in the same order}.
+Genome Wide Association Analysis using the multivariate mixed model solver `mmer`. For details about the generalized least squares (GLS) strategy using the V matrix from the mixed model go to the sommer help page. Please make sure that the marker matrix (W) is sorted correctly and aligned with the phenotypes (Y) for all individuals. \strong{The function will assume that the observations in the dataset and marker matrix are in the same order}.
 }
 \usage{
 GWAS(Y, X=NULL, Z=NULL, R=NULL, W=NULL, 

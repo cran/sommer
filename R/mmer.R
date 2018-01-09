@@ -1,7 +1,7 @@
 mmer <- function(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,tolpar=1e-3,
                  tolparinv=1e-6,draw=FALSE,silent=FALSE, constraint=TRUE, 
                  EIGEND=FALSE, forced=NULL, IMP=FALSE, complete=TRUE, 
-                 check.model=TRUE, restrained=NULL, REML=TRUE){
+                 check.model=TRUE, restrained=NULL, REML=TRUE, init.equal=TRUE){
   #R=NULL
   if (inherits(Y, "formula")){
     stop("\nYou have to use mmer2 function for formula-based models.\n", call. = FALSE)
@@ -23,7 +23,7 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,tolpar=1e
   }
   
   my.year <- 2018
-  my.month <- 1 #month when the user will start to get notifications the 1st day of next month
+  my.month <- 3 #month when the user will start to get notifications the 1st day of next month
   # if my month = 3, user will start to get notification in april 1st
   datee <- Sys.Date()
   year.mo.day <- as.numeric(strsplit(as.character(datee),"-")[[1]])# <- as.numeric(strsplit(gsub("....-","",datee),"-")[[1]])
@@ -153,8 +153,11 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,tolpar=1e
     RES <- MNR(Y=Y,X=X,ZETA=Z,R=R,init=init,iters=iters,tolpar=tolpar,
                tolparinv = tolparinv,draw=draw,silent=silent, 
                constraint = constraint,EIGEND = EIGEND,
-               forced=forced,IMP=IMP,restrained=restrained, REML=REML)
+               forced=forced,IMP=IMP,restrained=restrained, REML=REML, 
+               init.equal = init.equal)
     class(RES)<-c("MMERM")
+    #RES$Y.or <- Y
+    #RES$ZETA.or <- Z
   }else if(method == "EMMA"){
     if(length(Z)>1){stop("EMMA method only works for one random effect other than error.\n Please select NR or AI methods.", call. = FALSE)}
     RES <- MEMMA(Y=Y,X=X,ZETA=Z,tolpar=tolpar,
@@ -329,8 +332,8 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,tolpar=1e
   cat(paste(rep("=",nmaxchar), collapse = ""))
   #cat("\n   Multivariate Linear Mixed Model fit by REML      \n")
   cat(paste("\n",rlt,"Multivariate Linear Mixed Model fit by REML",rlt,"\n", collapse = ""))
-  #cat("***********************  sommer 3.1  ***********************\n")
-  cat(paste(rlh," sommer 3.1 ",rlh, "\n", collapse = ""))
+  #cat("***********************  sommer 3.2  ***********************\n")
+  cat(paste(rlh," sommer 3.2 ",rlh, "\n", collapse = ""))
   #cat("============================================================")
   cat(paste(rep("=",nmaxchar), collapse = ""))
   cat("\n")
@@ -508,7 +511,7 @@ anova.MMERM <- function(object, object2=NULL, ...) {
 #### =========== ####
 ## PLOTING FUNCTION #
 #### =========== ####
-plot.MMERM <- function(x, ...) {
+plot.MMERM <- function(x, stnd=TRUE, ...) {
   digits = max(3, getOption("digits") - 3)
   transp <- function (col, alpha = 0.5){
     res <- apply(col2rgb(col), 2, function(c) rgb(c[1]/255, c[2]/255,c[3]/255, alpha))
@@ -538,7 +541,7 @@ plot.MMERM <- function(x, ...) {
     stop("This package requires R 2.1 or later")
   assign(".sommer.home", file.path(library, pkg),
          pos=match("package:sommer", search()))
-  sommer.version = "3.1 (2017-11-01)" # usually 2 months before it expires
+  sommer.version = "3.2 (2018-01-01)" # usually 2 months before it expires
   
   ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ### check which version is more recent
@@ -564,13 +567,13 @@ plot.MMERM <- function(x, ...) {
     packageStartupMessage("[]  Type 'vignette('sommer.start')' for a short tutorial          []",appendLF=TRUE)
     packageStartupMessage("[]  Type 'citation('sommer')' to know how to cite sommer          []",appendLF=TRUE)
     packageStartupMessage(paste("[]================================================================[]"),appendLF=TRUE)
-    packageStartupMessage("UPDATE 'sommer' EVERY 2-MONTHS USING 'install.packages('sommer')'",appendLF=TRUE)
+    packageStartupMessage("UPDATE 'sommer' EVERY 3-MONTHS USING 'install.packages('sommer')'",appendLF=TRUE)
     
     #if(yyy > current){ # yyy < current in CRAN
     #  packageStartupMessage(paste("Version",current,"is now available."),appendLF=TRUE) # version current
     #  packageStartupMessage(paste("Please update 'sommer' installing the new version."),appendLF=TRUE) # version current
     #}
-    #print(image(diag(10),main="sommer 3.1"))
+    #print(image(diag(10),main="sommer 3.2"))
   }
   invisible()
 }

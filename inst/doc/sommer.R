@@ -1,28 +1,28 @@
 ## ------------------------------------------------------------------------
 library(sommer)
-data(h2)
-head(h2)
+data(h2example)
+head(h2example)
 
 ans1 <- mmer2(y~1, 
               random = ~Name + Env + Name:Env + Block,
               rcov = ~units,
-              data=h2, silent = TRUE)
+              data=h2example, silent = TRUE)
 
 suma <- summary(ans1)
-n.env <- length(levels(h2$Env))
+n.env <- length(levels(h2example$Env))
 pin(ans1, h2 ~ V1 / ( V1 + (V3/n.env) + (V5/(2*n.env)) ) )
 
 
 ## ------------------------------------------------------------------------
 library(sommer)
-data(h2)
-head(h2)
-Z1 <- model.matrix(~Name-1, h2)
-Z2 <- model.matrix(~Env-1, h2)
-Z3 <- model.matrix(~Env:Name-1, h2)
-Z4 <- model.matrix(~Block-1, h2)
+data(h2example)
+head(h2example)
+Z1 <- model.matrix(~Name-1, h2example)
+Z2 <- model.matrix(~Env-1, h2example)
+Z3 <- model.matrix(~Env:Name-1, h2example)
+Z4 <- model.matrix(~Block-1, h2example)
 ETA <- list(name=list(Z=Z1),env=list(Z=Z2),name.env=list(Z=Z3),block=list(Z=Z4))
-y <- h2$y
+y <- h2example$y
 ans1 <- mmer(Y=y, Z=ETA, silent = TRUE)
 vc <- ans1$var.comp
 

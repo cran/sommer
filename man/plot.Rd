@@ -4,10 +4,11 @@
 \description{\code{plot} method for class \code{"MMERM"}.
 }
 \usage{
-\method{plot}{MMERM}(x, \dots)
+\method{plot}{MMERM}(x,stnd=TRUE, \dots)
 }
 \arguments{
  \item{x}{an object of class \code{"MMERM"}}
+  \item{stnd}{argument for ploting the residuals to know if they should be standarized.}
  \item{\dots}{Further arguments to be passed}
 }
 \value{

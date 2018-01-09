@@ -6,7 +6,8 @@
 }
 \usage{
   blockerT(dat, d= 60, nr= 5, rows="ROW",
-           ranges="RANGE", by=NULL)
+           ranges="RANGE", by=NULL,
+           shiftF=0, shiftB=0)
 }
 
 \arguments{
@@ -16,6 +17,8 @@
   \item{rows}{the name of the numeric column that indicates the x coordinate direction in the field.}
   \item{ranges}{the name of the numeric column that indicates the y coordinate other direction in the field.}
   \item{by}{optional argument to indicate the name of the column of the dataframe x that indicates the environments so the field is filled by environment.}
+  \item{shiftF}{an integer value indicating the number of rows or ranges to shift the block. If positive, the blocking is shifted to the right. If negative, the blocking is shifted to the right. }
+  \item{shiftB}{an integer value indicating the number of rows or ranges to shift the block. If positive, the blocking is shifted to the right. If negative, the blocking is shifted to the right. }
   
 }
 \value{

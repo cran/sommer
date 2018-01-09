@@ -1,9 +1,18 @@
 #############
 ## EXPORTS
 #############
-export(adiag1, A.mat, and, at, atcg1234, hits, big.peaks.col, bathy.colors, blocker, blockerL, blockerT, brewer.pal, D.mat, design.score, eig, E.mat, fdr, fdr2, fill.design, g, grp, GWAS, GWAS2, hadamard.prod, hdm, imputev, is.diagonal.matrix, is.square.matrix, jet.colors, manhattan, matrix.trace, map.plot, maxi.qtl, mmer,MEMMA, MNR, mmer2, nna, overlay, pedtoK, phase.F1, pin, score.calcMV, transp, us, vctable, vctable.help)
+export(adiag1, AI, A.mat, and, at, atcg1234, hits, big.peaks.col, 
+       bathy.colors, blocker, blockerL, blockerT, brewer.pal, build.HMM, D.mat, 
+       design.score, eig, E.mat, EM, fdr, fdr2, fill.design, g, grp, 
+       GWAS, GWAS2, hadamard.prod, hdm, h2.fun, imputev, is.diagonal.matrix, 
+       is.square.matrix, jet.colors, manhattan, matrix.trace, map.plot, 
+       maxi.qtl, mmer,MEMMA, MNR, mmer2, nna, overlay, pedtoK, phase.F1, 
+       pin, score.calcMV, transp, us,  
+       vctable, vctable.help)
 
-export(summary.MMERM, residuals.MMERM, fitted.MMERM, plot.MMERM, anova.MMERM, coef.MMERM, randef)
+export(summary.MMERM, residuals.MMERM, fitted.MMERM, plot.MMERM, 
+       variogram, variogram.MMERM, plot.variogram.MMERM,
+       anova.MMERM, coef.MMERM, randef)
 
 # fixef.mmer, fixef.mmerM, fixef.MMERM
 
@@ -24,6 +33,10 @@ S3method(print, coef.MMERM)
 S3method(anova, MMERM)
 S3method(plot, MMERM)
 
+S3method(variogram, MMERM)
+S3method(plot, variogram.MMERM)
+
+
 #S3method(fixef, MMERM)
 #S3method(print, fixef.MMERM)
 
@@ -37,7 +50,7 @@ S3method(plot, MMERM)
              "available.packages", "contrib.url")
   #importFrom("matrixcalc", "matrix.trace","is.diagonal.matrix", "is.square.matrix")
   #importFrom("lme4","lmer","VarCorr")
-  importFrom("parallel", "detectCores","mclapply") #"detectCores","makeCluster","stopCluster",
+  #importFrom("parallel", "detectCores","mclapply") #"detectCores","makeCluster","stopCluster",
   #importFrom("doParallel","registerDoParallel")
   #importFrom("foreach", "%dopar%")
   
@@ -47,6 +60,8 @@ S3method(plot, MMERM)
   import("methods")
   import("Matrix")
   import("MASS")
+  import("lattice")
+  import("data.table")
   #import("foreach")
   #import("doParallel")
 
@@ -55,13 +70,13 @@ S3method(plot, MMERM)
   
 ### extra suggested by CRAN
   importFrom("grDevices", "col2rgb", "colorRampPalette", "gray.colors",
-             "rgb","dev.cur", "dev.size", "xy.coords")
+             "rgb","dev.cur", "dev.size", "xy.coords", "topo.colors")
   importFrom("stats", "as.formula", "cov", "density", "gaussian", "glm",
              "lm", "median", "optimize", "pbeta", "pchisq", "predict",
              "printCoefmat", "qqnorm", "smooth.spline", "var", "rnorm", 
              "model.matrix","na.omit", "p.adjust","kmeans","dist", "runif",
              "nobs", "ppoints", "sd", "model.frame", "model.response", "na.pass",
-             "cor", "optim", "rchisq","quantile","deriv")
+             "cor", "optim", "rchisq","quantile","deriv","terms.formula")
 
 
   

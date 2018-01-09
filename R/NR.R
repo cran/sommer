@@ -1,7 +1,7 @@
 MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,iters=20,tolpar=1e-3,
                 tolparinv=1e-6,draw=FALSE,silent=FALSE, constraint=TRUE, 
                 EIGEND=FALSE, forced=NULL, IMP=FALSE, complete=TRUE, 
-                check.model=FALSE, restrained=NULL, REML=TRUE){
+                check.model=FALSE, restrained=NULL, REML=TRUE, init.equal=TRUE){
   
   up.to.vec <- function(x){
     if(dim(as.matrix(x))[1]>1){aa <- upper.tri(x); diag(aa) <- TRUE
@@ -224,7 +224,13 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,iters=20,tolpar=1e-3,
   ###############
   ## define variance-covariance components, each list is a var.comp
   if(is.null(init)){
-    (sigma <- rep(list(sc.var),nz+nr)) #original variance values
+    sigma <- rep(list(sc.var),nz+nr) #original variance values
+    if(init.equal){ # if user prefers to use equal starting values (preferred-asreml)
+      for(w in 1:length(sigma)){
+        if(w <= nz){sigma[[w]] <- (sigma[[w]]*0 + 1)*0.10 + diag(0.05,ts)} # random
+        if(w > nz){sigma[[w]] <- (sigma[[w]]*0 + 1)*0.04977728 + diag(0.02488864,ts)} #rcov
+      }
+    }
   }else{
     sigma <- init
   }
@@ -232,6 +238,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,iters=20,tolpar=1e-3,
     iters <- 1
     sigma <- forced
   }
+  #print(sigma)
   names(sigma) <- varosss
   # decompose in a vector
   varos <- lapply(sigma,up.to.vec)
@@ -628,6 +635,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,iters=20,tolpar=1e-3,
     }
   };#(sigma2.u^2) *  ( crossprod(Z%*%K, P)  %*%  (Z%*%K)   )
   names(ulist) <- varosssZ
+  names(Zulist.ordim) <- varosssZ
   names(Var.u) <- varosssZ
   names(PEV.u) <- varosssZ
   
@@ -675,6 +683,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,iters=20,tolpar=1e-3,
   
   XB.ordim <- matrix(X.or%*%beta, nrow = nrow(Y.or), byrow = FALSE); #in a dataframe xb
   Y.fitted <- XB.ordim + Zu.ordim
+  res.ordim <- Y.fitted - Y.or
   
   layout(matrix(1,1,1))
   if(!silent){
@@ -719,5 +728,6 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,iters=20,tolpar=1e-3,
               dimos=dado, sigma.scaled=sigmaxxx, sigma= sigma.nonscale,
               fitted.y=Y.fitted, fitted.u=Zu.ordim, ZETA=ZETA, used.observations=nona,
               method="MNR",random.effs=varosssZ, forced=fofo, convergence=convergence,
-              monitor=monitor, restrained=restrained))
+              monitor=monitor, restrained=restrained, Zus=Zulist.ordim, 
+              res.ordim=res.ordim))
 }

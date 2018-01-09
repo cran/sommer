@@ -8,7 +8,8 @@ This function is used internally in the function \code{\link{mmer}} when MORE th
 MNR(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,iters=20,tolpar=1e-3,
     tolparinv=1e-6,draw=FALSE,silent=FALSE, constraint=TRUE, 
     EIGEND=FALSE, forced=NULL, IMP=FALSE, complete=TRUE, 
-    check.model=FALSE, restrained=NULL, REML=TRUE)
+    check.model=FALSE, restrained=NULL, REML=TRUE,
+    init.equal=TRUE)
 }
 \arguments{
   \item{Y}{a matrix or data frame of response variables}
@@ -74,6 +75,7 @@ MNR(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,iters=20,tolpar=1e-3,
    \item{check.model}{a TRUE/FALSE statement to indicate if the function should check the input parameters from the user.}
    \item{restrained}{a numeric argument specifying which variance-covariance parameters should be restrained.}
    \item{REML}{a TRUE/FALSE value to indicate if REML or ML should be used for optimization. Not functional yet. Only REML available.}
+   \item{init.equal}{a TRUE/FALSE value to indicate if the program should use the same initial values for all variance-covariance components in the multivariate models. Default is TRUE, otherwise the function will calculate the variance-covariance with the raw data and use them as initial values.}
    
 }
 \details{

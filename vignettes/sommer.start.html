@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2017-10-29" />
+<meta name="date" content="2018-01-09" />
 
 <title>Quick start for the sommer package</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Quick start for the sommer package</h1>
 <h4 class="author"><em>Giovanny Covarrubias-Pazaran</em></h4>
-<h4 class="date"><em>2017-10-29</em></h4>
+<h4 class="date"><em>2018-01-09</em></h4>
 
 
 
@@ -156,24 +156,24 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' &amp; ... &am
 <span class="kw">summary</span>(ans1)</code></pre></div>
 <pre><code>## ==================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ******************  sommer 3.1  ****************** 
+## ******************  sommer 3.2  ****************** 
 ## ==================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -20.14537 46.29075 55.95182    MNR     TRUE
 ## ==================================================
 ## Variance-Covariance components:
 ##                      VarComp VarCompSE Zratio
-## Name.Yield-Yield       3.682     1.691  2.177
-## Env:Name.Yield-Yield   5.173     1.495  3.459
-## units.Yield-Yield      4.366     0.647  6.749
+## Name.Yield-Yield       3.682    1.6912  2.177
+## Env:Name.Yield-Yield   5.173    1.4955  3.459
+## units.Yield-Yield      4.366    0.6469  6.749
 ## ==================================================
 ## Fixed effects:
 ## 
 ## $Yield
 ##              Estimate Std. Error   t value
-## (Intercept) 16.496351  0.6855001 24.064695
-## EnvCA.2012  -5.776759  0.7558178 -7.643057
-## EnvCA.2013  -6.380479  0.7960514 -8.015159
+## (Intercept) 16.496351  0.6855051 24.064519
+## EnvCA.2012  -5.776758  0.7558233 -7.643000
+## EnvCA.2013  -6.380479  0.7960572 -8.015101
 ## 
 ## ==================================================
 ## Groups and observations:
@@ -202,28 +202,28 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' &amp; ... &am
 <span class="kw">summary</span>(ans1)</code></pre></div>
 <pre><code>## ===================================================
 ##      Multivariate Linear Mixed Model fit by REML     
-## ******************  sommer 3.1  ****************** 
+## ******************  sommer 3.2  ****************** 
 ## ===================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -15.42982 36.85964 46.52071    MNR     TRUE
 ## ===================================================
 ## Variance-Covariance components:
 ##                           VarComp VarCompSE Zratio
-## Name.Yield-Yield            2.962    1.4963  1.980
-## CA.2011:Name.Yield-Yield   10.148    4.5108  2.250
-## CA.2012:Name.Yield-Yield    1.879    1.8699  1.005
+## Name.Yield-Yield            2.962    1.4964  1.980
+## CA.2011:Name.Yield-Yield   10.148    4.5107  2.250
+## CA.2012:Name.Yield-Yield    1.879    1.8700  1.005
 ## CA.2013:Name.Yield-Yield    6.629    2.5027  2.649
 ## CA.2013:units.Yield-Yield   2.560    0.6398  4.001
-## CA.2011:units.Yield-Yield   4.943    1.5246  3.242
+## CA.2011:units.Yield-Yield   4.942    1.5246  3.242
 ## CA.2012:units.Yield-Yield   5.725    1.3119  4.364
 ## ===================================================
 ## Fixed effects:
 ## 
 ## $Yield
 ##              Estimate Std. Error   t value
-## (Intercept) 16.507678  0.8268665 19.964138
-## EnvCA.2012  -5.816890  0.8575814 -6.782902
-## EnvCA.2013  -6.412433  0.9356490 -6.853460
+## (Intercept) 16.507676  0.8268629 19.964224
+## EnvCA.2012  -5.816887  0.8575779 -6.782926
+## EnvCA.2013  -6.412430  0.9356441 -6.853493
 ## 
 ## ===================================================
 ## Groups and observations:
@@ -255,7 +255,7 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' &amp; ... &am
 <span class="kw">summary</span>(ans3)</code></pre></div>
 <pre><code>## ==================================================================
 ##             Multivariate Linear Mixed Model fit by REML            
-## **************************  sommer 3.1  ************************** 
+## **************************  sommer 3.2  ************************** 
 ## ==================================================================
 ##         logLik      AIC      BIC Method Converge
 ## Value -11.4997 28.99939 38.66046    MNR     TRUE
@@ -312,36 +312,36 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' &amp; ... &am
 <span class="kw">summary</span>(ans1)</code></pre></div>
 <pre><code>## ==================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ******************  sommer 3.1  ****************** 
+## ******************  sommer 3.2  ****************** 
 ## ==================================================
 ##         logLik       AIC       BIC Method Converge
 ## Value 167.0252 -322.0505 -298.5695    MNR     TRUE
 ## ==================================================
 ## Variance-Covariance components:
 ##                        VarComp VarCompSE Zratio
-## Name.Yield-Yield        3.7091   1.68159  2.206
-## Name.Yield-Weight       0.9071   0.37954  2.390
-## Name.Weight-Weight      0.2244   0.08777  2.556
-## Env:Name.Yield-Yield    5.0922   1.47905  3.443
+## Name.Yield-Yield        3.7090   1.68155  2.206
+## Name.Yield-Weight       0.9071   0.37953  2.390
+## Name.Weight-Weight      0.2243   0.08777  2.556
+## Env:Name.Yield-Yield    5.0922   1.47906  3.443
 ## Env:Name.Yield-Weight   1.0269   0.30773  3.337
-## Env:Name.Weight-Weight  0.2101   0.06663  3.153
-## units.Yield-Yield       4.3838   0.64953  6.749
-## units.Yield-Weight      0.9078   0.14148  6.416
-## units.Weight-Weight     0.2280   0.03378  6.750
+## Env:Name.Weight-Weight  0.2101   0.06662  3.153
+## units.Yield-Yield       4.3837   0.64951  6.749
+## units.Yield-Weight      0.9077   0.14147  6.416
+## units.Weight-Weight     0.2280   0.03378  6.751
 ## ==================================================
 ## Fixed effects:
 ## 
 ## $Yield
 ##              Estimate Std. Error   t value
-## (Intercept) 14.741985  0.6783206 21.733063
-## EnvCA.2012  -3.199172  0.7474097 -4.280347
-## EnvCA.2013  -4.003349  0.7850509 -5.099477
+## (Intercept) 14.741988  0.6783190 21.733118
+## EnvCA.2012  -3.199176  0.7474089 -4.280355
+## EnvCA.2013  -4.003356  0.7850500 -5.099491
 ## 
 ## $Weight
 ##               Estimate Std. Error   t value
-## (Intercept)  0.5847374  0.1497090  3.905826
-## EnvCA.2012  -0.9711517  0.1592564 -6.098038
-## EnvCA.2013  -1.1643244  0.1681079 -6.926052
+## (Intercept)  0.5847384  0.1497086  3.905845
+## EnvCA.2012  -0.9711518  0.1592560 -6.098053
+## EnvCA.2013  -1.1643241  0.1681075 -6.926068
 ## 
 ## ==================================================
 ## Groups and observations:
@@ -371,24 +371,24 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' &amp; ... &am
 <span class="kw">summary</span>(ans1)</code></pre></div>
 <pre><code>## =====================================================
 ##       Multivariate Linear Mixed Model fit by REML      
-## ********************  sommer 3.1  ******************** 
+## ********************  sommer 3.2  ******************** 
 ## =====================================================
 ##         logLik       AIC       BIC Method Converge
 ## Value 177.8154 -343.6309 -320.1498    MNR     TRUE
 ## =====================================================
 ## Variance-Covariance components:
 ##                             VarComp VarCompSE Zratio
-## Name.Yield-Yield            3.32291   1.45386 2.2856
-## Name.Yield-Weight           0.79475   0.32648 2.4343
-## Name.Weight-Weight          0.19103   0.07509 2.5442
-## CA.2011:Name.Yield-Yield    8.69943   4.00992 2.1695
-## CA.2011:Name.Yield-Weight   1.77753   0.83835 2.1203
-## CA.2011:Name.Weight-Weight  0.35939   0.17885 2.0094
-## CA.2012:Name.Yield-Yield    2.57327   1.95113 1.3189
-## CA.2012:Name.Yield-Weight   0.33267   0.39866 0.8345
-## CA.2012:Name.Weight-Weight  0.03842   0.08600 0.4467
-## CA.2013:Name.Yield-Yield    5.46657   2.16184 2.5287
-## CA.2013:Name.Yield-Weight   1.34662   0.50455 2.6689
+## Name.Yield-Yield            3.32273   1.45378 2.2856
+## Name.Yield-Weight           0.79471   0.32646 2.4343
+## Name.Weight-Weight          0.19102   0.07508 2.5442
+## CA.2011:Name.Yield-Yield    8.69977   4.01009 2.1695
+## CA.2011:Name.Yield-Weight   1.77759   0.83838 2.1203
+## CA.2011:Name.Weight-Weight  0.35940   0.17886 2.0094
+## CA.2012:Name.Yield-Yield    2.57328   1.95113 1.3189
+## CA.2012:Name.Yield-Weight   0.33269   0.39868 0.8345
+## CA.2012:Name.Weight-Weight  0.03843   0.08601 0.4468
+## CA.2013:Name.Yield-Yield    5.46662   2.16187 2.5287
+## CA.2013:Name.Yield-Weight   1.34663   0.50455 2.6689
 ## CA.2013:Name.Weight-Weight  0.32893   0.12203 2.6954
 ## CA.2013:units.Yield-Yield   2.56131   0.63996 4.0023
 ## CA.2013:units.Yield-Weight  0.44569   0.12645 3.5246
@@ -396,7 +396,7 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' &amp; ... &am
 ## CA.2011:units.Yield-Yield   4.93845   1.52314 3.2423
 ## CA.2011:units.Yield-Weight  0.99446   0.32150 3.0932
 ## CA.2011:units.Weight-Weight 0.23982   0.07394 3.2433
-## CA.2012:units.Yield-Yield   5.73841   1.31504 4.3637
+## CA.2012:units.Yield-Yield   5.73843   1.31505 4.3637
 ## CA.2012:units.Yield-Weight  1.27999   0.30150 4.2454
 ## CA.2012:units.Weight-Weight 0.31804   0.07285 4.3657
 ## =====================================================
@@ -404,15 +404,15 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' &amp; ... &am
 ## 
 ## $Yield
 ##              Estimate Std. Error   t value
-## (Intercept) 14.498157  0.7889029 18.377621
-## EnvCA.2012  -3.009537  0.8264035 -3.641728
-## EnvCA.2013  -3.731629  0.8754507 -4.262524
+## (Intercept) 14.498149  0.7889099 18.377447
+## EnvCA.2012  -3.009529  0.8264130 -3.641677
+## EnvCA.2013  -3.731619  0.8754603 -4.262465
 ## 
 ## $Weight
 ##               Estimate Std. Error   t value
-## (Intercept)  0.5746062  0.1682642  3.414905
-## EnvCA.2012  -0.9334404  0.1697663 -5.498384
-## EnvCA.2013  -1.1375574  0.1914161 -5.942851
+## (Intercept)  0.5746021  0.1682650  3.414865
+## EnvCA.2012  -0.9334375  0.1697682 -5.498307
+## EnvCA.2013  -1.1375573  0.1914174 -5.942811
 ## 
 ## =====================================================
 ## Groups and observations:
@@ -451,28 +451,28 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' &amp; ... &am
 <span class="kw">summary</span>(ans1)</code></pre></div>
 <pre><code>## =====================================================
 ##       Multivariate Linear Mixed Model fit by REML      
-## ********************  sommer 3.1  ******************** 
+## ********************  sommer 3.2  ******************** 
 ## =====================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -15.42982 36.85964 46.52071    MNR     TRUE
 ## =====================================================
 ## Variance-Covariance components:
 ##                             VarComp VarCompSE Zratio
-## g(Name).Yield-Yield           2.962    1.4963  1.980
-## CA.2011:g(Name).Yield-Yield  10.148    4.5108  2.250
-## CA.2012:g(Name).Yield-Yield   1.879    1.8699  1.005
+## g(Name).Yield-Yield           2.962    1.4964  1.980
+## CA.2011:g(Name).Yield-Yield  10.148    4.5107  2.250
+## CA.2012:g(Name).Yield-Yield   1.879    1.8700  1.005
 ## CA.2013:g(Name).Yield-Yield   6.629    2.5027  2.649
 ## CA.2013:units.Yield-Yield     2.560    0.6398  4.001
-## CA.2011:units.Yield-Yield     4.943    1.5246  3.242
+## CA.2011:units.Yield-Yield     4.942    1.5246  3.242
 ## CA.2012:units.Yield-Yield     5.725    1.3119  4.364
 ## =====================================================
 ## Fixed effects:
 ## 
 ## $Yield
 ##              Estimate Std. Error   t value
-## (Intercept) 16.507678  0.8268665 19.964138
-## EnvCA.2012  -5.816890  0.8575814 -6.782902
-## EnvCA.2013  -6.412433  0.9356490 -6.853460
+## (Intercept) 16.507676  0.8268629 19.964224
+## EnvCA.2012  -5.816887  0.8575779 -6.782926
+## EnvCA.2013  -6.412430  0.9356441 -6.853493
 ## 
 ## =====================================================
 ## Groups and observations:
@@ -507,24 +507,24 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' &amp; ... &am
 <span class="kw">summary</span>(ans1)</code></pre></div>
 <pre><code>## =======================================================
 ##        Multivariate Linear Mixed Model fit by REML       
-## ********************  sommer 3.1  ******************** 
+## ********************  sommer 3.2  ******************** 
 ## =======================================================
 ##         logLik       AIC       BIC Method Converge
 ## Value 177.8154 -343.6309 -320.1498    MNR     TRUE
 ## =======================================================
 ## Variance-Covariance components:
 ##                               VarComp VarCompSE Zratio
-## g(Name).Yield-Yield           3.32291   1.45386 2.2856
-## g(Name).Yield-Weight          0.79475   0.32648 2.4343
-## g(Name).Weight-Weight         0.19103   0.07509 2.5442
-## CA.2011:g(Name).Yield-Yield   8.69943   4.00992 2.1695
-## CA.2011:g(Name).Yield-Weight  1.77753   0.83835 2.1203
-## CA.2011:g(Name).Weight-Weight 0.35939   0.17885 2.0094
-## CA.2012:g(Name).Yield-Yield   2.57327   1.95113 1.3189
-## CA.2012:g(Name).Yield-Weight  0.33267   0.39866 0.8345
-## CA.2012:g(Name).Weight-Weight 0.03842   0.08600 0.4467
-## CA.2013:g(Name).Yield-Yield   5.46657   2.16184 2.5287
-## CA.2013:g(Name).Yield-Weight  1.34662   0.50455 2.6689
+## g(Name).Yield-Yield           3.32273   1.45378 2.2856
+## g(Name).Yield-Weight          0.79471   0.32646 2.4343
+## g(Name).Weight-Weight         0.19102   0.07508 2.5442
+## CA.2011:g(Name).Yield-Yield   8.69977   4.01009 2.1695
+## CA.2011:g(Name).Yield-Weight  1.77759   0.83838 2.1203
+## CA.2011:g(Name).Weight-Weight 0.35940   0.17886 2.0094
+## CA.2012:g(Name).Yield-Yield   2.57328   1.95113 1.3189
+## CA.2012:g(Name).Yield-Weight  0.33269   0.39868 0.8345
+## CA.2012:g(Name).Weight-Weight 0.03843   0.08601 0.4468
+## CA.2013:g(Name).Yield-Yield   5.46662   2.16187 2.5287
+## CA.2013:g(Name).Yield-Weight  1.34663   0.50455 2.6689
 ## CA.2013:g(Name).Weight-Weight 0.32893   0.12203 2.6954
 ## CA.2013:units.Yield-Yield     2.56131   0.63996 4.0023
 ## CA.2013:units.Yield-Weight    0.44569   0.12645 3.5246
@@ -532,7 +532,7 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' &amp; ... &am
 ## CA.2011:units.Yield-Yield     4.93845   1.52314 3.2423
 ## CA.2011:units.Yield-Weight    0.99446   0.32150 3.0932
 ## CA.2011:units.Weight-Weight   0.23982   0.07394 3.2433
-## CA.2012:units.Yield-Yield     5.73841   1.31504 4.3637
+## CA.2012:units.Yield-Yield     5.73843   1.31505 4.3637
 ## CA.2012:units.Yield-Weight    1.27999   0.30150 4.2454
 ## CA.2012:units.Weight-Weight   0.31804   0.07285 4.3657
 ## =======================================================
@@ -540,15 +540,15 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' &amp; ... &am
 ## 
 ## $Yield
 ##              Estimate Std. Error   t value
-## (Intercept) 14.498157  0.7889029 18.377621
-## EnvCA.2012  -3.009537  0.8264035 -3.641728
-## EnvCA.2013  -3.731629  0.8754507 -4.262524
+## (Intercept) 14.498149  0.7889099 18.377447
+## EnvCA.2012  -3.009529  0.8264130 -3.641677
+## EnvCA.2013  -3.731619  0.8754603 -4.262465
 ## 
 ## $Weight
 ##               Estimate Std. Error   t value
-## (Intercept)  0.5746062  0.1682642  3.414905
-## EnvCA.2012  -0.9334404  0.1697663 -5.498384
-## EnvCA.2013  -1.1375574  0.1914161 -5.942851
+## (Intercept)  0.5746021  0.1682650  3.414865
+## EnvCA.2012  -0.9334375  0.1697682 -5.498307
+## EnvCA.2013  -1.1375573  0.1914174 -5.942811
 ## 
 ## =======================================================
 ## Groups and observations:

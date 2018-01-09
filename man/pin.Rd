@@ -42,7 +42,9 @@ data(CPdata)
 A <- A.mat(CPgeno)
 #### look at the data and fit the model
 head(CPpheno)
-mix1 <- mmer2(Yield~1,random=~g(id), G=list(id=A), data=CPpheno)
+mix1 <- mmer2(Yield~1,
+             random=~g(id), 
+             G=list(id=A), data=CPpheno)
 summary(mix1)
 #### run the pin function
 pin(mix1, h2 ~ V1 / ( V1 + V2 ) )
@@ -60,7 +62,10 @@ pin(mix1, h2 ~ V1 / ( V1 + V2 ) )
 # A <- A.mat(CPgeno)
 # #### look at the data and fit the model
 # head(CPpheno)
-# mix2 <- mmer2(cbind(Yield,color)~1,random=~g(id), G=list(id=A), 
+# mix2 <- mmer2(cbind(Yield,color)~1,
+#                random=~us(trait):g(id), 
+#                rcov=~us(trait):units,
+#                G=list(id=A), 
 #               data=CPpheno, MVM=TRUE)
 # summary(mix2)
 # ## genetic correlation
@@ -74,7 +79,8 @@ pin(mix1, h2 ~ V1 / ( V1 + V2 ) )
 # ####=========================================####
 # data(BTdata)
 # mix3 <- mmer2(cbind(tarsus, back) ~ sex,
-#                random = ~ dam + fosternest,
+#                random = ~ us(trait):dam + diag(trait):fosternest,
+#                rcov=~us(trait):units,
 #                data = BTdata, MVM=TRUE)
 # summary(mix3)
 # #### calculate the genetic correlation

@@ -4,7 +4,7 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
                   constraint=TRUE, EIGEND=FALSE,
                   forced=NULL, complete=TRUE, restrained=NULL,
                   na.method.X="exclude", na.method.Y="exclude",
-                  REML=TRUE){
+                  REML=TRUE, init.equal=TRUE){
   #rcov <- missing
   #gss=TRUE
   
@@ -105,39 +105,56 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
   }
   grpcheck <- grep("grp\\(",rtermss)# apply(data.frame(rtermss),2,function(x){grep("eig",x)})
   if(length(grpcheck)>0){
-    f1 <- strsplit(rtermss[grpcheck],":")[[1]]
-    f00 <- grep("trait",f1) # position of structure for trait
-    if(length(f00)>0){
-      ZKgrouping.str <- f1[f00]
-    }else{
-      ZKgrouping.str <- rep("diag(trait)",length(f1)) 
-    }
-    f0 <- f1[f00] # structure for eigend
-    f2 <- f1[setdiff(1:length(f1),f00)]
-    #if(length(f0)>0){f2 <- paste(f0,f2,sep=":")}
-    random <- as.formula(paste("~",paste(rtermss[-grpcheck], collapse = " + "))) # new random
-    random <- as.formula(paste(as.character(random),collapse=""))
-    namere <- expi2(f2) # name of the random effect to look in to grouping argument
+    #
+    ZKgrouping.str <- character()
     ZKgrouping <- list()
     cous <- 0
     cous2 <- numeric()
-    #ZKgrouping.str <- character()
-    for(u in 1:length(namere)){
+    counter <- 0
+    for(h in rev(grpcheck)){ # h <- grpcheck[2]
+      counter <- counter+1
+      f1 <- strsplit(rtermss[h],":")[[1]]
+      #f1 <- apply(data.frame(rtermss[grpcheck]),1,function(x){strsplit(x,":")[[1]]})
+      f00 <- grep("trait",f1) # position of structure for trait
+      if(length(f00)>0){
+        ZKgrouping.str[counter] <- f1[f00]
+      }else{
+        ZKgrouping.str[counter] <- rep("diag(trait)",length(f1)) 
+      }
+      f0 <- f1[f00] # structure
+      f2 <- f1[setdiff(1:length(f1),f00)] # actual random effect
+      #if(length(f0)>0){f2 <- paste(f0,f2,sep=":")}
+      random <- as.formula(paste("~",paste(rtermss[-h], collapse = " + "))) # new random
+      random <- as.formula(paste(as.character(random),collapse=""))
+      namere <- expi2(f2) # name of the random effect to look in to grouping argument
+      
+      rtermss <- rtermss[-h]
+      
+      #ZKgrouping.str <- character()
+      #for(u in 1:length(namere)){ # u <- 1
       cous <- cous+1
-      cous2[u] <- cous
-      grpu <- which(names(grouping)==namere[u])
+      cous2[counter] <- cous
+      grpu <- which(names(grouping)==namere)
       Zgrpu <- grouping[[grpu]]
       if(is.null(Zgrpu)){stop("Random effect specified with the grp() function not specified in the grouping argument.\n",call. = FALSE)}
-      Gu <- which(names(G)==namere[u])
+      Gu <- which(names(G)==namere)
       if(length(Gu) > 0){
         Kgrp <- G[[Gu]]
         cat("Ignore warning messages about variance-covariance matrices specified in the \nG argument not used for your grouping effects. They will be used.\n")
       }else{ Kgrp <- diag(ncol(Zgrpu))}
-      ZKgrouping[[u]] <- list(Z=Zgrpu, K=Kgrp)
-      names(ZKgrouping)[u] <- namere[u]
+      
+      ZKgrouping[[namere]] <- list(Z=Zgrpu, K=Kgrp)
+      #names(ZKgrouping)[counter] <- namere
+      #}
+      
     }
+    counter.grp <- counter
+    
   }
   
+  if(length(grpcheck)>0){
+    cous2.grp <- cous2
+  }
   ## for us structures
   # apply(data.frame(rtermss),2,function(x){grep("eig",x)})
   # if(length(usscheck)>0 & constraint){
@@ -267,7 +284,9 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
     Z <- list()
     counter <- 0
     counterl <- numeric() # to store the names of the random effects for each random effect specified by
-    #i=2
+    #for example it specifies where each random effects starts, 
+    # if at(LOC):x and loc has 2 levels then counterl[i] <- 2
+    # so ends up being something like 2 4 6
     
     # users, specially for interaction where a single term (i.e. at(location):gca) can produce several
     for(i in 1:length(zvar.names)){
@@ -310,16 +329,23 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
           }
           j1 <- colnames(zi)
           j2 <- gsub(":.*","",j1) # remove everything after the : to all names
-          j3 <- gsub(".*:","",vara) # part removed
+          
+          #?gregexpr
+          st1 <- gregexpr(":",vara)[[1]][1]+1
+          j3 <- substring(vara,st1, nchar(vara))
+          
+          #j3 <- gsub(".*:","",vara) # part removed, should be Row
           #j2 <- gsub(" ","", j2)
           k1 <- gsub(":.*","",vara) # to remove in next step
           #regexpr("\\((.*)\\)", j2[1])
           orx <- gsub(k1,"",j2, fixed = TRUE) # order of columns by location
-          where <- as.matrix(apply(data.frame(unique(orx)),1,function(x,y){which(y==x)},y=orx)) # each column says indeces for each level of at()
+          where <- matrix(apply(data.frame(unique(orx)),
+                                1,function(x,y){which(y==x)},y=orx),
+                          ncol=length(unique(orx))) # each column says indeces for each level of at()
           colnames(where) <- unique(j2)
           for(u in 1:dim(where)[2]){ # u=1
             counter <- counter+1
-            zix <- zi[,where[,u]]
+            zix <- as.matrix(zi[,where[,u]])
             ##
             ## var-cov matrix
             gcheck <- grep("g\\(",vara)
@@ -389,8 +415,8 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
             zz <- where[,df1[u,1]] # columns to take for location i
             zz2 <- where[,df1[u,2]] # columns to take for location j
             
-            zix <- zi[,zz] ## Z
-            zixt <- zi[,zz2] ## Z'
+            zix <- as.matrix(zi[,zz]) ## Z
+            zixt <- as.matrix(zi[,zz2]) ## Z'
             
             ##
             ## var-cov matrix
@@ -535,8 +561,8 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
       #added <- length(Z):(length(Z)+length(ZKgrouping))
       #Z[[added]] <- ZKgrouping
       Z <- c(Z,ZKgrouping)
-      cous2 <- max(counter) + cous2
-      counterl <- c(counterl,cous2)
+      cous2 <- max(counter) + counter.grp
+      counterl <- c(counterl,max(counter)+cous2.grp)
       ttt$ran.trt.str <- c(ttt$ran.trt.str,ZKgrouping.str)
     }
     
@@ -680,11 +706,15 @@ mmer2 <- function(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
                 iters=iters,tolpar=tolpar,
                 tolparinv = tolparinv,draw=draw,silent=silent, 
                 constraint = constraint,EIGEND = EIGEND,
-                forced=forced,IMP=IMP,complete=complete,restrained=torestrain)
+                forced=forced,IMP=IMP,complete=complete,restrained=torestrain,
+                init.equal = init.equal)
     if(!is.null(res$restrained)){
       names(res$restrained) <- rownames(res$sigma.scaled)[res$restrained] 
     }
-    
+    res$call$fixed <- fixed
+    res$call$random <- random
+    res$call$rcov <- rcov
+    res$data <- data
   }else{###only fixed effects
     res <- glm(yvars~X)
   }

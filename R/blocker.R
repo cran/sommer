@@ -247,7 +247,8 @@ blocker <- function(dat,rows="ROW",ranges="RANGE",by=NULL){
 ############################
 
 
-blockerL <- function(dat, nr= 5, rows="ROW",ranges="RANGE", by=NULL){
+blockerL <- function(dat, nr= 5, rows="ROW",ranges="RANGE", by=NULL,
+                     shiftF=0, shiftB=0){
   
   if(is.null(by)){by="FIELDINST"; dat[,"FIELDINST"] <- "F1"}
   
@@ -259,7 +260,7 @@ blockerL <- function(dat, nr= 5, rows="ROW",ranges="RANGE", by=NULL){
   
   dtlist <- lapply(dtlist, function(dt){
     
-    (stf <- seq(1-(nr*8),max(dt[,rows]),nr)) # forward blocking direction
+    stf <- seq( (1+shiftF) - (nr * 8), max(dt[, rows]), nr) # forward blocking direction
     (heigth <- nr)#abs(round(((max(dt[,rows])*2)*sin(d)*sin(d))/sin((90-d)*2))))
     counter <- 0
     
@@ -282,7 +283,7 @@ blockerL <- function(dat, nr= 5, rows="ROW",ranges="RANGE", by=NULL){
     #################
     dt$LBLOCKB <- NA
     
-    (stf <- seq(1-(nr*8),max(dt[,ranges]),nr)) # forward blocking direction
+    stf <- seq( (1+shiftB) - (nr * 8), max(dt[, ranges]), nr) # forward blocking direction
     (heigth <- nr)#abs(round(((max(dt[,rows])*2)*sin(d)*sin(d))/sin((90-d)*2))))
     counter <- 0
     
@@ -351,7 +352,8 @@ blockerL <- function(dat, nr= 5, rows="ROW",ranges="RANGE", by=NULL){
 
 
 
-blockerT <- function(dat, d= 60, nr= 5, rows="ROW",ranges="RANGE", by=NULL){
+blockerT <- function(dat, d= 60, nr= 5, rows="ROW",ranges="RANGE", 
+                     by=NULL, shiftF=0, shiftB=0){
   
   if(is.null(by)){by="FIELDINST"; dat[,"FIELDINST"] <- "F1"}
   
@@ -359,7 +361,7 @@ blockerT <- function(dat, d= 60, nr= 5, rows="ROW",ranges="RANGE", by=NULL){
   
   dtlist <- lapply(dtlist, function(dt){
     
-    (stf <- seq(1-(nr*40),max(dt[,rows]),nr)) # forward blocking direction
+    stf <- seq((shiftF+1) - (nr * 40), max(dt[, rows]), nr) # forward blocking direction
     (heigth <- abs(round(((max(dt[,rows])*2)*sin(d)*sin(d))/sin((90-d)*2))))
     counter <- 0
     
@@ -381,14 +383,15 @@ blockerT <- function(dat, d= 60, nr= 5, rows="ROW",ranges="RANGE", by=NULL){
     ################
     ################ backwards blocking
     dt$TBLOCKB <- NA
-    (stb <- sort(seq(1,max(dt[,rows])+(nr*40),nr), decreasing = TRUE)) # backwards
+    (stb <- sort(seq((shiftB+1), max(dt[, rows]) + (nr * 40), nr), ## ###!!!!!!
+                 decreasing = TRUE))
     for(u in 1:length(stb)){ # for each triangule formed
       counter <- counter+1
       (rowsinblock <- min(dt[,rows]):stb[u]) # rows in block
       (rowsinblock2 <- stb[u]:min(dt[,rows])) # to make sure that the smalles height is used at the last rows
       for(k in 1:length(rowsinblock)){ # for each row in the new block find height and add plot information
         (heigth0 <- abs(round(((k*2)*sin(d)*sin(d))/sin((90-d)*2))))
-        found <- which(dt[,rows] <= rowsinblock2[k] & dt[,ranges] <= heigth0)
+        found <- which(dt[,rows] < rowsinblock2[k] & dt[,ranges] < heigth0)
         if(length(found)>0){dt[found,"TBLOCKB"] <- u}
       }
     }

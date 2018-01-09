@@ -22,7 +22,8 @@ mmer2(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
       init=NULL,iters=20,tolpar = 1e-06, tolparinv = 1e-06, 
       draw=FALSE, silent=FALSE, constraint=TRUE, EIGEND=FALSE,
       forced=NULL, complete=TRUE, restrained=NULL,
-      na.method.X="exclude", na.method.Y="exclude", REML=TRUE)
+      na.method.X="exclude", na.method.Y="exclude", REML=TRUE,
+      init.equal=TRUE)
 }
 \arguments{
   \item{fixed}{a formula specifying the \strong{response variable(s)} \strong{and fixed effects}, i.e:
@@ -107,6 +108,7 @@ mmer2(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
    \item{na.method.X}{one of the two possible values; "include" or "exclude". If "include" is selected then the function will impute the X matrices for fixed effects with the median value. If "exclude" is selected it will get rid of all rows with missing values for the X (fixed) covariates. The default is "exclude". The "include" option should be used carefully.}
    \item{na.method.Y}{one of the two possible values; "include" or "exclude". If "include" is selected then the function will impute the Y matrix/dataframe with the median value. If "exclude" is selected it will get rid of missing values for the estimation of variance components. The default is "exclude".}
     \item{REML}{a TRUE/FALSE value to indicate if REML or ML should be used for optimization. Not functional yet. Only REML available.}
+   \item{init.equal}{a TRUE/FALSE value to indicate if the program should use the same initial values for all variance-covariance components in the multivariate models. Default is TRUE, otherwise the function will calculate the variance-covariance with the raw data and use them as initial values.}
     
 }
 \details{
@@ -115,7 +117,7 @@ The package has been equiped with several datasets to learn how to use the somme
 
 * \code{\link{HDdata}} and \code{\link{FDdata}} datasets have examples to fit half and full diallel designs. 
 
-* \code{\link{h2}} to calculate heritability
+* \code{\link{h2example}} to calculate heritability
 
 * \code{\link{cornHybrid}} and \code{\link{Technow_data}} datasets to perform genomic prediction in hybrid single crosses 
 
@@ -128,7 +130,7 @@ The package has been equiped with several datasets to learn how to use the somme
 
 * \code{\link{BTdata}} dataset contains an animal (birds) model.
 
-If you need to use pedigree you need to convert your pedigree into a relationship matrix (use the `getA` function from the pedigreemm package). Other functions such as \code{\link{summary}}, \code{\link{fitted}}, \code{\link{randef}} (notice here is randef not ranef), \code{\link{anova}}, \code{\link{residuals}}, \code{\link{coef}} and \code{\link{plot}} applicable to typical linear models can also be applied to models fitted using the mmer-type of functions. Additional functions for genetic analysis have been included such as False Discovery Rate calculation (\code{\link{fdr}}), plot of genetic maps (\code{\link{map.plot}}), creation of manhattan plots (\code{\link{manhattan}}), phasing F1 or CP populations (\code{\link{phase.F1}}). We have also included the famous \code{\link{transp}} function to get transparent colors. Useful functions for analyzing such designs are included such as the \code{\link{blocker}} and \code{\link{fill.design}}. 
+If you need to use pedigree you need to convert your pedigree into a relationship matrix (use the `getA` function from the pedigreemm package). Other functions such as \code{\link{summary}}, \code{\link{fitted}}, \code{\link{randef}} (notice here is randef not ranef), \code{\link{anova}}, \code{\link{variogram}}, \code{\link{residuals}}, \code{\link{coef}} and \code{\link{plot}} applicable to typical linear models can also be applied to models fitted using the mmer-type of functions. Additional functions for genetic analysis have been included such as False Discovery Rate calculation (\code{\link{fdr}}), build a genotypic hybrid marker matrix (\code{\link{build.HMM}}), plot of genetic maps (\code{\link{map.plot}}), creation of manhattan plots (\code{\link{manhattan}}), phasing F1 or CP populations (\code{\link{phase.F1}}). We have also included the popular \code{\link{transp}} function to get transparent colors. Useful functions for analyzing field trials are included such as the \code{\link{blockerT}}, \code{\link{blockerL}}, and \code{\link{fill.design}}.
 
 \strong{MODELS ENABLED}
 
