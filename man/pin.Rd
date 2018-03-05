@@ -81,7 +81,7 @@ pin(mix1, h2 ~ V1 / ( V1 + V2 ) )
 # mix3 <- mmer2(cbind(tarsus, back) ~ sex,
 #                random = ~ us(trait):dam + diag(trait):fosternest,
 #                rcov=~us(trait):units,
-#                data = BTdata, MVM=TRUE)
+#                data = BTdata)
 # summary(mix3)
 # #### calculate the genetic correlation
 # pin(mix3, gen.cor ~ V2 / sqrt(V1*V3))

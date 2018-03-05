@@ -11,19 +11,21 @@ Fits a multivariate or univariate linear mixed model by likelihood methods (REML
 
 The package also provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices to model covariances among genotypes for plant and animal breeding problems. 
 
-\strong{For a short tutorial} of how to perform different genetic analysis with sommer please \strong{type}:
+\strong{For tutorials} on how to perform different analysis with sommer please look at the vignettes by typing in the terminal:
 
-\strong{vignette("sommer.start")} or \strong{vignette("sommer")}
+\strong{vignette("sommer.start")} 
+
+\strong{vignette("sommer")}
 
 }
 \usage{
 
-mmer2(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
-      init=NULL,iters=20,tolpar = 1e-06, tolparinv = 1e-06, 
-      draw=FALSE, silent=FALSE, constraint=TRUE, EIGEND=FALSE,
-      forced=NULL, complete=TRUE, restrained=NULL,
-      na.method.X="exclude", na.method.Y="exclude", REML=TRUE,
-      init.equal=TRUE)
+mmer2(fixed, random, rcov, data, weights, G=NULL, 
+      grouping=NULL, method="NR", init=NULL, iters=20,
+      tolpar = 1e-06, tolparinv = 1e-06, draw=FALSE, 
+      silent=FALSE, constraint=TRUE, forced=NULL, 
+      complete=TRUE, restrained=NULL,na.method.X="exclude",
+      na.method.Y="exclude", REML=TRUE, init.equal=TRUE)
 }
 \arguments{
   \item{fixed}{a formula specifying the \strong{response variable(s)} \strong{and fixed effects}, i.e:
@@ -34,45 +36,34 @@ mmer2(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
   
   \item{random}{a formula specifying the name of the \strong{random effects}, i.e. \emph{random= ~ genotype + year}.
   
-  Useful functions can be used to fit heterogeneous variances and other special models:
+  Useful functions can be used to fit heterogeneous variances and other special models (\emph{see 'Special Functions' in the Details section for more information}):
   
-  \code{\link{at}}(.)   can be used to specify heterogeneous variance, i.e. \emph{random=~at(Location,c("A","B")):ID}
+  \code{diag(trait)} and \code{us(trait)} can be used to specify diagonal and unstructured covariance structures among responses in multivariate models.
   
-  \code{\link{diag}}(.)   can be used to specify a diagonal variance structure, i.e. \emph{random=~diag(Location):ID}
+  \code{at}(.) can be used to specify heterogeneous variance for specific levels of a random effect
   
-  \code{\link{us}}(.)   can be used to specify a unstructured variance, i.e. \emph{random=~us(Location):ID}
+  \code{diag}(.), \code{us}(.) can be used to specify diagonal and unstructured covariance structures among levels of a random effect.
   
-  \code{\link{and}}(.)   can be used to specify overlay of matrices, i.e. \emph{random=~male + and(female)}
+  \code{and}(.)   can be used to specify overlay of design matrices of random effects
   
-  \code{\link{g}}(.)   can be used to specify that a covariance structure for the random effect (not inverse) should be included, i.e. \emph{random=~g(male), G=list(male=Am)}, etc.
+  \code{g}(.)   can be used to specify that a known covariance structure for a random effect
   
-      \code{\link{grp}}(.)   can be used to specify customized incidence matrices for random effects, i.e. \emph{random=~male + grp(re), grouping=list(re=Zre)}
-      
-  \strong{For multivariate models} the functions; us(trait) and diag(trait) can be used before the random effects to indicate the covariance structure among traits, i.e.:
+  \code{grp}(.)   can be used to specify customized incidence matrices for random effects
   
-  \emph{us(trait):Geno} \strong{or} \emph{diag(trait):Geno}
-  
-  \emph{us(trait):at(Location):Geno} \strong{or} \emph{diag(trait):at(Location):Geno}
-  
-  \emph{us(trait):us(Location):Geno} \strong{or} \emph{diag(trait):us(Location):Geno}
-  
-  
+  \code{spl2D}(.)   can be used to fit a 2-dimensional spline (i.e. spatial modeling).
   
   }
   \item{rcov}{a formula specifying the name of the \strong{error term}, i.e. \emph{rcov= ~ units} or \emph{rcov=~at(.):units}.
   
   The functions that can be used to fit heterogeneous residual variances are:
   
-  \code{\link{at}}(.)   can be used to specify heterogeneous variance, i.e. \emph{rcov=~at(Location):units}
+    \code{diag(trait)} and \code{us(trait)} can be used to specify diagonal and unstructured covariance structures among responses for the residuals in multivariate models.
   
-  \strong{For multivariate models} the functions; us(trait) and diag(trait) can be used before the residual term to indicate the covariance structure among traits, i.e.:
-  
-  \emph{us(trait):units} \strong{or} \emph{diag(trait):units}
-  
-  \emph{us(trait):at(Location):units} \strong{or} \emph{diag(trait):at(Location):units}
+  \code{at}(.)   can be used to specify heterogeneous variance, i.e. \emph{rcov=~at(Location):units}
   
   }
   \item{data}{a data frame containing the variables specified in the formulas for response, fixed, and random effects.}
+  \item{weights}{name of the covariate for weights. To be used for the product R = Wsi*R*Wsi, where * is the matrix product, Wsi is the square root of the inverse of W and R is the residual matrix.}
   \item{G}{a list containing the \strong{variance-covariance matrices for the random effects (not inverses)}, i.e. if the user specifies: 
   
   \emph{random=~ g(genotype) + g(year)}
@@ -98,10 +89,6 @@ mmer2(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
     \item{draw}{a TRUE/FALSE value indicating if a plot showing the progress of the variance components should be drawn or not. Default is FALSE}
     \item{silent}{a TRUE/FALSE value indicating if the function should draw the progress bar as iterations progress. The default is FALSE, which means is not silent and will display the progress bar.}
     \item{constraint}{a TRUE/FALSE value indicating if the function should apply the boundary constraint indicating that variance components that are zero should be restrained.}
-    \item{EIGEND}{a TRUE/FALSE value indicating if an eigen decomposition for the additive relationship matrix should be performed or not. This is based on Lee (2015). The limitations of this method are:
-      1) can only be applied to one relationship matrix
-      2) The system needs to be squared and no missing data is allowed (then missing data is imputed with the median).
-   The default is FALSE to avoid the user get into trouble but experimented users can take advantage from this feature to fit big models, i.e. 5000 individuals in 555 seconds = 9 minutes in a MacBook 4GB RAM. If you use this feature keep in mind that residuals and fitted values cannot be used given the roation of the data.}
     \item{forced}{a list of values for variance-covariance components to be used if the user wants to force those values. The format is the same than the init argument.}
    \item{complete}{a TRUE/FALSE statement to indicate if the function should impute the cases where at least for one trait there's an observation. Default is TRUE in order to use all data points where at least one observation exist across traits.}
    \item{restrained}{a numeric argument specifying which variance-covariance parameters should be restrained. Please see \code{\link{vctable}} and \code{\link{vctable.help}} functions if you want to use it although you shouldn't since is made by the \code{\link{mmer2}} function.}
@@ -111,7 +98,58 @@ mmer2(fixed, random, rcov, data, G=NULL, grouping=NULL, method="NR",
    \item{init.equal}{a TRUE/FALSE value to indicate if the program should use the same initial values for all variance-covariance components in the multivariate models. Default is TRUE, otherwise the function will calculate the variance-covariance with the raw data and use them as initial values.}
     
 }
+
 \details{
+
+\strong{Special Functions}
+
+ \code{at(x,levels):y}   
+ 
+ can be used to specify heterogeneous variance for the "y"" covariate at specific levels of the factor covariate "x", i.e. \emph{random=~at(Location,c("A","B")):ID} fits a variance component for ID at levels A and B of the factor covariate Location.
+  
+ \code{diag(x):y}   
+ 
+ can be used to specify a diagonal covariance structure for the "y"" covariate for all levels of the factor covariate "x", i.e. \emph{random=~diag(Location):ID}  fits a variance component for ID at all levels of the factor covariate Location.
+ 
+  \code{diag(trait):x}  \strong{or}   \code{diag(trait):f(x):y}
+ 
+ can be used to specify a diagonal covariance structure among responses in multivariate models for the random effect "x" or "f(x):y" where f is an additional function applied at the random effect level (i.e. diag(x):y), i.e. \emph{random=~diag(trait):ID} along with a multivariate response fits a diagonal covariance structure among responses for the random effect ID.
+  
+ \code{us(x):y}   
+ 
+ can be used to specify an unstructured covariance structure for the "y"" covariate for all levels of the factor covariate "x", i.e. \emph{random=~us(Location):ID}  fits variance and covariance components for ID at all levels of the factor covariate Location.
+ 
+  \code{us(trait):x} \strong{or} \code{us(trait):f(x):y}
+ 
+ can be used to specify an unstructured covariance structure among responses in multivariate models for the random effect "x" or "f(x):y" where f is an additional function applied at the random effect level (i.e. us(x):y),, i.e. \emph{random=~us(trait):ID} along with a multivariate response fits an unstructured covariance structure among responses for the random effect ID.
+ 
+  \code{overlay(...,rlist=NULL,prefix=NULL)}   
+ 
+ can be used to specify overlay of design matrices between consecutive random effects specified, i.e. \emph{random=~overlay(male,female)} overlays (overlaps) the incidence matrices for the male and female random effects to obtain a single variance component for both effects.
+  
+  \code{g(x)}   
+ 
+ can be used to specify that the random effect "x" has a known covariance structure that will be provided in the \code{G} argument, i.e. \emph{random=~g(male), G=list(male=Am)} would indicate that the levels of the random effect called "male"" have a known covariance structure and is provided as a matrix called "Am" in the \code{G} argument.
+ 
+  \code{eig(g(x))}   
+ 
+ can be used to specify that we should apply the eigen decomposition to known covariance structure of the random effect "x" that was provided in the \code{G} argument, i.e. \emph{random=~ eig(g(id)), G=list(id=Am)} would perform the eigen decomposition proposed by Lee et al. (2015).
+ 
+  \code{grp(x)}   
+ 
+ can be used to specify customized incidence matrices for a random effect called "x" that will be provided in the \code{grouping} argument, i.e.  i.e. \emph{random=~ grp(ID), grouping=list(re=Zre)} would indicate that a new random effect called ID will be provided by the user an incidence matrix (i.e. Zre) in the \code{grouping} argument.
+  
+  \code{spl2D(x.coord, y.coord, at, at.levels, type, 
+      nseg, pord, degree, 
+      nest.div)}
+      
+  can be used to fit a 2-dimensional spline (i.e. spatial modeling) using coordinates \code{x.coord} and \code{y.coord}. The 2D spline can be fitted at specific levels using the \code{at} and \code{at.levels} arguments.Two types of P-Spline models are available; "SAP" or "PSANOVA" using the \code{type} argument. The \code{nseg} argument controls the number of segments for each marginal (strictly nseg - 1 is the number of internal knots in the domain of the covariate), and \code{pord} the penalty order for each marginal. \code{degree} is the order of the polynomial of the B-spline basis for each marginal being the default 3 (cubic B-splines). The \code{nest.div} argument refers to the number of segments to be used for the construction of the nested B-spline basis for the smooth-by-smooth interaction component. Default set to 1, which implies that nested basis are not used. \code{nseg}, \code{pord}, \code{degree}, \code{nest.div} are vectors of length 2 to be applied to \code{x.coord} and \code{y.coord} respectively.
+
+For a short tutorial on how to use this special functions you can look at the vignettes by typing in the terminal:
+
+\emph{vignette('sommer.start')}
+
+\strong{Example Datasets}
 
 The package has been equiped with several datasets to learn how to use the sommer package: 
 
@@ -128,15 +166,22 @@ The package has been equiped with several datasets to learn how to use the somme
 
 * \code{\link{gryphondata}} data contains an example of an animal model including pedigree information.
 
-* \code{\link{BTdata}} dataset contains an animal (birds) model.
+* \code{\link{BTdata}} dataset contains an animal (birds) information.
 
-If you need to use pedigree you need to convert your pedigree into a relationship matrix (use the `getA` function from the pedigreemm package). Other functions such as \code{\link{summary}}, \code{\link{fitted}}, \code{\link{randef}} (notice here is randef not ranef), \code{\link{anova}}, \code{\link{variogram}}, \code{\link{residuals}}, \code{\link{coef}} and \code{\link{plot}} applicable to typical linear models can also be applied to models fitted using the mmer-type of functions. Additional functions for genetic analysis have been included such as False Discovery Rate calculation (\code{\link{fdr}}), build a genotypic hybrid marker matrix (\code{\link{build.HMM}}), plot of genetic maps (\code{\link{map.plot}}), creation of manhattan plots (\code{\link{manhattan}}), phasing F1 or CP populations (\code{\link{phase.F1}}). We have also included the popular \code{\link{transp}} function to get transparent colors. Useful functions for analyzing field trials are included such as the \code{\link{blockerT}}, \code{\link{blockerL}}, and \code{\link{fill.design}}.
+\strong{Additional Functions}
 
-\strong{MODELS ENABLED}
+Other functions such as \code{\link{summary}}, \code{\link{fitted}}, \code{\link{randef}} (notice here is randef not ranef), \code{\link{anova}}, \code{\link{variogram}}, \code{\link{residuals}}, \code{\link{coef}} and \code{\link{plot}} applicable to typical linear models can also be applied to models fitted using the mmer-type of functions. 
 
-For details about the models enabled please check the help page ot the package \code{\link{sommer}}.
+Additional functions for genetic analysis have been included such as heritability (\code{\link{h2.fun}}), False Discovery Rate calculation (\code{\link{fdr}}), build a genotypic hybrid marker matrix (\code{\link{build.HMM}}), plot of genetic maps (\code{\link{map.plot}}), creation of manhattan plots (\code{\link{manhattan}}), phasing F1 or CP populations (\code{\link{phase.F1}}). If you need to use pedigree you need to convert your pedigree into a relationship matrix (use the `getA` function from the pedigreemm package). 
+
+Useful functions for analyzing field trials are included such as the \code{\link{spatPlots}}, \code{\link{blockerT}}, \code{\link{blockerL}}, and \code{\link{fill.design}}.
+
+\strong{Models Enabled}
+
+For details about the models enabled and more information about the covariance structures please check the help page ot the package (\code{\link{sommer}}).
 
 }
+
 \value{
 If all parameters are correctly indicated the program will return a list with the following information:
 
@@ -178,9 +223,13 @@ Gilmour et al. 1995. Average Information REML: An efficient algorithm for varian
 
 Kang et al. 2008. Efficient control of population structure in model organism association mapping. Genetics 178:1709-1723.
 
+Lee, D.-J., Durban, M., and Eilers, P.H.C. (2013). Efficient two-dimensional smoothing with P-spline ANOVA mixed models and nested bases. Computational Statistics and Data Analysis, 61, 22 - 37.
+
 Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: http://dx.doi.org/10.1101/027201.
 
 Maier et al. 2015. Joint analysis of psychiatric disorders increases accuracy of risk prediction for schizophrenia, bipolar disorder, and major depressive disorder. Am J Hum Genet; 96(2):283-294.
+
+Rodriguez-Alvarez, Maria Xose, et al. Correcting for spatial heterogeneity in plant breeding experiments with P-splines. Spatial Statistics 23 (2018): 52-71.
 
 Searle. 1993. Applying the EM algorithm to calculating ML and REML estimates of variance components. Paper invited for the 1993 American Statistical Association Meeting, San Francisco.
 

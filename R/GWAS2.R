@@ -1,22 +1,22 @@
-GWAS2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, grouping=NULL, method="NR",
-                  init=NULL,iters=20,tolpar = 1e-06, tolparinv = 1e-06, 
-                  draw=FALSE, silent=FALSE,
-                  constraint=TRUE, EIGEND=FALSE,
-                  forced=NULL,restrained=NULL,
+GWAS2 <- function(fixed, random, rcov, data, weights, G=NULL, M=NULL, grouping=NULL, 
+                  method="NR",init=NULL,iters=20,tolpar = 1e-06, tolparinv = 1e-06, 
+                  draw=FALSE, silent=FALSE, complete=TRUE,na.method.X="include", 
+                  na.method.Y="include", constraint=TRUE,forced=NULL,restrained=NULL,
                   
-                  P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, 
-                  gwas.plots=TRUE, map=NULL,manh.col=NULL,
-                  fdr.level=0.05, n.PC=0){
+                  P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05,gwas.plots=TRUE, 
+                  map=NULL,manh.col=NULL,fdr.level=0.05, n.PC=0){
   #rcov <- missing
   #gss=TRUE
   
-  if(is.null(W)){
-    stop("GWAS function needs the W argument (markers) to be different than NULL.\n", call. = FALSE)
+  if(is.null(M)){
+    stop("GWAS function needs the M argument (markers) to be different than NULL.\n", call. = FALSE)
   }
   
   # if(!silent){
-  #   cat("Always make sure that phenotypes in the dataset and marker matrix are in the same order.\nMeaning; phenotype of the i.th row corresponds to the i.th row in the marker matrix(W)")
+  #   cat("Always make sure that phenotypes in the dataset and marker matrix are in the same order.\nMeaning; phenotype of the i.th row corresponds to the i.th row in the marker matrix(M)")
   # }
+  
+  EIGEND=FALSE
   
   if(missing(data)){
     data <- environment(fixed)
@@ -38,16 +38,424 @@ GWAS2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, grouping=NULL, meth
     if (length(random) != 2) 
       stop("\nRandom model formula must be of form \" ~ pred\"")
   }
-
+  
   ###########################
   ## reduce the random formula
   
   expi <- function(j){gsub("[\\(\\)]", "", regmatches(j, gregexpr("\\(.*?\\)", j))[[1]])}
   expi2 <- function(x){gsub("(?<=\\()[^()]*(?=\\))(*SKIP)(*F)|.", "", x, perl=T)}
   
+  spl2D <-  function(x.coord,y.coord,at,at.levels, type="PSANOVA", nseg = c(10,10), pord = c(2,2), degree = c(3,3), nest.div = c(1,1) ) {
+    
+    interpret.covarrubias.formula <-
+      function(formula) {
+        env <- environment(formula) 
+        if(inherits(formula, "character"))          
+          formula <- as.formula(formula)
+        tf <- terms.formula(formula, specials = c("SAP", "PSANOVA"))
+        terms <- attr(tf, "term.labels")
+        nt <- length(terms)
+        if(nt != 1)
+          stop("Error in the specification of the spatial effect: only a sigle bidimensional function is allowed")
+        
+        res <- eval(parse(text = terms[1]), envir = env)
+        res
+      }
+    
+    bbase <-
+      function(X., XL., XR., NDX., BDEG.) {
+        # Function for B-spline basis
+        dx <- (XR. - XL.)/NDX.
+        knots <- seq(XL. - BDEG.*dx, XR. + BDEG.*dx, by=dx)
+        P <- outer(X., knots, tpower, BDEG.)
+        n <- dim(P)[2]
+        D <- diff(diag(n), diff = BDEG. + 1) / (gamma(BDEG. + 1) * dx ^ BDEG.)
+        B <- (-1) ^ (BDEG. + 1) * P %*% t(D)
+        res <- list(B = B, knots = knots)
+        res 
+      }
+    
+    tpower <-
+      function(x, t, p) {
+        # Function for truncated p-th power function
+        return((x - t) ^ p * (x > t))
+      }
+    
+    Rten2 <-
+      function(X1,X2) {
+        one.1 <- matrix(1,1,ncol(X1))
+        one.2 <- matrix(1,1,ncol(X2))
+        kronecker(X1,one.2)*kronecker(one.1,X2)
+      }
+    
+    MM.basis <-
+      function (x, xl, xr, ndx, bdeg, pord, decom = 1) {
+        Bb = bbase(x,xl,xr,ndx,bdeg)
+        knots <- Bb$knots
+        B = Bb$B
+        m = ncol(B)
+        n = nrow(B)
+        D = diff(diag(m), differences=pord)
+        P.svd = svd(crossprod(D))
+        U.Z = (P.svd$u)[,1:(m-pord)] # eigenvectors
+        d = (P.svd$d)[1:(m-pord)]  # eigenvalues
+        Z = B%*%U.Z
+        U.X = NULL
+        if(decom == 1) {
+          U.X = ((P.svd$u)[,-(1:(m-pord))])
+          X = B%*%U.X
+        } else if (decom == 2){
+          X = NULL
+          for(i in 0:(pord-1)){
+            X = cbind(X,x^i)
+          }
+        } else if(decom == 3) {
+          U.X = NULL
+          for(i in 0:(pord-1)){
+            U.X = cbind(U.X,knots[-c((1:pord),(length(knots)- pord + 1):length(knots))]^i)
+          }
+          X = B%*%U.X
+        } else if(decom == 4) { # Wood's 2013
+          X = B%*%((P.svd$u)[,-(1:(m-pord))])
+          id.v <- rep(1, nrow(X))
+          D.temp = X - ((id.v%*%t(id.v))%*%X)/nrow(X)
+          Xf <- svd(crossprod(D.temp))$u[,ncol(D.temp):1]
+          X <- X%*%Xf
+          U.X = ((P.svd$u)[,-(1:(m-pord)), drop = FALSE])%*%Xf
+        }
+        list(X = X, Z = Z, d = d, B = B, m = m, D = D, knots = knots, U.X = U.X, U.Z = U.Z)
+      }
+    
+    ####################
+    ### if we want to use at and at.levels
+    if(!missing(at)){
+      col1 <- deparse(substitute(at))
+      dat <- data.frame(x.coord, y.coord, at); colnames(dat) <- c("x.coord","y.coord",col1)
+      by <- col1
+      if(!missing(at.levels)){
+        by.levels=at.levels
+      }else{by.levels=NULL}
+    }else{
+      by=NULL
+      by.levels=NULL
+      dat <- data.frame(x.coord,y.coord); colnames(dat) <- c("x.coord","y.coord")
+    }
+    #######################
+    
+    x.coord <- "x.coord"
+    y.coord <- "y.coord"
+    
+    if(is.null(by)){
+      dat$FIELDINST <- "FIELD1"
+      by="FIELDINST"
+      dat[,by] <- as.factor(dat[,by])
+      data0 <- split(dat, dat[,by])
+      if(!is.null(by.levels)){
+        keep <- names(data0)[which(names(data0) %in% by.levels)]
+        
+        if(length(keep)==0){stop("The by.levels provided were not found in your dataset.",call. = FALSE)}
+        
+        data0 <- data0[[keep]]
+        if(length(keep)==1){data0 <- list(data0); names(data0) <- keep}
+      }
+    }else{
+      check <- which(colnames(dat)==by)
+      if(length(check)==0){stop("by argument not found in the dat provided", call. = FALSE)}else{
+        
+        missby <- which(is.na(dat[,by]))
+        if(length(missby)>0){stop("We will split using the by argument and you have missing values in this column.\nPlease correct.", call. = FALSE)}
+        
+        dat[,by] <- as.factor(dat[,by])
+        data0 <- split(dat, dat[,by])
+        
+        if(!is.null(by.levels)){
+          keep <- names(data0)[which(names(data0) %in% by.levels)]
+          
+          if(length(keep)==0){stop("The by.levels provided were not found in your dataset.",call. = FALSE)}
+          
+          data0 <- data0[[keep]]
+          if(length(keep)==1){data0 <- list(data0); names(data0) <- keep}
+          #print(str(data0))
+        }
+        
+      }
+    }
+    
+    nasx <- which(is.na(dat[,x.coord]))
+    nasy <- which(is.na(dat[,y.coord]))
+    if(length(nasx) > 0 | length(nasy) >0){
+      stop("x.coord and y.coord columns cannot have NA's", call. = FALSE)
+    }
+    #res <- interpret.covarrubias.formula(formula)
+    
+    ####
+    #### now apply the same to all environments
+    multires <- lapply(data0, function(data){
+      
+      
+      x1 <- data[ ,x.coord]
+      x2 <- data[ ,y.coord]
+      
+      #type = type
+      
+      MM1 = MM.basis(x1, min(x1), max(x1), nseg[1], degree[1], pord[1], 4)
+      MM2 = MM.basis(x2, min(x2), max(x2), nseg[2], degree[2], pord[2], 4)
+      
+      X1 <- MM1$X; Z1 <- MM1$Z; d1 <- MM1$d; B1 <- MM1$B
+      X2 <- MM2$X; Z2 <- MM2$Z; d2 <- MM2$d; B2 <- MM2$B
+      
+      c1 = ncol(B1); c2 = ncol(B2)
+      
+      # Nested bases
+      if(nest.div[1] == 1) {
+        MM1n <- MM1
+        Z1n <- Z1
+        c1n <- c1
+        d1n <- d1	
+      } else {
+        MM1n = MM.basis(x1, min(x1), max(x1), nseg[1]/nest.div[1], degree[1], pord[1], 4)
+        Z1n <- MM1n$Z
+        d1n <- MM1n$d
+        c1n <-  ncol(MM1n$B)  					
+      }
+      if(nest.div[2] == 1) {
+        MM2n <- MM2
+        Z2n <- Z2
+        c2n <- c2
+        d2n <- d2	
+      } else {
+        MM2n = MM.basis(x2, min(x2), max(x2), nseg[2]/nest.div[2], degree[2], pord[2], 4)
+        Z2n <- MM2n$Z
+        d2n <- MM2n$d
+        c2n <-  ncol(MM2n$B)  					
+      }
+      
+      x.fixed <- y.fixed <- ""
+      for(i in 0:(pord[1]-1)){
+        if(i == 1) 
+          x.fixed <- c(x.fixed, x.coord)
+        else if( i > 1)
+          x.fixed <- c(x.fixed, paste(x.coord, "^", i, sep = ""))
+      }
+      for(i in 0:(pord[2]-1)){
+        if(i == 1) 
+          y.fixed <- c(y.fixed, y.coord)
+        else if( i > 1)
+          y.fixed <- c(y.fixed, paste(y.coord, "^", i, sep = ""))
+      }
+      xy.fixed <- NULL
+      for(i in 1:length(y.fixed)) {
+        xy.fixed <- c(xy.fixed, paste(y.fixed[i], x.fixed, sep= ""))
+      }
+      xy.fixed <- xy.fixed[xy.fixed != ""]
+      names.fixed <- xy.fixed
+      
+      smooth.comp <- paste("f(", x.coord,",", y.coord,")", sep = "")
+      
+      if(type == "SAP") {
+        names.random <- paste(smooth.comp, c(x.coord, y.coord), sep = "|")				
+        X = Rten2(X2, X1)		
+        # Delete the intercept
+        X <- X[,-1,drop = FALSE]
+        Z = cbind(Rten2(X2, Z1), Rten2(Z2, X1), Rten2(Z2n, Z1n))
+        
+        dim.random <- c((c1 -pord[1])*pord[2] , (c2 - pord[2])*pord[1], (c1n - pord[1])*(c2n - pord[2]))		
+        dim <- list(fixed = rep(1, ncol(X)), random = sum(dim.random))
+        names(dim$fixed) <- names.fixed
+        names(dim$random) <- paste(smooth.comp, "Global")
+        
+        # Variance/Covariance components
+        g1u <- rep(1, pord[2])%x%d1
+        g2u <- d2%x%rep(1, pord[1])
+        g1b <- rep(1, c2n - pord[2])%x%d1n
+        g2b <- d2n%x%rep(1, c1n - pord[1])
+        
+        g <- list()	
+        g[[1]] <- c(g1u, rep(0, dim.random[2]), g1b)
+        g[[2]] <- c(rep(0, dim.random[1]), g2u, g2b)
+        
+        names(g) <- names.random
+        
+      } else {		
+        one1. <- X1[,1, drop = FALSE]
+        one2. <- X2[,1, drop = FALSE]
+        
+        x1. <- X1[,-1, drop = FALSE]
+        x2. <- X2[,-1, drop = FALSE]
+        
+        # Fixed and random matrices
+        X <- Rten2(X2, X1)
+        # Delete the intercept
+        X <- X[,-1,drop = FALSE]
+        Z <- cbind(Rten2(one2., Z1), Rten2(Z2, one1.), Rten2(x2., Z1), Rten2(Z2, x1.), Rten2(Z2n, Z1n))
+        
+        dim.random <- c((c1-pord[1]), (c2-pord[2]), (c1-pord[1])*(pord[2]-1), (c2-pord[2])*(pord[1]-1), (c1n-pord[2])*(c2n-pord[2]))
+        
+        # Variance/Covariance components		
+        g1u <- d1
+        g2u <- d2
+        
+        g1v <- rep(1, pord[2] - 1)%x%d1
+        g2v <- d2%x%rep(1,pord[1] - 1)
+        
+        g1b <- rep(1, c2n - pord[2])%x%d1n
+        g2b <- d2n%x%rep(1, c1n - pord[1])
+        
+        g <- list()
+        
+        if(type == "SAP.ANOVA") {
+          g[[1]] <- c(g1u, rep(0, sum(dim.random[2:5])))
+          g[[2]] <- c(rep(0, dim.random[1]), g2u, rep(0, sum(dim.random[3:5])))
+          g[[3]] <- c(rep(0, sum(dim.random[1:2])), g1v, rep(0, dim.random[4]), g1b)
+          g[[4]] <- c(rep(0, sum(dim.random[1:3])), g2v, g2b)
+          
+          names.random <- c(paste("f(", x.coord,")", sep = ""), paste("f(", y.coord,")", sep = ""), paste(smooth.comp, c(x.coord, y.coord), sep = "|"))			
+          dim <- list(fixed = rep(1, ncol(X)), random = c(dim.random[1:2], sum(dim.random[-(1:2)])))		
+          names(dim$fixed) <- names.fixed
+          names(dim$random) <- c(names.random[1:2], paste(smooth.comp, "Global"))
+          names(g) <- names.random
+        } else {
+          g[[1]] <- c(g1u, rep(0, sum(dim.random[2:5])))
+          g[[2]] <- c(rep(0, dim.random[1]), g2u, rep(0, sum(dim.random[3:5])))
+          g[[3]] <- c(rep(0, sum(dim.random[1:2])), g1v, rep(0, sum(dim.random[4:5])))
+          g[[4]] <- c(rep(0, sum(dim.random[1:3])), g2v, rep(0, dim.random[5]))
+          g[[5]] <- c(rep(0, sum(dim.random[1:4])), g1b + g2b)
+          
+          names.random <- c(paste("f(", x.coord,")", sep = ""), paste("f(", y.coord,")", sep = ""),
+                            paste("f(", x.coord,"):", y.coord, sep = ""),
+                            paste(x.coord,":f(", y.coord,")", sep = ""),
+                            paste("f(", x.coord,"):f(", y.coord,")", sep = ""))
+          
+          dim <- list(fixed = rep(1, ncol(X)), random = dim.random)		
+          names(dim$fixed) <- names.fixed
+          names(dim$random) <- names.random
+          names(g) <- names.random
+        }		
+      }
+      colnames(X) <- names.fixed
+      colnames(Z) <- paste(smooth.comp, 1:ncol(Z), sep = ".")
+      
+      attr(dim$fixed, "random") <- attr(dim$fixed, "sparse") <- rep(FALSE, length(dim$fixed))
+      attr(dim$fixed, "spatial") <- rep(TRUE, length(dim$fixed))
+      
+      attr(dim$random, "random") <- attr(dim$random, "spatial") <- rep(TRUE, length(dim$random)) 
+      attr(dim$random, "sparse") <- rep(FALSE, length(dim$random))
+      
+      terms <- list()
+      terms$MM <- list(MM1 = MM1, MM2 = MM2)
+      terms$MMn <- list(MM1 = MM1n, MM2 = MM2n)
+      #terms$terms.formula <- res
+      
+      # attr(terms, "term") <- smooth.comp
+      
+      # Initialize variance components
+      init.var <- rep(1, length(g))
+      
+      res <- list(X = X, Z = Z, dim = dim, g = g, init.var = init.var)	
+      M <- cbind(res$X,res$Z)
+      
+      return(M)
+    })
+    
+    nrowss <- (unlist(lapply(multires,nrow)))
+    nranges <- (unlist(lapply(multires,ncol)))
+    
+    names(multires) <- gsub(" ",".",names(multires))
+    names(multires) <- gsub("#",".",names(multires))
+    names(multires) <- gsub("/",".",names(multires))
+    names(multires) <- gsub("%",".",names(multires))
+    names(multires) <- gsub("\\(",".",names(multires))
+    names(multires) <- gsub(")",".",names(multires))
+    
+    
+    st <- 1 # for number of rows
+    st2 <- 1 # for number of column
+    end2 <- numeric() # for end of number of column
+    dataflist <- list()
+    #glist <- list()
+    for(u in 1:length(multires)){
+      prov <- multires[[u]]
+      mu <- as.data.frame(matrix(0,nrow = sum(nrowss), ncol = ncol(prov)))
+      colnames(mu) <- paste(names(multires)[u],colnames(prov), sep="_")
+      
+      nam <- paste("at",names(multires)[u],"2Dspl", sep="_")
+      end <- as.numeric(unlist(st+(nrowss[u]-1)))
+      
+      mu[st:end,] <- prov
+      dataflist[[nam]] <- as(as.matrix(mu), Class="sparseMatrix")
+      st <- end+1
+      ## for keeping track of the inits
+      # end2 <- as.numeric(unlist(st2+(ncol(prov)-1)))
+      # glist[[nam]] <- st2:end2
+      # st2 <- end2+1
+    }
+    
+    ## now build the last dataframe and adjust the glist
+    # newdatspl <- as.data.frame(do.call(cbind,dataflist))
+    # nn <- ncol(dat) # to add to the glist
+    # glist <- lapply(glist, function(x){x+nn})
+    # newdat <- data.frame(dat,newdatspl)
+    
+    ## now make the formula
+    
+    #funny <- paste(paste("grp(",names(dataflist),")",sep=""), collapse=" + ")
+    
+    ## important
+    # newdat: is the neew data frame with original data and splines per location matrices
+    # glist: is the argument to provide in group in asreml to indicate where each grouping starts and ends
+    # funny: formula to add to your random formula
+    dataflist <- lapply(dataflist,as.matrix)
+    fin <-dataflist#list(newdat=dataflist, funny=funny) # 
+    return(fin)
+  }
+  
   # see if any of the random terms has eig or group
   #rtermss <-strsplit(as.character(random[2]), split = "[+]")[[1]] #)  gsub(" ", "", 
   
+  ################
+  #### NA.METHOD.X
+  if(na.method.X == "exclude"){
+    fufu <- strsplit(as.character(fixed[3]), split = "[+]")[[1]]
+    fufu <- apply(data.frame(fufu),1,function(x){
+      strsplit(as.character((as.formula(paste("~",x)))[2]), split = "[+]")[[1]]
+    })
+    fufu <- unique(unlist(apply(data.frame(fufu),1,function(x){strsplit(x,":")[[1]]})))
+    fufu <- setdiff(fufu,"1")
+    if(length(fufu) >0){
+      missing1 <- sort(unique(as.vector(unlist(apply(data.frame(data[,fufu]),2,function(x){as.vector(which(is.na(x)))})))))
+      if(length(missing1) > 0){
+        data <- droplevels(data[-missing1,])
+      }
+    }
+  }else if(na.method.X == "include"){
+    fufu <- strsplit(as.character(fixed[3]), split = "[+]")[[1]]
+    fufu <- apply(data.frame(fufu),1,function(x){
+      strsplit(as.character((as.formula(paste("~",x)))[2]), split = "[+]")[[1]]
+    })
+    fufu <- setdiff(fufu,"1")
+    if(length(fufu) >0){
+      for(u in fufu){
+        v <- which(is.na(data[,u]))
+        if(length(v) > 0){ # if there's missing data impute
+          #print("imputing")
+          data[,u] <- imputev(data[,u])
+        }
+      }
+    }
+  }else{
+    stop("na.method.X not recognized for sommer", call. = FALSE)
+  }
+  ##########
+  ## NA.METHOD.Y
+  if(na.method.Y == "exclude"){
+    IMP=FALSE
+  }else if(na.method.Y == "include"){
+    IMP=TRUE
+  }else{
+    stop("na.method.Y not recognized for sommer", call. = FALSE)
+  }
+  
+  ######
   yuyu <- strsplit(as.character(random[2]), split = "[+]")[[1]]
   rtermss <- apply(data.frame(yuyu),1,function(x){
     strsplit(as.character((as.formula(paste("~",x)))[2]), split = "[+]")[[1]]
@@ -65,52 +473,121 @@ GWAS2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, grouping=NULL, meth
     if(length(f0)>0){f3 <- paste(f0,f3,sep=":")}
     rtermss <- c(f3,rtermss[-eigcheck])
     random <- as.formula(paste("~",paste(rtermss, collapse = " + "))) # new random
+    random <- as.formula(paste(as.character(random),collapse=""))
     #print(random)
   }
   grpcheck <- grep("grp\\(",rtermss)# apply(data.frame(rtermss),2,function(x){grep("eig",x)})
   if(length(grpcheck)>0){
-    f1 <- strsplit(rtermss[grpcheck],":")[[1]]
-    f00 <- grep("trait",f1) # position of structure for trait
-    if(length(f00)>0){
-      ZKgrouping.str <- f1[f00]
-    }else{
-      ZKgrouping.str <- rep("diag(trait)",length(f1)) 
-    }
-    f0 <- f1[f00] # structure for eigend
-    f2 <- f1[setdiff(1:length(f1),f00)]
-    #if(length(f0)>0){f2 <- paste(f0,f2,sep=":")}
-    random <- as.formula(paste("~",paste(rtermss[-grpcheck], collapse = " + "))) # new random
-    namere <- expi2(f2) # name of the random effect to look in to grouping argument
+    #
+    ZKgrouping.str <- character()
     ZKgrouping <- list()
     cous <- 0
     cous2 <- numeric()
-    #ZKgrouping.str <- character()
-    for(u in 1:length(namere)){
+    counter <- 0
+    for(h in rev(grpcheck)){ # h <- grpcheck[2]
+      counter <- counter+1
+      f1 <- strsplit(rtermss[h],":")[[1]]
+      #f1 <- apply(data.frame(rtermss[grpcheck]),1,function(x){strsplit(x,":")[[1]]})
+      f00 <- grep("trait",f1) # position of structure for trait
+      if(length(f00)>0){
+        ZKgrouping.str[counter] <- f1[f00]
+      }else{
+        ZKgrouping.str[counter] <- rep("diag(trait)",length(f1)) 
+      }
+      f0 <- f1[f00] # structure
+      f2 <- f1[setdiff(1:length(f1),f00)] # actual random effect
+      #if(length(f0)>0){f2 <- paste(f0,f2,sep=":")}
+      random <- as.formula(paste("~",paste(rtermss[-h], collapse = " + "))) # new random
+      random <- as.formula(paste(as.character(random),collapse=""))
+      namere <- expi2(f2) # name of the random effect to look in to grouping argument
+      
+      rtermss <- rtermss[-h]
+      
+      #ZKgrouping.str <- character()
+      #for(u in 1:length(namere)){ # u <- 1
       cous <- cous+1
-      cous2[u] <- cous
-      grpu <- which(names(grouping)==namere[u])
+      cous2[counter] <- cous
+      grpu <- which(names(grouping)==namere)
       Zgrpu <- grouping[[grpu]]
       if(is.null(Zgrpu)){stop("Random effect specified with the grp() function not specified in the grouping argument.\n",call. = FALSE)}
-      Gu <- which(names(G)==namere[u])
+      Gu <- which(names(G)==namere)
       if(length(Gu) > 0){
         Kgrp <- G[[Gu]]
-        cat("Ignore warning messages about variance-covariance matrices specified in the \nG argument not used for your grouping effects.\n")
+        cat("Ignore warning messages about variance-covariance matrices specified in the \nG argument not used for your grouping effects. They will be used.\n")
       }else{ Kgrp <- diag(ncol(Zgrpu))}
-      ZKgrouping[[u]] <- list(Z=Zgrpu, K=Kgrp)
-      names(ZKgrouping)[u] <- namere[u]
+      
+      ZKgrouping[[namere]] <- list(Z=Zgrpu, K=Kgrp)
+      #names(ZKgrouping)[counter] <- namere
+      #}
+      
     }
+    counter.grp <- counter
+    
+  }
+  if(length(grpcheck)>0){
+    cous2.grp <- cous2
+  }
+  
+  ## we will keep 'counter.grp' which is the last grouping factor (length(grp terms))
+  ## also keep 'cous2.grp' which it says which terms are the grouping (i.e. 1,2)
+  
+  splcheck <- grep("spl2D\\(",rtermss)# apply(data.frame(rtermss),2,function(x){grep("eig",x)})
+  if(length(splcheck)>0){
+    #
+    ZKspl2d.str <- character()
+    ZKspl2d <- list()
+    cous <- 0
+    cous2 <- numeric()
+    counter <- 0
+    for(h in rev(splcheck)){ # h <- grpcheck[2]
+      counter <- counter+1
+      f1 <- strsplit(rtermss[h],":")[[1]]
+      #f1 <- apply(data.frame(rtermss[grpcheck]),1,function(x){strsplit(x,":")[[1]]})
+      f00 <- grep("trait",f1) # position of structure for trait
+      f0 <- f1[f00] # structure
+      f2 <- f1[setdiff(1:length(f1),f00)] # actual random effect
+      
+      random <- as.formula(paste("~",paste(rtermss[-h], collapse = " + "))) # new random
+      random <- as.formula(paste(as.character(random),collapse=""))
+      
+      rtermss <- rtermss[-h]
+      
+      provspl <- eval(parse(text = f2),envir = data)
+      provspl <- lapply(provspl, function(x){zxk <- list(Z=x, K=diag(ncol(x))); return(zxk)})
+      ZKspl2d <- c(ZKspl2d,provspl)
+      
+      # if(length(f00)>0){
+      #   ZKgrouping.str[counter] <- f1[f00]
+      # }else{
+      #   ZKgrouping.str[counter] <- rep("diag(trait)",length(f1)) 
+      # }
+      if(length(f00)>0){
+        ZKspl2d.str <- c(ZKspl2d.str,rep(f1[f00],length(provspl)))
+      }else{
+        ZKspl2d.str <- c(ZKspl2d.str,rep("diag(trait)",length(provspl)) )
+      }
+      provspl <- NULL
+    }
+    counter.spl2d <- length(ZKspl2d.str)
+    
+  }
+  
+  if(length(splcheck)>0){
+    cous2.spl2d <- 1:length(ZKspl2d.str)#cous2
   }
   
   ## for us structures
- # apply(data.frame(rtermss),2,function(x){grep("eig",x)})
+  # apply(data.frame(rtermss),2,function(x){grep("eig",x)})
   # if(length(usscheck)>0 & constraint){
   #   cat("Setting 'constraint' argument to FALSE for unstructured model. \nPlease be carefult with results",call. = FALSE)
   #   constraint=FALSE
   # }
-    
+  
   if(missing(rcov)){rcovi <- NULL}else{rcovi<-rcov}
   ttt <- vctable.help(random = random, rcov = rcovi) # extract trait structure
   random <- ttt$random # update random term
+  random <- as.formula(paste(as.character(random),collapse=""))
+  
   rcov <- ttt$rcov # update rcov term
   
   
@@ -121,16 +598,16 @@ GWAS2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, grouping=NULL, meth
   usscheck <- grep("us\\(",strsplit(as.character(random[2]), split = "[+]")[[1]])
   ###########################
   ########### useful functions
-  at <- function(x, levs){ # how you handle x
+  at <- function(x, levs){ 
     dd <- model.matrix(~x - 1,data.frame(x))
     colnames(dd) <- substring(colnames(dd),2)
     dd <- dd[,levs]
-    return(dd)
   }
   
   diagc <- grep("diag\\(", random)
   if(length(diagc)){ # if user fits a diagonal model is the same than at
     random <- as.formula(paste(gsub("diag","at",random),collapse = ""))
+    random <- as.formula(paste(as.character(random),collapse=""))
   }
   
   if(!missing(rcov)){
@@ -140,11 +617,12 @@ GWAS2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, grouping=NULL, meth
     }
   }
   
+  us <- function(x){x}
   g <- function(x){x}
   and <- function(x){x}
   eig <- function(x){x}
   perc.na <- function(x){length(which(is.na(x)))/length(x)}
-    
+  
   ###########################
   ############## impute data
   ginvcheck <- grep("ginv\\(",random)
@@ -220,14 +698,15 @@ GWAS2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, grouping=NULL, meth
       }
     }
     
-    
     zvar <- V #names(V)
-    
     
     Z <- list()
     counter <- 0
     counterl <- numeric() # to store the names of the random effects for each random effect specified by
-    #i=2
+    #for example it specifies where each random effects starts, 
+    # if at(LOC):x and loc has 2 levels then counterl[i] <- 2
+    # so ends up being something like 2 4 6
+    
     # users, specially for interaction where a single term (i.e. at(location):gca) can produce several
     for(i in 1:length(zvar.names)){
       ## incidence matrix
@@ -236,7 +715,7 @@ GWAS2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, grouping=NULL, meth
       # data.frame(factor(V[,vara],levels=V[,vara],ordered=T))
       zi <- model.matrix(as.formula(paste("~",vara,"-1")),zvar)
       
-       ### check for overlay matrices
+      ### check for overlay matrices
       andc <- grep("and\\(",vara)
       if(length(andc)>0){
         
@@ -269,16 +748,23 @@ GWAS2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, grouping=NULL, meth
           }
           j1 <- colnames(zi)
           j2 <- gsub(":.*","",j1) # remove everything after the : to all names
-          j3 <- gsub(".*:","",vara) # part removed
+          
+          #?gregexpr
+          st1 <- gregexpr(":",vara)[[1]][1]+1
+          j3 <- substring(vara,st1, nchar(vara))
+          
+          #j3 <- gsub(".*:","",vara) # part removed, should be Row
           #j2 <- gsub(" ","", j2)
           k1 <- gsub(":.*","",vara) # to remove in next step
           #regexpr("\\((.*)\\)", j2[1])
           orx <- gsub(k1,"",j2, fixed = TRUE) # order of columns by location
-          where <- as.matrix(apply(data.frame(unique(orx)),1,function(x,y){which(y==x)},y=orx)) # each column says indeces for each level of at()
+          where <- matrix(apply(data.frame(unique(orx)),
+                                1,function(x,y){which(y==x)},y=orx),
+                          ncol=length(unique(orx))) # each column says indeces for each level of at()
           colnames(where) <- unique(j2)
           for(u in 1:dim(where)[2]){ # u=1
             counter <- counter+1
-            zix <- zi[,where[,u]]
+            zix <- as.matrix(zi[,where[,u]])
             ##
             ## var-cov matrix
             gcheck <- grep("g\\(",vara)
@@ -296,6 +782,7 @@ GWAS2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, grouping=NULL, meth
                 #########
                 uuuz <- colnames(zix)#levels(as.factor(colnames(zi))) # order of Z
                 uuuk <- attr(G[[ww]],"dimnames")[[1]] # order of K
+                if(is.null(uuuk)){uuuk <- dimnames(G[[ww]])[[1]]}
                 inte <- intersect(uuuz,uuuk)
                 #print(length(inte)==length(uuuz))
                 if(length(inte)==length(uuuz)){ # the names were the same in Z and K
@@ -347,8 +834,8 @@ GWAS2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, grouping=NULL, meth
             zz <- where[,df1[u,1]] # columns to take for location i
             zz2 <- where[,df1[u,2]] # columns to take for location j
             
-            zix <- zi[,zz] ## Z
-            zixt <- zi[,zz2] ## Z'
+            zix <- as.matrix(zi[,zz]) ## Z
+            zixt <- as.matrix(zi[,zz2]) ## Z'
             
             ##
             ## var-cov matrix
@@ -371,6 +858,7 @@ GWAS2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, grouping=NULL, meth
                 ######### just one is needed since z and z' have the same g
                 uuuz <- colnames(zix)#levels(as.factor(colnames(zi))) # order of Z
                 uuuk <- attr(G[[ww]],"dimnames")[[1]] # order of K
+                if(is.null(uuuk)){uuuk <- dimnames(G[[ww]])[[1]]}
                 inte <- intersect(uuuz,uuuk)
                 #print(length(inte)==length(uuuz))
                 if(length(inte)==length(uuuz)){ # the names were the same in Z and K
@@ -434,7 +922,8 @@ GWAS2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, grouping=NULL, meth
             #########
             uuuz <- colnames(zi)#levels(as.factor(colnames(zi))) # order of Z
             uuuk <- attr(G[[ww]],"dimnames")[[1]] # order of K
-            
+            if(is.null(uuuk)){uuuk <- dimnames(G[[ww]])[[1]]}
+            #print(uuuk)
             ### ========== sommer 2.8 =========== ###
             ## no intersection when "Year:" is present
             dotcheck <- grep(":g\\(",vara) # if user has Year:g(id)
@@ -487,13 +976,25 @@ GWAS2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, grouping=NULL, meth
       counterl[i] <- counter
     }
     
+    ##################################
+    ####now add the grouping matrices to the model
+    ##################################
     if(length(grpcheck)>0){
-      #added <- length(Z):(length(Z)+length(ZKgrouping))
-      #Z[[added]] <- ZKgrouping
       Z <- c(Z,ZKgrouping)
-      cous2 <- max(counter) + cous2
-      counterl <- c(counterl,cous2)
-      ttt$ran.trt.str <- c(ttt$ran.trt.str,ZKgrouping.str)
+      cous2 <- max(counter) + counter.grp # total number of ZK matrices added, counter is only from RE and counter.grp from grouping
+      counterl <- c(counterl,max(counter)+cous2.grp) # 
+      # originally counterl says the last effect where the same trait structure should be applied, i.e.
+      # for at(E):B + at(F):G if 'E' has 3 levels and 'F' 4 levels counterl is c(3,7)
+      ttt$ran.trt.str <- c(ttt$ran.trt.str,ZKgrouping.str) 
+      # the trait structures should match the length of counterl
+    }
+    
+    if(length(splcheck)>0){
+      Z <- c(Z,ZKspl2d)
+      if(length(cous2)==0){cous2 <- max(counter)}
+      cous2 <- cous2 + counter.spl2d # total number of ZK matrices added
+      counterl <- c(counterl,(cous2-counter.spl2d)+cous2.spl2d) # which have a unique trait structure
+      ttt$ran.trt.str <- c(ttt$ran.trt.str,ZKspl2d.str)
     }
     
     if(missing(rcov)){ #### MISSING R ARGUMENT
@@ -562,9 +1063,9 @@ GWAS2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, grouping=NULL, meth
     
     strmapping <- data.frame(x=c(counterl[1],diff(counterl),rrs),y=c(ttt$ran.trt.str,ttt$rcov.trt.str))
     ttt.all <- as.vector(unlist(apply(strmapping,1,function(x){rep(x[2],x[1])})))
-#     for(m in 1:length(strmapping)){
-#       mapping$stru[which(mapping$res == m)] <- strmapping[m]
-#     }
+    #     for(m in 1:length(strmapping)){
+    #       mapping$stru[which(mapping$res == m)] <- strmapping[m]
+    #     }
     
     #ttt.all <- c(ttt$ran.trt.str, ttt$rcov.trt.str) # structures for each random effect
     torestrain <- numeric()
@@ -631,8 +1132,16 @@ GWAS2 <- function(fixed, random, rcov, data, G=NULL, W=NULL, grouping=NULL, meth
     vara2 <- gsub("us\\s*\\([^\\)]+\\)","",vara2)
     names(Z) <- vara2
     
+    if(!missing(weights)){
+      
+      col1 <- deparse(substitute(weights))
+      coco <- data[[col1]]
+      W <- Diagonal(n=length(coco),x=coco)
+      coco <- NULL; col1 <- NULL
+    }else{W<- NULL}
     
-    res <- GWAS(Y=yvar, X=X, Z=Z, R=R,W=W, method=method, init=init,
+    
+    res <- GWAS(Y=yvar, X=X, Z=Z, R=R, W=W, M=M, method=method, init=init,
                 iters=iters,tolpar=tolpar,
                 tolparinv = tolparinv,draw=draw,silent=silent, 
                 constraint = constraint,EIGEND = EIGEND,

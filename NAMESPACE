@@ -1,13 +1,13 @@
 #############
 ## EXPORTS
 #############
-export(adiag1, AI, A.mat, and, at, atcg1234, hits, big.peaks.col, 
+export(adiag1, AI, A.mat, atcg1234, hits, big.peaks.col, 
        bathy.colors, blocker, blockerL, blockerT, brewer.pal, build.HMM, D.mat, 
-       design.score, eig, E.mat, EM, fdr, fdr2, fill.design, g, grp, 
+       design.score, E.mat, EM, fdr, fdr2, fill.design,
        GWAS, GWAS2, hadamard.prod, hdm, h2.fun, imputev, is.diagonal.matrix, 
        is.square.matrix, jet.colors, manhattan, matrix.trace, map.plot, 
        maxi.qtl, mmer,MEMMA, MNR, mmer2, nna, overlay, pedtoK, phase.F1, 
-       pin, score.calcMV, transp, us,  
+       pin, score.calcMV, spatPlots, transp,  
        vctable, vctable.help)
 
 export(summary.MMERM, residuals.MMERM, fitted.MMERM, plot.MMERM, 

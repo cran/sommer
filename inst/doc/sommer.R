@@ -128,7 +128,7 @@ HDdata$male <- as.factor(HDdata$male)
 HDdata$female <- as.factor(HDdata$female)
 # Fit the model
 modHD <- mmer2(sugar~1, 
-               random=~male + and(female) + geno, 
+               random=~overlay(male,female) + geno, 
                rcov=~units,
                data=HDdata, silent = TRUE)
 summary(modHD)
@@ -147,7 +147,7 @@ Vg <- Va + Vd
   head(HDdata)
   #### GCA matrix for half diallel using male and female columns
   #### use the 'overlay' function to create the half diallel matrix
-  Z1 <- overlay(HDdata[,c(3:4)])
+  Z1 <- overlay(HDdata$female, HDdata$male)
   #### Obtain the SCA matrix
   Z2 <- model.matrix(~as.factor(geno)-1, data=HDdata)
   #### Define the response variable and run
@@ -171,7 +171,7 @@ y.trn[vv,"X1"] <- NA
 ans <- mmer2(X1~1,
              random=~g(id), 
              rcov=~units,
-             G=list(id=K), method="NR", 
+             G=list(id=K), 
              data=y.trn, silent = TRUE) # kinship based
 cor(ans$u.hat$`g(id)`[vv,],Y[vv,"X1"])
 
@@ -203,6 +203,28 @@ anss2 <- mmer2(yield~1,
                method="NR", silent=TRUE, data=y.trn) 
 summary(anss2)
 cor(anss2$fitted.y[vv2], hybs$yield[vv2])
+
+## ------------------------------------------------------------------------
+data(CPdata)
+head(CPpheno)
+CPgeno[1:4,1:4]
+#### create the variance-covariance matrix 
+A <- A.mat(CPgeno) # additive relationship matrix
+#### look at the data and fit the model
+head(CPpheno)
+
+mix1 <- mmer2(Yield~1,
+              random=~g(id)
+                      + Rowf + Colf
+                      + spl2D(Row,Col),
+              rcov=~units,
+              G=list(id=A), silent=TRUE,
+              data=CPpheno)
+summary(mix1)
+
+## ------------------------------------------------------------------------
+#### get the spatial plots
+fittedvals <- spatPlots(mix1,row = "Row", range = "Col")
 
 ## ------------------------------------------------------------------------
 data(CPdata)

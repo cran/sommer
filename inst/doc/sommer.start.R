@@ -80,3 +80,25 @@ ans1 <- mmer2(cbind(Yield, Weight) ~ Env,
 summary(ans1)
 
 
+## ------------------------------------------------------------------------
+data(CPdata)
+head(CPpheno)
+CPgeno[1:4,1:4]
+#### create the variance-covariance matrix 
+A <- A.mat(CPgeno) # additive relationship matrix
+#### look at the data and fit the model
+head(CPpheno)
+
+mix1 <- mmer2(Yield~1,
+              random=~g(id)
+                      + Rowf + Colf
+                      + spl2D(Row,Col),
+              rcov=~units,
+              G=list(id=A), silent=TRUE,
+              data=CPpheno)
+summary(mix1)
+
+## ------------------------------------------------------------------------
+#### get the spatial plots
+fittedvals <- spatPlots(mix1,row = "Row", range = "Col")
+

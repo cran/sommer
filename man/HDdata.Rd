@@ -28,6 +28,8 @@ Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits u
 #### examples are silenced with one '#' mark, 
 #### remove them and run the examples
 ####=========================================####
+data(HDdata)
+head(HDdata)
 
 ####=========================================####
 #### Example 1 (formula-based)
@@ -39,26 +41,18 @@ HDdata$female <- as.factor(HDdata$female)
 HDdata$male <- as.factor(HDdata$male)
 HDdata$geno <- as.factor(HDdata$geno)
 #### model using overlay
-modh <- mmer2(sugar~1, random=~female + and(male) + geno, 
+modh <- mmer2(sugar~1, random=~overlay(female,male) + geno, 
               data=HDdata)
 summary(modh)
-
-#### model using overlay [and(.)] and covariance structures [g(.)]
+#### model using overlay and covariance structures
 
 # A <- diag(7); A[1,2] <- 0.5; A[2,1] <- 0.5 # fake covariance structure
 # colnames(A) <- as.character(1:7); rownames(A) <- colnames(A);A
 # 
-# modh2 <- mmer2(sugar~1, random=~g(female) + and(g(male)) + geno,
-#                G=list(female=A, male=A),data=HDdata)
+# modh2 <- mmer2(sugar~1, random=~ overlay(female,male) + geno,
+#                G=list(`overlay(female, male)`=A),data=HDdata)
 # summary(modh2)
-
-########################################################
-########################################################
-########################################################
-########################################################
-########################################################
-########################################################
-
+# 
 # ####=========================================####
 # #### Example 2 (matrix-based)
 # #### using overlay with mmer function
@@ -66,7 +60,7 @@ summary(modh)
 # 
 # #### GCA matrix for half diallel using male and female columns
 # #### use the 'overlay' function to create the half diallel matrix
-# Z1 <- overlay(HDdata[,c(3:4)])
+# Z1 <- overlay(HDdata$male, HDdata$female)
 # 
 # #### Obtain the SCA matrix
 # Z2 <- model.matrix(~as.factor(geno)-1, data=HDdata)

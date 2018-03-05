@@ -13,15 +13,20 @@ The sommer package was developed to provide R users a powerful and reliable mult
 
 The purpose of this quick start guide is to show the flexibility of the package under certain common scenarios:  
 
+B1) Background on mixed models
+B2) Background on covariance structures
+
 1) Univariate homogeneous variance models
 2) Univariate heterogeneous variance models
 3) Univariate unstructured variance models
 4) Multivariate homogeneous variance models
 5) Multivariate heterogeneous variance models
+6) Including special functions
+7) Spatial modeling
 
-## Background
+## B1) Background on mixed models
 
-The core of the package are the `mmer2` (formula-based) and `mmer` (matrix-based) functions which solve the mixed model equations. The functions are an interface to call the `NR` Direct-Inversion Newton-Raphson (Tunnicliffe 1989; Gilmour et al. 1995; Lee et al. 2016) or the `EMMA` efficient mixed model association algorithm (Kang et al. 2008). Since version 2.0 sommer can handle multivariate models. Following Maier et al. (2015), the multivariate (and by extension the univariate) mixed model implemented has the form:
+The core of the package are the `mmer2` (formula-based) and `mmer` (matrix-based) functions which solve the mixed model equations. The functions are an interface to call the `NR` Direct-Inversion Newton-Raphson (Tunnicliffe 1989; Gilmour et al. 1995; Lee et al. 2016) or the `EMMA` efficient mixed model association algorithm (Kang et al. 2008). From version 2.0, sommer can handle multivariate models. Following Maier et al. (2015), the multivariate (and by extension the univariate) mixed model implemented has the form:
 
 <br>
 
@@ -60,9 +65,9 @@ $$
 
 $$\mathbf{X} = \left[\begin{array}
 {rrr}
-X_1 & ... & ... \\
-... & ... & ...\\
-... & ... & X_t \\
+X_1 & 0 & 0 \\
+\vdots & \ddots & \vdots\\
+0 & 0 & X_t \\
 \end{array}\right]
 $$
     
@@ -71,7 +76,7 @@ $$
 $$\mathbf{V} = \left[\begin{array}
 {rrr}
 Z_1 K{\sigma^2_{g_{1}}} Z_1' + Z_1 I{\sigma^2_{\epsilon_{1}}} Z_1' & ... & Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' \\
- ... & ... & ...\\
+\vdots & \ddots & \vdots\\
 Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' & ... & Z_t K{\sigma^2_{g_{t}}} Z_t' + Z_t I{\sigma^2_{\epsilon_{t}}} Z_t' \\
 \end{array}\right]
 $$
@@ -103,6 +108,80 @@ In the following section we will go in detail over several examples on how to us
 
 <br>
 
+## B2) Background on covariance structures
+
+One of the major strenghts of linear mixed models is the flexibility to specify variance-covariance structures at all levels. In general, mixed models can be seen as kronecker products of multiple variance-covariance stuctures. For example, a multivariate model (i.e. 2 traits) where "g" genotypes (i.e. 100 genotypes) are tested in "e" environments (i.e. 3 environments), the genotype variance-covariance can be seen as the following multiplicative model:
+
+T $\otimes$ G $\otimes$ A
+
+where:
+
+$$\mathbf{T} = \left[\begin{array}
+{rr}
+{\sigma^2_{g_{_{t1,t1}}}} & {\sigma_{g_{_{t1,t2}}}} \\
+{\sigma_{g_{_{t2,t1}}}} & {\sigma^2_{g_{_{t2,t2}}}} \\
+\end{array}\right]
+$$
+
+is the covariance structure for genotypes among traits.
+
+$$\mathbf{G} = \left[\begin{array}
+{rrr}
+{\sigma^2_{g_{_{e1,e1}}}} & {\sigma_{g_{_{e1,e2}}}} & {\sigma_{g_{_{e1,e3}}}} \\
+{\sigma_{g_{_{e2,e1}}}} & {\sigma^2_{g_{_{e2,e2}}}} & {\sigma_{g_{_{e2,e3}}}} \\
+{\sigma_{g_{_{e3,e1}}}} & {\sigma_{g_{_{e3,e2}}}} & {\sigma^2_{g_{_{e3,e3}}}} \\
+\end{array}\right]
+$$
+
+is the genotype covariance structure among environments.
+
+and $A$ is the genomic, additive or any other relationship matrix.
+
+The T and G covariance structures shown above are known as unstructured (US) covariance matrices, although this is just one example from several covariance structures that the linear mixed models enable. For example, other popular covariance structures are:
+
+Diagonal (DIAG)
+
+$$\mathbf{\Sigma} = \left[\begin{array}
+{rrr}
+{\sigma^2_{g_{_{e1,e1}}}} & 0 & 0 \\
+\vdots & \ddots & \vdots \\
+0 & 0 & {\sigma^2_{g_{_{ei,ei}}}} \\
+\end{array}\right]
+$$
+Compound simmetry (CS)
+
+$$\mathbf{\Sigma} = \left[\begin{array}
+{rrrr}
+{\sigma^2_{g}} + {\sigma^2_{ge}} & {\sigma^2_{g}} & {\sigma^2_{g}} & {\sigma^2_{g}} \\
+{\sigma^2_{g}} & {\sigma^2_{g}} + {\sigma^2_{ge}} & {\sigma^2_{g}} & {\sigma^2_{g}}\\
+\vdots & \vdots & \ddots & \vdots\\
+{\sigma^2_{g}} & {\sigma^2_{g}} & {\sigma^2_{g}} & {\sigma^2_{g}} + {\sigma^2_{ge}}\\
+\end{array}\right]
+$$
+
+First order autoregressive (AR1)
+
+$$\mathbf{\Sigma} = \sigma^2 \left[\begin{array}
+{rrrr}
+1 & {\rho} & {\rho^2} & {\rho^3} \\
+{\rho} & 1 & {\rho} & {\rho^2}\\
+{\rho^2} & {\rho} & 1 & {\rho} \\
+{\rho^3} & {\rho^2} & {\rho}  & 1  \\
+\end{array}\right]
+$$
+
+and the already mentioned Unstructured (US)
+
+$$\mathbf{\Sigma} = \left[\begin{array}
+{rrr}
+{\sigma^2_{g_{_{e1,e1}}}} & {\sigma_{g_{_{e1,e2}}}} & {\sigma_{g_{_{e1,e3}}}} \\
+\vdots & \ddots & \vdots \\
+{\sigma_{g_{_{e3,e1}}}} & {\sigma_{g_{_{e3,e2}}}} & {\sigma^2_{g_{_{e3,e3}}}} \\
+\end{array}\right]
+$$
+
+among others. Sommer has the capabilities to fit some of these covariance structures in the mixed model machinery. In the following section we will go over some examples on how to accomodate some structures.
+
 ## 1) Univariate homogeneous variance models
 
 This type of models refer to single response models where a variable of interest (i.e. genotypes) needs to be analized as interacting with a 2nd random effect (i.e. environments), but you assume that across environments the genotypes have the same variance component. This is the so-called compound simmetry (CS) model.
@@ -122,7 +201,7 @@ summary(ans1)
 
 ## 2) Univariate heterogeneous variance models
 
-Very often in multi-environment trials, the assumption that the genetic variance or the residual variance is the same across locations may be too naive. Because of that, specifying a general genetic component and a location specific genetic variance is the way to go. This require a CS+DIAG model.
+Very often in multi-environment trials, the assumption that the genetic variance or the residual variance is the same across locations may be too naive. Because of that, specifying a general genetic component and a location specific genetic variance is the way to go. This requires a CS+DIAG model (also called heterogeneous CS model).
 
 ```{r}
 
@@ -228,7 +307,47 @@ summary(ans1)
 
 Notice that the `g()` function is applied at the random effect called "Name", and the covariance structure is provided in the argument "G". In the example, we used a diagonal covariance structure for demonstration purposes but any dense covariance matrix can be used.
 
-Other special functions such as `and()` for overlay models, `eig()` for an eigen decomposition of the covariance matrix, `grp()` for customized random effects providing an incidence matrix, are available. Take a look a the help page for each of these special functions.
+Other special functions such as `overlay()` for overlay models, `eig()` for an eigen decomposition of the covariance matrix, `grp()` for customized random effects providing an incidence matrix, and `spl2D()` are available. Take a look a the help page for each of these special functions.
+
+## 7) Spatial modeling (using the 2-dimensional spline)
+
+We will use the CPdata to show the use of 2-dimensional splines for accomodating spatial effects in field experiments. In early generation variety trials the availability of seed is low, which makes the use of unreplicated design a neccesity more than anything else. Experimental designs such as augmented designs and partially-replicated (p-rep) designs become every day more common this days. 
+
+In order to do a good job modeling the spatial trends happening in the field special covariance structures have been proposed to accomodate such spatial trends (i.e. autoregressive residuals; ar1). Unfortunately, some of these covariance structures make the modeling rather unstable. More recently other research groups have proposed the use of 2-dimensional splines to overcome such issues and have a more robust modeling of the spatial terms (Lee et al. 2013; Rodríguez-Álvarez et al. 2018).
+
+In this example we assume an unreplicated population where row and range information is available which allows us to fit a 2 dimensional spline model.
+
+```{r}
+data(CPdata)
+head(CPpheno)
+CPgeno[1:4,1:4]
+#### create the variance-covariance matrix 
+A <- A.mat(CPgeno) # additive relationship matrix
+#### look at the data and fit the model
+head(CPpheno)
+
+mix1 <- mmer2(Yield~1,
+              random=~g(id)
+                      + Rowf + Colf
+                      + spl2D(Row,Col),
+              rcov=~units,
+              G=list(id=A), silent=TRUE,
+              data=CPpheno)
+summary(mix1)
+```
+
+Notice that the job is done by the `spl2D()` function that takes the Row and Col information to fit a spatial kernel. When multiple fields are available the function has an additional argument call `at` which allows to fit a different spatial kernel in each field. For example if there was multiple fields the use of the random call would look like:
+
+random=~ spl2D(Row,Col, at=FIELD)
+
+where FIELD would correspond to the name of the column of the dataset where the identifier for the different environments is. 
+
+```{r}
+#### get the spatial plots
+fittedvals <- spatPlots(mix1,row = "Row", range = "Col")
+```
+
+## Final remarks
 
 Keep in mind that sommer uses direct inversion (DI) algorithm which can be very slow for large datasets. The package is focused in problems of the type p > n (more random effect levels than observations) and models with dense covariance structures. For example, for experiment with dense covariance structures with low-replication (i.e. 2000 records from 1000 individuals replicated  twice with a covariance structure of 1000x1000) sommer will be faster than MME-based software. Also for genomic problems with large number of random effect levels, i.e. 300 individuals (n) with 100,000 genetic markers (p). For highly replicated trials with small covariance structures or n > p (i.e. 2000 records from 200 individuals replicated 10 times with covariance structure of 200x200) asreml or other MME-based algorithms will be much faster and we recommend you to opt for those software.
 
@@ -244,9 +363,13 @@ Henderson C.R. 1975. Best Linear Unbiased Estimation and Prediction under a Sele
 
 Kang et al. 2008. Efficient control of population structure in model organism association mapping. Genetics 178:1709-1723.
 
+Lee, D.-J., Durban, M., and Eilers, P.H.C. (2013). Efficient two-dimensional smoothing with P-spline ANOVA mixed models and nested bases. Computational Statistics and Data Analysis, 61, 22 - 37.
+
 Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: http://dx.doi.org/10.1101/027201.
 
 Maier et al. 2015. Joint analysis of psychiatric disorders increases accuracy of risk prediction for schizophrenia, bipolar disorder, and major depressive disorder. Am J Hum Genet; 96(2):283-294.
+
+Rodriguez-Alvarez, Maria Xose, et al. Correcting for spatial heterogeneity in plant breeding experiments with P-splines. Spatial Statistics 23 (2018): 52-71.
 
 Searle. 1993. Applying the EM algorithm to calculating ML and REML estimates of variance components. Paper invited for the 1993 American Statistical Association Meeting, San Francisco.
 

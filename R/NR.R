@@ -1,4 +1,4 @@
-MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,iters=20,tolpar=1e-3,
+MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,W=NULL,init=NULL,iters=20,tolpar=1e-3,
                 tolparinv=1e-6,draw=FALSE,silent=FALSE, constraint=TRUE, 
                 EIGEND=FALSE, forced=NULL, IMP=FALSE, complete=TRUE, 
                 check.model=FALSE, restrained=NULL, REML=TRUE, init.equal=TRUE){
@@ -77,6 +77,13 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,iters=20,tolpar=1e-3,
   }
   if(is.null(R)){
     R <- list(units=diag(nrow(as.matrix(Y))))
+  }
+  if(!is.null(W)){ # no need to multiply
+    if(nrow(W)!= nrow(R[[1]])){stop("Dimensins of R and W should be equal.",call. = FALSE)}
+    #Wi.sqrt<- solve(sqrt(W))
+    provw <- 1/sqrt(diag(W)) 
+    Wi.sqrt <- Diagonal(n=nrow(W),x=provw)
+    R <- lapply(R, function(x){Wi.sqrt%*%x%*%Wi.sqrt})
   }
   fixnames <- colnames(X)
   Y.or <- Y
@@ -648,6 +655,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,iters=20,tolpar=1e-3,
     Zu.ordim <- Zu.ordim + Zulist.ordim[[h]]
   }
   ee.cond <- Y.red.noscale.ordim - fitted.y.good - Zu # Y - XB - ZU
+  ee.non.cond <- Y.red.noscale.ordim - fitted.y.good
   ######################
   ## Fisher inverse
   sigma.cov <- ((A.svd) * 2) 
@@ -683,7 +691,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,iters=20,tolpar=1e-3,
   
   XB.ordim <- matrix(X.or%*%beta, nrow = nrow(Y.or), byrow = FALSE); #in a dataframe xb
   Y.fitted <- XB.ordim + Zu.ordim
-  res.ordim <- Y.fitted - Y.or
+  res.ordim <-Y.or - Y.fitted
   
   layout(matrix(1,1,1))
   if(!silent){
@@ -722,7 +730,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,iters=20,tolpar=1e-3,
   return(list(var.comp=sigma, V.inv=V, u.hat = ulist , Var.u.hat = Var.u, 
               beta.hat = beta, Var.beta.hat = XVXi2, fish.inv=sigma.cova, 
               fish.inv.nonscale=fish.inv.nonscale,
-              PEV.u.hat = PEV.u, residuals=ee, cond.residuals=ee.cond,
+              PEV.u.hat = PEV.u, residuals=ee.non.cond, cond.residuals=ee.cond,
               LL=llik, AIC=AIC, BIC=BIC, X=X, Y= Y.red.noscale.ordim,
               #Zforvec= Zforvec.list, varvecG=varvecG,Ylin=Y.red.noscale.lin,
               dimos=dado, sigma.scaled=sigmaxxx, sigma= sigma.nonscale,

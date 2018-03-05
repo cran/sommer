@@ -5,7 +5,7 @@
 This function is used internally in the function \code{\link{mmer}} when MORE than 1 variance component needs to be estimated through the use of the Newton-Raphson (MNR) algorithm for multivariate models (multiple responses).
 }
 \usage{
-MNR(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,iters=20,tolpar=1e-3,
+MNR(Y,X=NULL,ZETA=NULL,R=NULL,W=NULL,init=NULL,iters=20,tolpar=1e-3,
     tolparinv=1e-6,draw=FALSE,silent=FALSE, constraint=TRUE, 
     EIGEND=FALSE, forced=NULL, IMP=FALSE, complete=TRUE, 
     check.model=FALSE, restrained=NULL, REML=TRUE,
@@ -57,6 +57,7 @@ MNR(Y,X=NULL,ZETA=NULL,R=NULL,init=NULL,iters=20,tolpar=1e-3,
   
   You can see the examples at the bottom to have a clearer idea how to fit your models. }
  \item{R}{list of R matrices to correct for residual. Internally the program will do the kronecker product of such matrices to create R.}
+  \item{W}{matrix of weights of dimensions n x n. To be used for the product R = Wsi*R*Wsi, where * is the matrix product, Wsi is the square root of the inverse of W and R is the residual matrix.}
   \item{init}{vector of initial values for the variance components. By default this is NULL and variance components are estimated by the method selected, but in case the user want to provide initial values this argument is functional.}
   \item{iters}{Maximum number of iterations allowed.  Default value is
     15.}

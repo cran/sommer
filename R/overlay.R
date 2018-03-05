@@ -24,10 +24,61 @@
 # }
 
 
-overlay <-function(dat, rlist=NULL, prefix=NULL){
-  
-  
+# overlay <-function(dat, rlist=NULL, prefix=NULL){
+#   
+#   
+#   dat <- as.data.frame(dat)
+#   
+#   if(is.null(dim(dat))){
+#     stop("Please provide a data frame to the overlay function, not a vector.\n", call. = FALSE)
+#   }
+#   
+#   if(is.null(rlist)){
+#     #rlist <- vector(mode="list",length = dim(dat)[2])
+#     rlist <- as.list(rep(1, dim(dat)[2]))
+#   }
+#   
+#   ss1 <- colnames(dat)
+#   dat2 <- as.data.frame(dat[,ss1]); head(dat2)
+#   colnames(dat2) <- ss1
+#   
+#   femlist <- list()
+#   S1list <- list()
+#   ## convert to factor such columns
+#   ## and store matrices
+#   for(i in 1:length(ss1)){
+#     femlist[[i]] <- ss1[i]
+#     dat2[,femlist[[i]]] <- as.factor(dat2[,femlist[[i]]])
+#     S1 <- model.matrix(as.formula(paste("~",femlist[[i]],"-1")), dat2)
+#     colnames(S1) <- gsub(femlist[[i]],"",colnames(S1))
+#     S1list[[i]] <- S1
+#   }
+#   # make a matrix with all possible names full of zeros
+#   levo <- sort(unique(unlist(lapply(S1list, function(x){colnames(x)}))))
+#   S3 <- matrix(0,nrow=dim(dat2)[1],ncol=length(levo)); rownames(S3) <- rownames(dat2)
+#   colnames(S3) <- levo
+#   for(i in 1:length(S1list)){
+#     if(i==1){
+#       S3[rownames(S1list[[i]]),colnames(S1list[[i]])] <- S1list[[i]]*rlist[[i]] # ADD FEMALES
+#     }else{
+#       S3[rownames(S1list[[i]]),colnames(S1list[[i]])] <- S3[rownames(S1list[[i]]),colnames(S1list[[i]])] + (S1list[[i]][rownames(S1list[[i]]),colnames(S1list[[i]])]*rlist[[i]]) ## add males
+#     }
+#   }
+#   if(!is.null(prefix)){
+#     colnames(S3) <- paste(prefix,colnames(S3),sep="")
+#   }
+#   return(S3)
+# }
+
+overlay <-function(..., rlist=NULL, prefix=NULL){
+  #print(str(list(...)))
+  init <- list(...)
+  init <- lapply(init,as.character)
+  names <- as.character(substitute(list(...)))[-1L]
+  dat <- as.data.frame(do.call(cbind,init))
+  #colnames(dat) <- names
   dat <- as.data.frame(dat)
+  #print(str(dat))
   
   if(is.null(dim(dat))){
     stop("Please provide a data frame to the overlay function, not a vector.\n", call. = FALSE)

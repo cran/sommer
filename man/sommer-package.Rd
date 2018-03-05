@@ -14,11 +14,25 @@ Giovanny Covarrubias-Pazaran
 }
 \description{
 
-Structural multivariate-univariate linear mixed model solver for multiple random effects allowing the specification of variance covariance structures. ML/REML estimates can be obtained using the Direct-Inversion Newton-Raphson and Efficient Mixed Model Association algorithms. Designed for genomic prediction and genome wide association studies (GWAS) to include additive, dominance and epistatic relationship structures or other covariance structures, but also functional as a regular mixed model program.  
+Sommer is a structural multivariate-univariate linear mixed model solver for multiple random effects allowing the specification of variance covariance structures. ML/REML estimates can be obtained using the Direct-Inversion Newton-Raphson and Efficient Mixed Model Association algorithms. Designed for genomic prediction and genome wide association studies (GWAS) to include additive, dominance and epistatic relationship structures or other covariance structures, but also functional as a regular mixed model program.  
 
-The sommer package has been developed to provide R users with open-source code to understand how most popular likelihood algorithms in mixed model analysis work, but at the same time allowing to perform their real analysis in diploid and polyploid organisms with small and medium-size data sets (<10,000 observations for average computers). The package is focused in the p > n problem and dense covariance structure when the direct-inversion algorithm become faster than MME-based algorithms. \strong{ The core of the package are the \code{\link{mmer2}} (formula-based) and \code{\link{mmer}} (matrix-based) functions} that fit the multivariate linear mixed models.We highly recommend the use of the formula-based \code{\link{mmer2}} function since it offers the same flexibility but makes easier the tedious work of building the matrices. This package returns variance-covariance components, BLUPs, BLUEs, residuals, fitted values, variances-covariances for fixed and random effects, etc. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices for diploid and polyploid organisms. The package provides flexibility to fit other genetic models such as full and half diallel models as well. In addition the \code{\link{pin}} function can be used to estimate standard errors for linear combinations of variance components (i.e. ratios like h2). A good converter from letter code to numeric format is implemented in the function \code{\link{atcg1234}}, which supports higher ploidy levels than diploid.
+The sommer package has been developed to provide R users with open-source code to understand how most popular likelihood algorithms in mixed model analysis work, but at the same time allowing to perform their real analysis in diploid and polyploid organisms with small and medium-size data sets (<10,000 observations for average computers). The package is focused in the p > n problem and dense covariance structures when the direct-inversion algorithm become faster than MME-based algorithms. \strong{ The core of the package are the \code{\link{mmer2}} (formula-based) and \code{\link{mmer}} (matrix-based) functions} that fit the multivariate linear mixed models.We highly recommend the use of the formula-based \code{\link{mmer2}} function since it offers the same flexibility but makes easier the tedious work of building the matrices. This package returns variance-covariance components, BLUPs, BLUEs, residuals, fitted values, variances-covariances for fixed and random effects, etc. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices for diploid and polyploid organisms. The package provides flexibility to fit other genetic models such as full and half diallel models as well. In addition the \code{\link{pin}} function can be used to estimate standard errors for linear combinations of variance components (i.e. ratios like h2). A good converter from letter code to numeric format is implemented in the function \code{\link{atcg1234}}, which supports higher ploidy levels than diploid.
 
-Starting with version 3.0 the GWAS models that use the W argument have their own functions \code{\link{GWAS}} and \code{\link{GWAS2}} and are not part of the \code{\link{mmer}} type of functions.
+Starting with version 3.0 the GWAS models that use the M argument have their own functions \code{\link{GWAS}} and \code{\link{GWAS2}} and are not part of the \code{\link{mmer}} type of functions.
+}
+
+\section{Tutorials}{
+
+\strong{For tutorials} on how to perform different analysis with sommer please look at the vignettes by typing in the terminal:
+
+\emph{vignette("sommer.start")} 
+
+\emph{vignette("sommer")}
+
+Please update 'sommer' every 2 months using:
+
+\emph{install.packages("sommer")}
+
 }
 
 \section{Getting started}{
@@ -40,33 +54,21 @@ The package has been equiped with several datasets to learn how to use the somme
 
 * \code{\link{BTdata}} dataset contains an animal (birds) model.
 
-Other functions such as \code{\link{summary}}, \code{\link{fitted}}, \code{\link{randef}} (notice here is randef not ranef), \code{\link{anova}}, \code{\link{variogram}}, \code{\link{residuals}}, \code{\link{coef}} and \code{\link{plot}} applicable to typical linear models can also be applied to models fitted using the mmer-type of functions. Additional functions for genetic analysis have been included such as False Discovery Rate calculation (\code{\link{fdr}}), build a genotypic hybrid marker matrix (\code{\link{build.HMM}}), plot of genetic maps (\code{\link{map.plot}}), creation of manhattan plots (\code{\link{manhattan}}), phasing F1 or CP populations (\code{\link{phase.F1}}). We have also included the popular \code{\link{transp}} function to get transparent colors. Useful functions for analyzing field trials are included such as the \code{\link{blockerT}}, \code{\link{blockerL}}, and \code{\link{fill.design}}.
+Other functions such as \code{\link{summary}}, \code{\link{fitted}}, \code{\link{randef}} (notice here is randef not ranef), \code{\link{anova}}, \code{\link{variogram}}, \code{\link{residuals}}, \code{\link{coef}} and \code{\link{plot}} applicable to typical linear models can also be applied to models fitted using the mmer-type of functions. Additional functions for genetic analysis have been included such as heritability (\code{\link{h2.fun}}), False Discovery Rate calculation (\code{\link{fdr}}), build a genotypic hybrid marker matrix (\code{\link{build.HMM}}), plot of genetic maps (\code{\link{map.plot}}), creation of manhattan plots (\code{\link{manhattan}}), phasing F1 or CP populations (\code{\link{phase.F1}}). If you need to use pedigree you need to convert your pedigree into a relationship matrix (use the `getA` function from the pedigreemm package).
+
+Useful functions for analyzing field trials are included such as the \code{\link{spatPlots}}, \code{\link{blockerT}}, \code{\link{blockerL}}, and \code{\link{fill.design}}.
 
 }
 
-\section{Differences of sommer 3.0 with previous versions}{
+\section{Differences of sommer >= 3.0 with previous versions}{
 
-Since version 3.0 we have decided to focus in developing the multivariate solver and for doing this we have decided to remove the W argument (for GWAS analysis) from the mmer functions (mmer and mmer2) and move it to it's own function \code{\link{GWAS}} and \code{\link{GWAS2}}.
+Since version 3.0 we have decided to focus in developing the multivariate solver and for doing this we have decided to remove the M argument (for GWAS analysis) from the mmer functions (mmer and mmer2) and move it to it's own function \code{\link{GWAS}} and \code{\link{GWAS2}}.
 
 Now the mmer2 solver has implemented the us(trait), diag(trait), at(trait) asreml formulation for multivariate models that allow to specify the structure of the trait in multivariate models. Therefore the MVM argument is no longer needed.
 
 The Average Information algorithm has been removed from the package because of its instability to deal with very complex models without good initial values. The default NR algorithm implemented instead is almost bullet proof and doesn't require good starting values. Please give it a try. We have left the stand-alone MME-based algorithms; Expectation Maximization (\code{\link{EM}}) and Average Information (\code{\link{AI}}) available in case users wants to use them but will not be further mantained or extended, neither are part of the mmer-type of functions.
 
 Keep in mind that sommer uses direct inversion (DI) algorithm which can be very slow for datasets with many observations (big 'n'). The package is focused in problems of the type p > n (more random effect(s) levels than observations) and models with dense covariance structures. For example, for experiment with dense covariance structures with low-replication (i.e. 2000 records from 1000 individuals replicated  twice with a covariance structure of 1000x1000) sommer will be faster than MME-based software. Also for genomic problems with large number of random effect levels, i.e. 300 individuals (n) with 100,000 genetic markers (p). For highly replicated trials with small covariance structures or n > p (i.e. 2000 records from 200 individuals replicated 10 times with covariance structure of 200x200) asreml or other MME-based algorithms will be much faster and we recommend you to use that software.
-
-}
-
-\section{Tutorials}{
-
-For a short tutorial and a quick start guide using sommer please type:
-
-\strong{vignette("sommer.start")}
-
-\strong{vignette("sommer")}
-
-Please update 'sommer' every 2 months using:
-
-install.packages("sommer")
 
 }
 
@@ -121,11 +123,11 @@ The EMMA method is the one proposed by Kang et al. (2008). Please refer to the c
 
 \section{GWAS Models}{
 
-The GWAS models in the sommer package are enabled by using the W argument in the functions \code{\link{GWAS}} and \code{\link{GWAS2}}, which is expected to be a numeric marker matrix. Markers are treated as fixed effects according to the model proposed by Yu et al. (2006) for diploids, and Rosyara et al. (2016) (for polyploids). The matrices X and W are both fixed effects, but they are separated by 2 different arguments to distinguish factors such as environmental and design factors for the argument "X" and markers with "W".
+The GWAS models in the sommer package are enabled by using the M argument in the functions \code{\link{GWAS}} and \code{\link{GWAS2}}, which is expected to be a numeric marker matrix. Markers are treated as fixed effects according to the model proposed by Yu et al. (2006) for diploids, and Rosyara et al. (2016) (for polyploids). The matrices X and M are both fixed effects, but they are separated by 2 different arguments to distinguish factors such as environmental and design factors for the argument "X" and markers with "M".
   
   The genome-wide association analysis is based on the mixed model:
 
-\deqn{y = X \beta + Z g + W \tau + e}
+\deqn{y = X \beta + Z g + M \tau + e}
 
 where \eqn{\beta} is a vector of fixed effects that can model both environmental factors and population structure.  
 The variable \eqn{g} models the genetic background of each line as a random effect with \eqn{Var[g] = K \sigma^2}.  
@@ -133,7 +135,7 @@ The variable \eqn{\tau} models the additive SNP effect as a fixed effect.  The r
   
   When principal components are included (P+K model), the loadings are determined from an eigenvalue decomposition of the K matrix and are used in the fixed effect part.
 
-The argument "P3D" introduced by Zhang et al. (2010) can be used with the P3D argument.  When P3D=FALSE, this function is equivalent to EMMA//NR with REML where the variance components are estimated for each SNP or marker tested (Kang et al. 2008).  When P3D=TRUE, it is equivalent to EMMAX//NR (Kang et al. 2010) where the assumption is that variance components for all SNP/markers are the same and therefore the variance components are estimated only once (and markers are tested in a WLS framework being the the weight matrix (W) the inverse of the phenotypic variance matrix (V)).  Therefore, P3D=TRUE option is faster but can underestimate significance compared to P3D=FALSE.
+The argument "P3D" introduced by Zhang et al. (2010) can be used with the P3D argument.  When P3D=FALSE, this function is equivalent to EMMA//NR with REML where the variance components are estimated for each SNP or marker tested (Kang et al. 2008).  When P3D=TRUE, it is equivalent to EMMAX//NR (Kang et al. 2010) where the assumption is that variance components for all SNP/markers are the same and therefore the variance components are estimated only once (and markers are tested in a WLS framework being the the weight matrix (M) the inverse of the phenotypic variance matrix (V)).  Therefore, P3D=TRUE option is faster but can underestimate significance compared to P3D=FALSE.
 
 Multivariate GWAS are based in Covarrubias-Pazaran et al. (2017, Submitted), which adjusts betas for all response variables and then does the regular GWAS with such adjusted betas or marker effects.
 

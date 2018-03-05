@@ -10,13 +10,15 @@ Fits a multivariate or univariate linear mixed model by likelihood methods (REML
 
 The package also provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices to model the covariance among genotypes in plant and animal breeding problems.
 
-\strong{For a short tutorial} of how to perform different genetic analysis with sommer please type:
+\strong{For tutorials} on how to perform different analysis with sommer please look at the vignettes by typing in the terminal:
 
-\strong{vignette("sommer.start")} or \strong{vignette("sommer")}
+\strong{vignette("sommer.start")} 
+
+\strong{vignette("sommer")}
 
 }
 \usage{
-mmer(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,
+mmer(Y,X=NULL,Z=NULL,R=NULL,W=NULL,method="NR",init=NULL,iters=20,
     tolpar=1e-3, tolparinv=1e-6,draw=FALSE,silent=FALSE, 
     constraint=TRUE, EIGEND=FALSE, forced=NULL, IMP=FALSE, 
     complete=TRUE, check.model=TRUE, restrained=NULL, REML=TRUE,
@@ -68,6 +70,7 @@ mmer(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,
   
   You can see the examples at the bottom to have a clearer idea how to fit your models. }
  \item{R}{list of R matrices for residual effects. If multiple residual structures are provided a direct sum will be applied and the user has to keep in mind that all matrices have to be of the order NxN (neing N the number of observations) even though they will be full of zeros in certain parts of the matrix. Good knowledge of linear algebra is required to use this argument.}
+ \item{W}{matrix of weights of dimensions n x n. To be used for the product R = Wsi*R*Wsi, where * is the matrix product, Wsi is the square root of the inverse of W and R is the residual matrix.}
   \item{method}{this refers to the method or algorithm to be used for estimating variance components. Sommer now focus only in 2 algorithms; Direct-inversion Newton-Raphson \strong{NR} (Tunnicliffe 1989; Gilmour et al. 1995; Lee et al. 2015), and \strong{EMMA} efficient mixed model association (Kang et al. 2008). Average Information has been discontinued because of the instability for very complex models requiring EM-type of algorithms to work.}
   \item{init}{initial values for the variance components. By default this is NULL and variance components are estimated by the method selected, but in case the user want to provide initial values this argument is functional. It has to be provided as a list, where each list element is one variance component and if multitrait model is pursued each element of the list is a matrix of variance covariance components among traits.}
   \item{iters}{Maximum number of iterations allowed.  Default value is
@@ -92,6 +95,8 @@ mmer(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,
 }
 \details{
 
+\strong{Example Datasets}
+
 The package has been equiped with several datasets to learn how to use the sommer package: 
 
 * \code{\link{HDdata}} and \code{\link{FDdata}} datasets have examples to fit half and full diallel designs. 
@@ -107,11 +112,17 @@ The package has been equiped with several datasets to learn how to use the somme
 
 * \code{\link{gryphondata}} data contains an example of an animal model including pedigree information.
 
-* \code{\link{BTdata}} dataset contains an animal (birds) model.
+* \code{\link{BTdata}} dataset contains an animal (birds) information.
 
-If you need to use pedigree you need to convert your pedigree into a relationship matrix (use the `getA` function from the pedigreemm package). Other functions such as \code{\link{summary}}, \code{\link{fitted}}, \code{\link{randef}} (notice here is randef not ranef), \code{\link{anova}}, \code{\link{variogram}}, \code{\link{residuals}}, \code{\link{coef}} and \code{\link{plot}} applicable to typical linear models can also be applied to models fitted using the mmer-type of functions. Additional functions for genetic analysis have been included such as False Discovery Rate calculation (\code{\link{fdr}}), build a genotypic hybrid marker matrix (\code{\link{build.HMM}}), plot of genetic maps (\code{\link{map.plot}}), creation of manhattan plots (\code{\link{manhattan}}), phasing F1 or CP populations (\code{\link{phase.F1}}). We have also included the popular \code{\link{transp}} function to get transparent colors. Useful functions for analyzing field trials are included such as the \code{\link{blockerT}}, \code{\link{blockerL}}, and \code{\link{fill.design}}.
+\strong{Additional Functions}
 
-\strong{MODELS ENABLED}
+Other functions such as \code{\link{summary}}, \code{\link{fitted}}, \code{\link{randef}} (notice here is randef not ranef), \code{\link{anova}}, \code{\link{variogram}}, \code{\link{residuals}}, \code{\link{coef}} and \code{\link{plot}} applicable to typical linear models can also be applied to models fitted using the mmer-type of functions. 
+
+Additional functions for genetic analysis have been included such as heritability (\code{\link{h2.fun}}), False Discovery Rate calculation (\code{\link{fdr}}), build a genotypic hybrid marker matrix (\code{\link{build.HMM}}), plot of genetic maps (\code{\link{map.plot}}), creation of manhattan plots (\code{\link{manhattan}}), phasing F1 or CP populations (\code{\link{phase.F1}}). If you need to use pedigree you need to convert your pedigree into a relationship matrix (use the `getA` function from the pedigreemm package).
+
+Useful functions for analyzing field trials are included such as the \code{\link{spatPlots}}, \code{\link{blockerT}}, \code{\link{blockerL}}, and \code{\link{fill.design}}.
+
+\strong{Models Enabled}
 
 For details about the models enabled please check the \code{\link{sommer}} help page.
 
@@ -158,9 +169,13 @@ Gilmour et al. 1995. Average Information REML: An efficient algorithm for varian
 
 Kang et al. 2008. Efficient control of population structure in model organism association mapping. Genetics 178:1709-1723.
 
+Lee, D.-J., Durban, M., and Eilers, P.H.C. (2013). Efficient two-dimensional smoothing with P-spline ANOVA mixed models and nested bases. Computational Statistics and Data Analysis, 61, 22 - 37.
+
 Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: http://dx.doi.org/10.1101/027201.
 
 Maier et al. 2015. Joint analysis of psychiatric disorders increases accuracy of risk prediction for schizophrenia, bipolar disorder, and major depressive disorder. Am J Hum Genet; 96(2):283-294.
+
+Rodriguez-Alvarez, Maria Xose, et al. Correcting for spatial heterogeneity in plant breeding experiments with P-splines. Spatial Statistics 23 (2018): 52-71.
 
 Searle. 1993. Applying the EM algorithm to calculating ML and REML estimates of variance components. Paper invited for the 1993 American Statistical Association Meeting, San Francisco.
 

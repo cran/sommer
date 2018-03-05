@@ -1,4 +1,4 @@
-GWAS <- function (Y, X=NULL, Z=NULL, R=NULL, W=NULL, 
+GWAS <- function (Y, X=NULL, Z=NULL, R=NULL, W=NULL, M=NULL, 
                   method="NR", tolpar = 1e-06, tolparinv = 1e-06, 
                   draw=FALSE, silent=FALSE, iters=15, 
                   init=NULL, check.model=TRUE, EIGEND=FALSE, forced=NULL, 
@@ -9,16 +9,16 @@ GWAS <- function (Y, X=NULL, Z=NULL, R=NULL, W=NULL,
 
   complete=TRUE
   IMP=TRUE 
-  if(is.null(W)){
-    stop("GWAS function needs the W argument (markers) to be different than NULL.\n", call. = FALSE)
+  if(is.null(M)){
+    stop("GWAS function needs the M argument (markers) to be different than NULL.\n", call. = FALSE)
   }
   
   if(!silent){
-    cat("Always make sure that the response (y) and marker matrix (W argument) are in the same order.\nMeaning; response in the i.th row should correspond to the i.th row in the marker matrix(W).\n")
+    cat("Always make sure that the response (y) and marker matrix (M argument) are in the same order.\nMeaning; response in the i.th row should correspond to the i.th row in the marker matrix(M).\n")
   }
   
-  #varss <- apply(W, 2, var)
-  #W <- W[,which(varss > 0)]
+  #varss <- apply(M, 2, var)
+  #M <- M[,which(varss > 0)]
   ## for some reason I don't understand quite well the multivariate models can only estimate
   ## variance components in a steady way with V=kronecker(sigma,ZKZ) and dV/ds=kronecker(traits,ZKZ)
   ## but for getting the real V matrix is V=kronecker(ZKZ,sigma) which is not the same, why???? no idea yet.
@@ -49,7 +49,7 @@ GWAS <- function (Y, X=NULL, Z=NULL, R=NULL, W=NULL,
       r <- max(which(svd.X$d > 1e-08))
       return(as.matrix(svd.X$u[, 1:r]))
     }
-    KK <- A.mat(W, shrink = FALSE)
+    KK <- A.mat(M, shrink = FALSE)
     eig.vec <- eigen(KK)$vectors
     # if no X matrix make an intercept
     if(is.null(X)){X <- as.matrix(rep(1,dim(KK)[1]))}
@@ -144,7 +144,7 @@ GWAS <- function (Y, X=NULL, Z=NULL, R=NULL, W=NULL,
   }else if(method=="AI"){
     stop("AI method has been discontinued because of its instability. Try 'NR'.\nSee details in the sommer help page. ", call. = FALSE)
   }else if(method=="NR"){
-    res <- MNR(Y=Y,X=X,ZETA=Z,R=R,init=init,iters=iters,tolpar=tolpar,tolparinv = tolparinv,draw=draw,silent=silent, constraint = constraint,EIGEND = EIGEND,forced=forced,IMP=IMP,restrained=restrained, complete = complete)
+    res <- MNR(Y=Y,X=X,ZETA=Z,R=R,W=W,init=init,iters=iters,tolpar=tolpar,tolparinv = tolparinv,draw=draw,silent=silent, constraint = constraint,EIGEND = EIGEND,forced=forced,IMP=IMP,restrained=restrained, complete = complete)
     class(res)<-c("MMERM")
   }else{
     stop("Unrecognized method. Please select one of the methods; 'NR', 'EMMA'.",call. = FALSE)
@@ -153,17 +153,17 @@ GWAS <- function (Y, X=NULL, Z=NULL, R=NULL, W=NULL,
   ##################
   ### now get scores
   ##################
-  if(!is.null(W)){
-    if(is.null(colnames(W))){colnames(W) <- paste("M",1:dim(W)[2],sep="")}
+  if(!is.null(M)){
+    if(is.null(colnames(M))){colnames(M) <- paste("m",1:dim(M)[2],sep="")}
     
-    deviations <- apply(W,2,sd,na.rm=TRUE) # sd of markers
+    deviations <- apply(M,2,sd,na.rm=TRUE) # sd of markers
     dev.no0 <- which(deviations > 0) # markers that are not singlular
-    W <- W[,dev.no0] # only good markers will be tested
-    W <- W[,which(!duplicated(colnames(W)))]# no duplicated  markers are allowed
+    M <- M[,dev.no0] # only good markers will be tested
+    M <- M[,which(!duplicated(colnames(M)))]# no duplicated  markers are allowed
 
-    rw <- rownames(W)
-    cw <- colnames(W)
-    W <- apply(W, 2, function(x){
+    rw <- rownames(M)
+    cw <- colnames(M)
+    M <- apply(M, 2, function(x){
       vv <- which(is.na(x));
       if(length(vv) > 0){
         mu <- mean(x, na.rm = TRUE);
@@ -171,36 +171,36 @@ GWAS <- function (Y, X=NULL, Z=NULL, R=NULL, W=NULL,
       return(x)
     }
     )
-    rownames(W) <- rw
-    colnames(W) <- cw
+    rownames(M) <- rw
+    colnames(M) <- cw
 
     
-    marks <-colnames(W)
+    marks <-colnames(M)
     Y <- scale(Y)
     dimos <- dim(as.matrix(Y))
     Z <- diag(dimos[1])
     if(is.null(X)){X <- as.matrix(rep(1,dimos[1]))}
     K <- res$ZETA[[1]]$K
     ZZ <- res$ZETA[[1]]$Z
-    M <- W
+    m <- M
     Hinv <- res$V.inv
     max.geno.freq= 1 - min.MAF
     if(!silent){
       cat("\nPerforming GWAS\n")
     }
-    W.scores <- score.calcMV(marks=marks,Y=Y,Z=Z,X=X,K=K,ZZ=ZZ,M=M,Hinv=Hinv,min.MAF=min.MAF,model=models[1],max.geno.freq=max.geno.freq,silent=silent,P3D=P3D,ploidy=ploidy)
-    res$W <- W
-    res$W.scores <- W.scores
+    M.scores <- score.calcMV(marks=marks,Y=Y,Z=Z,X=X,K=K,ZZ=ZZ,M=m,Hinv=Hinv,min.MAF=min.MAF,model=models[1],max.geno.freq=max.geno.freq,silent=silent,P3D=P3D,ploidy=ploidy)
+    res$M <- M
+    res$M.scores <- M.scores
     ########################
     ########################
     #### plot
     ########################
     ########################
     if(!is.null(map) & gwas.plots){ ########### MAP PRESENT ##################
-      dd <- t(W.scores$score)#matrix(W.scores$score)
+      dd <- t(M.scores$score)#matrix(M.scores$score)
       ffr <- apply(dd,2,function(x,y){fdr(x,fdr.level = y)$fdr.10},y=fdr.level)
       #ffr <- fdr(dd, fdr.level=fdr.level)$fdr.10
-      #rownames(dd) <- colnames(W)
+      #rownames(dd) <- colnames(M)
       ## make sure map doesn't have duplicated markers
       non.dup <- which(!duplicated(map$Locus))
       map2 <- map[non.dup,]
@@ -221,9 +221,9 @@ GWAS <- function (Y, X=NULL, Z=NULL, R=NULL, W=NULL,
         }
         layout(matrix(c(1,2,2),1,3))
 
-        for(t in 1:dim(W.scores$score)[1]){
+        for(t in 1:dim(M.scores$score)[1]){
           if(gwas.plots){ # user gave map, wants map, BUT WANTS PLOT??
-            qq(W.scores$score[t,])
+            qq(M.scores$score[t,])
             yylim <- ceiling(max(dd2[,t],na.rm=TRUE))
             plot(dd2[,t], bty="n", main=colnames(dd2)[t], col=col.scheme[factor(map3$Chrom, levels = unique(map3$Chrom, na.rm=TRUE))], xaxt="n", xlab="Chromosome", ylab=expression(paste(-log[10],"(p.value)")), pch=20, cex=2.5, las=2, ylim = c(0,yylim))
             ## make axis
@@ -241,14 +241,14 @@ GWAS <- function (Y, X=NULL, Z=NULL, R=NULL, W=NULL,
         res$map <- cbind(map3[,1:3], map3$p.val)# map3
 
       }else{####$$$$$ NO MARKERS IN COMMON EXIST $$$$$$$$#######
-        cat("\nError found! There was no markers in common between the column names of the W matrix \nand the map you provided. Please make sure that your data frame has names \n'Chrom' and 'Locus' to match correctly your map and markers tested. Plotting all markers.\n")
+        cat("\nError found! There was no markers in common between the column names of the M matrix \nand the map you provided. Please make sure that your data frame has names \n'Chrom' and 'Locus' to match correctly your map and markers tested. Plotting all markers.\n")
         map3 <- NA
         layout(matrix(1:2,1,2))
-        for(t in 1:dim(W.scores$score)[1]){
-          qq(W.scores$score[t,])
-          yylim <- ceiling(max(W.scores$score[t,],na.rm=TRUE))
-          plot(W.scores$score[t,], col=transp("cadetblue", 0.6), pch=20, xlab="Marker index",
-               ylab=expression(paste(-log[10],"(p.value)")), main=rownames(W.scores$score)[t], bty="n", cex=1.5, ylim=c(0,yylim))
+        for(t in 1:dim(M.scores$score)[1]){
+          qq(M.scores$score[t,])
+          yylim <- ceiling(max(M.scores$score[t,],na.rm=TRUE))
+          plot(M.scores$score[t,], col=transp("cadetblue", 0.6), pch=20, xlab="Marker index",
+               ylab=expression(paste(-log[10],"(p.value)")), main=rownames(M.scores$score)[t], bty="n", cex=1.5, ylim=c(0,yylim))
           abline(h=ffr[t], col="slateblue4", lty=3, lwd=2)
           legend("topright", legend=paste("FDR(",fdr.level,")=",round(ffr[t],2), sep=""),
                  bty="n", lty=3, lwd=2, col="slateblue4", cex=0.8)
@@ -258,21 +258,21 @@ GWAS <- function (Y, X=NULL, Z=NULL, R=NULL, W=NULL,
 
     } else if (is.null(map) & gwas.plots){ ############ NO MAP PROVIDED #############
       layout(matrix(c(1,2,2),1,3))
-      dd <- t(W.scores$score)#matrix(W.scores$score)
+      dd <- t(M.scores$score)#matrix(M.scores$score)
       # get FDR value
       ffr <- apply(dd,2,function(x,yyy){fdr(x,fdr.level = yyy)$fdr.10},yyy=fdr.level)
       #layout(matrix(1:2,1,2))
-      for(t in 1:dim(W.scores$score)[1]){
-        qq(W.scores$score[t,])
-        yylim <- ceiling(max(W.scores$score[t,],na.rm=TRUE))
-        plot(W.scores$score[t,], col=transp("cadetblue", 0.6), pch=20, xlab="Marker index",
-             ylab=expression(paste(-log[10],"(p.value)")), main=rownames(W.scores$score)[t], bty="n", cex=1.5, ylim=c(0,yylim))
+      for(t in 1:dim(M.scores$score)[1]){
+        qq(M.scores$score[t,])
+        yylim <- ceiling(max(M.scores$score[t,],na.rm=TRUE))
+        plot(M.scores$score[t,], col=transp("cadetblue", 0.6), pch=20, xlab="Marker index",
+             ylab=expression(paste(-log[10],"(p.value)")), main=rownames(M.scores$score)[t], bty="n", cex=1.5, ylim=c(0,yylim))
         abline(h=ffr[t], col="slateblue4", lty=3, lwd=2)
       }
       map3 <-NA
       res$map <- map3
     }else{
-      dd <- t(W.scores$score)#matrix(W.scores$score)
+      dd <- t(M.scores$score)#matrix(M.scores$score)
       ffr <- apply(dd,2,function(x,y){fdr(x,fdr.level = y)$fdr.10},y=fdr.level)
     }
   }

@@ -1,4 +1,4 @@
-mmer <- function(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,tolpar=1e-3,
+mmer <- function(Y,X=NULL,Z=NULL,R=NULL,W=NULL,method="NR",init=NULL,iters=20,tolpar=1e-3,
                  tolparinv=1e-6,draw=FALSE,silent=FALSE, constraint=TRUE, 
                  EIGEND=FALSE, forced=NULL, IMP=FALSE, complete=TRUE, 
                  check.model=TRUE, restrained=NULL, REML=TRUE, init.equal=TRUE){
@@ -24,12 +24,11 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,tolpar=1e
   
   my.year <- 2018
   my.month <- 3 #month when the user will start to get notifications the 1st day of next month
-  # if my month = 3, user will start to get notification in april 1st
+  ### if my month = 3, user will start to get notification in april 1st
   datee <- Sys.Date()
   year.mo.day <- as.numeric(strsplit(as.character(datee),"-")[[1]])# <- as.numeric(strsplit(gsub("....-","",datee),"-")[[1]])
   your.year <- year.mo.day[1]
   your.month <- year.mo.day[2]
-  #month <- both[1]#your month
   ## if your month is greater than my month you are outdated
   if(your.month > my.month & your.year >= my.year){
     # error if your month is greater and your year is smaller
@@ -150,7 +149,7 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,tolpar=1e
   }
   
   if(method == "NR"){
-    RES <- MNR(Y=Y,X=X,ZETA=Z,R=R,init=init,iters=iters,tolpar=tolpar,
+    RES <- MNR(Y=Y,X=X,ZETA=Z,R=R,W=W,init=init,iters=iters,tolpar=tolpar,
                tolparinv = tolparinv,draw=draw,silent=silent, 
                constraint = constraint,EIGEND = EIGEND,
                forced=forced,IMP=IMP,restrained=restrained, REML=REML, 
@@ -332,8 +331,8 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,method="NR",init=NULL,iters=20,tolpar=1e
   cat(paste(rep("=",nmaxchar), collapse = ""))
   #cat("\n   Multivariate Linear Mixed Model fit by REML      \n")
   cat(paste("\n",rlt,"Multivariate Linear Mixed Model fit by REML",rlt,"\n", collapse = ""))
-  #cat("***********************  sommer 3.2  ***********************\n")
-  cat(paste(rlh," sommer 3.2 ",rlh, "\n", collapse = ""))
+  #cat("***********************  sommer 3.3  ***********************\n")
+  cat(paste(rlh," sommer 3.3 ",rlh, "\n", collapse = ""))
   #cat("============================================================")
   cat(paste(rep("=",nmaxchar), collapse = ""))
   cat("\n")
@@ -541,7 +540,7 @@ plot.MMERM <- function(x, stnd=TRUE, ...) {
     stop("This package requires R 2.1 or later")
   assign(".sommer.home", file.path(library, pkg),
          pos=match("package:sommer", search()))
-  sommer.version = "3.2 (2018-01-01)" # usually 2 months before it expires
+  sommer.version = "3.3 (2018-03-01)" # usually 2 months before it expires
   
   ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ### check which version is more recent
@@ -573,7 +572,7 @@ plot.MMERM <- function(x, stnd=TRUE, ...) {
     #  packageStartupMessage(paste("Version",current,"is now available."),appendLF=TRUE) # version current
     #  packageStartupMessage(paste("Please update 'sommer' installing the new version."),appendLF=TRUE) # version current
     #}
-    #print(image(diag(10),main="sommer 3.2"))
+    #print(image(diag(10),main="sommer 3.3"))
   }
   invisible()
 }

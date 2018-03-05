@@ -11,17 +11,18 @@ vignette: >
 
 The sommer package was developed to provide R users a powerful and reliable multivariate mixed model solver for different genetic and non-genetic analysis in diploid and polyploid organisms. This package allows the user to estimate variance components for a mixed model with the advantage of specifying the variance-covariance structure of the random effects, specify heterogeneous variances, and obtain other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc. 
 
-The package is focused on problems of the type p > n related to genomic prediction (hybrid prediction & genomic selection) and GWAS analysis, although general mixed models can be fitted as well. The package provides kernels to estimate additive (`A.mat`), dominance (`D.mat`), and epistatic (`E.mat`) relationship matrices that have been shown to increase prediction accuracy under certain scenarios or simply to estimate the variance components of such. The package provides flexibility to fit other genetic models such as full and half diallel models as well.
+The package is focused on problems of the type p > n related to genomic prediction (hybrid prediction & genomic selection) and GWAS analysis, although any general mixed model can be fitted as well. The package provides kernels to estimate additive (`A.mat`), dominance (`D.mat`), and epistatic (`E.mat`) relationship matrices that have been shown to increase prediction accuracy under certain scenarios or simply to estimate the variance components of such. The package provides flexibility to fit other genetic models such as full and half diallel models as well.
 
-Vignettes aim to provide several examples in how to use the sommer package under different scenarios in breeding and genetics. We will spend the rest of the space providing examples for: 
+Vignettes aim to provide several examples in how to use the sommer package under different scenarios. We will spend the rest of the space providing examples for: 
 
 1) Heritability ($h^2$) calculation
 2) Specifying heterogeneous variances in mixed models
 3) Using the pin calculator
-4) Half and full diallel designs
-5) Genomic selection
-6) Single cross prediction
-7) Multivariate genetic models and genetic correlations
+4) Half and full diallel designs (using the overlay)
+5) Genomic selection (predicting mendelian sampling)
+6) Single cross prediction (hybrid prediction)
+7) Spatial modeling (using the 2-dimensional splines)
+8) Multivariate genetic models and genetic correlations
 
 ## Background
 
@@ -62,7 +63,7 @@ $$
 $$\mathbf{X} = \left[\begin{array}
 {rrr}
 X_1 & ... & ... \\
-... & ... & ...\\
+\vdots & \ddots & \vdots\\
 ... & ... & X_t \\
 \end{array}\right]
 $$
@@ -72,7 +73,7 @@ $$
 $$\mathbf{V} = \left[\begin{array}
 {rrr}
 Z_1 K{\sigma^2_{g_{1}}} Z_1' + Z_1 I{\sigma^2_{\epsilon_{1}}} Z_1' & ... & Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' \\
- ... & ... & ...\\
+ \vdots & \ddots & \vdots\\
 Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' & ... & Z_t K{\sigma^2_{g_{t}}} Z_t' + Z_t I{\sigma^2_{\epsilon_{t}}} Z_t' \\
 \end{array}\right]
 $$
@@ -106,11 +107,11 @@ In the following section we will go in detail over several examples on how to us
 
 ## 1) Marker and non-marker based heritability calculation 
 
-The heritability is one of the most popular parameters in the breeding and genetics community. The heritability is usually estimated as narrow sense ($h^2$; only additive variance in the numerator $\sigma^2_A$), and broad sense ($H^2$; all genetic variance in the numerator $\sigma^2_G$).
+The heritability is one of the most popular parameters among the breeding and genetics community because of the insight that provides in the inheritance of the trait. The heritability is usually estimated as narrow sense ($h^2$; only additive variance in the numerator $\sigma^2_A$), and broad sense ($H^2$; all genetic variance in the numerator $\sigma^2_G$).
 
-In a classical experiment with no molecular markers, special designs are performed to estimate and disect the additive ($\sigma^2_A$) and dominance ($\sigma^2_D$) variance along with environmental variability. Designs such as generation analysis, North Carolina designs are used to disect $\sigma^2_A$ and $\sigma^2_D$ to estimate the narrow sense heritability ($h^2$). When no special design is available we can still disect the genetic variance ($\sigma^2_G$) and estimate the broad sense heritability. In this example we will show the broad sense estimation which doesn't use covariance structures for random effects. For big models with no covariance structures, sommer's direct inversion is a bad idea to use but we will show anyways how to do it, for very sparse models we recommend using the lmer function from the lme4 package from Douglas Bates or change to the EM algorithm which uses MME-based algorithms.
+In a classical breeding experiment with no molecular markers, special designs are performed to estimate and disect the additive ($\sigma^2_A$) and non-additive (i.e. dominance $\sigma^2_D$) variance along with environmental variability. Designs such as generation analysis, North Carolina designs are used to disect $\sigma^2_A$ and $\sigma^2_D$ to estimate the narrow sense heritability ($h^2$). When no special design is available we can still disect the genetic variance ($\sigma^2_G$) and estimate the broad sense heritability. In this first example we will show the broad sense estimation which doesn't use covariance structures for the genotipic effect (i.e. genomic or additive relationship matrices). For big models with no covariance structures, sommer's direct inversion is a bad idea to use but we will show anyways how to do it, but keep in mind that for very sparse models we recommend using the lmer function from the lme4 package or any other package using MME-based algorithms (i.e. asreml-R).
 
-The dataset has 41 potato lines evaluated in 5 locations across 3 years in an RCBD design. We show how to fit the model and extract the variance components to calculate the $h^2$.
+The following dataset has 41 potato lines evaluated in 5 locations across 3 years in an RCBD design. We show how to fit the model and extract the variance components to calculate the $h^2$.
 
 ```{r}
 library(sommer)
@@ -144,9 +145,9 @@ ans1 <- mmer(Y=y, Z=ETA, silent = TRUE)
 vc <- ans1$var.comp
 ```
 
-Recently with markers becoming cheaper, thousand of markers can be run in the breeding materials. When markers are available, an special design is not neccesary to disect the additive genetic variance. The availability of the additive, dominance and epistatic relationship matrices allow us to estimate $\sigma^2_A$, $\sigma^2_D$ and $\sigma^2_I$.
+Recently with markers becoming cheaper, thousand of markers can be run in the breeding materials. When markers are available, an special design is not neccesary to disect the additive genetic variance. The availability of the additive, dominance and epistatic relationship matrices allow us to estimate $\sigma^2_A$, $\sigma^2_D$ and $\sigma^2_I$, although given that A, D and E are not orthogonal the interpretation of models that fit more than A and D become cumbersome.
 
-Assume you have a population, and a similar model like the one displayed previously has been fitted. Now we have BLUPs for the genotypes but in addition we have genetic markers.
+Assume you have a population (even unreplicated) in the field but in addition we have genetic markers. Now we can fit the model and estimate the genomic heritability that explains a portion of the additive genetic variance (with high marker density $\sigma^2_A$ = $\sigma^2_g$)
 
 ```{r}
 data(CPdata)
@@ -231,7 +232,7 @@ The `draw` argument allows you to see the progress of the likelihood and the cha
 
 ## 3) Using the pin calculator
 
-Sometimes the user needs to calculate ratios or functions of specific variance-covariance components and obtain the standard error for such parameters. Examples of these are the genetic correlations, heritabilities, etc. Using the CPdata we will show how to estimate the heritability and the standard error.
+Sometimes the user needs to calculate ratios or functions of specific variance-covariance components and obtain the standard error for such parameters. Examples of these are the genetic correlations, heritabilities, etc. Using the CPdata we will show how to estimate the heritability and the standard error using the pin function that uses the delta method to come up with these parameters. This can be extended for any linear combination of the variance components.
 
 ```{r}
 data(CPdata)
@@ -250,7 +251,7 @@ pin(mix1, h2 ~ V1 / ( V1 + V2 ) )
 
 The same can be used for multivariate models. Please check the documentation of the `pin` function to see more examples.
 
-## 4) Half and full diallel designs 
+## 4) Half and full diallel designs (use of the overlay)
 
 When breeders are looking for the best single cross combinations, diallel designs have been by far the most used design in crops like maize. There are 4 types of diallel designs depending if reciprocate and self cross (omission of parents) are performed (full diallel with parents n^2; full diallel without parents n(n-1); half diallel with parents 1/2 * n(n+1); half diallel without parents 1/2 * n(n-1) ). In this example we will show a full dialle design (reciprocate crosses are performed) and half diallel designs (only one of the directions is performed).
 
@@ -285,7 +286,8 @@ Vg <- Va + Vd
 ```
 Don't worry too much about the small h2 value, the data was simulated to be mainly dominance variance, therefore the Va was simulated extremely small leading to such value of narrow sense h2.
 
-In this second data set we show a small half diallel with 7 parents crossed in one direction. n(n-1)/2 crosses are possible 7(6)/2 = 21 unique crosses. Parents appear as males or females indistictly. Each with two replications in a CRD. For a half diallel design a single GCA variance component for both males and females can be estimated and an SCA as well ($\sigma^2_GCA$ and $\sigma^2_SCA$ respectively), and BLUPs for GCA and SCA of the parents can be extracted. We would show first how to use it with the `mmer2` function using the `and()` function and later we will show how to do it creating customized matrices using the `overlay` and `model.matrix` functions for the GCA and SCA matrices respectively. The specific model here is:
+
+In this second data set we show a small half diallel with 7 parents crossed in one direction. n(n-1)/2 crosses are possible 7(6)/2 = 21 unique crosses. Parents appear as males or females indistictly. Each with two replications in a CRD. For a half diallel design a single GCA variance component for both males and females can be estimated and an SCA as well ($\sigma^2_GCA$ and $\sigma^2_SCA$ respectively), and BLUPs for GCA and SCA of the parents can be extracted. We would show first how to use it with the `mmer2` function using the `overlay()` function and later we will show how to do it creating customized matrices using the `overlay` and `model.matrix` functions for the GCA and SCA matrices respectively. The specific model here is:
 
 $y = X\beta + Zu_g + Zu_s + \epsilon$ 
 
@@ -297,7 +299,7 @@ HDdata$male <- as.factor(HDdata$male)
 HDdata$female <- as.factor(HDdata$female)
 # Fit the model
 modHD <- mmer2(sugar~1, 
-               random=~male + and(female) + geno, 
+               random=~overlay(male,female) + geno, 
                rcov=~units,
                data=HDdata, silent = TRUE)
 summary(modHD)
@@ -312,14 +314,14 @@ Vg <- Va + Vd
 (h2 <- Va / (Vg + (Ve/2)) )
 ```
 
-Notice how the `and()` argument makes the overlay possible making sure that male and female are joint into a single random effect. The same can be done using the `mmer` argument by creating the incidence and covariance matrices in case you want to see what is doing `mmer2` in the background.
+Notice how the `overlay()` argument makes the overlap of incidence matrices possible making sure that male and female are joint into a single random effect. The same can be done using the `mmer` argument by creating the incidence and covariance matrices in case you want to see what is doing `mmer2` in the background.
 
 ```{r}
   data(HDdata)
   head(HDdata)
   #### GCA matrix for half diallel using male and female columns
   #### use the 'overlay' function to create the half diallel matrix
-  Z1 <- overlay(HDdata[,c(3:4)])
+  Z1 <- overlay(HDdata$female, HDdata$male)
   #### Obtain the SCA matrix
   Z2 <- model.matrix(~as.factor(geno)-1, data=HDdata)
   #### Define the response variable and run
@@ -356,7 +358,7 @@ y.trn[vv,"X1"] <- NA
 ans <- mmer2(X1~1,
              random=~g(id), 
              rcov=~units,
-             G=list(id=K), method="NR", 
+             G=list(id=K), 
              data=y.trn, silent = TRUE) # kinship based
 cor(ans$u.hat$`g(id)`[vv,],Y[vv,"X1"])
 ```
@@ -419,7 +421,45 @@ In the previous model we only used the GCA effects (GCA1 and GCA2) for practicit
 
 A model without covariance structures would show that the SCA variance component is insignificant compared to the GCA effects. This is why including the third random effect doesn't increase the prediction accuracy.
 
-## 7) Multivariate genetic models and genetic correlations
+## 7) Spatial modeling (using the 2-dimensional spline)
+
+We will use the CPdata to show the use of 2-dimensional splines for accomodating spatial effects in field experiments. In early generation variety trials the availability of seed is low, which makes the use of unreplicated design a neccesity more than anything else. Experimental designs such as augmented designs and partially-replicated (p-rep) designs become every day more common this days. 
+
+In order to do a good job modeling the spatial trends happening in the field special covariance structures have been proposed to accomodate such spatial trends (i.e. autoregressive residuals; ar1). Unfortunately, some of these covariance structures make the modeling rather unstable. More recently other research groups have proposed the use of 2-dimensional splines to overcome such issues and have a more robust modeling of the spatial terms (Lee et al. 2013; Rodríguez-Álvarez et al. 2018).
+
+In this example we assume an unreplicated population where row and range information is available which allows us to fit a 2 dimensional spline model.
+
+```{r}
+data(CPdata)
+head(CPpheno)
+CPgeno[1:4,1:4]
+#### create the variance-covariance matrix 
+A <- A.mat(CPgeno) # additive relationship matrix
+#### look at the data and fit the model
+head(CPpheno)
+
+mix1 <- mmer2(Yield~1,
+              random=~g(id)
+                      + Rowf + Colf
+                      + spl2D(Row,Col),
+              rcov=~units,
+              G=list(id=A), silent=TRUE,
+              data=CPpheno)
+summary(mix1)
+```
+
+Notice that the job is done by the `spl2D()` function that takes the Row and Col information to fit a spatial kernel. When multiple fields are available the function has an additional argument call `at` which allows to fit a different spatial kernel in each field. For example if there was multiple fields the use of the random call would look like:
+
+random=~ spl2D(Row,Col, at=FIELD)
+
+where FIELD would correspond to the name of the column of the dataset where the identifier for the different environments is. 
+
+```{r}
+#### get the spatial plots
+fittedvals <- spatPlots(mix1,row = "Row", range = "Col")
+```
+
+## 8) Multivariate genetic models and genetic correlations
 
 Sometimes is important to estimate genetic variance-covariance among traits, multi-reponse models are very useful for such task. Let see an example with 3 traits (color, Yield, and Firmness) and a single random effect (genotype; id) although multiple effects can be modeled as well. We need to use a variance covariance structure for the random effect to be able to obtain the genetic covariance among traits.
 
@@ -469,9 +509,13 @@ Henderson C.R. 1975. Best Linear Unbiased Estimation and Prediction under a Sele
 
 Kang et al. 2008. Efficient control of population structure in model organism association mapping. Genetics 178:1709-1723.
 
+Lee, D.-J., Durban, M., and Eilers, P.H.C. (2013). Efficient two-dimensional smoothing with P-spline ANOVA mixed models and nested bases. Computational Statistics and Data Analysis, 61, 22 - 37.
+
 Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: http://dx.doi.org/10.1101/027201.
 
 Maier et al. 2015. Joint analysis of psychiatric disorders increases accuracy of risk prediction for schizophrenia, bipolar disorder, and major depressive disorder. Am J Hum Genet; 96(2):283-294.
+
+Rodriguez-Alvarez, Maria Xose, et al. Correcting for spatial heterogeneity in plant breeding experiments with P-splines. Spatial Statistics 23 (2018): 52-71.
 
 Searle. 1993. Applying the EM algorithm to calculating ML and REML estimates of variance components. Paper invited for the 1993 American Statistical Association Meeting, San Francisco.
 

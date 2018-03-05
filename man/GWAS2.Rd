@@ -5,19 +5,18 @@ Genome Wide Association Analysis
 }
 \description{
 
-Genome Wide Association Analysis using the formula-based multivariate mixed model solver `mmer2`. For details about the generalized least squares (GLS) strategy using the V matrix from the mixed model go to the sommer help page. Please make sure that the marker matrix (W) is sorted correctly and aligned with the phenotype for all individuals. \strong{The function will assume that the observations in the dataset and marker matrix are in the same order}.
+Genome Wide Association Analysis using the formula-based multivariate mixed model solver `mmer2`. For details about the generalized least squares (GLS) strategy using the V matrix from the mixed model go to the sommer help page. Please make sure that the marker matrix (M) is sorted correctly and aligned with the phenotype for all individuals. \strong{The function will assume that the observations in the dataset and marker matrix are in the same order}.
 
 }
 \usage{
 
-GWAS2(fixed, random, rcov, data, G=NULL, W=NULL, grouping=NULL, method="NR",
-      init=NULL,iters=20,tolpar = 1e-06, tolparinv = 1e-06, 
-      draw=FALSE, silent=FALSE, constraint=TRUE, EIGEND=FALSE,
-      forced=NULL,restrained=NULL,
-      
-      P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05, 
-      gwas.plots=TRUE, map=NULL,manh.col=NULL,
-      fdr.level=0.05, n.PC=0)
+GWAS2(fixed, random, rcov, data, weights, G=NULL, M=NULL, grouping=NULL, 
+      method="NR",init=NULL,iters=20,tolpar = 1e-06, tolparinv = 1e-06, 
+      draw=FALSE, silent=FALSE, complete=TRUE,na.method.X="include", 
+      na.method.Y="include", constraint=TRUE,forced=NULL,restrained=NULL,
+                  
+      P3D=TRUE, models="additive", ploidy=2, min.MAF=0.05,gwas.plots=TRUE, 
+      map=NULL,manh.col=NULL,fdr.level=0.05, n.PC=0)
 }
 \arguments{
   \item{fixed}{a formula specifying the \strong{response variable(s)} \strong{and fixed effects}, i.e:
@@ -28,44 +27,34 @@ GWAS2(fixed, random, rcov, data, G=NULL, W=NULL, grouping=NULL, method="NR",
   
   \item{random}{a formula specifying the name of the \strong{random effects}, i.e. \emph{random= ~ genotype + year}.
   
-  Useful functions can be used to fit heterogeneous variances and others:
+  Useful functions can be used to fit heterogeneous variances and other special models (\emph{see 'Special Functions' in the Details section for more information}):
   
-  \code{\link{at}}(.)   can be used to specify heterogeneous variance, i.e. \emph{random=~at(Location,c("3","4")):ID}
+  \code{diag(trait)} and \code{us(trait)} can be used to specify diagonal and unstructured covariance structures among responses in multivariate models.
   
-  \code{\link{diag}}(.)   can be used to specify a diagonal variance structure, i.e. \emph{random=~diag(Location):ID}
+  \code{at}(.) can be used to specify heterogeneous variance for specific levels of a random effect
   
-  \code{\link{us}}(.)   can be used to specify a unstructured variance, i.e. \emph{random=~us(Location):ID}
+  \code{diag}(.), \code{us}(.) can be used to specify diagonal and unstructured covariance structures among levels of a random effect.
   
-  \code{\link{and}}(.)   can be used to specify overlay of matrices, i.e. \emph{random=~male + and(female)}
+  \code{and}(.)   can be used to specify overlay of design matrices of random effects
   
-  \code{\link{g}}(.)   can be used to specify that a covariance structure for the random effect (not inverse) should be included, i.e. \emph{random=~g(male), G=list(male=Am)}, etc.
+  \code{g}(.)   can be used to specify that a known covariance structure for a random effect
   
-      \code{\link{grp}}(.)   can be used to specify customized incidence matrices for random effects, i.e. \emph{random=~male + grp(re), grouping=list(re=Zre)}
-      
-         \strong{For multivariate models} the functions; us(trait) and diag(trait) can be used before the random effects to indicate the covariance structure among traits, i.e.:
+  \code{grp}(.)   can be used to specify customized incidence matrices for random effects
   
-  \emph{us(trait):Geno} \strong{or} \emph{diag(trait):Geno}
-  
-  \emph{us(trait):at(Location):Geno} \strong{or} \emph{diag(trait):at(Location):Geno}
-  
-  \emph{us(trait):us(Location):Geno} \strong{or} \emph{diag(trait):us(Location):Geno}
- 
+  \code{spl2D}(.)   can be used to fit a 2-dimensional spline (i.e. spatial modeling).
   
   }
   \item{rcov}{a formula specifying the name of the \strong{error term}, i.e. \emph{rcov= ~ units} or \emph{rcov=~at(.):units}.
   
   The functions that can be used to fit heterogeneous residual variances are:
   
-  \code{\link{at}}(.)   can be used to specify heterogeneous variance, i.e. \emph{rcov=~at(Location):units}
+    \code{diag(trait)} and \code{us(trait)} can be used to specify diagonal and unstructured covariance structures among responses for the residuals in multivariate models.
   
-   \strong{For multivariate models} the functions; us(trait) and diag(trait) can be used before the residual term to indicate the covariance structure among traits, i.e.:
-  
-  \emph{us(trait):units} \strong{or} \emph{diag(trait):units}
-  
-  \emph{us(trait):at(Location):units} \strong{or} \emph{diag(trait):at(Location):units}
+  \code{at}(.)   can be used to specify heterogeneous variance, i.e. \emph{rcov=~at(Location):units}
   
   }
   \item{data}{a data frame containing the variables specified in the formulas for response, fixed, and random effects.}
+    \item{weights}{name of the covariate for weights. To be used for the product R = Wsi*R*Wsi, where * is the matrix product, Wsi is the square root of the inverse of W and R is the residual matrix.}
   \item{G}{a list containing the \strong{variance-covariance matrices for the random effects (not inverses)}, i.e. if the user specifies: 
   
   \emph{random=~ g(genotype) + g(year)}
@@ -76,11 +65,11 @@ GWAS2(fixed, random, rcov, data, G=NULL, W=NULL, grouping=NULL, method="NR",
   
   where M1 and M2 are the variance-covariance matrices for random effects 'genotype' and 'year' respectively. Opposite to asreml you provide the original var-covar matrix, not its inverse.}
   
-  \item{W}{an incidence matrix for extra fixed effects and only to be used if GWAS is desired and markers will be treated as fixed effects according to Yu et al. (2006) for diploids, and Rosyara et al (2016) for polyploids. Theoretically X and W are both fixed effects, but they are separated to perform GWAS in a model y = Xb + Zu + Wg, allowing the program to recognize the markers from other fixed factors such as environmental factors. This has to be provided as a matrix same than X.
+  \item{M}{an incidence matrix for extra fixed effects and only to be used if GWAS is desired and markers will be treated as fixed effects according to Yu et al. (2006) for diploids, and Rosyara et al (2016) for polyploids. Theoretically X and M are both fixed effects, but they are separated to perform GWAS in a model y = Xb + Zu + Mg, allowing the program to recognize the markers from other fixed factors such as environmental factors. This has to be provided as a matrix same than X.
   
   Performs genome-wide association analysis based on the mixed model (Yu et al. 2006):
 
-\deqn{y = X \beta + Z g + W \tau + \varepsilon}
+\deqn{y = X \beta + Z g + M \tau + \varepsilon}
 
 where \eqn{\beta} is a vector of fixed effects that can model both environmental factors and population structure.  
 The variable \eqn{g} models the genetic background of each line as a random effect with \eqn{Var[g] = K \sigma^2}.  
@@ -107,19 +96,18 @@ The dashed line in the Manhattan plots corresponds to an FDR rate of 0.05 and is
   \item{tolparinv}{tolerance parameter for matrix inverse}
     \item{draw}{a TRUE/FALSE value indicating if a plot showing the progress of the variance components should be drawn or not. Default is FALSE}
     \item{silent}{a TRUE/FALSE value indicating if the function should draw the progress bar as iterations progress. The default is FALSE, which means is not silent and will display the progress bar.}
+     \item{complete}{a TRUE/FALSE statement to indicate if the function should impute the cases where at least for one trait there's an observation. Default is TRUE in order to use all data points where at least one observation exist across traits.}
+   \item{na.method.X}{one of the two possible values; "include" or "exclude". If "include" is selected then the function will impute the X matrices for fixed effects with the median value. If "exclude" is selected it will get rid of all rows with missing values for the X (fixed) covariates. The default is "exclude". The "include" option should be used carefully.}
+   \item{na.method.Y}{one of the two possible values; "include" or "exclude". If "include" is selected then the function will impute the Y matrix/dataframe with the median value. If "exclude" is selected it will get rid of missing values for the estimation of variance components. The default is "exclude".}
     \item{constraint}{a TRUE/FALSE value indicating if the function should apply the boundary constraint indicating that variance components that are zero should be restrained.}
-    \item{EIGEND}{a TRUE/FALSE value indicating if an eigen decomposition for the additive relationship matrix should be performed or not. This is based on Lee (2015). The limitations of this method are:
-      1) can only be applied to one relationship matrix
-      2) The system needs to be squared and no missing data is allowed (then missing data is imputed with the median).
-   The default is FALSE to avoid the user get into trouble but experimented users can take advantage from this feature to fit big models, i.e. 5000 individuals in 555 seconds = 9 minutes in a MacBook 4GB RAM.}
     \item{forced}{a list of values for variance-covariance components to be used if the user wants to force those values. The format is the same than the init argument.}
    \item{restrained}{a numeric argument specifying which variance-covariance parameters should be restrained. Please see \code{\link{vctable}} and \code{\link{vctable.help}} functions if you want to use it although you shouldn't since is made for the \code{\link{GWAS2}} function.}
    \item{P3D}{when the user performs GWAS, P3D=TRUE means that the variance components are estimated by REML only once, without any markers in the model. When P3D=FALSE, variance components are estimated by REML for each marker separately. The default is the first case.}
   \item{models}{The model to be used in GWAS. The default is the additive model which applies for diploids and polyploids but the model can be a vector with all possible models, i.e. "additive","1-dom-alt","1-dom-ref","2-dom-alt","2-dom-ref" models are supported for polyploids based on Rosyara (2016).}
   \item{ploidy}{A numeric value indicating the ploidy level of the organism. The default is 2 which means diploid but higher ploidy levels are supported. This should only be modified if you are performing GWAS in polyploids.}
-  \item{min.MAF}{when the user performs GWAS min.MAF is a scalar value between 0-1 indicating what is theminor allele frequency to be allowed for a marker during a GWAS analysis when providing the matrix of markers W. In general is known that results for markers with alleles with MAF < 0.05 are not reliable unless sample size is big enough.}
+  \item{min.MAF}{when the user performs GWAS min.MAF is a scalar value between 0-1 indicating what is theminor allele frequency to be allowed for a marker during a GWAS analysis when providing the matrix of markers M. In general is known that results for markers with alleles with MAF < 0.05 are not reliable unless sample size is big enough.}
   \item{gwas.plots}{a TRUE/FALSE statement indicating if the GWAS and qq plot should be drawn or not. The default is TRUE but you may want to avoid it.}
-  \item{map}{a data frame with 2 columns, 'Chrom', and 'Locus' not neccesarily with same dimensions that markers. The program will look for markers in common among the W matrix and the map provided. Although, the association tests are performed for all markers, only the markers in common will be plotted.}
+  \item{map}{a data frame with 2 columns, 'Chrom', and 'Locus' not neccesarily with same dimensions that markers. The program will look for markers in common among the M matrix and the map provided. Although, the association tests are performed for all markers, only the markers in common will be plotted.}
   \item{manh.col}{a vector with colors desired for the manhattan plot. Default are cadetblue and red alternated.}
   \item{fdr.level}{a level of FDR to calculate and plot the line in the GWAS plot. Default is fdr.level=0.05}
   \item{n.PC}{when the user performs GWAS this refers to the number of principal components to include as fixed effects for Q + K model. Default is 0 (equals K model).}
@@ -158,8 +146,8 @@ If all parameters are correctly indicated the program will return a list with th
 \item{forced}{a TRUE/FALSE statement indicating if user used the forced argument.}
 \item{convergence}{a TRUE/FALSE statement indicating if the model converged.}
 \item{monitor}{The values of log-likelihood and variance-covariance components across iterations during the REML estimation.}
-\item{W}{The markers matrix used in the GWAS analysis (bad markers discarded).}
-\item{W.scores}{A list with two elements; 
+\item{M}{The markers matrix used in the GWAS analysis (bad markers discarded).}
+\item{M.scores}{A list with two elements; 
 
 \emph{scores}: which are the -log10 p values for each marker
 
@@ -221,7 +209,7 @@ head(CPpheno)
 #               random=~g(id), 
 #               rcov=~units,
 #               G=list(id=A), 
-#               W=CPgeno,
+#               M=CPgeno,
 #               data=CPpheno)
 # summary(mix1)
 # 
@@ -266,7 +254,7 @@ head(CPpheno)
 # my.map <- PolyData$map
 # models <- c("additive","1-dom-alt","1-dom-ref","2-dom-alt","2-dom-ref")
 # ans2 <- GWAS2(tuber_shape~1, random=~g(Name), models = "additive",
-#               G=list(Name=A), W=marks, data=phenotypes2)
+#               G=list(Name=A), M=marks, data=phenotypes2)
 # summary(ans2)
 
 

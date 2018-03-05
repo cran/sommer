@@ -278,18 +278,30 @@ version 3.1 (2017-11-01)
 version 3.2 (2018-01-01)
 ######################## 
 
-  + spl2D function to fit 2 dimensional spline model has been added and documented
   + variogram and plot.variogram functions enabled to visualize the residuals or the
     spatial model fitted (in case of 2D spline models)
+    
+########################
+version 3.3 (2018-03-01)
+######################## 
+
+  + spl2D function to fit 2 dimensional spline model has been added and documented
+  + spatPlots function added to visualize the fitted values and residuals
+  + now the mmer and mmer2 function can use weights
+
   
     
 ##pendings
++ documentation on delta method (pin), covariance structures available and use
++ add at(trait)
++ replace and() by overlay()
+
 + random regression (working on it)
 + implementation of lsmeans package
 
 
 + use samm example for rcpp, pass everything to Rcpp
-+ add at(trait)
+
 ## when using at()
 ## if only one level is specified the summary names are messed up
 + fix map and scores output from GWAS functions
@@ -297,6 +309,7 @@ version 3.2 (2018-01-01)
 + IMPLEMENT PREDICTION FUNCTION
 + START LOOKING AT GENERALIZED MODELS
 + add update function
++ AR1, AR2 structures
 
 + make sure the program can run even if the only random effect is a grp() effect
 + more than one grp() term and used at the at() and diag() levels
