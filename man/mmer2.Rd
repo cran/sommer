@@ -25,7 +25,8 @@ mmer2(fixed, random, rcov, data, weights, G=NULL,
       tolpar = 1e-06, tolparinv = 1e-06, draw=FALSE, 
       silent=FALSE, constraint=TRUE, forced=NULL, 
       complete=TRUE, restrained=NULL,na.method.X="exclude",
-      na.method.Y="exclude", REML=TRUE, init.equal=TRUE)
+      na.method.Y="exclude", REML=TRUE, init.equal=TRUE,
+      return.param=FALSE,date.warning=TRUE)
 }
 \arguments{
   \item{fixed}{a formula specifying the \strong{response variable(s)} \strong{and fixed effects}, i.e:
@@ -70,9 +71,15 @@ mmer2(fixed, random, rcov, data, weights, G=NULL,
   
   then the G argument should be used as:  
   
-  G=list(genotype=M1, year=M2) 
+  \emph{G=list(genotype=A1, year=A2)} 
   
-  where M1 and M2 are the variance-covariance matrices for random effects 'genotype' and 'year' respectively. Opposite to asreml you provide the original var-covar matrix, not its inverse.}
+  where A1 and A2 are the variance-covariance matrices for random effects 'genotype' and 'year' respectively. Opposite to asreml you provide the original var-covar matrix, not its inverse.
+  
+  For special cases such as the \code{overlay()} and \code{grp()} functions. The variance covariance matrices in G should be provided with the entire name and the random formula should NOT use the \code{g()} function for such random effect, i.e:
+  
+  \emph{random=~overlay(females, males), G=list('overlay(females, males)'=A3)}
+  
+  }
   \item{grouping}{argument to provide customized random effects. This has to be provided as a list where each element of the list is an incidence matrix for a random effect specified in the random formula using the `grp()` function. For example a customized random effect 're' would specified as:
   
   \emph{random=~ grp(re), grouping=list(re=Zre)}
@@ -96,6 +103,8 @@ mmer2(fixed, random, rcov, data, weights, G=NULL,
    \item{na.method.Y}{one of the two possible values; "include" or "exclude". If "include" is selected then the function will impute the Y matrix/dataframe with the median value. If "exclude" is selected it will get rid of missing values for the estimation of variance components. The default is "exclude".}
     \item{REML}{a TRUE/FALSE value to indicate if REML or ML should be used for optimization. Not functional yet. Only REML available.}
    \item{init.equal}{a TRUE/FALSE value to indicate if the program should use the same initial values for all variance-covariance components in the multivariate models. Default is TRUE, otherwise the function will calculate the variance-covariance with the raw data and use them as initial values.}
+   \item{return.param}{a TRUE/FALSE value to indicate if the program should return the parameters used for modeling without fitting the model.}
+   \item{date.warning}{a TRUE/FALSE value to indicate if the program should warn you when is time to update the sommer package.}
     
 }
 
@@ -125,7 +134,7 @@ mmer2(fixed, random, rcov, data, weights, G=NULL,
  
   \code{overlay(...,rlist=NULL,prefix=NULL)}   
  
- can be used to specify overlay of design matrices between consecutive random effects specified, i.e. \emph{random=~overlay(male,female)} overlays (overlaps) the incidence matrices for the male and female random effects to obtain a single variance component for both effects.
+ can be used to specify overlay of design matrices between consecutive random effects specified, i.e. \emph{random=~overlay(male,female)} overlays (overlaps) the incidence matrices for the male and female random effects to obtain a single variance component for both effects. The `rlist` argument is a list with each element being a numeric value that multiplies the incidence matrix to be overlayed. See \code{\link{overlay}} for details.
   
   \code{g(x)}   
  
@@ -143,7 +152,7 @@ mmer2(fixed, random, rcov, data, weights, G=NULL,
       nseg, pord, degree, 
       nest.div)}
       
-  can be used to fit a 2-dimensional spline (i.e. spatial modeling) using coordinates \code{x.coord} and \code{y.coord}. The 2D spline can be fitted at specific levels using the \code{at} and \code{at.levels} arguments.Two types of P-Spline models are available; "SAP" or "PSANOVA" using the \code{type} argument. The \code{nseg} argument controls the number of segments for each marginal (strictly nseg - 1 is the number of internal knots in the domain of the covariate), and \code{pord} the penalty order for each marginal. \code{degree} is the order of the polynomial of the B-spline basis for each marginal being the default 3 (cubic B-splines). The \code{nest.div} argument refers to the number of segments to be used for the construction of the nested B-spline basis for the smooth-by-smooth interaction component. Default set to 1, which implies that nested basis are not used. \code{nseg}, \code{pord}, \code{degree}, \code{nest.div} are vectors of length 2 to be applied to \code{x.coord} and \code{y.coord} respectively.
+  can be used to fit a 2-dimensional spline (i.e. spatial modeling) using coordinates \code{x.coord} and \code{y.coord}. The 2D spline can be fitted at specific levels using the \code{at} and \code{at.levels} arguments.Two types of P-Spline models are available; "SAP" or "PSANOVA" using the \code{type} argument. The \code{nseg} argument controls the number of segments for each marginal (strictly nseg - 1 is the number of internal knots in the domain of the covariate), and \code{pord} the penalty order for each marginal. \code{degree} is the order of the polynomial of the B-spline basis for each marginal being the default 3 (cubic B-splines). The \code{nest.div} argument refers to the number of segments to be used for the construction of the nested B-spline basis for the smooth-by-smooth interaction component. Default set to 1, which implies that nested basis are not used. \code{nseg}, \code{pord}, \code{degree}, \code{nest.div} are vectors of length 2 to be applied to \code{x.coord} and \code{y.coord} respectively. See an example in the \code{\link{spatPlots}} documentation.
 
 For a short tutorial on how to use this special functions you can look at the vignettes by typing in the terminal:
 
@@ -172,9 +181,9 @@ The package has been equiped with several datasets to learn how to use the somme
 
 Other functions such as \code{\link{summary}}, \code{\link{fitted}}, \code{\link{randef}} (notice here is randef not ranef), \code{\link{anova}}, \code{\link{variogram}}, \code{\link{residuals}}, \code{\link{coef}} and \code{\link{plot}} applicable to typical linear models can also be applied to models fitted using the mmer-type of functions. 
 
-Additional functions for genetic analysis have been included such as heritability (\code{\link{h2.fun}}), False Discovery Rate calculation (\code{\link{fdr}}), build a genotypic hybrid marker matrix (\code{\link{build.HMM}}), plot of genetic maps (\code{\link{map.plot}}), creation of manhattan plots (\code{\link{manhattan}}), phasing F1 or CP populations (\code{\link{phase.F1}}). If you need to use pedigree you need to convert your pedigree into a relationship matrix (use the `getA` function from the pedigreemm package). 
+Additional functions for genetic analysis have been included such as heritability (\code{\link{h2.fun}}), False Discovery Rate calculation (\code{\link{fdr}}), build a genotypic hybrid marker matrix (\code{\link{build.HMM}}), plot of genetic maps (\code{\link{map.plot}}), creation of manhattan plots (\code{\link{manhattan}}). If you need to use pedigree you need to convert your pedigree into a relationship matrix (i.e. use the `getA` function from the pedigreemm package). 
 
-Useful functions for analyzing field trials are included such as the \code{\link{spatPlots}}, \code{\link{blockerT}}, \code{\link{blockerL}}, and \code{\link{fill.design}}.
+Useful functions for analyzing field trials are included such as the \code{spl2D}, \code{\link{spatPlots}}, \code{\link{blockerT}}, \code{\link{blockerL}}, and \code{\link{fill.design}}.
 
 \strong{Models Enabled}
 
@@ -192,24 +201,29 @@ If all parameters are correctly indicated the program will return a list with th
 \item{PEV.u.hat}{a list (one element for each random effect) with the predicted error variance matrix for trait BLUPs.}
 \item{beta.hat}{a data frame for trait BLUEs (fixed effects).}
 \item{Var.beta.hat}{a variance-covariance matrix for trait BLUEs}
-\item{fish.inv}{inverse of the Fisher's information.}
+\item{fish.inv}{inverse of the Fisher's information scaled.}
+\item{fish.inv.nonscale}{inverse of the Fisher's information without scaling.}
 \item{residuals}{Residual values e = Y - XB}
 \item{cond.residuals}{Conditional residual e.cond = Y - (XB + ZU)}
 \item{LL}{LogLikelihood}
 \item{AIC}{Akaike information criterion}
 \item{BIC}{Bayesian information criterion}
+\item{Y}{ response matrix}
 \item{X}{ incidence matrix for fixed effects}
 \item{dimos}{dimnensions for incidence matrix for random effects}
 \item{sigma.scaled}{scaled variance-covariance components}
+\item{sigma}{vectorized variance-covariance components}
 \item{fitted.y}{ Fitted values y.hat=XB+Zu}
 \item{fitted.u}{ Fitted values only across random effects u.hat=Zu.1+....+Zu.i}
+\item{Zus}{Fitted values for each random effect by separate.}
 \item{ZETA}{Original incidence and variance covariance matrices used in the model fit.}
-\item{K}{ variance-covariance matrix for random effects. If more than one random effect this will be the diagonal binding of individual K matrices.}
 \item{method}{The method for extimation of variance components specified by the user.}
 \item{forced}{a TRUE/FALSE statement indicating if user used the forced argument.}
 \item{convergence}{a TRUE/FALSE statement indicating if the model converged.}
 \item{monitor}{The values of log-likelihood and variance-covariance components across iterations during the REML estimation.}
 \item{restrained}{table of restrained parameters.}
+\item{call}{formula for fixed, random and rcov used.}
+\item{data}{original dataset provided.}
 
 
 }

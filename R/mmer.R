@@ -1,7 +1,8 @@
 mmer <- function(Y,X=NULL,Z=NULL,R=NULL,W=NULL,method="NR",init=NULL,iters=20,tolpar=1e-3,
                  tolparinv=1e-6,draw=FALSE,silent=FALSE, constraint=TRUE, 
                  EIGEND=FALSE, forced=NULL, IMP=FALSE, complete=TRUE, 
-                 check.model=TRUE, restrained=NULL, REML=TRUE, init.equal=TRUE){
+                 check.model=TRUE, restrained=NULL, REML=TRUE, init.equal=TRUE,
+                 date.warning=TRUE){
   #R=NULL
   if (inherits(Y, "formula")){
     stop("\nYou have to use mmer2 function for formula-based models.\n", call. = FALSE)
@@ -23,16 +24,18 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,W=NULL,method="NR",init=NULL,iters=20,to
   }
   
   my.year <- 2018
-  my.month <- 3 #month when the user will start to get notifications the 1st day of next month
-  ### if my month = 3, user will start to get notification in april 1st
+  my.month <- 6 #month when the user will start to get notifications the 1st day of next month
+  ### if my month = 3, user will start to get notification in april 1st (next month)
   datee <- Sys.Date()
   year.mo.day <- as.numeric(strsplit(as.character(datee),"-")[[1]])# <- as.numeric(strsplit(gsub("....-","",datee),"-")[[1]])
   your.year <- year.mo.day[1]
   your.month <- year.mo.day[2]
   ## if your month is greater than my month you are outdated
-  if(your.month > my.month & your.year >= my.year){
-    # error if your month is greater and your year is smaller
-    cat("Version out of date. Please update sommer to the newest version using:\ninstall.packages('sommer') in a new session\n")
+  if(date.warning){
+    if(your.month > my.month & your.year >= my.year){
+      # error if your month is greater and your year is smaller
+      cat("Version out of date. Please update sommer to the newest version using:\ninstall.packages('sommer') in a new session\n")
+    }
   }
   #########*****************************
   ## make sure user don't provide the same names for random effects
@@ -69,9 +72,9 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,W=NULL,method="NR",init=NULL,iters=20,to
     }
   }
   #########*****************************
-#   if(!is.null(W)){
-#     cat("Response is imputed for estimation of variance components in GWAS models.\n")
-#   }
+  #   if(!is.null(W)){
+  #     cat("Response is imputed for estimation of variance components in GWAS models.\n")
+  #   }
   #########*****************************
   
   if(!is.null(X)){
@@ -160,7 +163,7 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,W=NULL,method="NR",init=NULL,iters=20,to
   }else if(method == "EMMA"){
     if(length(Z)>1){stop("EMMA method only works for one random effect other than error.\n Please select NR or AI methods.", call. = FALSE)}
     RES <- MEMMA(Y=Y,X=X,ZETA=Z,tolpar=tolpar,
-               tolparinv = tolparinv,check.model=check.model,silent=silent)
+                 tolparinv = tolparinv,check.model=check.model,silent=silent)
     class(RES)<-c("MMERM")
   }else if(method == "AI"){
     stop("AI method has been discontinued because of its instability. Try 'NR'.\nSee details in the sommer help page. ", call. = FALSE)
@@ -168,13 +171,13 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,W=NULL,method="NR",init=NULL,iters=20,to
     stop("Method not available. See details in the sommer help page.", call. = FALSE)
   }
   
-#   else if(method == "AI"){
-#     RES <- MAI(Y=Y,X=X,ZETA=Z,R=R,init=init,iters=iters,tolpar=tolpar,
-#                tolparinv = tolparinv,draw=draw,silent=silent, 
-#                constraint = constraint,EIGEND = EIGEND,
-#                forced=forced,IMP=IMP,restrained=restrained)
-#     class(RES)<-c("MMERM")
-#   }
+  #   else if(method == "AI"){
+  #     RES <- MAI(Y=Y,X=X,ZETA=Z,R=R,init=init,iters=iters,tolpar=tolpar,
+  #                tolparinv = tolparinv,draw=draw,silent=silent, 
+  #                constraint = constraint,EIGEND = EIGEND,
+  #                forced=forced,IMP=IMP,restrained=restrained)
+  #     class(RES)<-c("MMERM")
+  #   }
   #######$$$$$$$$$$$$$$$$$$$$$$$$$$$
   #######$$$$$$$$$$$$$$$$$$$$$$$$$$$
   layout(matrix(1,1,1))
@@ -331,8 +334,8 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,W=NULL,method="NR",init=NULL,iters=20,to
   cat(paste(rep("=",nmaxchar), collapse = ""))
   #cat("\n   Multivariate Linear Mixed Model fit by REML      \n")
   cat(paste("\n",rlt,"Multivariate Linear Mixed Model fit by REML",rlt,"\n", collapse = ""))
-  #cat("***********************  sommer 3.3  ***********************\n")
-  cat(paste(rlh," sommer 3.3 ",rlh, "\n", collapse = ""))
+  #cat("***********************  sommer 3.4  ***********************\n")
+  cat(paste(rlh," sommer 3.4 ",rlh, "\n", collapse = ""))
   #cat("============================================================")
   cat(paste(rep("=",nmaxchar), collapse = ""))
   cat("\n")
@@ -520,11 +523,11 @@ plot.MMERM <- function(x, stnd=TRUE, ...) {
   traits <- ncol(x$fitted.y)
   layout(matrix(1:4,2,2))
   for(i in 1:traits){
-  plot(x$fitted.y[x$used.observations,i], scale(x$cond.residuals[,i]), pch=20, col=transp("cadetblue"), ylab="Std Residuals", xlab="Fitted values", main="Residual vs Fitted", bty="n", ...); grid()
-  plot(x$fitted.y[x$used.observations,i], sqrt(abs((scale(x$cond.residuals[,i])))), pch=20, col=transp("thistle4"), ylab="Sqrt Abs Std Residuals", xlab="Fitted values", main="Scale-Location",bty="n", ...);grid()
-  qqnorm(scale(x$cond.residuals), pch=20, col=transp("tomato1"), ylab="Std Residuals", bty="n",...); grid()
-  hat <- x$X%*%solve(t(x$X)%*%x$V.inv%*%x$X)%*%t(x$X)%*%x$V.inv # leverage including variance from random effects H= X(X'V-X)X'V-
-  plot(diag(hat), scale(x$cond.residuals), pch=20, col=transp("springgreen3"), ylab="Std Residuals", xlab="Leverage", main="Residual vs Leverage", bty="n", ...); grid()
+    plot(x$fitted.y[x$used.observations,i], scale(x$cond.residuals[,i]), pch=20, col=transp("cadetblue"), ylab="Std Residuals", xlab="Fitted values", main="Residual vs Fitted", bty="n", ...); grid()
+    plot(x$fitted.y[x$used.observations,i], sqrt(abs((scale(x$cond.residuals[,i])))), pch=20, col=transp("thistle4"), ylab="Sqrt Abs Std Residuals", xlab="Fitted values", main="Scale-Location",bty="n", ...);grid()
+    qqnorm(scale(x$cond.residuals), pch=20, col=transp("tomato1"), ylab="Std Residuals", bty="n",...); grid()
+    hat <- x$X%*%solve(t(x$X)%*%x$V.inv%*%x$X)%*%t(x$X)%*%x$V.inv # leverage including variance from random effects H= X(X'V-X)X'V-
+    plot(diag(hat), scale(x$cond.residuals), pch=20, col=transp("springgreen3"), ylab="Std Residuals", xlab="Leverage", main="Residual vs Leverage", bty="n", ...); grid()
   }
   #####################
   layout(matrix(1,1,1))
@@ -540,7 +543,7 @@ plot.MMERM <- function(x, stnd=TRUE, ...) {
     stop("This package requires R 2.1 or later")
   assign(".sommer.home", file.path(library, pkg),
          pos=match("package:sommer", search()))
-  sommer.version = "3.3 (2018-03-01)" # usually 2 months before it expires
+  sommer.version = "3.4 (2018-04-01)" # usually 2 months before it expires
   
   ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ### check which version is more recent
@@ -572,7 +575,7 @@ plot.MMERM <- function(x, stnd=TRUE, ...) {
     #  packageStartupMessage(paste("Version",current,"is now available."),appendLF=TRUE) # version current
     #  packageStartupMessage(paste("Please update 'sommer' installing the new version."),appendLF=TRUE) # version current
     #}
-    #print(image(diag(10),main="sommer 3.3"))
+    #print(image(diag(10),main="sommer 3.4"))
   }
   invisible()
 }

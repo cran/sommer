@@ -1,5 +1,5 @@
 409d7240e81051ced4e0a2d2da823246 *CHANGELOG
-f8926237b17348d1b785c79ebc91e623 *DESCRIPTION
+9e3895b615f6feb36a58a063974e194c *DESCRIPTION
 997821d5a778828c194e64f013096821 *NAMESPACE
 73e05505dd1dc9ab311fe55027dfa375 *R/A.mat.R
 ff3211e850e996a57a255052973f729e *R/AI.R
@@ -19,8 +19,8 @@ e8595a762ef350aa7d893535e06e42e1 *R/build.HMM.R
 50ea9fd024bb770ce79f183a7be8c80e *R/h2.fun.R
 862501a3b187c350997cee1a22e07053 *R/matrix.calculations.R
 a32707694bd3e568d293cd87f56c12cf *R/miscelaneous.R
-be5a504814ae0e3651251e23ce924ce9 *R/mmer.R
-6ab72a2800b692b910ec4528eb8c33ab *R/mmer2.R
+8b7b190242c26b425833bc26d17b6a9e *R/mmer.R
+a1fc252917cdcc0590abfe23834d920e *R/mmer2.R
 c648e4a2f12fe1a0e2fda99047da7d88 *R/nna.R
 cc5bb942805e81ee46161d15930d02b7 *R/overlay.R
 2de91905d76c8bb3c26e21034fb2a22a *R/ped.to.A.R
@@ -54,7 +54,7 @@ c656ffcbe29229a11d61ed22680e7d45 *inst/CITATION
 c2b91d6fb405dad675037aa3059db1fc *inst/doc/sommer.Rmd
 2c4f737aef99563c7f22d637fc5fa1a6 *inst/doc/sommer.pdf
 a42849a28d0e76870d2796631def68c0 *inst/doc/sommer.start.R
-f09fc5e82591e604d0583aef30906d42 *inst/doc/sommer.start.Rmd
+a77c284d2e24d3d9c9d51e24dad80734 *inst/doc/sommer.start.Rmd
 9f32fcd691831ca5a060dd3ded2fd574 *inst/doc/sommer.start.pdf
 f16b0f53e83a65cb74545dcb175b55f1 *man/A.mat.Rd
 fe23cbdf4ec2ba46fd49115df54e5afe *man/AI.Rd
@@ -112,8 +112,8 @@ eb057de850916cdfede4f42dfe4f78fb *man/manhattan.Rd
 2ddb917a1eb9742e6a3139318822330d *man/map.plot.Rd
 cd6faa1bba2003bd2fd77d04957b1455 *man/matrix.trace.Rd
 8650223c61f75e50cbe29acd6a241f04 *man/maxi.qtl.Rd
-2c7727ffee56a8fffcd2ab8eca402e53 *man/mmer.Rd
-7883a3a47b58a5430db22bb1fe057ae9 *man/mmer2.Rd
+1b68041a1f1aec424b182bfda563bc13 *man/mmer.Rd
+27f0fef5dcf84eec4a6965f2078a9fc4 *man/mmer2.Rd
 87fb62bca8161963260c9625bd7a6df8 *man/my.colors.Rd
 2fd2f237dceb8f0b15c49c36e221ccaf *man/nna.Rd
 f05ebbd0a3bb8d33323fe859692d9364 *man/overlay.Rd
@@ -135,6 +135,6 @@ f75098b3a890c9943c86effa94afa5b2 *man/transp.Rd
 e34f0b036164adddec0db2a443d416b6 *man/wheatLines.Rd
 d4e28fb39c73372bbe587a787df36fdd *man/yates.oats.Rd
 c2b91d6fb405dad675037aa3059db1fc *vignettes/sommer.Rmd
-35c2aee178e691b04b9a5651bebdfb81 *vignettes/sommer.html
-f09fc5e82591e604d0583aef30906d42 *vignettes/sommer.start.Rmd
-c52787b2c9686f2bd47b57a38802c7d4 *vignettes/sommer.start.html
+4c3cf6562c727270adc94db4a9ce64d8 *vignettes/sommer.html
+a77c284d2e24d3d9c9d51e24dad80734 *vignettes/sommer.start.Rmd
+3808b6ee2e3a0e6f7bf1fa6a9f6675a3 *vignettes/sommer.start.html

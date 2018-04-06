@@ -22,7 +22,7 @@ mmer(Y,X=NULL,Z=NULL,R=NULL,W=NULL,method="NR",init=NULL,iters=20,
     tolpar=1e-3, tolparinv=1e-6,draw=FALSE,silent=FALSE, 
     constraint=TRUE, EIGEND=FALSE, forced=NULL, IMP=FALSE, 
     complete=TRUE, check.model=TRUE, restrained=NULL, REML=TRUE,
-    init.equal=TRUE)
+    init.equal=TRUE,date.warning=TRUE)
 }
 \arguments{
   \item{Y}{a matrix or data frame of response variables}
@@ -91,6 +91,7 @@ mmer(Y,X=NULL,Z=NULL,R=NULL,W=NULL,method="NR",init=NULL,iters=20,
    \item{restrained}{a numeric argument specifying which variance-covariance parameters should be restrained. Please see \code{\link{vctable}} and \code{\link{vctable.help}} functions if you want to use it although you shouldn't since is made for the \code{\link{mmer2}} function.}
    \item{REML}{a TRUE/FALSE value to indicate if REML or ML should be used for optimization. Not functional yet. Only REML available.}
    \item{init.equal}{a TRUE/FALSE value to indicate if the program should use the same initial values for all variance-covariance components in the multivariate models. Default is TRUE, otherwise the function will calculate the variance-covariance with the raw data and use them as initial values.}
+   \item{date.warning}{a TRUE/FALSE value to indicate if the program should warn you when is time to update the sommer package.}
     
 }
 \details{

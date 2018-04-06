@@ -3,9 +3,16 @@ mmer2 <- function(fixed, random, rcov, data, weights, G=NULL,
                   tolpar = 1e-06, tolparinv = 1e-06, draw=FALSE, 
                   silent=FALSE, constraint=TRUE, forced=NULL, 
                   complete=TRUE, restrained=NULL,na.method.X="exclude",
-                  na.method.Y="exclude", REML=TRUE, init.equal=TRUE){
+                  na.method.Y="exclude", REML=TRUE, init.equal=TRUE,
+                  return.param=FALSE, date.warning=TRUE){
   #rcov <- missing
   #gss=TRUE
+  
+  if(!is.null(G)){ # adjust the names of G to avoid errors when using G on overlay() for spacing issues 
+    names(G) <- apply(as.data.frame(names(G)),1,function(x){as.character(as.formula(paste("~",x)))[2]})
+    #print(names(G))
+  }
+  
   EIGEND=FALSE
   
   if(missing(data)){
@@ -1134,14 +1141,19 @@ mmer2 <- function(fixed, random, rcov, data, weights, G=NULL,
     overc <- grep("overlay\\(",names(Z)) # overlay check
     if(length(overc) > 0){
       for(oo in 1:length(overc)){
-        nameoverlay <- names(Z)[overc[oo]]
+        nameoverlay <- names(Z)[overc[oo]] # name of the overlay random effect
         #print(nameoverlay)
         #print(names(G))
-        if(!is.null(G)){
+        if(!is.null(G)){ # if there's Gs look for overlay Gs
           gover <- grep(gsub("overlay\\(","overlay\\\\(",names(G)), nameoverlay)
         }else{
           gover <- numeric()
         }
+        
+        ## if user specified the g() for an overlay effect but there was no match
+        # if(length(gover)==0){
+        #   warning(paste("covariance matrices in G not found for",nameoverlay,". covariance matrices available are:", paste(names(G), collapse = ", ")),call. = FALSE)
+        # }
         
         #print(gover)
         if(length(gover)>0){# if there's a covariance structure for the over lay
@@ -1180,14 +1192,24 @@ mmer2 <- function(fixed, random, rcov, data, weights, G=NULL,
       #print(str(Z))
     }
     #print(str(Z))
+    #print(str(Z))
+    if(return.param){
+      res <- list(Y=yvar, X=X, Z=Z, R=R, W=W, method=method, REML=REML, init=init,
+                  iters=iters,tolpar=tolpar,
+                  tolparinv = tolparinv,draw=draw,silent=silent, 
+                  constraint = constraint,EIGEND = EIGEND,
+                  forced=forced,IMP=IMP,complete=complete,restrained=torestrain,
+                  init.equal = init.equal)
+    }else{
     res <- mmer(Y=yvar, X=X, Z=Z, R=R, W=W, method=method, REML=REML, init=init,
                 iters=iters,tolpar=tolpar,
                 tolparinv = tolparinv,draw=draw,silent=silent, 
                 constraint = constraint,EIGEND = EIGEND,
                 forced=forced,IMP=IMP,complete=complete,restrained=torestrain,
-                init.equal = init.equal)
+                init.equal = init.equal, date.warning=date.warning)
     if(!is.null(res$restrained)){
       names(res$restrained) <- rownames(res$sigma.scaled)[res$restrained] 
+    }
     }
     res$call$fixed <- fixed
     res$call$random <- random

@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2018-03-05" />
+<meta name="date" content="2018-04-06" />
 
 <title>Quick start for the sommer package</title>
 
@@ -70,11 +70,11 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Quick start for the sommer package</h1>
 <h4 class="author"><em>Giovanny Covarrubias-Pazaran</em></h4>
-<h4 class="date"><em>2018-03-05</em></h4>
+<h4 class="date"><em>2018-04-06</em></h4>
 
 
 
-<p>The sommer package was developed to provide R users a powerful and reliable multivariate mixed model solver. The package is focused in problems of the type p &gt; n (more random effect levels than observations). This package allows the user to fit mixed models with the advantage of specifying the variance-covariance structure for the random effects, and specify heterogeneous variances, and obtain other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc.</p>
+<p>The sommer package was developed to provide R users a powerful and reliable multivariate mixed model solver. The package is focused in problems of the type p &gt; n (more effects to estimate than observations). This package allows the user to fit mixed models with the advantage of specifying the variance-covariance structure for the random effects, and specify heterogeneous variances, and obtain other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc.</p>
 <p>The purpose of this quick start guide is to show the flexibility of the package under certain common scenarios:</p>
 <p>B1) Background on mixed models B2) Background on covariance structures</p>
 <ol style="list-style-type: decimal">
@@ -216,7 +216,7 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' &amp; ... &am
 <span class="kw">summary</span>(ans1)</code></pre></div>
 <pre><code>## ==================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ******************  sommer 3.3  ****************** 
+## ******************  sommer 3.4  ****************** 
 ## ==================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -20.14537 46.29075 55.95182    MNR     TRUE
@@ -262,7 +262,7 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' &amp; ... &am
 <span class="kw">summary</span>(ans1)</code></pre></div>
 <pre><code>## ===================================================
 ##      Multivariate Linear Mixed Model fit by REML     
-## ******************  sommer 3.3  ****************** 
+## ******************  sommer 3.4  ****************** 
 ## ===================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -15.42982 36.85964 46.52071    MNR     TRUE
@@ -315,7 +315,7 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' &amp; ... &am
 <span class="kw">summary</span>(ans3)</code></pre></div>
 <pre><code>## ==================================================================
 ##             Multivariate Linear Mixed Model fit by REML            
-## **************************  sommer 3.3  ************************** 
+## **************************  sommer 3.4  ************************** 
 ## ==================================================================
 ##         logLik      AIC      BIC Method Converge
 ## Value -11.4997 28.99939 38.66046    MNR     TRUE
@@ -372,7 +372,7 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' &amp; ... &am
 <span class="kw">summary</span>(ans1)</code></pre></div>
 <pre><code>## ==================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ******************  sommer 3.3  ****************** 
+## ******************  sommer 3.4  ****************** 
 ## ==================================================
 ##         logLik       AIC       BIC Method Converge
 ## Value 167.0252 -322.0505 -298.5695    MNR     TRUE
@@ -431,7 +431,7 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' &amp; ... &am
 <span class="kw">summary</span>(ans1)</code></pre></div>
 <pre><code>## =====================================================
 ##       Multivariate Linear Mixed Model fit by REML      
-## ********************  sommer 3.3  ******************** 
+## ********************  sommer 3.4  ******************** 
 ## =====================================================
 ##         logLik       AIC       BIC Method Converge
 ## Value 177.8154 -343.6309 -320.1498    MNR     TRUE
@@ -511,7 +511,7 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' &amp; ... &am
 <span class="kw">summary</span>(ans1)</code></pre></div>
 <pre><code>## =====================================================
 ##       Multivariate Linear Mixed Model fit by REML      
-## ********************  sommer 3.3  ******************** 
+## ********************  sommer 3.4  ******************** 
 ## =====================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -15.42982 36.85964 46.52071    MNR     TRUE
@@ -567,7 +567,7 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' &amp; ... &am
 <span class="kw">summary</span>(ans1)</code></pre></div>
 <pre><code>## =======================================================
 ##        Multivariate Linear Mixed Model fit by REML       
-## ********************  sommer 3.3  ******************** 
+## ********************  sommer 3.4  ******************** 
 ## =======================================================
 ##         logLik       AIC       BIC Method Converge
 ## Value 177.8154 -343.6309 -320.1498    MNR     TRUE
@@ -663,7 +663,7 @@ A &lt;-<span class="st"> </span><span class="kw">A.mat</span>(CPgeno) <span clas
 <span class="kw">summary</span>(mix1)</code></pre></div>
 <pre><code>## =====================================================
 ##       Multivariate Linear Mixed Model fit by REML      
-## ********************  sommer 3.3  ******************** 
+## ********************  sommer 3.4  ******************** 
 ## =====================================================
 ##         logLik      AIC      BIC Method Converge
 ## Value -151.201 304.4021 308.2937    MNR     TRUE
