@@ -9,7 +9,7 @@
 
 Fits a multivariate or univariate linear mixed model by likelihood methods (REML). It has been \strong{implemented to work with a data frame in a formula-based fashion} which will create the incidence and variance covariance matrices for the user and call the \code{\link{mmer}} function in the background. The optimization methods are; Direct-Inversion Newton-Raphson (NR) (Tunnicliffe 1989; Lee et al. 2015; Maier et al. 2015), and Efficient Mixed Model Association (EMMA) (Kang et al. 2008). These algorithms are \strong{intended to be used for problems of the type p > n}. For problems with sparse covariance structures, or problems of the type n > p, the MME-based algorithms are faster and we recommend to shift to the use of MME-based software (i.e. lme4, breedR, or asreml-R).
 
-The package also provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices to model covariances among genotypes for plant and animal breeding problems. 
+The package also provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices to model covariances among genotypes for plant and animal breeding problems.Spatial modeling can be made through the two dimensional splines (see details below).
 
 \strong{For tutorials} on how to perform different analysis with sommer please look at the vignettes by typing in the terminal:
 
@@ -51,7 +51,7 @@ mmer2(fixed, random, rcov, data, weights, G=NULL,
   
   \code{grp}(.)   can be used to specify customized incidence matrices for random effects
   
-  \code{spl2D}(.)   can be used to fit a 2-dimensional spline (i.e. spatial modeling).
+  \code{spl2D}(.)   can be used to fit a 2-dimensional spline (i.e. spatial modeling; see Special functions section below).
   
   }
   \item{rcov}{a formula specifying the name of the \strong{error term}, i.e. \emph{rcov= ~ units} or \emph{rcov=~at(.):units}.
@@ -152,7 +152,7 @@ mmer2(fixed, random, rcov, data, weights, G=NULL,
       nseg, pord, degree, 
       nest.div)}
       
-  can be used to fit a 2-dimensional spline (i.e. spatial modeling) using coordinates \code{x.coord} and \code{y.coord}. The 2D spline can be fitted at specific levels using the \code{at} and \code{at.levels} arguments.Two types of P-Spline models are available; "SAP" or "PSANOVA" using the \code{type} argument. The \code{nseg} argument controls the number of segments for each marginal (strictly nseg - 1 is the number of internal knots in the domain of the covariate), and \code{pord} the penalty order for each marginal. \code{degree} is the order of the polynomial of the B-spline basis for each marginal being the default 3 (cubic B-splines). The \code{nest.div} argument refers to the number of segments to be used for the construction of the nested B-spline basis for the smooth-by-smooth interaction component. Default set to 1, which implies that nested basis are not used. \code{nseg}, \code{pord}, \code{degree}, \code{nest.div} are vectors of length 2 to be applied to \code{x.coord} and \code{y.coord} respectively. See an example in the \code{\link{spatPlots}} documentation.
+  can be used to fit a 2-dimensional spline (i.e. spatial modeling) using coordinates \code{x.coord} and \code{y.coord}. The 2D spline can be fitted at specific levels using the \code{at} and \code{at.levels} arguments. For example \emph{random=~spl2D(x.coord=Row,y.coord=Range,at=FIELD)}.Two types of P-Spline models are available; "SAP" or "PSANOVA" using the \code{type} argument. The \code{nseg} argument controls the number of segments for each marginal (strictly nseg - 1 is the number of internal knots in the domain of the covariate), and \code{pord} the penalty order for each marginal. \code{degree} is the order of the polynomial of the B-spline basis for each marginal being the default 3 (cubic B-splines). The \code{nest.div} argument refers to the number of segments to be used for the construction of the nested B-spline basis for the smooth-by-smooth interaction component. Default set to 1, which implies that nested basis are not used. \code{nseg}, \code{pord}, \code{degree}, \code{nest.div} are vectors of length 2 to be applied to \code{x.coord} and \code{y.coord} respectively. See an example in the \code{\link{spatPlots}} documentation.
 
 For a short tutorial on how to use this special functions you can look at the vignettes by typing in the terminal:
 
@@ -170,12 +170,16 @@ The package has been equiped with several datasets to learn how to use the somme
 
 * \code{\link{wheatLines}} dataset to do genomic prediction in single crosses in species displaying only additive effects.
 
-* \code{\link{CPdata}} dataset to fit genomic prediction models within a biparental population coming from 2 highly heterozygous parents including additive, dominance and epistatic effects. 
+* \code{\link{CPdata}} dataset to fit genomic prediction models within a biparental population coming from 2 highly heterozygous parents including additive, dominance and epistatic effects.
 * \code{\link{PolyData}} to fit genomic prediction and GWAS analysis in polyploids. 
 
 * \code{\link{gryphondata}} data contains an example of an animal model including pedigree information.
 
 * \code{\link{BTdata}} dataset contains an animal (birds) information.
+
+* \code{\link{ExpDesigns}} dataset contains examples for fitting different experimental designs.
+
+* \code{\link{spatPlots}} dataset contains examples of spatial modeling of field trials through the two-dimensional splines.
 
 \strong{Additional Functions}
 

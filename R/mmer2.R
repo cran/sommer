@@ -418,6 +418,8 @@ mmer2 <- function(fixed, random, rcov, data, weights, G=NULL,
     })
     fufu <- unique(unlist(apply(data.frame(fufu),1,function(x){strsplit(x,":")[[1]]})))
     fufu <- setdiff(fufu,"1")
+    fufu <- setdiff(fufu,"-1")
+    fufu <- apply(data.frame(fufu),1,function(x){gsub("-1","",gsub(" ","",x))})
     if(length(fufu) >0){
       missing1 <- sort(unique(as.vector(unlist(apply(data.frame(data[,fufu]),2,function(x){as.vector(which(is.na(x)))})))))
       if(length(missing1) > 0){
@@ -430,6 +432,8 @@ mmer2 <- function(fixed, random, rcov, data, weights, G=NULL,
       strsplit(as.character((as.formula(paste("~",x)))[2]), split = "[+]")[[1]]
     })
     fufu <- setdiff(fufu,"1")
+    fufu <- setdiff(fufu,"-1")
+    fufu <- apply(data.frame(fufu),1,function(x){gsub("-1","",gsub(" ","",x))})
     if(length(fufu) >0){
       for(u in fufu){
         v <- which(is.na(data[,u]))

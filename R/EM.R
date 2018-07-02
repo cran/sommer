@@ -370,7 +370,8 @@ EM <- function(y,X=NULL,ZETA=NULL,R=NULL,iters=30,draw=TRUE,silent=FALSE, constr
               X=X.or, Z=Zbind, K=Ksp, ZETA=ZETA,
               ## go back to original data
               fitted.y=fit1, fitted.u=Zor.u2, 
-              forced=forced, convergence=convergence)
+              forced=forced, convergence=convergence,
+              CM=CM, CMi=CMi)
   
   layout(matrix(1,1,1))
   return(res)

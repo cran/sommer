@@ -6,9 +6,9 @@ Obtain heritabilities with three different methods
 \description{
 Obtain heritabilities based on three different methods; Cullis et al. (2006), Oakey at al. (2006), and line-mean h2 (Falconer, 1995).
 
-Cullis at al. (2006): h2= 1 - (PEM.mu/Vg)
+Cullis at al. (2006): h2= 1 - (PEM.mu/2*Vg)
 
-Oakey at al. (2006): h2= 1 - (tr(G^-1 * Czz)/m)
+Oakey at al. (2006): h2= 1 - (tr((0.5*G^-1) * Czz)/m)
 
 Falconer (1995): h2 = Vg / (Vg+(Ve/r*e))
 
@@ -16,7 +16,7 @@ where "PEV.mu" is the average prediction error variance for the genetic term, "V
 }
 \usage{
 
-h2.fun(object, data, gTerm=NULL, eTerm=NULL)
+h2.fun(object, data, gTerm=NULL, eTerm=NULL, md=NULL)
       
 }
 \arguments{
@@ -24,9 +24,18 @@ h2.fun(object, data, gTerm=NULL, eTerm=NULL)
   \item{data}{the dataset used to fit the model provided in the object argument.}
   \item{gTerm}{a character vector specifying the genetic terms fitted in the model.}
   \item{eTerm}{a character vector specifying the environment term fitted in the model.}
+  \item{md}{a numeric value to multiply the genetic variance in the heritability formulas (see details below). If NULL it will use the mean value of the diagonal from the genomic or relationship matrix.}
 }
 \details{
 Please see the description or go to the canonical papers where methods are explained with more detail.
+
+For each level from the eTerm (environment) the heritability is calculated as:
+
+h2.stdr= Vg/(Vg+Ve/(ne*nr))
+h2.cullis= 1 - (PEV/(md*Vg))
+h2.oakey= 1 - tr[ ( C22 (Gi*1/md) / m ) ] 
+
+where "Vg" refers to the genotype variance "Ve" the error variance, "ne" number of environments, "nr" number of replicates, "PEV" is the predicted error variance for the genotype (gTerm), "md" is the mean value from the diagonal of the relationship (pedigree or genomic) matrix "G"" and "m" is the number of lines, "Gi" is the inverse of the relationship matrix.
 }
 %\value{
 %%  ~Describe the value returned
@@ -44,26 +53,29 @@ Falconer, Douglas S., Trudy FC Mackay, and Richard Frankham. "Introduction to qu
 }
 \examples{
 
-data(h2example)
-head(h2example)
+data(example)
+head(example)
 ####=========================================####
 #### fit the mixed model (very heavy model)
 ####=========================================####
-# ans1 <- mmer2(y~Env,
+# ans1 <- mmer2(Yield~Env,
 #               random=~at(Env):Name + at(Env):Block,
 #               rcov=~at(Env):units,
-#               data=h2example)
+#               data=example)
 # summary(ans1)
 
 ####=========================================####
 #### calculate heritability
 ####=========================================####
-# length(levels(h2example$Env)) # number of environment
-# 2 # number of blocks
-# # using the pin function
-# pin(ans1,h2example~(V1+(V3/15))/(V1+(V3/15)+(V5/(2*15))))
-# # using the 
-# h2.fun(ans1, h2example, gTerm = "Name", eTerm = "Env")
+# with(example,table(Name, Env)) # 2 reps 
+# vcs <- summary(ans1)$var.comp.table
+# vcs[1:3,1] / (vcs[1:3,1] + (vcs[7:9,1]/2))
+# ## using the pin function
+# pin(ans1,h2example~(V1)/(V1+(V8/2)))
+# pin(ans1,h2example~(V2)/(V2+(V9/2)))
+# pin(ans1,h2example~(V3)/(V3+(V7/2)))
+# ## using the h2.fun() function
+# h2.fun(ans1, example, gTerm = "Name", eTerm = "Env")
 
 
 }

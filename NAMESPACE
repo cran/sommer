@@ -1,7 +1,7 @@
 #############
 ## EXPORTS
 #############
-export(adiag1, AI, A.mat, atcg1234, hits, big.peaks.col, 
+export(adiag1, A.mat, atcg1234, hits, big.peaks.col, 
        bathy.colors, blocker, blockerL, blockerT, brewer.pal, build.HMM, D.mat, 
        design.score, E.mat, EM, fdr, fdr2, fill.design,
        GWAS, GWAS2, hadamard.prod, hdm, h2.fun, imputev, is.diagonal.matrix, 

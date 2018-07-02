@@ -16,7 +16,7 @@ spatPlots(object, by=NULL, colfunc=NULL,
 \arguments{
   \item{object}{a mixed model fitted using mmer2.}
 \item{by}{
-A character argument specifying the column name in the data frame in case the asreml model will specify a diagonal structure, meaning we will fit a different 2d spline at each FIELDINST
+A character argument specifying the column name in the data frame to fit a difference variance component for each level of such column. For example, if the model to be fitted should have a variance component for each field where the spatial effect row*range will be estimated, then the column that specifies the different fields should be provided to the `by` argument as a character vector of length one. 
 }
 \item{colfunc}{
 an optional function to creat colors for the spatial plots.
@@ -74,6 +74,23 @@ head(CPpheno)
 # summary(mix1)
 # #### get the spatial plots
 # spatPlots(mix1,row = "Row", range = "Col")
-
+# 
+# ###########################################
+# ## mickey mouse example for multiple fields
+# aa <- CPpheno; bb <- CPpheno
+# aa$FIELD <- "A";bb$FIELD <- "B"
+# set.seed(1234)
+# aa$Yield <- aa$Yield + rnorm(length(aa$Yield),0,4)
+# CPpheno2 <- rbind(aa,bb)
+# head(CPpheno2)
+# 
+# mix2 <- mmer2(Yield~1,
+#               random=~diag(FIELD):g(id)
+#               + diag(FIELD):Rowf + diag(FIELD):Colf
+#               + spl2D(Row,Col, at=FIELD),
+#               rcov=~diag(FIELD):units,
+#               G=list(id=A),
+#               data=CPpheno2)
+# summary(mix2)
 }
 \seealso{\code{\link{mmer}} and \code{\link{mmer2}}-- the core functions of the package }

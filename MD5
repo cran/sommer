@@ -1,11 +1,10 @@
-409d7240e81051ced4e0a2d2da823246 *CHANGELOG
-9e3895b615f6feb36a58a063974e194c *DESCRIPTION
-997821d5a778828c194e64f013096821 *NAMESPACE
+62402c1b806561515697629ee2e76879 *CHANGELOG
+9753b85eaeac37b96463d260212f3560 *DESCRIPTION
+6ffc6ec95ad4fb10940803db7f98b0ae *NAMESPACE
 73e05505dd1dc9ab311fe55027dfa375 *R/A.mat.R
-ff3211e850e996a57a255052973f729e *R/AI.R
 6075e47e64cd197e7e43ef00aa356680 *R/D.mat.R
 709318a1c1a7c75dc35e2dd8258f1022 *R/E.mat.R
-9780e964be458622835a30b2e2ac971c *R/EM.R
+f2e6615e5775874ad1253c5c0e256f46 *R/EM.R
 a811b1bc9450912f2feaeb3f08189a28 *R/EMMA.R
 ef07c32a5cb42cec282020edadc31531 *R/GWAS.R
 d95d381864d4e1c187497dcd87e85ba9 *R/GWAS2.R
@@ -16,11 +15,11 @@ e8595a762ef350aa7d893535e06e42e1 *R/build.HMM.R
 05d572a035d0a6efe08489e310997e5b *R/design.score.R
 98ba22345cd241a4343ebb19e18a7c61 *R/fill.design.R
 4c296ba0995dd2b15f59f577e35d6280 *R/gwas.related.R
-50ea9fd024bb770ce79f183a7be8c80e *R/h2.fun.R
+c6839d792a10ee2cb3d6d8ef1b58d2b1 *R/h2.fun.R
 862501a3b187c350997cee1a22e07053 *R/matrix.calculations.R
 a32707694bd3e568d293cd87f56c12cf *R/miscelaneous.R
-8b7b190242c26b425833bc26d17b6a9e *R/mmer.R
-a1fc252917cdcc0590abfe23834d920e *R/mmer2.R
+5c7cde7083994cfe302ec2ed295e9105 *R/mmer.R
+694c08ed333586d265af22bc491ebf4c *R/mmer2.R
 c648e4a2f12fe1a0e2fda99047da7d88 *R/nna.R
 cc5bb942805e81ee46161d15930d02b7 *R/overlay.R
 2de91905d76c8bb3c26e21034fb2a22a *R/ped.to.A.R
@@ -57,7 +56,6 @@ a42849a28d0e76870d2796631def68c0 *inst/doc/sommer.start.R
 a77c284d2e24d3d9c9d51e24dad80734 *inst/doc/sommer.start.Rmd
 9f32fcd691831ca5a060dd3ded2fd574 *inst/doc/sommer.start.pdf
 f16b0f53e83a65cb74545dcb175b55f1 *man/A.mat.Rd
-fe23cbdf4ec2ba46fd49115df54e5afe *man/AI.Rd
 ebf0b870a8afd25758403c8b65ec544e *man/BTdata.Rd
 88f23cb1b81fd59728d4f9f2107a4851 *man/CPdata.Rd
 d6b00b026b023c3c71817cfb4ccd3cf6 *man/D.mat.Rd
@@ -99,7 +97,7 @@ ded509cb69c2055ecbbaa7656cd1e09c *man/figures/mai.png
 cc1f97821a906c80202de5e88fd44afa *man/fill.design.Rd
 18cdec7f64115801195b35948bf8136e *man/fitted.Rd
 18e8851d6a798b6b1646cf4b642c8e85 *man/gryphondata.Rd
-15f103fd78da1881dae2a39f1e90f621 *man/h2.fun.Rd
+e77f10a21a1489bac16784e869a567bb *man/h2.fun.Rd
 39cff93e31069a0b3e10f4af0871de73 *man/h2example.Rd
 ed078b091e3616c4354cdec4ad1f1a6f *man/hadamard.prod.Rd
 56e4f8d34cce6729bfb6a97f76868d11 *man/hdm.Rd
@@ -113,7 +111,7 @@ eb057de850916cdfede4f42dfe4f78fb *man/manhattan.Rd
 cd6faa1bba2003bd2fd77d04957b1455 *man/matrix.trace.Rd
 8650223c61f75e50cbe29acd6a241f04 *man/maxi.qtl.Rd
 1b68041a1f1aec424b182bfda563bc13 *man/mmer.Rd
-27f0fef5dcf84eec4a6965f2078a9fc4 *man/mmer2.Rd
+a292ea567157b166c41cb7a1fc07a91a *man/mmer2.Rd
 87fb62bca8161963260c9625bd7a6df8 *man/my.colors.Rd
 2fd2f237dceb8f0b15c49c36e221ccaf *man/nna.Rd
 f05ebbd0a3bb8d33323fe859692d9364 *man/overlay.Rd
@@ -125,8 +123,8 @@ c059657d70517b58f2ea6cd1f453749f *man/phase.F1.Rd
 ebc82d3c9f713b54c8bb877a723b7efe *man/randef.Rd
 6f3fd81f574b956eaf3b7d7f41e9d174 *man/residuals.Rd
 de53f242a999bb5482689be949139e9b *man/score.calcMV.Rd
-57ad88cf5e426b42b8f30408ae8b1dc5 *man/sommer-package.Rd
-a45d2fac28bddd63696e2223ccb20483 *man/spatPlots.Rd
+1f4e08f2038926b96ecc07c2aa98242f *man/sommer-package.Rd
+ff166cbf03c7b58866de2dca867a129a *man/spatPlots.Rd
 bde54b983e26ab36148461745f93e63f *man/summary.Rd
 f75098b3a890c9943c86effa94afa5b2 *man/transp.Rd
 02cfc8819db2b962e60377f80ff75ef6 *man/variogram.Rd
@@ -135,6 +133,6 @@ f75098b3a890c9943c86effa94afa5b2 *man/transp.Rd
 e34f0b036164adddec0db2a443d416b6 *man/wheatLines.Rd
 d4e28fb39c73372bbe587a787df36fdd *man/yates.oats.Rd
 c2b91d6fb405dad675037aa3059db1fc *vignettes/sommer.Rmd
-4c3cf6562c727270adc94db4a9ce64d8 *vignettes/sommer.html
+079919e9a2bf9d83c51e8d2f55648b7b *vignettes/sommer.html
 a77c284d2e24d3d9c9d51e24dad80734 *vignettes/sommer.start.Rmd
-3808b6ee2e3a0e6f7bf1fa6a9f6675a3 *vignettes/sommer.start.html
+85067fd9070cae529b5e4be5636bdfa1 *vignettes/sommer.start.html

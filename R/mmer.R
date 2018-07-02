@@ -24,7 +24,7 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,W=NULL,method="NR",init=NULL,iters=20,to
   }
   
   my.year <- 2018
-  my.month <- 6 #month when the user will start to get notifications the 1st day of next month
+  my.month <- 9 #month when the user will start to get notifications the 1st day of next month
   ### if my month = 3, user will start to get notification in april 1st (next month)
   datee <- Sys.Date()
   year.mo.day <- as.numeric(strsplit(as.character(datee),"-")[[1]])# <- as.numeric(strsplit(gsub("....-","",datee),"-")[[1]])
@@ -170,7 +170,6 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,W=NULL,method="NR",init=NULL,iters=20,to
   }else{
     stop("Method not available. See details in the sommer help page.", call. = FALSE)
   }
-  
   #   else if(method == "AI"){
   #     RES <- MAI(Y=Y,X=X,ZETA=Z,R=R,init=init,iters=iters,tolpar=tolpar,
   #                tolparinv = tolparinv,draw=draw,silent=silent, 
@@ -334,8 +333,8 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,W=NULL,method="NR",init=NULL,iters=20,to
   cat(paste(rep("=",nmaxchar), collapse = ""))
   #cat("\n   Multivariate Linear Mixed Model fit by REML      \n")
   cat(paste("\n",rlt,"Multivariate Linear Mixed Model fit by REML",rlt,"\n", collapse = ""))
-  #cat("***********************  sommer 3.4  ***********************\n")
-  cat(paste(rlh," sommer 3.4 ",rlh, "\n", collapse = ""))
+  #cat("***********************  sommer 3.5  ***********************\n")
+  cat(paste(rlh," sommer 3.5 ",rlh, "\n", collapse = ""))
   #cat("============================================================")
   cat(paste(rep("=",nmaxchar), collapse = ""))
   cat("\n")
@@ -543,7 +542,7 @@ plot.MMERM <- function(x, stnd=TRUE, ...) {
     stop("This package requires R 2.1 or later")
   assign(".sommer.home", file.path(library, pkg),
          pos=match("package:sommer", search()))
-  sommer.version = "3.4 (2018-04-01)" # usually 2 months before it expires
+  sommer.version = "3.5 (2018-07-01)" # usually 2 months before it expires
   
   ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ### check which version is more recent
@@ -575,7 +574,7 @@ plot.MMERM <- function(x, stnd=TRUE, ...) {
     #  packageStartupMessage(paste("Version",current,"is now available."),appendLF=TRUE) # version current
     #  packageStartupMessage(paste("Please update 'sommer' installing the new version."),appendLF=TRUE) # version current
     #}
-    #print(image(diag(10),main="sommer 3.4"))
+    #print(image(diag(10),main="sommer 3.5"))
   }
   invisible()
 }

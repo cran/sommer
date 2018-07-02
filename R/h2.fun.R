@@ -1,5 +1,5 @@
 
-h2.fun <- function(object, data, gTerm=NULL, eTerm=NULL) {
+h2.fun <- function(object, data, gTerm=NULL, eTerm=NULL, md=NULL) {
   
   if(missing(object)){
     stop("Please provide a model object of type mmer.\n", call. = FALSE)
@@ -45,7 +45,7 @@ h2.fun <- function(object, data, gTerm=NULL, eTerm=NULL) {
     }else{
       nn <- median(table(subdata[,gTerm]))
     }
-    nn
+    #print(nn)
     
     if(length(elevels)==1){ # single field
       f2 <- grep("units",names(object$var.comp))
@@ -61,16 +61,24 @@ h2.fun <- function(object, data, gTerm=NULL, eTerm=NULL) {
     pev.mat <- 0
     vcs <- numeric()
     counter <- 0
+    meandiag <- numeric() # store the diagonal of the covariance matrix
+    co <- 0
     for(gs in geTerm){
+      co = co+1
       counter <- counter + 1
       if(counter==1){
         pev.mat <- pev.mat + object$PEV.u.hat[[gs]][[1]]
       }; pev.mat[1:4,1:4]
       A<- object$ZETA[[gs]]$K
+      if(is.null(md)){
+        meandiag[co] <- mean(diag(A))
+      }else{meandiag[co] <- md}
       vc <- as.numeric(object$var.comp[[gs]])
       vcs[[gs]] <- vc
       G <- G + A * vc
     }
+    meandiag <- mean(meandiag) # make sure we take the mean if more than one genetic term was fitted although that is not allowed
+
     G[1:3,1:3]
     try(ginv <- solve(G), silent = TRUE)
     if(class(ginv)=="try-error"){
@@ -84,7 +92,7 @@ h2.fun <- function(object, data, gTerm=NULL, eTerm=NULL) {
     id.mat<-diag(nv) #create identity matrix
     esh2<-1-(sum(pev.mat*ginv)/nv)
     #library(Matrix)
-    M<-id.mat-(ginv%*%pev.mat)
+    M<-id.mat-(((1/meandiag)*ginv)%*%pev.mat)
     #M <- make.full(M)
     eM<-eigen(M)# eigenvalues of M
     sm<-rep(NA,nv)
@@ -93,14 +101,29 @@ h2.fun <- function(object, data, gTerm=NULL, eTerm=NULL) {
     seM<-sum(neM) # add all eigen values, full heritability
     h2<- seM/sum(sm)
     
-    h2.cullis <- 1 - (mean(diag(pev.mat))/vc)
-    h2.stdrd <- as.numeric(vc/(vc+(ve/nn)))
-    h2s[[e]] <- data.frame(H2.stdrd=h2.stdrd,H2.cullis=h2.cullis,H2.oakey.eigen=h2)
+    pevs <- mean(diag(pev.mat))
+    ve <- as.vector(ve)
     
+    h2.cullis <- 1 - (mean(diag(pev.mat))/((meandiag)*vc))
+    h2.stdrd <- as.numeric(vc/(vc+(ve/nn)))
+    
+    h2s[[e]] <- data.frame(PEV=pevs, Vg=vc, Ve=ve,N.rep=nn, H2.stdrd=h2.stdrd,H2.cullis=h2.cullis,H2.oakey.eigen=h2)
+    # print(ve)
   }
   h2d <- as.data.frame(do.call(rbind,h2s))
   h2d[,eTerm] <- names(h2s)
-  h2d[,"trait"] <- colnames(object$Y)
+  h2d[,"Trait"] <- colnames(object$Y)
+  #h2d <- h2d[,c("Trait","Env",setdiff(colnames(h2d),c("Trait","Env")))]
   return(h2d)
-  
+  # pevs <- diag(mix2$PEV.u.hat$id$Yield)
+  # vg <- mix2$var.comp$id[1,1]
+  # ve <- mix2$var.comp$units[1,1]
+  # pevm <- mix2$PEV.u.hat$id$Yield
+  # m <- nrow(A)
+  # Gi <- solve(diag(1,m)*vg)
+  # 1 - mean(pevs/(2*vg)); mean(1 - pevs/(2*vg))
+  # vg/(vg+ve)
+  # uu <- (0.5*Gi %*% pevm)/m
+  # 1 - matrix.trace(as.matrix(uu)); 1 - sum(diag(uu))
+  # 1 - mean(diag(0.5*Gi %*% pevm))
 }
