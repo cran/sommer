@@ -64,7 +64,7 @@ score.calcMV <- function(marks,Y,Z,X,K,ZZ,M,Hinv,ploidy,model,min.MAF,max.geno.f
       W <- crossprod(X2, Hinv %*% X2) 
       Winv <- try(solve(W),silent=TRUE)
       if (class(Winv) != "try-error") {
-        beta <- Winv %*% crossprod(X2, Hinv %*% Y2)
+        beta <- Winv %*% crossprod(X2, Hinv %*% Y2) # b = (XV-X)- XV-Y where X = X %*% Zid %*% Mi
         resid <- Y2 - X2 %*% beta
         s2 <- as.double(crossprod(resid, Hinv %*% resid))/v2
         Q <- s2 * Winv#[(p-v1+1):p,(p-v1+1):p]

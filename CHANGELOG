@@ -301,7 +301,14 @@ version 3.5 (2018-07-01)
 ######################## 
 
   + h2.fun returns now corrected heritabilities for Oakey (2006) and Cullis (2006) formulas.
-    
+  
+########################
+version 3.6 (2018-09-01)
+######################## 
+
+  + some documentation changes
+  + almost finished c++ version, just wait for it.
+  
 ##pendings
 + documentation on delta method (pin), covariance structures available and use
 

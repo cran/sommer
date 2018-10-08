@@ -130,11 +130,11 @@ GWAS <- function (Y, X=NULL, Z=NULL, R=NULL, W=NULL, M=NULL,
   }
   ###**********************************
   
-  if(!is.null(ncol(Y))){
-    if(ncol(Y) >1){
-    stop("The multivariate GWAS is under maintenance. Please wait until a new version to use it.",call. = FALSE)
-    }
-  }
+  # if(!is.null(ncol(Y))){
+  #   if(ncol(Y) >1){
+  #   stop("The multivariate GWAS is under maintenance. Please wait until a new version to use it.",call. = FALSE)
+  #   }
+  # }
   ####-----------------------
   ####-----------------------
   if(method=="EMMA"){
@@ -144,7 +144,9 @@ GWAS <- function (Y, X=NULL, Z=NULL, R=NULL, W=NULL, M=NULL,
   }else if(method=="AI"){
     stop("AI method has been discontinued because of its instability. Try 'NR'.\nSee details in the sommer help page. ", call. = FALSE)
   }else if(method=="NR"){
-    res <- MNR(Y=Y,X=X,ZETA=Z,R=R,W=W,init=init,iters=iters,tolpar=tolpar,tolparinv = tolparinv,draw=draw,silent=silent, constraint = constraint,EIGEND = EIGEND,forced=forced,IMP=IMP,restrained=restrained, complete = complete)
+    res <- MNR(Y=Y,X=X,ZETA=Z,R=R,W=W,init=init,iters=iters,tolpar=tolpar,tolparinv = tolparinv,
+               draw=draw,silent=silent, constraint = constraint,EIGEND = EIGEND,forced=forced,
+               IMP=IMP,restrained=restrained, complete = complete)
     class(res)<-c("MMERM")
   }else{
     stop("Unrecognized method. Please select one of the methods; 'NR', 'EMMA'.",call. = FALSE)

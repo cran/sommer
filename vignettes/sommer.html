@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2018-07-02" />
+<meta name="date" content="2018-10-08" />
 
 <title>Quantitative genetics using the sommer package</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Quantitative genetics using the sommer package</h1>
 <h4 class="author"><em>Giovanny Covarrubias-Pazaran</em></h4>
-<h4 class="date"><em>2018-07-02</em></h4>
+<h4 class="date"><em>2018-10-08</em></h4>
 
 
 
@@ -82,10 +82,15 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li>Specifying heterogeneous variances in mixed models</li>
 <li>Using the pin calculator</li>
 <li>Half and full diallel designs (using the overlay)</li>
-<li>Genomic selection (predicting mendelian sampling)</li>
+<li>Genomic selection (predicting mendelian sampling)
+<ul>
+<li>GBLUP</li>
+<li>rrBLUP</li>
+</ul></li>
 <li>Single cross prediction (hybrid prediction)</li>
 <li>Spatial modeling (using the 2-dimensional splines)</li>
 <li>Multivariate genetic models and genetic correlations</li>
+<li>Final remarks</li>
 </ol>
 <div id="background" class="section level2">
 <h2>Background</h2>
@@ -293,7 +298,7 @@ modFD &lt;-<span class="st"> </span><span class="kw">mmer2</span>(Yield~<span cl
 <span class="kw">summary</span>(modFD)</code></pre></div>
 <pre><code>## ==================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ******************  sommer 3.5  ****************** 
+## ******************  sommer 3.6  ****************** 
 ## ==================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -164.6839 331.3677 335.3592    MNR     TRUE
@@ -335,7 +340,7 @@ modFD &lt;-<span class="st"> </span><span class="kw">mmer2</span>(Yield~<span cl
 <span class="kw">summary</span>(modFD)</code></pre></div>
 <pre><code>## ==================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ******************  sommer 3.5  ****************** 
+## ******************  sommer 3.6  ****************** 
 ## ==================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -157.4751 316.9502 320.9417    MNR     TRUE
@@ -392,7 +397,7 @@ A &lt;-<span class="st"> </span><span class="kw">A.mat</span>(CPgeno)
 <span class="kw">summary</span>(mix1)</code></pre></div>
 <pre><code>## ==================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ******************  sommer 3.5  ****************** 
+## ******************  sommer 3.6  ****************** 
 ## ==================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -110.7406 223.4812 227.3728    MNR     TRUE
@@ -445,7 +450,7 @@ hybrid2 &lt;-<span class="st"> </span>cornHybrid$hybrid <span class="co"># extra
 (suma &lt;-<span class="st"> </span><span class="kw">summary</span>(modFD))</code></pre></div>
 <pre><code>## ==================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ******************  sommer 3.5  ****************** 
+## ******************  sommer 3.6  ****************** 
 ## ==================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -132.5889 273.1777 289.1436    MNR     TRUE
@@ -507,7 +512,7 @@ modHD &lt;-<span class="st"> </span><span class="kw">mmer2</span>(sugar~<span cl
 <span class="kw">summary</span>(modHD)</code></pre></div>
 <pre><code>## ===========================================================
 ##          Multivariate Linear Mixed Model fit by REML         
-## **********************  sommer 3.5  ********************** 
+## **********************  sommer 3.6  ********************** 
 ## ===========================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -5.674408 13.34882 15.08649    MNR     TRUE
@@ -564,7 +569,7 @@ Vg &lt;-<span class="st"> </span>Va +<span class="st"> </span>Vd
   <span class="kw">summary</span>(modHD)</code></pre></div>
 <pre><code>## ==================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ******************  sommer 3.5  ****************** 
+## ******************  sommer 3.6  ****************** 
 ## ==================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -5.674413 13.34883 15.08649    MNR     TRUE
@@ -621,6 +626,8 @@ K &lt;-<span class="st"> </span><span class="kw">A.mat</span>(X) <span class="co
 y.trn &lt;-<span class="st"> </span>Y
 vv &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">rownames</span>(Y),<span class="kw">round</span>(<span class="kw">dim</span>(Y)[<span class="dv">1</span>]/<span class="dv">5</span>))
 y.trn[vv,<span class="st">&quot;X1&quot;</span>] &lt;-<span class="st"> </span><span class="ot">NA</span>
+
+## GBLUP
 ans &lt;-<span class="st"> </span><span class="kw">mmer2</span>(X1~<span class="dv">1</span>,
              <span class="dt">random=</span>~<span class="kw">g</span>(id), 
              <span class="dt">rcov=</span>~units,
@@ -628,6 +635,18 @@ ans &lt;-<span class="st"> </span><span class="kw">mmer2</span>(X1~<span class="
              <span class="dt">data=</span>y.trn, <span class="dt">silent =</span> <span class="ot">TRUE</span>) <span class="co"># kinship based</span>
 <span class="kw">cor</span>(ans$u.hat$<span class="st">`</span><span class="dt">g(id)</span><span class="st">`</span>[vv,],Y[vv,<span class="st">&quot;X1&quot;</span>])</code></pre></div>
 <pre><code>## [1] 0.4885693</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## rrBLUP
+y.trn$dummy &lt;-<span class="st"> </span><span class="kw">paste</span>(<span class="st">&quot;dummy&quot;</span>,<span class="dv">1</span>:<span class="kw">nrow</span>(y.trn),<span class="dt">sep=</span><span class="st">&quot;_&quot;</span>)
+ans &lt;-<span class="st"> </span><span class="kw">mmer2</span>(X1~<span class="dv">1</span>,
+             <span class="dt">random=</span>~dummy +<span class="st"> </span><span class="kw">grp</span>(markers), 
+             <span class="dt">rcov=</span>~units,
+             <span class="dt">grouping =</span><span class="kw">list</span>(<span class="dt">markers=</span>X), 
+             <span class="dt">data=</span>y.trn, <span class="dt">silent =</span> <span class="ot">TRUE</span>) <span class="co"># kinship based</span>
+
+u &lt;-<span class="st"> </span>X %*%<span class="st"> </span><span class="kw">as.matrix</span>(ans$u.hat$markers[,<span class="dv">1</span>]) <span class="co"># BLUPs for individuals</span>
+<span class="kw">cor</span>(u[vv,],Y[vv,<span class="st">&quot;X1&quot;</span>]) <span class="co"># same correlation</span></code></pre></div>
+<pre><code>## [1] 0.4885692</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># the same can be applied in multi-response models in GBLUP or rrBLUP</span></code></pre></div>
 </div>
 <div id="single-cross-prediction" class="section level2">
 <h2>6) Single cross prediction</h2>
@@ -685,7 +704,7 @@ anss2 &lt;-<span class="st"> </span><span class="kw">mmer2</span>(yield~<span cl
 <span class="kw">summary</span>(anss2)</code></pre></div>
 <pre><code>## ==================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ******************  sommer 3.5  ****************** 
+## ******************  sommer 3.6  ****************** 
 ## ==================================================
 ##         logLik       AIC       BIC Method Converge
 ## Value 121.6303 -241.2605 -236.2095    MNR     TRUE
@@ -755,7 +774,7 @@ A &lt;-<span class="st"> </span><span class="kw">A.mat</span>(CPgeno) <span clas
 <span class="kw">summary</span>(mix1)</code></pre></div>
 <pre><code>## =====================================================
 ##       Multivariate Linear Mixed Model fit by REML      
-## ********************  sommer 3.5  ******************** 
+## ********************  sommer 3.6  ******************** 
 ## =====================================================
 ##         logLik      AIC      BIC Method Converge
 ## Value -151.201 304.4021 308.2937    MNR     TRUE
@@ -822,7 +841,7 @@ ans.A &lt;-<span class="st"> </span><span class="kw">mmer2</span>(<span class="k
 <span class="kw">summary</span>(ans.A)</code></pre></div>
 <pre><code>## ==================================================
 ##     Multivariate Linear Mixed Model fit by REML    
-## ******************  sommer 3.5  ****************** 
+## ******************  sommer 3.6  ****************** 
 ## ==================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -286.6437 577.2875 586.4626    MNR     TRUE
@@ -868,6 +887,9 @@ prod.sd &lt;-<span class="st"> </span>sd.gvc %*%<span class="st"> </span><span c
 (h2 &lt;-<span class="st"> </span><span class="kw">diag</span>(gvc) /<span class="st"> </span><span class="kw">diag</span>(<span class="kw">cov</span>(CPpheno[,<span class="kw">names</span>(<span class="kw">diag</span>(gvc))], <span class="dt">use =</span> <span class="st">&quot;complete.obs&quot;</span>)))</code></pre></div>
 <pre><code>##     color     Yield 
 ## 0.7699871 0.1439069</code></pre>
+</div>
+<div id="final-remarks" class="section level2">
+<h2>9) Final remarks</h2>
 <p>Keep in mind that sommer uses direct inversion (DI) algorithm which can be very slow for large datasets. The package is focused in problems of the type p &gt; n (more random effect levels than observations) and models with dense covariance structures. For example, for experiment with dense covariance structures with low-replication (i.e. 2000 records from 1000 individuals replicated twice with a covariance structure of 1000x1000) sommer will be faster than MME-based software. Also for genomic problems with large number of random effect levels, i.e. 300 individuals (n) with 100,000 genetic markers (p). For highly replicated trials with small covariance structures or n &gt; p (i.e. 2000 records from 200 individuals replicated 10 times with covariance structure of 200x200) asreml or other MME-based algorithms will be much faster and we recommend you to opt for those software.</p>
 </div>
 <div id="literature" class="section level2">

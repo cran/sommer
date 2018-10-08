@@ -168,12 +168,26 @@ set.seed(12345)
 y.trn <- Y
 vv <- sample(rownames(Y),round(dim(Y)[1]/5))
 y.trn[vv,"X1"] <- NA
+
+## GBLUP
 ans <- mmer2(X1~1,
              random=~g(id), 
              rcov=~units,
              G=list(id=K), 
              data=y.trn, silent = TRUE) # kinship based
 cor(ans$u.hat$`g(id)`[vv,],Y[vv,"X1"])
+
+## rrBLUP
+y.trn$dummy <- paste("dummy",1:nrow(y.trn),sep="_")
+ans <- mmer2(X1~1,
+             random=~dummy + grp(markers), 
+             rcov=~units,
+             grouping =list(markers=X), 
+             data=y.trn, silent = TRUE) # kinship based
+
+u <- X %*% as.matrix(ans$u.hat$markers[,1]) # BLUPs for individuals
+cor(u[vv,],Y[vv,"X1"]) # same correlation
+# the same can be applied in multi-response models in GBLUP or rrBLUP
 
 ## ------------------------------------------------------------------------
 data(Technow_data)

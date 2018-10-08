@@ -727,6 +727,12 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,W=NULL,init=NULL,iters=20,tolpar=1e-3,
   ee <- rep(up.to.vec(sc.var),length(sigma))
   fish.inv.nonscale <- ( sigma.cova * (dd%*%t(dd)) ) / ((ee%*%t(ee)))
   
+  if(ncol(monitor) <= 3 & !is.null(forced)){
+    if(iters > 3){
+    warning("Your model has converged in no more than 3 iterations. \nYour model might be succeptible to bad initial values. \nPlease try your model with different initial values to make sure is reliable.", call. = FALSE)
+    }
+  }
+  
   return(list(var.comp=sigma, V.inv=V, u.hat = ulist , Var.u.hat = Var.u, 
               beta.hat = beta, Var.beta.hat = XVXi2, fish.inv=sigma.cova, 
               fish.inv.nonscale=fish.inv.nonscale,
@@ -734,7 +740,7 @@ MNR <- function(Y,X=NULL,ZETA=NULL,R=NULL,W=NULL,init=NULL,iters=20,tolpar=1e-3,
               LL=llik, AIC=AIC, BIC=BIC, X=X, Y= Y.red.noscale.ordim,
               #Zforvec= Zforvec.list, varvecG=varvecG,Ylin=Y.red.noscale.lin,
               dimos=dado, sigma.scaled=sigmaxxx, sigma= sigma.nonscale,
-              fitted.y=Y.fitted, fitted.u=Zu.ordim, ZETA=ZETA, used.observations=nona,
+              fitted.y=Y.fitted, fitted.u=Zu.ordim, ZETA=ZETA, P=P, used.observations=nona,
               method="MNR",random.effs=varosssZ, forced=fofo, convergence=convergence,
               monitor=monitor, restrained=restrained, Zus=Zulist.ordim, 
               res.ordim=res.ordim))

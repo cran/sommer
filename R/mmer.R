@@ -24,7 +24,7 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,W=NULL,method="NR",init=NULL,iters=20,to
   }
   
   my.year <- 2018
-  my.month <- 9 #month when the user will start to get notifications the 1st day of next month
+  my.month <- 11 #month when the user will start to get notifications the 1st day of next month
   ### if my month = 3, user will start to get notification in april 1st (next month)
   datee <- Sys.Date()
   year.mo.day <- as.numeric(strsplit(as.character(datee),"-")[[1]])# <- as.numeric(strsplit(gsub("....-","",datee),"-")[[1]])
@@ -34,7 +34,7 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,W=NULL,method="NR",init=NULL,iters=20,to
   if(date.warning){
     if(your.month > my.month & your.year >= my.year){
       # error if your month is greater and your year is smaller
-      cat("Version out of date. Please update sommer to the newest version using:\ninstall.packages('sommer') in a new session\n")
+      cat("Version out of date. Please update sommer to the newest version using:\ninstall.packages('sommer') in a new session\n Use the 'date.warning' argument to disable the warning message.")
     }
   }
   #########*****************************
@@ -109,7 +109,7 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,W=NULL,method="NR",init=NULL,iters=20,to
             condi<-(dido$Z[2] == dido$K[1] & dido$Z[2] == dido$K[2]) 
             # condition, column size on Z matches with a square matrix K
             if(!condi){
-              cat(paste("ERROR! In the",s,"th random effect you have provided or created an incidence \nmatrix with dimensions:",dido$Z[1],"rows and",dido$Z[2],"columns. Therefore the \nvariance-covariance matrix(K) for this random effect expected was a \nsquare matrix with dimensions",dido$Z[2],"x",dido$Z[2]),", but you provided a",dido$K[1],"x",dido$K[2]," matrix \nas a variance-covariance matrix. Please double check your matrices.")
+              cat(paste("ERROR! In the",s,"th random effect you have provided or created an incidence \nmatrix with dimensions:",dido$Z[1],"rows and",dido$Z[2],"columns. Therefore the \nvariance-covariance matrix(K) for this random effect expected was a \nsquare matrix with dimensions",dido$Z[2],"x",dido$Z[2]),", but you provided a",dido$K[1],"x",dido$K[2]," matrix \nas a variance-covariance matrix. Please double check your matrices. Might be that you didn't drop all levels while subsetting your data, if so try: yourdata <- droplevels(yourdata).")
               stop()
             }
           }#---------------------------------------------------------------------------
@@ -134,7 +134,7 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,W=NULL,method="NR",init=NULL,iters=20,to
           condi<-(dido$Z[2] == dido$K[1] & dido$Z[2] == dido$K[2]) 
           # condition, column size on Z matches with a square matrix K
           if(!condi){
-            cat(paste("ERROR! In the",s,"th random effect you have provided or created an incidence \nmatrix with dimensions:",dido$Z[1],"rows and",dido$Z[2],"columns. Therefore the \nvariance-covariance matrix(K) for this random effect expected was a \nsquare matrix with dimensions",dido$Z[2],"x",dido$Z[2]),", but you provided a",dido$K[1],"x",dido$K[2]," matrix \nas a variance-covariance matrix. Please double check your matrices.")
+            cat(paste("ERROR! In the",s,"th random effect you have provided or created an incidence \nmatrix with dimensions:",dido$Z[1],"rows and",dido$Z[2],"columns. Therefore the \nvariance-covariance matrix(K) for this random effect expected was a \nsquare matrix with dimensions",dido$Z[2],"x",dido$Z[2]),", but you provided a",dido$K[1],"x",dido$K[2]," matrix \nas a variance-covariance matrix. Please double check your matrices. Might be that you didn't drop all levels while subsetting your data, if so try: yourdata <- droplevels(yourdata).")
             stop()
           }else{Z=list(Z=Z)}
         }
@@ -333,8 +333,8 @@ mmer <- function(Y,X=NULL,Z=NULL,R=NULL,W=NULL,method="NR",init=NULL,iters=20,to
   cat(paste(rep("=",nmaxchar), collapse = ""))
   #cat("\n   Multivariate Linear Mixed Model fit by REML      \n")
   cat(paste("\n",rlt,"Multivariate Linear Mixed Model fit by REML",rlt,"\n", collapse = ""))
-  #cat("***********************  sommer 3.5  ***********************\n")
-  cat(paste(rlh," sommer 3.5 ",rlh, "\n", collapse = ""))
+  #cat("***********************  sommer 3.6  ***********************\n")
+  cat(paste(rlh," sommer 3.6 ",rlh, "\n", collapse = ""))
   #cat("============================================================")
   cat(paste(rep("=",nmaxchar), collapse = ""))
   cat("\n")
@@ -542,7 +542,7 @@ plot.MMERM <- function(x, stnd=TRUE, ...) {
     stop("This package requires R 2.1 or later")
   assign(".sommer.home", file.path(library, pkg),
          pos=match("package:sommer", search()))
-  sommer.version = "3.5 (2018-07-01)" # usually 2 months before it expires
+  sommer.version = "3.6 (2018-09-01)" # usually 2 months before it expires
   
   ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ### check which version is more recent
@@ -574,7 +574,7 @@ plot.MMERM <- function(x, stnd=TRUE, ...) {
     #  packageStartupMessage(paste("Version",current,"is now available."),appendLF=TRUE) # version current
     #  packageStartupMessage(paste("Please update 'sommer' installing the new version."),appendLF=TRUE) # version current
     #}
-    #print(image(diag(10),main="sommer 3.5"))
+    #print(image(diag(10),main="sommer 3.6"))
   }
   invisible()
 }

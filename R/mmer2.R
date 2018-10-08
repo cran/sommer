@@ -44,6 +44,13 @@ mmer2 <- function(fixed, random, rcov, data, weights, G=NULL,
   
   spl2D <-  function(x.coord,y.coord,at,at.levels, type="PSANOVA", nseg = c(10,10), pord = c(2,2), degree = c(3,3), nest.div = c(1,1) ) {
     
+    if(!is.numeric(x.coord)){
+      stop("x.coord argument in spl2D() needs to be numeric.", call. = FALSE)
+    }
+    if(!is.numeric(y.coord)){
+      stop("y.coord argument in spl2D() needs to be numeric.", call. = FALSE)
+    }
+    
     interpret.covarrubias.formula <-
       function(formula) {
         env <- environment(formula) 
@@ -485,6 +492,7 @@ mmer2 <- function(fixed, random, rcov, data, weights, G=NULL,
     cous <- 0
     cous2 <- numeric()
     counter <- 0
+    zren.grp <- character()
     for(h in rev(grpcheck)){ # h <- grpcheck[2]
       counter <- counter+1
       f1 <- strsplit(rtermss[h],":")[[1]]
@@ -518,11 +526,13 @@ mmer2 <- function(fixed, random, rcov, data, weights, G=NULL,
       }else{ Kgrp <- diag(ncol(Zgrpu))}
       
       ZKgrouping[[namere]] <- list(Z=Zgrpu, K=Kgrp)
+      zren.grp[counter] <- namere
       #names(ZKgrouping)[counter] <- namere
       #}
       
     }
     counter.grp <- counter
+    zren.grp<- na.omit(zren.grp)
     
   }
   if(length(grpcheck)>0){
@@ -540,10 +550,10 @@ mmer2 <- function(fixed, random, rcov, data, weights, G=NULL,
     cous <- 0
     cous2 <- numeric()
     counter <- 0
+    zren.spl <- character()
     for(h in rev(splcheck)){ # h <- grpcheck[2]
       counter <- counter+1
       f1 <- strsplit(rtermss[h],":")[[1]]
-      #f1 <- apply(data.frame(rtermss[grpcheck]),1,function(x){strsplit(x,":")[[1]]})
       f00 <- grep("trait",f1) # position of structure for trait
       f0 <- f1[f00] # structure
       f2 <- f1[setdiff(1:length(f1),f00)] # actual random effect
@@ -557,18 +567,16 @@ mmer2 <- function(fixed, random, rcov, data, weights, G=NULL,
       provspl <- lapply(provspl, function(x){zxk <- list(Z=x, K=diag(ncol(x))); return(zxk)})
       ZKspl2d <- c(ZKspl2d,provspl)
       
-      # if(length(f00)>0){
-      #   ZKgrouping.str[counter] <- f1[f00]
-      # }else{
-      #   ZKgrouping.str[counter] <- rep("diag(trait)",length(f1)) 
-      # }
       if(length(f00)>0){
         ZKspl2d.str <- c(ZKspl2d.str,rep(f1[f00],length(provspl)))
       }else{
         ZKspl2d.str <- c(ZKspl2d.str,rep("diag(trait)",length(provspl)) )
       }
+      
+      zren.spl <- c(zren.spl,rep(f2,length(provspl)))
       provspl <- NULL
     }
+    zren.spl <- na.omit(zren.spl)
     counter.spl2d <- length(ZKspl2d.str)
     
   }
@@ -576,13 +584,6 @@ mmer2 <- function(fixed, random, rcov, data, weights, G=NULL,
   if(length(splcheck)>0){
     cous2.spl2d <- 1:length(ZKspl2d.str)#cous2
   }
-  
-  ## for us structures
-  # apply(data.frame(rtermss),2,function(x){grep("eig",x)})
-  # if(length(usscheck)>0 & constraint){
-  #   cat("Setting 'constraint' argument to FALSE for unstructured model. \nPlease be carefult with results",call. = FALSE)
-  #   constraint=FALSE
-  # }
   
   if(missing(rcov)){rcovi <- NULL}else{rcovi<-rcov}
   ttt <- vctable.help(random = random, rcov = rcovi) # extract trait structure
@@ -702,6 +703,7 @@ mmer2 <- function(fixed, random, rcov, data, weights, G=NULL,
     zvar <- V #names(V)
     
     Z <- list()
+    zren <- character()
     counter <- 0
     counterl <- numeric() # to store the names of the random effects for each random effect specified by
     #for example it specifies where each random effects starts, 
@@ -712,7 +714,8 @@ mmer2 <- function(fixed, random, rcov, data, weights, G=NULL,
     for(i in 1:length(zvar.names)){
       ## incidence matrix
       vara <- zvar.names[i]
-      
+      forzren <- vara
+      #print(forzren)
       # data.frame(factor(V[,vara],levels=V[,vara],ordered=T))
       zi <- model.matrix(as.formula(paste("~",vara,"-1")),zvar)
       
@@ -807,7 +810,7 @@ mmer2 <- function(fixed, random, rcov, data, weights, G=NULL,
             ###
             elem <- list(Z=zix, K=ki)
             Z[[counter]] <- elem
-            
+            zren[counter] <- forzren
             names(Z)[counter] <- paste(colnames(where)[u],":",j3,sep="")
           }
         }
@@ -893,6 +896,7 @@ mmer2 <- function(fixed, random, rcov, data, weights, G=NULL,
             
             #elem <- list(Z=zix, K=ki)
             Z[[counter]] <- elem
+            zren[counter] <- forzren
             # Env:Name!ca:fl
             env <- expi2(as.character(unlist(df1[u,])))[1]# 
             env.name <- paste(env,j3,sep=":") # Env
@@ -971,12 +975,12 @@ mmer2 <- function(fixed, random, rcov, data, weights, G=NULL,
         }
         elem <- list(Z=zi, K=ki)
         Z[[counter]] <- elem
-        
+        zren[counter] <- forzren
         names(Z)[counter] <- vara # add the name of the random effect
       }
       counterl[i] <- counter
     }
-    
+    #print(zren)
     ##################################
     ####now add the grouping matrices to the model
     ##################################
@@ -988,6 +992,7 @@ mmer2 <- function(fixed, random, rcov, data, weights, G=NULL,
       # for at(E):B + at(F):G if 'E' has 3 levels and 'F' 4 levels counterl is c(3,7)
       ttt$ran.trt.str <- c(ttt$ran.trt.str,ZKgrouping.str) 
       # the trait structures should match the length of counterl
+      zren <- c(zren,zren.grp)
     }
     
     if(length(splcheck)>0){
@@ -996,6 +1001,7 @@ mmer2 <- function(fixed, random, rcov, data, weights, G=NULL,
       cous2 <- cous2 + counter.spl2d # total number of ZK matrices added
       counterl <- c(counterl,(cous2-counter.spl2d)+cous2.spl2d) # which have a unique trait structure
       ttt$ran.trt.str <- c(ttt$ran.trt.str,ZKspl2d.str)
+      zren <- c(zren,zren.spl)
     }
     
     if(missing(rcov)){ #### MISSING R ARGUMENT
@@ -1203,7 +1209,7 @@ mmer2 <- function(fixed, random, rcov, data, weights, G=NULL,
                   tolparinv = tolparinv,draw=draw,silent=silent, 
                   constraint = constraint,EIGEND = EIGEND,
                   forced=forced,IMP=IMP,complete=complete,restrained=torestrain,
-                  init.equal = init.equal)
+                  init.equal = init.equal,random.names=zren)
     }else{
     res <- mmer(Y=yvar, X=X, Z=Z, R=R, W=W, method=method, REML=REML, init=init,
                 iters=iters,tolpar=tolpar,
@@ -1219,6 +1225,8 @@ mmer2 <- function(fixed, random, rcov, data, weights, G=NULL,
     res$call$random <- random
     res$call$rcov <- rcov
     res$data <- data
+    res$random.names <- zren
+    res$fixed.names <- fufu
   }else{###only fixed effects
     res <- glm(yvars~X)
   }

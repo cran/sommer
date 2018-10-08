@@ -45,7 +45,7 @@ mmer2(fixed, random, rcov, data, weights, G=NULL,
   
   \code{diag}(.), \code{us}(.) can be used to specify diagonal and unstructured covariance structures among levels of a random effect.
   
-  \code{and}(.)   can be used to specify overlay of design matrices of random effects
+  \code{overlay}(.)   can be used to specify overlay of design matrices of random effects
   
   \code{g}(.)   can be used to specify that a known covariance structure for a random effect
   
@@ -152,7 +152,7 @@ mmer2(fixed, random, rcov, data, weights, G=NULL,
       nseg, pord, degree, 
       nest.div)}
       
-  can be used to fit a 2-dimensional spline (i.e. spatial modeling) using coordinates \code{x.coord} and \code{y.coord}. The 2D spline can be fitted at specific levels using the \code{at} and \code{at.levels} arguments. For example \emph{random=~spl2D(x.coord=Row,y.coord=Range,at=FIELD)}.Two types of P-Spline models are available; "SAP" or "PSANOVA" using the \code{type} argument. The \code{nseg} argument controls the number of segments for each marginal (strictly nseg - 1 is the number of internal knots in the domain of the covariate), and \code{pord} the penalty order for each marginal. \code{degree} is the order of the polynomial of the B-spline basis for each marginal being the default 3 (cubic B-splines). The \code{nest.div} argument refers to the number of segments to be used for the construction of the nested B-spline basis for the smooth-by-smooth interaction component. Default set to 1, which implies that nested basis are not used. \code{nseg}, \code{pord}, \code{degree}, \code{nest.div} are vectors of length 2 to be applied to \code{x.coord} and \code{y.coord} respectively. See an example in the \code{\link{spatPlots}} documentation.
+  can be used to fit a 2-dimensional spline (i.e. spatial modeling) using coordinates \code{x.coord} and \code{y.coord} (in numeric class). The 2D spline can be fitted at specific levels using the \code{at} and \code{at.levels} arguments. For example \emph{random=~spl2D(x.coord=Row,y.coord=Range,at=FIELD)}.Two types of P-Spline models are available; "SAP" or "PSANOVA" using the \code{type} argument. The \code{nseg} argument controls the number of segments for each marginal (strictly nseg - 1 is the number of internal knots in the domain of the covariate), and \code{pord} the penalty order for each marginal. \code{degree} is the order of the polynomial of the B-spline basis for each marginal being the default 3 (cubic B-splines). The \code{nest.div} argument refers to the number of segments to be used for the construction of the nested B-spline basis for the smooth-by-smooth interaction component. Default set to 1, which implies that nested basis are not used. \code{nseg}, \code{pord}, \code{degree}, \code{nest.div} are vectors of length 2 to be applied to \code{x.coord} and \code{y.coord} respectively. See an example in the \code{\link{spatPlots}} documentation.
 
 For a short tutorial on how to use this special functions you can look at the vignettes by typing in the terminal:
 
@@ -191,7 +191,7 @@ Useful functions for analyzing field trials are included such as the \code{spl2D
 
 \strong{Models Enabled}
 
-For details about the models enabled and more information about the covariance structures please check the help page ot the package (\code{\link{sommer}}).
+For details about the models enabled and more information about the covariance structures please check the help page of the package (\code{\link{sommer}}).
 
 }
 
