@@ -1,14 +1,13 @@
-\name{residuals.MMERM}
-\alias{residuals.MMERM}
+\name{residuals.mmer}
+\alias{residuals.mmer}
 \title{Residuals form a GLMM fitted with mmer}
-\description{\code{residuals} method for class \code{"MMERM"}.
+\description{\code{residuals} method for class \code{"mmer"}.
 }
 \usage{
-\method{residuals}{MMERM}(object, type = "conditional", \dots)
+\method{residuals}{mmer}(object, \dots)
 }
 \arguments{
- \item{object}{an object of class \code{"MMERM"}}
- \item{type}{ the type of residuals which should be returned. The alternatives are: "conditional" (e=y-(Xb+Zu)) and "regular" (e=y-Xb).}
+ \item{object}{an object of class \code{"mmer"}}
  \item{\dots}{Further arguments to be passed}
 }
 \value{

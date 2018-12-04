@@ -37,17 +37,17 @@ The calculations are based on the estimated variance parameters and their varian
 #### simple example with univariate models
 ####=========================================####
 ####=========================================####
-data(CPdata)
-#### create the variance-covariance matrix 
-A <- A.mat(CPgeno)
-#### look at the data and fit the model
-head(CPpheno)
-mix1 <- mmer2(Yield~1,
-             random=~g(id), 
-             G=list(id=A), data=CPpheno)
-summary(mix1)
-#### run the pin function
-pin(mix1, h2 ~ V1 / ( V1 + V2 ) )
+# data(CPdata)
+# #### create the variance-covariance matrix 
+# A <- A.mat(CPgeno)
+# #### look at the data and fit the model
+# head(CPpheno)
+# mix1 <- mmer2(Yield~1,
+#               random=~g(id), 
+#               G=list(id=A), data=CPpheno)
+# summary(mix1)
+# #### run the pin function
+# pin(mix1, h2 ~ V1 / ( V1 + V2 ) )
 
 # ####=========================================####
 # ####=========================================####

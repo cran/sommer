@@ -1,18 +1,19 @@
 Package: sommer
 Type: Package
 Title: Solving Mixed Model Equations in R
-Version: 3.6
-Date: 2018-09-01
+Version: 3.7
+Date: 2019-01-01
 Author: Giovanny Covarrubias-Pazaran
 Maintainer: Giovanny Covarrubias-Pazaran <cova_ruber@live.com.mx>
-Description: Structural multivariate-univariate linear mixed model solver for multiple random effects allowing the specification of variance-covariance structures for random effects and allowing the fit of heterogeneous variance models (Covarrubias-Pazaran, 2016 <doi:10.1371/journal.pone.0156744>; Maier et al., 2015 <doi:10.1016/j.ajhg.2014.12.006>). ML/REML estimates can be obtained using the Direct-Inversion Newton-Raphson, and Efficient Mixed Model Association algorithms. Designed for genomic prediction and genome wide association studies (GWAS), particularly focused in the p > n problem (more coefficients than observations) to include multiple relationship matrices or other covariance structures. Spatial models can be fitted using the two-dimensional spline functionality in sommer.
-Depends: R (>= 2.10), Matrix (>= 1.1.1), methods, stats, MASS, lattice
-Imports: data.table
-License: GPL-3
-URL: http://www.wisc.edu
-Packaged: 2018-10-08 18:12:25 UTC; cova_ruber
-NeedsCompilation: no
-Repository: CRAN
-Date/Publication: 2018-10-08 19:00:03 UTC
-Suggests: knitr, plyr
+Description: Structural multivariate-univariate linear mixed model solver for multiple random effects allowing the specification of variance-covariance structures for random effects and allowing the fit of heterogeneous and special variance models (Covarrubias-Pazaran, 2016 <doi:10.1371/journal.pone.0156744>; Maier et al., 2015 <doi:10.1016/j.ajhg.2014.12.006>). ML/REML estimates can be obtained using the Direct-Inversion Newton-Raphson, Direct-Inversion Average Information and Efficient Mixed Model Association algorithms. Designed for genomic prediction and genome wide association studies (GWAS), particularly focused in the p > n problem (more coefficients than observations) to include multiple relationship matrices or other covariance structures. Spatial models can be fitted using the two-dimensional spline functionality in sommer.
+Depends: R (>= 2.10), Matrix (>= 1.1.1), methods, stats, MASS, lattice,
+        crayon
+License: GPL (>= 2)
+Imports: Rcpp (>= 0.12.19)
+LinkingTo: Rcpp, RcppArmadillo
+Suggests: knitr, plyr, parallel, orthopolynom
 VignetteBuilder: knitr
+NeedsCompilation: yes
+Packaged: 2018-12-02 16:37:18 UTC; cova_ruber
+Repository: CRAN
+Date/Publication: 2018-12-04 10:20:02 UTC

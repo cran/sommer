@@ -308,32 +308,27 @@ version 3.6 (2018-09-01)
 
   + some documentation changes
   + almost finished c++ version, just wait for it.
+
+########################
+version 3.7 (2018-09-01)
+######################## 
+
+  + C++ (Armadillo library) implementation done.
+  + now the vs() function is the main function to create variance models
+  + ds(),us(),cs(),at() for complex variance models added
+  + contraint matrices can eb easily indicated with unsm(), fixm(), uncm() 
+    in the Gtc argument of vs()
+  + fatal bug in the multivariate BLUPs has been fixed
+  + implementation of predict() function for lsmeans
+  + multivariate GWAS implemented again, fixed and ready to rock
+  + random regression implemented
+  + anova() function enabled for single model to get sum of squares and MS
+  + EIGEN functionality not available anymore, same with EMMA called from mmer
+  + mmer2 and GWAS2 have been deprecated, now mmer and GWAS functions can do all 
   
-##pendings
-+ documentation on delta method (pin), covariance structures available and use
 
-+ random regression (working on it)
-+ implementation of lsmeans package
-
-
-+ use samm example for rcpp, pass everything to Rcpp
-
-## when using at()
-## if only one level is specified the summary names are messed up
-+ fix map and scores output from GWAS functions
+######################
+## PENDINGS
 + IMPLEMENT WALD TEST
-+ IMPLEMENT PREDICTION FUNCTION
-+ START LOOKING AT GENERALIZED MODELS
-
-+ make sure the program can run even if the only random effect is a grp() effect
-+ more than one grp() term and used at the at() and diag() levels
-+ move to c++
-
-* exp(-(K/theta[i])^2) for gaussian kernels, where theta[i] is the value with max LL
-* (theta <- setdiff(seq(0, max(dist(M)), length.out = 11),0)); M is the marker matrix
-
-
-\if{html}{\figure{mai.png}{options: width="45\%" alt="Figure: mai.png"}}
-\if{latex}{\figure{mai.pdf}{options: width=10cm}}
 
  

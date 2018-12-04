@@ -101,4 +101,4 @@ adiag1(z,t(z))     # just the pad value
 }
 
 \keyword{array}
-\seealso{\code{\link{mmer}} and \code{\link{mmer2}} -- the core functions of the package }
+\seealso{\code{\link{mmer}} -- the core function of the package }

@@ -55,42 +55,22 @@ Rodriguez-Alvarez, M.X, Boer, M.P., van Eeuwijk, F.A., and Eilers, P.H.C. (2017)
 }
 
 \examples{
-
-data(CPdata)
-head(CPpheno)
-CPgeno[1:4,1:4]
-#### create the variance-covariance matrix 
-A <- A.mat(CPgeno) # additive relationship matrix
-#### look at the data and fit the model
-head(CPpheno)
-
-# mix1 <- mmer2(Yield~1,
-#               random=~g(id)
-#                       + Rowf + Colf
-#                       + spl2D(Row,Col),
-#               rcov=~units,
-#               G=list(id=A),
-#               data=CPpheno)
-# summary(mix1)
-# #### get the spatial plots
-# spatPlots(mix1,row = "Row", range = "Col")
-# 
-# ###########################################
-# ## mickey mouse example for multiple fields
-# aa <- CPpheno; bb <- CPpheno
+data("DT_cpdata")
+# ### mimic two fields
+# aa <- DT; bb <- DT
 # aa$FIELD <- "A";bb$FIELD <- "B"
 # set.seed(1234)
 # aa$Yield <- aa$Yield + rnorm(length(aa$Yield),0,4)
-# CPpheno2 <- rbind(aa,bb)
-# head(CPpheno2)
-# 
-# mix2 <- mmer2(Yield~1,
-#               random=~diag(FIELD):g(id)
-#               + diag(FIELD):Rowf + diag(FIELD):Colf
-#               + spl2D(Row,Col, at=FIELD),
-#               rcov=~diag(FIELD):units,
-#               G=list(id=A),
-#               data=CPpheno2)
-# summary(mix2)
+# DT2 <- rbind(aa,bb)
+# head(DT2)
+# A <- A.mat(GT)
+# mix <- mmer(Yield~1,
+#             random=~vs(ds(FIELD),id, Gu=A) + 
+#               vs(ds(FIELD),Rowf) +
+#               vs(ds(FIELD),Colf) +
+#                 vs(ds(FIELD),spl2D(Row,Col)),
+#             rcov=~vs(ds(FIELD),units),
+#             data=DT2)
+
 }
-\seealso{\code{\link{mmer}} and \code{\link{mmer2}}-- the core functions of the package }
+\seealso{\code{\link{mmer}} -- the core function of the package }

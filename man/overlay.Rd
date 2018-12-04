@@ -36,48 +36,18 @@
 #### examples are silenced with one '#' mark, 
 #### remove them and run the examples
 ####=========================================####
-data(HDdata)
-head(HDdata)
+data("DT_halfdiallel")
+head(DT)
+DT$femalef <- as.factor(DT$female)
+DT$malef <- as.factor(DT$male)
+DT$genof <- as.factor(DT$geno)
 
-####=========================================####
-#### Example 1 (formula-based)
-#### using overlay with mmer2 function
-####=========================================####
-data(HDdata)
-head(HDdata)
-HDdata$female <- as.factor(HDdata$female)
-HDdata$male <- as.factor(HDdata$male)
-HDdata$geno <- as.factor(HDdata$geno)
+A <- diag(7); colnames(A) <- rownames(A) <- 1:7;A # if you want to provide a covariance matrix
 #### model using overlay
-modh <- mmer2(sugar~1, random=~overlay(female,male) + geno, 
-              data=HDdata)
-summary(modh)
-#### model using overlay and covariance structures
-
-# A <- diag(7); A[1,2] <- 0.5; A[2,1] <- 0.5 # fake covariance structure
-# colnames(A) <- as.character(1:7); rownames(A) <- colnames(A);A
-# 
-# modh2 <- mmer2(sugar~1, random=~ overlay(female,male) + geno,
-#                G=list(`overlay(female, male)`=A),data=HDdata)
-# summary(modh2)
-# 
-# ####=========================================####
-# #### Example 2 (matrix-based)
-# #### using overlay with mmer function
-# ####=========================================####
-# 
-# #### GCA matrix for half diallel using male and female columns
-# #### use the 'overlay' function to create the half diallel matrix
-# Z1 <- overlay(HDdata$male, HDdata$female)
-# 
-# #### Obtain the SCA matrix
-# Z2 <- model.matrix(~as.factor(geno)-1, data=HDdata)
-# 
-# #### Define the response variable and run
-# y <- HDdata$sugar
-# ETA <- list(list(Z=Z1), list(Z=Z2)) # Zu component
-# modHD <- mmer(Y=y, Z=ETA, draw=FALSE, silent=TRUE)
-# summary(modHD)
+modh <- mmer(sugar~1, 
+             random=~vs(overlay(femalef,malef), Gu=A) 
+                     + genof,
+              data=DT)
 
 }
-\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}
+\seealso{The core functions of the package \code{\link{mmer}}}

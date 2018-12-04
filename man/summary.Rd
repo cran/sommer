@@ -1,15 +1,15 @@
-\name{summary.MMERM}
-\alias{summary.MMERM}
-\alias{print.summary.MMERM}
-\alias{print.MMERM}
+\name{summary.mmer}
+\alias{summary.mmer}
+\alias{print.summary.mmer}
+\alias{print.mmer}
 \title{summary form a GLMM fitted with mmer}
-\description{\code{summary} method for class \code{"MMERM"}.
+\description{\code{summary} method for class \code{"mmer"}.
 }
 \usage{
-\method{summary}{MMERM}(object, \dots)
+\method{summary}{mmer}(object, \dots)
 }
 \arguments{
- \item{object}{an object of class \code{"MMERM"}}
+ \item{object}{an object of class \code{"mmer"}}
  \item{\dots}{Further arguments to be passed}
 }
 \value{

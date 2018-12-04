@@ -59,9 +59,9 @@ Su G, Christensen OF, Ostersen T, Henryon M, Lund MS. 2012. Estimating Additive 
 ####=========================================####
 #### use Technow data as example
 ####=========================================####
-data(Technow_data)
-M.flint <- Technow_data$MF # Marker matrix Flint
-M.dent <- Technow_data$MD # Marker matrix Dent
+data(DT_technow)
+M.flint <- Mf # Marker matrix Flint
+M.dent <- Md # Marker matrix Dent
 
 ## first get all possible hybrids
 res1 <- build.HMM(M.dent, M.flint, 
@@ -81,4 +81,4 @@ res2$HMM.dom[1:5,1:5]
 # D <- D.mat(M)
 
 }
-\seealso{\code{\link{mmer}} and \code{\link{mmer2}}-- the core functions of the package }
+\seealso{\code{\link{mmer}}-- the core function of the package }

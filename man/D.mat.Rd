@@ -95,49 +95,5 @@ for (i in 1:200) {
 
 D <- D.mat(X)
 
-########################################################
-########################################################
-########################################################
-########################################################
-########################################################
-########################################################
-
-####=========================================####
-#### EXAMPLE 2
-#### For CRAN time limitations most lines in the 
-#### examples are silenced with one '#' mark, 
-#### remove them and run the examples
-####=========================================####
-data(CPdata)
-#### look at the data
-head(CPpheno)
-CPgeno[1:5,1:5]
-#### fit a model including additive and dominance effects
-#y <- CPpheno$color
-#Za <- diag(length(y))
-#Zd <- diag(length(y))
-#Ze <- diag(length(y))
-#A <- A.mat(CPgeno) # additive relationship matrix
-#D <- D.mat(CPgeno) # dominance relationship matrix
-
-#y.trn <- y # for prediction accuracy
-#ww <- sample(c(1:dim(Za)[1]),72) # delete data for 1/5 of the population
-#y.trn[ww] <- NA
-####================####
-#### ADDITIVE MODEL ####
-####================####
-#ETA.A <- list(list(Z=Za,K=A))
-#ans.A <- mmer(Y=y.trn, Z=ETA.A)
-#cor(ans.A$fitted.y[ww], y[ww], use="pairwise.complete.obs")
-####=========================####
-#### ADDITIVE-DOMINANT MODEL ####
-####=========================####
-#ETA.AD <- list(list(Z=Za,K=A),list(Z=Zd,K=D))
-#ans.AD <- mmer(Y=y.trn, Z=ETA.AD)
-#cor(ans.AD$fitted.y[ww], y[ww], use="pairwise.complete.obs")
-### greater accuracy !!!! ~4 percent increment!!
-### we run 100 iterations, ~4 percent increment in general
-
-
 }
-\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}
+\seealso{The core functions of the package \code{\link{mmer}}}

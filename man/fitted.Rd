@@ -1,13 +1,13 @@
-\name{fitted.MMERM}
-\alias{fitted.MMERM}
+\name{fitted.mmer}
+\alias{fitted.mmer}
 \title{fitted form a GLMM fitted with mmer}
-\description{\code{fitted} method for class \code{"MMERM"}.
+\description{\code{fitted} method for class \code{"mmer"}.
 }
 \usage{
-\method{fitted}{MMERM}(object, type = "complete", \dots)
+\method{fitted}{mmer}(object, type = "complete", \dots)
 }
 \arguments{
- \item{object}{an object of class \code{"MMERM"}}
+ \item{object}{an object of class \code{"mmer"}}
  \item{type}{ the type of fitted which should be returned. The alternatives are: "complete" (y.hat=Xb+Zu) and "incomplete" (y.hat=Zu).}
  \item{\dots}{Further arguments to be passed}
 }

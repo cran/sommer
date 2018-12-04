@@ -38,12 +38,12 @@
 #### remove them and run the examples using
 #### command + shift + C |OR| control + shift + C
 ####=========================================####
-data(CPdata)
-#### look at the data
-head(CPpheno)
-#### fill the design
-gg <- fill.design(x=CPpheno, rows="Row",ranges="Col")
-head(gg)
+# data(DT_cpdata)
+# #### look at the data
+# head(DT)
+# #### fill the design
+# gg <- fill.design(x=DT, rows="Row",ranges="Col")
+# head(gg)
 
 }
-\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}
+\seealso{The core functions of the package \code{\link{mmer}}}

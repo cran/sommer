@@ -9,7 +9,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-The sommer package was developed to provide R users a powerful and reliable multivariate mixed model solver for different genetic and non-genetic analysis in diploid and polyploid organisms. This package allows the user to estimate variance components for a mixed model with the advantage of specifying the variance-covariance structure of the random effects, specify heterogeneous variances, and obtain other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc. 
+The sommer package was developed to provide R users a powerful and reliable multivariate mixed model solver for different genetic and non-genetic analysis in diploid and polyploid organisms. This package allows the user to estimate variance components for a mixed model with the advantage of specifying the variance-covariance structure of the random effects, specify heterogeneous variances, and obtain other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc. The core algorithms of the package are coded in C++ using the Armadillo library to opmitime dense matrix operations common in the derect-inversion algorithms. 
 
 The package is focused on problems of the type p > n related to genomic prediction (hybrid prediction & genomic selection) and GWAS analysis, although any general mixed model can be fitted as well. The package provides kernels to estimate additive (`A.mat`), dominance (`D.mat`), and epistatic (`E.mat`) relationship matrices that have been shown to increase prediction accuracy under certain scenarios or simply to estimate the variance components of such. The package provides flexibility to fit other genetic models such as full and half diallel models as well.
 
@@ -75,9 +75,9 @@ $$
 
 $$\mathbf{V} = \left[\begin{array}
 {rrr}
-Z_1 K{\sigma^2_{g_{1}}} Z_1' + Z_1 I{\sigma^2_{\epsilon_{1}}} Z_1' & ... & Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' \\
+Z_1 K{\sigma^2_{g_{1}}} Z_1' + H{\sigma^2_{\epsilon_{1}}} & ... & Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}}\\
  \vdots & \ddots & \vdots\\
-Z_1 K{\sigma_{g_{1,t}}} Z_t' + Z_1 I{\sigma_{\epsilon_{1,t}}} Z_t' & ... & Z_t K{\sigma^2_{g_{t}}} Z_t' + Z_t I{\sigma^2_{\epsilon_{t}}} Z_t' \\
+Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} & ... & Z_t K{\sigma^2_{g_{t}}} Z_t' + H{\sigma^2_{\epsilon_{t}}} \\
 \end{array}\right]
 $$
 
@@ -118,34 +118,16 @@ The following dataset has 41 potato lines evaluated in 5 locations across 3 year
 
 ```{r}
 library(sommer)
-data(h2example)
-head(h2example)
+data(DT_example)
+head(DT)
 
-ans1 <- mmer2(y~1, 
-              random = ~Name + Env + Name:Env + Block,
-              rcov = ~units,
-              data=h2example, silent = TRUE)
-
-suma <- summary(ans1)
-n.env <- length(levels(h2example$Env))
+ans1 <- mmer(Yield~1,
+             random= ~ Name + Env + Env:Name + Env:Block,
+             rcov= ~ units,
+             data=DT)
+summary(ans1)$varcomp
+(n.env <- length(levels(DT$Env)))
 pin(ans1, h2 ~ V1 / ( V1 + (V3/n.env) + (V5/(2*n.env)) ) )
-
-```
-
-The same model can be fitted with the `mmer` function that is actually used by the `mmer2` function in the background. This is just to show that you can create your customized matrices and use the mixed model solver. This is how you would do it:
-
-```{r}
-library(sommer)
-data(h2example)
-head(h2example)
-Z1 <- model.matrix(~Name-1, h2example)
-Z2 <- model.matrix(~Env-1, h2example)
-Z3 <- model.matrix(~Env:Name-1, h2example)
-Z4 <- model.matrix(~Block-1, h2example)
-ETA <- list(name=list(Z=Z1),env=list(Z=Z2),name.env=list(Z=Z3),block=list(Z=Z4))
-y <- h2example$y
-ans1 <- mmer(Y=y, Z=ETA, silent = TRUE)
-vc <- ans1$var.comp
 ```
 
 Recently with markers becoming cheaper, thousand of markers can be run in the breeding materials. When markers are available, an special design is not neccesary to disect the additive genetic variance. The availability of the additive, dominance and epistatic relationship matrices allow us to estimate $\sigma^2_A$, $\sigma^2_D$ and $\sigma^2_I$, although given that A, D and E are not orthogonal the interpretation of models that fit more than A and D become cumbersome.
@@ -153,103 +135,68 @@ Recently with markers becoming cheaper, thousand of markers can be run in the br
 Assume you have a population (even unreplicated) in the field but in addition we have genetic markers. Now we can fit the model and estimate the genomic heritability that explains a portion of the additive genetic variance (with high marker density $\sigma^2_A$ = $\sigma^2_g$)
 
 ```{r}
-data(CPdata)
-CPpheno$idd <-CPpheno$id; CPpheno$ide <-CPpheno$id
+data("DT_cpdata")
+DT$idd <-DT$id; DT$ide <-DT$id
 ### look at the data
-head(CPpheno)
-CPgeno[1:5,1:4]
-## fit a model including additive and dominance effects
-A <- A.mat(CPgeno) # additive relationship matrix
-D <- D.mat(CPgeno) # dominance relationship matrix
-E <- E.mat(CPgeno) # epistatic relationship matrix
-
-ans.ADE <- mmer2(color~1, 
-                 random=~g(id) + g(idd) + g(ide), 
+A <- A.mat(GT) # additive relationship matrix
+D <- D.mat(GT) # dominance relationship matrix
+E <- E.mat(GT) # epistatic relationship matrix
+ans.ADE <- mmer(color~1, 
+                 random=~vs(id,Gu=A) + vs(idd,Gu=D), 
                  rcov=~units,
-                 G=list(id=A,idd=D,ide=E), 
-                 silent = TRUE, data=CPpheno)
-suma <- summary(ans.ADE)$var.comp.table
-(H2 <- sum(suma[1:3,1])/sum(suma[,1]))
-(h2 <- sum(suma[1,1])/sum(suma[,1]))
-
+                 data=DT)
+(summary(ans.ADE)$varcomp)
+pin(ans.ADE, h2 ~ (V1) / ( V1+V3) )
+pin(ans.ADE, h2 ~ (V1+V2) / ( V1+V2+V3) )
 ```
 
-In the previous example we showed how to estimate the additive ($\sigma^2_A$), dominance ($\sigma^2_D$), and epistatic ($\sigma^2_I$) variance components based on markers and estimate broad ($H^2$) and narrow sense heritability ($h^2$). Notice that we used the `g()` function which indicates that the random effect inside the parenthesis (i.e. id, idd or ide) has a covariance matrix (A, D, or E), that will be specified in the G argument in the form of a list and using the name of the random efect to allow the program to recognize which variance covariance matrix belongs to each random effect. Please DO NOT provide the inverse but the original covariance matrix. This is why we have called the function `g()` and no `giv()` as the popular software asreml.
-
-Just to show one more time that you can use your own matrices we will repeat the same calculation using the `mmer` function:
-
-```{r}
-data(CPdata)
-### look at the data
-head(CPpheno)
-CPgeno[1:5,1:4]
-## fit a model including additive and dominance effects
-Z1 <- model.matrix(~id-1, CPpheno); colnames(Z1) <- gsub("id","",colnames(Z1))
-A <- A.mat(CPgeno) # additive relationship matrix
-D <- D.mat(CPgeno) # dominance relationship matrix
-E <- E.mat(CPgeno) # epistatic relationship matrix
-y <- CPpheno$color
-
-ETA <- list(id=list(Z=Z1,K=A),idd=list(Z=Z1,K=D),ide=list(Z=Z1,K=E))
-ans.ADE <- mmer(Y=y, Z=ETA, silent = TRUE)
-ans.ADE$var.comp
-```
+In the previous example we showed how to estimate the additive ($\sigma^2_A$), dominance ($\sigma^2_D$), and epistatic ($\sigma^2_I$) variance components based on markers and estimate broad ($H^2$) and narrow sense heritability ($h^2$). Notice that we used the `vs()` function which indicates that the random effect inside the parenthesis (i.e. id, idd or ide) has a covariance matrix (A, D, or E), that will be specified in the Gu argument  of the vs() function. Please DO NOT provide the inverse but the original covariance matrix.
 
 ## 2) Specifying heterogeneous variances in univariate models
 
-Very often in multi-environment trials, the assumption that genetic variance is the same across locations may be too naive. Because of that, specifying a general genetic component and a location specific genetic variance is the way to go. Although the function 'mmer' implemented in sommer can be used to do that, can be quite cumbersome and messy to create the incidence and variance covariance matrices for fitting those models. For that reason the function 'mmer2' was added to the package to make such models easier to fit.
+Very often in multi-environment trials, the assumption that genetic variance is the same across locations may be too naive. Because of that, specifying a general genetic component and a location specific genetic variance is the way to go.
 
 We estimate variance components for $GCA_2$ and $SCA$ specifying the variance structure.
 
 ```{r, fig.show='hold'}
-data(cornHybrid)
-hybrid2 <- cornHybrid$hybrid # extract cross data
-head(hybrid2)
+data("DT_cornhybrids")
 ### fit the model
-modFD <- mmer2(Yield~1, 
-               random=~ at(Location,c("3","4")):GCA2, 
-               rcov= ~ at(Location):units,
-               data=hybrid2, silent = TRUE)
+modFD <- mmer(Yield~1, 
+               random=~ vs(at(Location,c("3","4")),GCA2), 
+               rcov= ~ vs(ds(Location),units),
+               data=DT)
 summary(modFD)
 ```
 
-In the previous example we showed how the `at` function is used in the `mmer2` solver. By using the `at` function you can specify that i.e. the GCA2 has a different variance in different Locations, in this case locations 3 and 4, but also a main GCA variance. This is considered a CS + DIAG (compound symmetry + diagonal) model.
+In the previous example we showed how the `at()` function is used in the `mmer` solver. By using the `at` function you can specify that i.e. the GCA2 has a different variance in different Locations, in this case locations 3 and 4, but also a main GCA variance. This is considered a CS + DIAG (compound symmetry + diagonal) model.
 
-In addition, other functions can be added on top to fit models with covariance structures, i.e. the `g()` function which indicates that the random effect inside the parenthesis (i.e. GCA2) has a covariance matrix (A, pedigree or genomic relationship matrix) that will be specified in the G argument in the form of a list:
+In addition, other functions can be added on top to fit models with covariance structures, i.e. the Gu argument from the `vs()` function to indicate a covariance matrix (A, pedigree or genomic relationship matrix)
 
 ```{r}
-data(cornHybrid)
-hybrid2 <- cornHybrid$hybrid # extract cross data
-## get the covariance structure for GCA2
-A <- cornHybrid$K
-## fit the model
-modFD <- mmer2(Yield~1, 
-               random=~ g(GCA2) + at(Location):g(GCA2), 
-               rcov= ~ at(Location):units,
-               data=hybrid2, G=list(GCA2=A),
-               silent = TRUE, draw=FALSE)
+data("DT_cornhybrids")
+GT[1:4,1:4]
+### fit the model
+modFD <- mmer(Yield~1, 
+              random=~ vs(at(Location,c("3","4")),GCA2,Gu=GT), 
+              rcov= ~ vs(ds(Location),units),
+              data=DT)
 summary(modFD)
 ```
-
-The `draw` argument allows you to see the progress of the likelihood and the change of the variance components, we just mention it in case you like to do that inspection but this will make the fitting process more time consuming.
 
 ## 3) Using the pin calculator
 
 Sometimes the user needs to calculate ratios or functions of specific variance-covariance components and obtain the standard error for such parameters. Examples of these are the genetic correlations, heritabilities, etc. Using the CPdata we will show how to estimate the heritability and the standard error using the pin function that uses the delta method to come up with these parameters. This can be extended for any linear combination of the variance components.
 
 ```{r}
-data(CPdata)
-#### create the variance-covariance matrix 
-A <- A.mat(CPgeno)
-#### look at the data and fit the model
-head(CPpheno)
-mix1 <- mmer2(color~1,
-              random=~g(id), 
-              rcov=~units,
-              G=list(id=A), data=CPpheno, silent=TRUE)
-summary(mix1)
-#### run the pin function
-pin(mix1, h2 ~ V1 / ( V1 + V2 ) )
+data("DT_cpdata")
+### look at the data
+A <- A.mat(GT) # additive relationship matrix
+ans <- mmer(color~1, 
+                random=~vs(id,Gu=A), 
+                rcov=~units,
+                data=DT)
+(summary(ans.ADE)$varcomp)
+pin(ans, h2 ~ (V1) / ( V1+V2) )
 ```
 
 The same can be used for multivariate models. Please check the documentation of the `pin` function to see more examples.
@@ -269,18 +216,16 @@ $y = X\beta + Zu_1 + Zu_2 + Zu_S + \epsilon$
 We estimate variance components for $GCA_1$, $GCA_2$ and $SCA$ and use them to estimate heritability. Additionally BLUPs for GCA and SCA effects can be used to predict crosses.
 
 ```{r}
-data(cornHybrid)
-hybrid2 <- cornHybrid$hybrid # extract cross data
-head(hybrid2)
+data("DT_cornhybrids")
 
-modFD <- mmer2(Yield~Location, 
+modFD <- mmer(Yield~Location, 
                random=~GCA1+GCA2+SCA, 
                rcov=~units,
-               data=hybrid2,silent = TRUE, draw=FALSE)
-(suma <- summary(modFD))
-Vgca <- sum(suma$var.comp.table[1:2,1])
-Vsca <- suma$var.comp.table[3,1]
-Ve <- suma$var.comp.table[4,1]
+               data=DT)
+(suma <- summary(modFD)$varcomp)
+Vgca <- sum(suma[1:2,1])
+Vsca <- suma[3,1]
+Ve <- suma[4,1]
 Va = 4*Vgca
 Vd = 4*Vsca
 Vg <- Va + Vd
@@ -295,44 +240,20 @@ In this second data set we show a small half diallel with 7 parents crossed in o
 $y = X\beta + Zu_g + Zu_s + \epsilon$ 
 
 ```{r}
-data(HDdata)
-head(HDdata)
-HDdata$geno <- as.factor(HDdata$geno)
-HDdata$male <- as.factor(HDdata$male)
-HDdata$female <- as.factor(HDdata$female)
-# Fit the model
-modHD <- mmer2(sugar~1, 
-               random=~overlay(male,female) + geno, 
-               rcov=~units,
-               data=HDdata, silent = TRUE)
-summary(modHD)
-suma <- summary(modHD)$var.comp.table
-Vgca <- suma[1,1]
-Vsca <- suma[2,1]
-Ve <- suma[3,1]
-Va = 4*Vgca
-Vd = 4*Vsca
-Vg <- Va + Vd
-(H2 <- Vg / (Vg + (Ve/2)) ) # 2 technical reps
-(h2 <- Va / (Vg + (Ve/2)) )
+data("DT_halfdiallel")
+head(DT)
+DT$femalef <- as.factor(DT$female)
+DT$malef <- as.factor(DT$male)
+DT$genof <- as.factor(DT$geno)
+#### model using overlay
+modh <- mmer(sugar~1, 
+             random=~vs(overlay(femalef,malef)) 
+             + genof,
+             data=DT)
+summary(modh)$varcomp
 ```
 
-Notice how the `overlay()` argument makes the overlap of incidence matrices possible making sure that male and female are joint into a single random effect. The same can be done using the `mmer` argument by creating the incidence and covariance matrices in case you want to see what is doing `mmer2` in the background.
-
-```{r}
-  data(HDdata)
-  head(HDdata)
-  #### GCA matrix for half diallel using male and female columns
-  #### use the 'overlay' function to create the half diallel matrix
-  Z1 <- overlay(HDdata$female, HDdata$male)
-  #### Obtain the SCA matrix
-  Z2 <- model.matrix(~as.factor(geno)-1, data=HDdata)
-  #### Define the response variable and run
-  y <- HDdata$sugar
-  ETA <- list(list(Z=Z1), list(Z=Z2)) # Zu component
-  modHD <- mmer(Y=y, Z=ETA, draw=FALSE, silent=TRUE)
-  summary(modHD)
-```
+Notice how the `overlay()` argument makes the overlap of incidence matrices possible making sure that male and female are joint into a single random effect.
 
 ## 5) Genomic selection
 
@@ -347,36 +268,37 @@ $y = X\beta + Zu + \epsilon$
 and takes advantage of the variance covariance matrix for the genotype effect known as the additive relationship matrix (A) and calculated using the `A.mat` function to establish connections among all individuals and predict the BLUPs for individuals that were not measured. The prediction accuracy depends on several factors such as the heritability ($h^2$), training population used (TP), size of TP, etc.
 
 ```{r}
-data(wheatLines); 
-X <- wheatLines$wheatGeno; X[1:5,1:4]; dim(X)
-Y <- data.frame(wheatLines$wheatPheno); Y$id <- rownames(Y); head(Y);
-rownames(X) <- rownames(Y)
+data("DT_wheat"); 
+colnames(DT) <- paste0("X",1:ncol(DT))
+DT <- as.data.frame(DT);DT$id <- as.factor(rownames(DT))
 # select environment 1
-K <- A.mat(X) # additive relationship matrix
+rownames(GT) <- rownames(DT)
+K <- A.mat(GT) # additive relationship matrix
+colnames(K) <- rownames(K) <- rownames(DT)
 # GBLUP pedigree-based approach
 set.seed(12345)
-y.trn <- Y
-vv <- sample(rownames(Y),round(dim(Y)[1]/5))
+y.trn <- DT
+vv <- sample(rownames(DT),round(nrow(DT)/5))
 y.trn[vv,"X1"] <- NA
-
+head(y.trn)
 ## GBLUP
-ans <- mmer2(X1~1,
-             random=~g(id), 
-             rcov=~units,
-             G=list(id=K), 
-             data=y.trn, silent = TRUE) # kinship based
-cor(ans$u.hat$`g(id)`[vv,],Y[vv,"X1"])
+ans <- mmer(X1~1,
+            random=~vs(id,Gu=K), 
+            rcov=~units, 
+            data=y.trn) # kinship based
+ans$U$`u:id`$X1 <- as.data.frame(ans$U$`u:id`$X1)
+rownames(ans$U$`u:id`$X1) <- gsub("id","",rownames(ans$U$`u:id`$X1))
+cor(ans$U$`u:id`$X1[vv,],DT[vv,"X1"], use="complete")
 
 ## rrBLUP
-y.trn$dummy <- paste("dummy",1:nrow(y.trn),sep="_")
-ans <- mmer2(X1~1,
-             random=~dummy + grp(markers), 
+ans2 <- mmer(X1~1,
+             random=~vs(list(GT)), 
              rcov=~units,
-             grouping =list(markers=X), 
-             data=y.trn, silent = TRUE) # kinship based
+             data=y.trn) # kinship based
 
-u <- X %*% as.matrix(ans$u.hat$markers[,1]) # BLUPs for individuals
-cor(u[vv,],Y[vv,"X1"]) # same correlation
+u <- GT %*% as.matrix(ans2$U$`u:GT`$X1) # BLUPs for individuals
+rownames(u) <- rownames(GT)
+cor(u[vv,],DT[vv,"X1"]) # same correlation
 # the same can be applied in multi-response models in GBLUP or rrBLUP
 ```
 
@@ -405,33 +327,22 @@ $u_s$ ~ N(0, $K_3$$\sigma^2_us$)
 And we can specify the K matrices. The main difference between this model and the full and half diallel designs is the fact that this model will include variance covariance structures in each of the three random effects (GCA1, GCA2 and SCA) to be able to predict the crosses that have not ocurred yet. We will use the data published by Technow et al. (2015) to show how to do prediction of single crosses.
 
 ```{r}
-data(Technow_data)
-
-A.flint <- Technow_data$AF # Additive relationship matrix Flint
-A.dent <- Technow_data$AD # Additive relationship matrix Dent
-
-pheno <- Technow_data$pheno # phenotypes for 1254 single cross hybrids
-head(pheno);dim(pheno) 
-# CREATE A DATA FRAME WITH ALL POSSIBLE HYBRIDS
-DD <- kronecker(A.dent,A.flint,make.dimnames=TRUE)
-hybs <- data.frame(sca=rownames(DD),yield=NA,matter=NA,gcad=NA, gcaf=NA)
-hybs$yield[match(pheno$hy, hybs$sca)] <- pheno$GY
-hybs$matter[match(pheno$hy, hybs$sca)] <- pheno$GM
-hybs$gcad <- as.factor(gsub(":.*","",hybs$sca))
-hybs$gcaf <- as.factor(gsub(".*:","",hybs$sca))
-head(hybs)
+data("DT_technow")
 # RUN THE PREDICTION MODEL
-y.trn <- hybs
-vv1 <- which(!is.na(hybs$yield))
+y.trn <- DT
+vv1 <- which(!is.na(DT$GY))
 vv2 <- sample(vv1, 100)
-y.trn[vv2,"yield"] <- NA
-anss2 <- mmer2(yield~1, 
-               random=~g(gcad) + g(gcaf), 
+y.trn[vv2,"GY"] <- NA
+anss2 <- mmer(GY~1, 
+               random=~vs(dent,Gu=Ad) + vs(flint,Gu=Af), 
                rcov=~units,
-               G=list(gcad=A.dent, gcaf=A.flint), 
-               method="NR", silent=TRUE, data=y.trn) 
-summary(anss2)
-cor(anss2$fitted.y[vv2], hybs$yield[vv2])
+               data=y.trn) 
+summary(anss2)$varcomp
+
+zu1 <- model.matrix(~dent-1,y.trn) %*% anss2$U$`u:dent`$GY
+zu2 <- model.matrix(~flint-1,y.trn) %*% anss2$U$`u:flint`$GY
+u <- zu1+zu2+anss2$Beta[1,"Estimate"]
+cor(u[vv2,], DT$GY[vv2])
 ```
 
 In the previous model we only used the GCA effects (GCA1 and GCA2) for practicity, altough it's been shown that the SCA effect doesn't actually help that much in increasing prediction accuracy and increase a lot the computation intensity required since the variance covariance matrix for SCA is the kronecker product of the variance covariance matrices for the GCA effects, resulting in a 10578x10578 matrix that increases in a very intensive manner the computation required.
@@ -447,69 +358,41 @@ In order to do a good job modeling the spatial trends happening in the field spe
 In this example we assume an unreplicated population where row and range information is available which allows us to fit a 2 dimensional spline model.
 
 ```{r}
-data(CPdata)
-head(CPpheno)
-CPgeno[1:4,1:4]
-#### create the variance-covariance matrix 
-A <- A.mat(CPgeno) # additive relationship matrix
-#### look at the data and fit the model
-head(CPpheno)
-
-mix1 <- mmer2(Yield~1,
-              random=~g(id)
-                      + Rowf + Colf
-                      + spl2D(Row,Col),
-              rcov=~units,
-              G=list(id=A), silent=TRUE,
-              data=CPpheno)
-summary(mix1)
+data("DT_cpdata")
+### mimic two fields
+A <- A.mat(GT)
+mix <- mmer(Yield~1,
+            random=~vs(id, Gu=A) +
+              vs(Rowf) +
+              vs(Colf) +
+              vs(spl2D(Row,Col)),
+            rcov=~vs(units),
+            data=DT)
+summary(mix)
 ```
 
-Notice that the job is done by the `spl2D()` function that takes the Row and Col information to fit a spatial kernel. When multiple fields are available the function has an additional argument call `at` which allows to fit a different spatial kernel in each field. For example if there was multiple fields the use of the random call would look like:
+Notice that the job is done by the `spl2D()` function that takes the Row and Col information to fit a spatial kernel. 
 
-random=~ spl2D(Row,Col, at=FIELD)
-
-where FIELD would correspond to the name of the column of the dataset where the identifier for the different environments is. 
-
-```{r}
-#### get the spatial plots
-fittedvals <- spatPlots(mix1,row = "Row", range = "Col")
-```
 
 ## 8) Multivariate genetic models and genetic correlations
 
 Sometimes is important to estimate genetic variance-covariance among traits, multi-reponse models are very useful for such task. Let see an example with 3 traits (color, Yield, and Firmness) and a single random effect (genotype; id) although multiple effects can be modeled as well. We need to use a variance covariance structure for the random effect to be able to obtain the genetic covariance among traits.
 
 ```{r}
-data(CPdata)
-### look at the data
-head(CPpheno);CPgeno[1:5,1:4]
-## fit a model including additive effects
-A <- A.mat(CPgeno) # additive relationship matrix
-####================####
-#### ADDITIVE MODEL ####
-####================####
-ans.A <- mmer2(cbind(color,Yield)~1, 
-               random=~us(trait):g(id),
-               rcov=~us(trait):units,
-               G=list(id=A),
-               data=CPpheno, silent = TRUE)
-summary(ans.A)
+data("DT_cpdata")
+A <- A.mat(GT)
+ans.m <- mmer(cbind(Yield,color)~1,
+               random=~ vs(id, Gu=A)
+               + vs(Rowf,Gtc=diag(2))
+               + vs(Colf,Gtc=diag(2)),
+               rcov=~ vs(units),
+               data=DT)
 ```
 
 Now you can extract the BLUPs using the 'randef' function or simple accesing with the '$' sign and pick 'u.hat'. Also, genetic correlations and heritabilities can be calculated easily. 
 
 ```{r}
-## genetic variance covariance
-gvc <- ans.A$var.comp$`g(id)`
-## extract variances (diagonals) and get standard deviations
-sd.gvc <- as.matrix(sqrt(diag(gvc))) 
-## get possible products sd(Vgi) * sd(Vgi')
-prod.sd <- sd.gvc %*% t(sd.gvc)
-## genetic correlations cov(gi,gi')/[sd(Vgi) * sd(Vgi')]
-(gen.cor <- gvc/prod.sd)
-## heritabilities
-(h2 <- diag(gvc) / diag(cov(CPpheno[,names(diag(gvc))], use = "complete.obs")))
+cov2cor(ans.m$sigma$`u:id`)
 ```
 
 ## 9) Final remarks
@@ -519,6 +402,8 @@ Keep in mind that sommer uses direct inversion (DI) algorithm which can be very 
 ## Literature
 
 Covarrubias-Pazaran G. 2016. Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6):1-15.
+
+Covarrubias-Pazaran G. 2018. Software update: Moving the R package sommer to multivariate mixed models for genome-assisted prediction. doi: https://doi.org/10.1101/354639
 
 Bernardo Rex. 2010. Breeding for quantitative traits in plants. Second edition. Stemma Press. 390 pp.
 

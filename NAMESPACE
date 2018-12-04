@@ -1,72 +1,81 @@
-#############
-## EXPORTS
-#############
-export(adiag1, A.mat, atcg1234, hits, big.peaks.col, 
-       bathy.colors, blocker, blockerL, blockerT, brewer.pal, build.HMM, D.mat, 
-       design.score, E.mat, EM, fdr, fdr2, fill.design,
-       GWAS, GWAS2, hadamard.prod, hdm, h2.fun, imputev, is.diagonal.matrix, 
-       is.square.matrix, jet.colors, manhattan, matrix.trace, map.plot, 
-       maxi.qtl, mmer,MEMMA, MNR, mmer2, nna, overlay, pedtoK, phase.F1, 
-       pin, score.calcMV, spatPlots, transp,  
-       vctable, vctable.help)
+useDynLib(sommer, .registration=TRUE)
+importFrom(Rcpp, evalCpp)
+#exportPattern("^[[:alpha:]]+")
 
-export(summary.MMERM, residuals.MMERM, fitted.MMERM, plot.MMERM, 
-       variogram, variogram.MMERM, plot.variogram.MMERM,
-       anova.MMERM, coef.MMERM, randef)
+export(   
+       fill.design, 
+       transp,jet.colors,bathy.colors,
+      #  hits, big.peaks.col,
+      # maxi.qtl, nna, 
+      manhattan, map.plot, 
+       pedtoK,
+       spatPlots)
 
-# fixef.mmer, fixef.mmerM, fixef.MMERM
+## FUN_main
+export(mmer, mmer2, GWAS, GWAS2)
+
+## FUN_special
+export(at,cs,ds,us,vs,
+       unsm,uncm,fixm,fcm,
+       list2usmat,
+       overlay, spl2D)
+
+## FUN_markers
+export(atcg1234,build.HMM,h2.fun)
+
+## FUN_stats
+export(adiag1, imputev,
+       leg,
+       pin)
+
+## FUN_relationships
+export(A.mat, D.mat, E.mat, AR1, CS, ARMA)
+
+## FUN_algorithms
+export(EM, MEMMA)
+
+## FUN_utils
+export(summary.mmer, residuals.mmer, fitted.mmer, plot.mmer, 
+       predict.mmer,
+       #variogram, variogram.mmer, plot.variogram.mmer,
+       anova.mmer, coef.mmer, randef)
 
 # S3 METHODS
+S3method(summary, mmer)
+S3method(print, summary.mmer)
+S3method(residuals, mmer)
+S3method(print, residuals.mmer)
+S3method(fitted, mmer)
+S3method(print, fitted.mmer)
+S3method(coef, mmer)
+S3method(print, coef.mmer)
+S3method(anova, mmer)
+S3method(plot, mmer)
+S3method(predict, mmer)
+S3method(print, predict.mmer)
+S3method(head, predict.mmer)
 
-#S3method(fixef, mmerM)
-#S3method(print, fixef.mmerM)
-
-## for multivariate
-S3method(summary, MMERM)
-S3method(print, summary.MMERM)
-S3method(residuals, MMERM)
-S3method(print, residuals.MMERM)
-S3method(fitted, MMERM)
-S3method(print, fitted.MMERM)
-S3method(coef, MMERM)
-S3method(print, coef.MMERM)
-S3method(anova, MMERM)
-S3method(plot, MMERM)
-
-S3method(variogram, MMERM)
-S3method(plot, variogram.MMERM)
-
-
-#S3method(fixef, MMERM)
-#S3method(print, fixef.MMERM)
-
-############
-# IMPORTS
-############
-  importFrom("graphics", "abline", "axis", "image", "layout", "legend",
-             "lines", "plot", "points", "rect", "text", "locator",
-             "par", "grid", "plot.new", "polygon","segments", "title")
-  importFrom("utils", "combn", "setTxtProgressBar", "txtProgressBar",
-             "available.packages", "contrib.url")
-  #importFrom("matrixcalc", "matrix.trace","is.diagonal.matrix", "is.square.matrix")
-  #importFrom("lme4","lmer","VarCorr")
-  #importFrom("parallel", "detectCores","mclapply") #"detectCores","makeCluster","stopCluster",
-  #importFrom("doParallel","registerDoParallel")
-  #importFrom("foreach", "%dopar%")
-  
-  
-#  importFrom("beepr", "beep")
-## FULL IMPORTS
+#S3method(variogram, mmer)
+#S3method(plot, variogram.mmer)
+###########
+## full imports
+###########
   import("methods")
   import("Matrix")
   import("MASS")
   import("lattice")
-  import("data.table")
-  #import("foreach")
-  #import("doParallel")
-
-
-#  import("audio","play")
+  import("crayon")
+ # import("data.table")
+############
+# IMPORTS
+############
+  importFrom("graphics", "abline", "axis", "layout", "legend",
+             "lines", "plot", "points", "rect", "text", "locator",
+             "par", "grid", "plot.new", "polygon","segments", "title")
+  importFrom("utils", "combn", "setTxtProgressBar", "txtProgressBar",
+             "available.packages", "contrib.url","str")
+  importFrom("methods", "as")
+#  importFrom("crayon", "blue")
   
 ### extra suggested by CRAN
   importFrom("grDevices", "col2rgb", "colorRampPalette", "gray.colors",
@@ -76,9 +85,8 @@ S3method(plot, variogram.MMERM)
              "printCoefmat", "qqnorm", "smooth.spline", "var", "rnorm", 
              "model.matrix","na.omit", "p.adjust","kmeans","dist", "runif",
              "nobs", "ppoints", "sd", "model.frame", "model.response", "na.pass",
-             "cor", "optim", "rchisq","quantile","deriv","terms.formula")
-
-
-  
-  
+             "cor", "optim", "rchisq","quantile","deriv","terms.formula",
+             "aggregate","pf")
+  importFrom("lattice", "wireframe")
+#  importFrom("data.table", "setkeyv","data.table")
 

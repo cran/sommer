@@ -53,32 +53,18 @@ Falconer, Douglas S., Trudy FC Mackay, and Richard Frankham. "Introduction to qu
 }
 \examples{
 
-data(example)
-head(example)
-####=========================================####
-#### fit the mixed model (very heavy model)
-####=========================================####
-# ans1 <- mmer2(Yield~Env,
-#               random=~at(Env):Name + at(Env):Block,
-#               rcov=~at(Env):units,
-#               data=example)
+data(DT_example)
+head(DT)
+# ####=========================================####
+# #### fit the mixed model (very heavy model)
+# ####=========================================####
+# ans1 <- mmer(Yield~Env,
+#               random=~vs(ds(Env),Name) + vs(ds(Env),Block),
+#               rcov=~vs(ds(Env),units),
+#               data=DT)
 # summary(ans1)
-
-####=========================================####
-#### calculate heritability
-####=========================================####
-# with(example,table(Name, Env)) # 2 reps 
-# vcs <- summary(ans1)$var.comp.table
-# vcs[1:3,1] / (vcs[1:3,1] + (vcs[7:9,1]/2))
-# ## using the pin function
-# pin(ans1,h2example~(V1)/(V1+(V8/2)))
-# pin(ans1,h2example~(V2)/(V2+(V9/2)))
-# pin(ans1,h2example~(V3)/(V3+(V7/2)))
-# ## using the h2.fun() function
-# h2.fun(ans1, example, gTerm = "Name", eTerm = "Env")
-
 
 }
 \seealso{
-\code{\link{sommer}}, \code{\link{mmer2}}
+\code{\link{sommer}}
 }

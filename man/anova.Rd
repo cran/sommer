@@ -1,20 +1,21 @@
-\name{anova.MMERM}
-\alias{anova.MMERM}
+\name{anova.mmer}
+\alias{anova.mmer}
 \title{anova form a GLMM fitted with mmer}
-\description{\code{anova} method for class \code{"MMERM"}.
+\description{\code{anova} method for class \code{"mmer"}.
 }
 \usage{
-\method{anova}{MMERM}(object, object2=NULL, \dots)
+\method{anova}{mmer}(object, object2=NULL, type=1, \dots)
 }
 \arguments{
- \item{object}{an object of class \code{"MMERM"}}
- \item{object2}{an object of class \code{"MMERM"}, if NULL the program will return an error specifying that this function was developed for comparing mixed models using likelihood ratio tests and no to provide regular sum of squares results.}
+ \item{object}{an object of class \code{"mmer"}}
+ \item{object2}{an object of class \code{"mmer"}, if NULL the program will provide regular sum of squares results.}
+  \item{type}{anova type, I or II}
  \item{\dots}{Further arguments to be passed}
 }
 \value{
   vector of anova
  }
 \author{Giovanny Covarrubias \email{covarrubiasp@wisc.edu}}
-\seealso{\code{\link{anova}}, \code{\link{mmer}}, and \code{\link{mmer2}}}
+\seealso{\code{\link{anova}}, \code{\link{mmer}}}
 \keyword{models}
 

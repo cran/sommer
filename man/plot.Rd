@@ -1,13 +1,13 @@
-\name{plot.MMERM}
-\alias{plot.MMERM}
+\name{plot.mmer}
+\alias{plot.mmer}
 \title{plot form a LMM plot with mmer}
-\description{\code{plot} method for class \code{"MMERM"}.
+\description{\code{plot} method for class \code{"mmer"}.
 }
 \usage{
-\method{plot}{MMERM}(x,stnd=TRUE, \dots)
+\method{plot}{mmer}(x,stnd=TRUE, \dots)
 }
 \arguments{
- \item{x}{an object of class \code{"MMERM"}}
+ \item{x}{an object of class \code{"mmer"}}
   \item{stnd}{argument for ploting the residuals to know if they should be standarized.}
  \item{\dots}{Further arguments to be passed}
 }

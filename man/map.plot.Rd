@@ -62,4 +62,4 @@ map.plot(geno, trait="X2", type="hist")
 map.plot(geno, trait="X2", type="dot")
 
 }
-\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmer2}}}
+\seealso{The core functions of the package \code{\link{mmer}}}
