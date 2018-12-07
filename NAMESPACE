@@ -86,7 +86,7 @@ S3method(head, predict.mmer)
              "model.matrix","na.omit", "p.adjust","kmeans","dist", "runif",
              "nobs", "ppoints", "sd", "model.frame", "model.response", "na.pass",
              "cor", "optim", "rchisq","quantile","deriv","terms.formula",
-             "aggregate","pf")
+             "aggregate","pf","terms")
   importFrom("lattice", "wireframe")
 #  importFrom("data.table", "setkeyv","data.table")
 

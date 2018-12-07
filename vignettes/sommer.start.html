@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2018-12-02" />
+<meta name="date" content="2018-12-06" />
 
 <title>Quick start for the sommer package</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Quick start for the sommer package</h1>
 <h4 class="author"><em>Giovanny Covarrubias-Pazaran</em></h4>
-<h4 class="date"><em>2018-12-02</em></h4>
+<h4 class="date"><em>2018-12-06</em></h4>
 
 
 
@@ -106,7 +106,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </ol>
 <div id="b1-background-on-mixed-models" class="section level2">
 <h2>B1) Background on mixed models</h2>
-<p>The core of the package are the <code>mmer2</code> (formula-based) and <code>mmer</code> (matrix-based) functions which solve the mixed model equations. The functions are an interface to call the <code>NR</code> Direct-Inversion Newton-Raphson (Tunnicliffe 1989; Gilmour et al. 1995; Lee et al. 2016) or the <code>EMMA</code> efficient mixed model association algorithm (Kang et al. 2008). From version 2.0, sommer can handle multivariate models. Following Maier et al. (2015), the multivariate (and by extension the univariate) mixed model implemented has the form:</p>
+<p>The core of the package is the <code>mmer</code> function which solve the mixed model equations. The functions are an interface to call the <code>NR</code> Direct-Inversion Newton-Raphson or Average Information algorithms (Tunnicliffe 1989; Gilmour et al. 1995; Lee et al. 2016). From version 2.0, sommer can handle multivariate models. Following Maier et al. (2015), the multivariate (and by extension the univariate) mixed model implemented has the form:</p>
 <p><br></p>
 <p><span class="math inline">\(y_1 = X_1\beta_1 + Z_1u_1 + \epsilon_1\)</span></p>
 <p><span class="math inline">\(y_2 = X_2\beta_2 + Z_2u_2 + \epsilon_2\)</span></p>
@@ -153,7 +153,7 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <p><span class="math inline">\(\theta^{k+1} = \theta^{k} + (H^{k})^{-1}*\frac{dL}{d\sigma^2_i}|\theta^k\)</span></p>
 <p><br></p>
 <p>Where, <span class="math inline">\(\theta\)</span> is the vector of variance components for random effects and covariance components among traits, <span class="math inline">\(H^{-1}\)</span> is the inverse of the Hessian matrix of second derivatives for the kth cycle, <span class="math inline">\(\frac{dL}{d\sigma^2_i}\)</span> is the vector of first derivatives of the likelihood with respect to the variance-covariance components. The Eigen decomposition of the relationship matrix proposed by Lee and Van Der Werf (2016) was included in the Newton-Raphson algorithm to improve time efficiency. Additionally, the popular pin function to estimate standard errors for linear combinations of variance components (i.e. heritabilities and genetic correlations) was added to the package as well.</p>
-<p>The function <code>mmer</code> takes the Zs and Ks for each random effect and construct the neccesary structure inside and estimates the variance components by ML/REML using any of the 4 methods available in sommer. The <code>mmer2</code> function is enabled to work in a model-based fashion so user don’t have to build the Z’s and K matrices. Please refer to the canonical papers listed in the Literature section to check how the algorithms work. We have tested widely the methods to make sure they provide the same solution when the likelihood behaves well but for complex problems they might lead to slightly different answers. If you have any concern please contact me at <a href="mailto:cova_ruber@live.com.mx">cova_ruber@live.com.mx</a>.</p>
+<p>Please refer to the canonical papers listed in the Literature section to check how the algorithms work. We have tested widely the methods to make sure they provide the same solution when the likelihood behaves well but for complex problems they might lead to slightly different answers. If you have any concern please contact me at <a href="mailto:cova_ruber@live.com.mx">cova_ruber@live.com.mx</a>.</p>
 <p>In the following section we will go in detail over several examples on how to use mixed models in univariate and multivariate case and their use in quantitative genetics.</p>
 <p><br></p>
 </div>
@@ -245,31 +245,31 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
               <span class="dt">rcov=</span> ~<span class="st"> </span>units,
               <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -23.4747   17:34:46      0           0
-##     2      -21.0636   17:34:46      0           0
-##     3      -20.2304   17:34:46      0           0
-##     4      -20.1465   17:34:46      0           0
-##     5      -20.1454   17:34:46      0           0
-##     6      -20.1454   17:34:46      0           0</code></pre>
+##     1      -31.2668   23:57:19      0           0
+##     2      -23.2804   23:57:19      0           0
+##     3      -20.4746   23:57:19      0           0
+##     4      -20.1501   23:57:19      0           0
+##     5      -20.1454   23:57:19      0           0
+##     6      -20.1454   23:57:19      0           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans1)</code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
 ## **********************  sommer 3.7  ********************** 
 ## ============================================================
 ##          logLik      AIC      BIC Method Converge
-## Value -20.14539 46.29075 55.95182     NR     TRUE
+## Value -20.14544 46.29075 55.95182     NR     TRUE
 ## ============================================================
 ## Variance-Covariance components:
 ##                      VarComp VarCompSE Zratio Constraint
-## Name.Yield-Yield       3.682    1.6913  2.177   Positive
-## Env:Name.Yield-Yield   5.173    1.4955  3.459   Positive
-## units.Yield-Yield      4.366    0.6469  6.749   Positive
+## Name.Yield-Yield       3.682     1.691  2.177   Positive
+## Env:Name.Yield-Yield   5.173     1.495  3.460   Positive
+## units.Yield-Yield      4.366     0.647  6.748   Positive
 ## ============================================================
 ## Fixed effects:
 ##   Trait      Effect Estimate Std.Error t.value
 ## 1 Yield (Intercept)   16.496    0.6855  24.065
 ## 2 Yield  EnvCA.2012   -5.777    0.7558  -7.643
-## 3 Yield  EnvCA.2013   -6.380    0.7961  -8.015
+## 3 Yield  EnvCA.2013   -6.380    0.7960  -8.015
 ## ============================================================
 ## Groups and observations:
 ##          Yield
@@ -295,30 +295,29 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
               <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">vs</span>(<span class="kw">ds</span>(Env),units),
               <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -23.4747   17:34:46      0           0
-##     2      -17.9787   17:34:47      1           0
-##     3      -15.8441   17:34:47      1           0
-##     4      -15.4545   17:34:47      1           0
-##     5      -15.4314   17:34:47      1           0
-##     6      -15.4299   17:34:47      1           0
-##     7      -15.4298   17:34:47      1           0</code></pre>
+##     1      -31.2668   23:57:19      0           0
+##     2      -19.8549   23:57:19      0           0
+##     3      -15.9797   23:57:19      0           0
+##     4      -15.4374   23:57:19      0           0
+##     5      -15.43   23:57:19      0           0
+##     6      -15.4298   23:57:19      0           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans2)</code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
 ## **********************  sommer 3.7  ********************** 
 ## ============================================================
 ##          logLik      AIC      BIC Method Converge
-## Value -15.42992 36.85966 46.52072     NR     TRUE
+## Value -15.42995 36.85965 46.52072     NR     TRUE
 ## ============================================================
 ## Variance-Covariance components:
 ##                           VarComp VarCompSE Zratio Constraint
-## Name.Yield-Yield            2.963    1.4969  1.979   Positive
-## CA.2011:Name.Yield-Yield   10.145    4.5086  2.250   Positive
-## CA.2012:Name.Yield-Yield    1.879    1.8704  1.005   Positive
-## CA.2013:Name.Yield-Yield    6.629    2.5025  2.649   Positive
-## CA.2011:units.Yield-Yield   4.942    1.5245  3.242   Positive
-## CA.2012:units.Yield-Yield   5.724    1.3116  4.365   Positive
-## CA.2013:units.Yield-Yield   2.560    0.6398  4.001   Positive
+## Name.Yield-Yield            2.963     1.496  1.980   Positive
+## CA.2011:Name.Yield-Yield   10.146     4.507  2.251   Positive
+## CA.2012:Name.Yield-Yield    1.878     1.870  1.004   Positive
+## CA.2013:Name.Yield-Yield    6.629     2.503  2.649   Positive
+## CA.2011:units.Yield-Yield   4.942     1.525  3.242   Positive
+## CA.2012:units.Yield-Yield   5.725     1.312  4.363   Positive
+## CA.2013:units.Yield-Yield   2.560     0.640  4.000   Positive
 ## ============================================================
 ## Fixed effects:
 ##   Trait      Effect Estimate Std.Error t.value
@@ -353,38 +352,38 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
              <span class="dt">rcov=</span>~<span class="kw">vs</span>(<span class="kw">us</span>(Env),units), 
              <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -20.3368   17:34:47      0           0
-##     2      -14.2124   17:34:47      0           0
-##     3      -11.8334   17:34:47      0           0
-##     4      -11.51   17:34:47      0           0
-##     5      -11.5001   17:34:48      1           0
-##     6      -11.4997   17:34:48      1           0</code></pre>
+##     1      -37.9059   23:57:20      1           0
+##     2      -17.9745   23:57:20      1           0
+##     3      -12.2427   23:57:20      1           0
+##     4      -11.5121   23:57:20      1           0
+##     5      -11.5001   23:57:20      1           0
+##     6      -11.4997   23:57:20      1           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans3)</code></pre></div>
 <pre><code>## ===================================================================
 ##              Multivariate Linear Mixed Model fit by REML             
 ## **************************  sommer 3.7  ************************** 
 ## ===================================================================
-##          logLik      AIC     BIC Method Converge
-## Value -11.50013 28.99943 38.6605     NR     TRUE
+##          logLik      AIC      BIC Method Converge
+## Value -11.50007 28.99943 38.66049     NR     TRUE
 ## ===================================================================
 ## Variance-Covariance components:
 ##                                   VarComp VarCompSE    Zratio Constraint
-## CA.2011:Name.Yield-Yield          15.6658 5.423e+00 2.889e+00   Positive
-## CA.2012:CA.2011:Name.Yield-Yield   6.1107 2.486e+00 2.458e+00   Unconstr
-## CA.2012:Name.Yield-Yield           4.5309 1.822e+00 2.487e+00   Positive
-## CA.2013:CA.2011:Name.Yield-Yield   6.3844 3.067e+00 2.082e+00   Unconstr
-## CA.2013:CA.2012:Name.Yield-Yield   0.3934 1.524e+00 2.581e-01   Unconstr
-## CA.2013:Name.Yield-Yield           8.5972 2.484e+00 3.461e+00   Positive
-## CA.2011:units.Yield-Yield          4.9698 1.532e+00 3.244e+00   Positive
-## CA.2012:CA.2011:units.Yield-Yield  2.1067 1.437e-15 1.466e+15   Unconstr
-## CA.2012:units.Yield-Yield          5.6722 1.300e+00 4.364e+00   Positive
-## CA.2013:CA.2011:units.Yield-Yield  2.1067 0.000e+00       Inf   Unconstr
-## CA.2013:CA.2012:units.Yield-Yield  2.1067 0.000e+00       Inf   Unconstr
-## CA.2013:units.Yield-Yield          2.5571 6.392e-01 4.001e+00   Positive
+## CA.2011:Name.Yield-Yield           15.665 5.421e+00 2.890e+00   Positive
+## CA.2012:CA.2011:Name.Yield-Yield    6.110 2.485e+00 2.459e+00   Unconstr
+## CA.2012:Name.Yield-Yield            4.530 1.821e+00 2.488e+00   Positive
+## CA.2013:CA.2011:Name.Yield-Yield    6.384 3.066e+00 2.082e+00   Unconstr
+## CA.2013:CA.2012:Name.Yield-Yield    0.393 1.523e+00 2.580e-01   Unconstr
+## CA.2013:Name.Yield-Yield            8.597 2.484e+00 3.461e+00   Positive
+## CA.2011:units.Yield-Yield           4.970 1.532e+00 3.243e+00   Positive
+## CA.2012:CA.2011:units.Yield-Yield   4.087 2.436e-16 1.678e+16   Unconstr
+## CA.2012:units.Yield-Yield           5.673 1.301e+00 4.361e+00   Positive
+## CA.2013:CA.2011:units.Yield-Yield   4.087 0.000e+00       Inf   Unconstr
+## CA.2013:CA.2012:units.Yield-Yield   4.087 0.000e+00       Inf   Unconstr
+## CA.2013:units.Yield-Yield           2.557 6.393e-01 4.000e+00   Positive
 ## ===================================================================
 ## Fixed effects:
 ##   Trait      Effect Estimate Std.Error t.value
-## 1 Yield (Intercept)   16.331    0.8137  20.069
+## 1 Yield (Intercept)   16.331    0.8137  20.070
 ## 2 Yield  EnvCA.2012   -5.696    0.7404  -7.693
 ## 3 Yield  EnvCA.2013   -6.271    0.8191  -7.656
 ## ===================================================================
@@ -418,38 +417,37 @@ ans4 &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="kw"
               <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">vs</span>(units),
               <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      72.7074   17:34:48      0           0
-##     2      120.156   17:34:49      1           0
-##     3      155.652   17:34:50      2           0
-##     4      166.839   17:34:51      3           0
-##     5      167.024   17:34:51      3           0
-##     6      167.025   17:34:52      4           0
-##     7      167.025   17:34:53      5           0</code></pre>
+##     1      66.0395   23:57:21      1           0
+##     2      131.529   23:57:21      1           0
+##     3      162.769   23:57:22      2           0
+##     4      166.983   23:57:23      3           0
+##     5      167.025   23:57:23      3           0
+##     6      167.025   23:57:24      4           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans4)</code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
 ## **********************  sommer 3.7  ********************** 
 ## ============================================================
 ##         logLik       AIC       BIC Method Converge
-## Value 167.0252 -322.0505 -298.5695     NR     TRUE
+## Value 167.0248 -322.0505 -298.5695     NR     TRUE
 ## ============================================================
 ## Variance-Covariance components:
 ##                         VarComp VarCompSE Zratio Constraint
-## u:Name.Yield-Yield       3.7090   1.68154  2.206   Positive
-## u:Name.Yield-Weight      0.9071   0.37953  2.390   Unconstr
-## u:Name.Weight-Weight     0.2243   0.08777  2.556   Positive
-## u:EnvName.Yield-Yield    5.0922   1.47905  3.443   Positive
-## u:EnvName.Yield-Weight   1.0269   0.30773  3.337   Unconstr
-## u:EnvName.Weight-Weight  0.2101   0.06662  3.153   Positive
-## u:units.Yield-Yield      4.3837   0.64949  6.750   Positive
-## u:units.Yield-Weight     0.9077   0.14147  6.417   Unconstr
-## u:units.Weight-Weight    0.2280   0.03378  6.751   Positive
+## u:Name.Yield-Yield       3.7089   1.68117  2.206   Positive
+## u:Name.Yield-Weight      0.9071   0.37944  2.391   Unconstr
+## u:Name.Weight-Weight     0.2243   0.08775  2.557   Positive
+## u:EnvName.Yield-Yield    5.0921   1.47879  3.443   Positive
+## u:EnvName.Yield-Weight   1.0269   0.30767  3.338   Unconstr
+## u:EnvName.Weight-Weight  0.2101   0.06661  3.154   Positive
+## u:units.Yield-Yield      4.3837   0.64941  6.750   Positive
+## u:units.Yield-Weight     0.9077   0.14145  6.417   Unconstr
+## u:units.Weight-Weight    0.2280   0.03377  6.751   Positive
 ## ============================================================
 ## Fixed effects:
 ##    Trait      Effect Estimate Std.Error t.value
 ## 1  Yield (Intercept)  16.4093    0.6783  24.191
 ## 2 Weight (Intercept)   0.9806    0.1497   6.550
-## 3  Yield  EnvCA.2012  -5.6844    0.7474  -7.605
+## 3  Yield  EnvCA.2012  -5.6844    0.7474  -7.606
 ## 4 Weight  EnvCA.2012  -1.1846    0.1593  -7.439
 ## 5  Yield  EnvCA.2013  -6.2952    0.7850  -8.019
 ## 6 Weight  EnvCA.2013  -1.3559    0.1681  -8.065
@@ -480,55 +478,54 @@ ans5 &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="kw"
               <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">vs</span>(<span class="kw">ds</span>(Env),units),
               <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      72.7074   17:34:55      2           0
-##     2      127.145   17:34:57      4           0
-##     3      164.877   17:34:58      5           0
-##     4      177.275   17:34:59      6           0
-##     5      177.759   17:35:0      7           0
-##     6      177.806   17:35:2      9           0
-##     7      177.814   17:35:3      10           0
-##     8      177.815   17:35:5      12           0
-##     9      177.815   17:35:7      14           0</code></pre>
+##     1      66.0395   23:57:25      1           0
+##     2      138.617   23:57:27      3           0
+##     3      172.682   23:57:28      4           0
+##     4      177.662   23:57:30      6           0
+##     5      177.801   23:57:31      7           0
+##     6      177.813   23:57:32      8           0
+##     7      177.815   23:57:34      10           0
+##     8      177.815   23:57:35      11           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans5)</code></pre></div>
 <pre><code>## =============================================================
 ##           Multivariate Linear Mixed Model fit by REML          
 ## **********************  sommer 3.7  ********************** 
 ## =============================================================
 ##         logLik       AIC       BIC Method Converge
-## Value 177.8151 -343.6307 -320.1497     NR     TRUE
+## Value 177.8151 -343.6308 -320.1497     NR     TRUE
 ## =============================================================
 ## Variance-Covariance components:
 ##                             VarComp VarCompSE Zratio Constraint
-## u:Name.Yield-Yield          3.31892   1.45282 2.2845   Positive
-## u:Name.Yield-Weight         0.79393   0.32626 2.4335   Unconstr
-## u:Name.Weight-Weight        0.19088   0.07504 2.5436   Positive
-## CA.2011:Name.Yield-Yield    8.70864   4.01547 2.1688   Positive
-## CA.2011:Name.Yield-Weight   1.77911   0.83930 2.1197   Unconstr
-## CA.2011:Name.Weight-Weight  0.35964   0.17901 2.0090   Positive
-## CA.2012:Name.Yield-Yield    2.57514   1.95105 1.3199   Positive
-## CA.2012:Name.Yield-Weight   0.33336   0.39873 0.8360   Unconstr
-## CA.2012:Name.Weight-Weight  0.03861   0.08602 0.4489   Positive
-## CA.2013:Name.Yield-Yield    5.46595   2.16170 2.5285   Positive
-## CA.2013:Name.Yield-Weight   1.34633   0.50444 2.6690   Unconstr
-## CA.2013:Name.Weight-Weight  0.32882   0.12199 2.6955   Positive
-## CA.2011:units.Yield-Yield   4.93854   1.52320 3.2422   Positive
+## u:Name.Yield-Yield          3.31936   1.45269 2.2850   Positive
+## u:Name.Yield-Weight         0.79393   0.32621 2.4338   Unconstr
+## u:Name.Weight-Weight        0.19085   0.07503 2.5438   Positive
+## CA.2011:Name.Yield-Yield    8.70657   4.01470 2.1687   Positive
+## CA.2011:Name.Yield-Weight   1.77892   0.83926 2.1196   Unconstr
+## CA.2011:Name.Weight-Weight  0.35966   0.17903 2.0089   Positive
+## CA.2012:Name.Yield-Yield    2.57109   1.94951 1.3188   Positive
+## CA.2012:Name.Yield-Weight   0.33245   0.39840 0.8345   Unconstr
+## CA.2012:Name.Weight-Weight  0.03842   0.08595 0.4470   Positive
+## CA.2013:Name.Yield-Yield    5.46908   2.16307 2.5284   Positive
+## CA.2013:Name.Yield-Weight   1.34713   0.50479 2.6687   Unconstr
+## CA.2013:Name.Weight-Weight  0.32902   0.12208 2.6952   Positive
+## CA.2011:units.Yield-Yield   4.93852   1.52318 3.2422   Positive
 ## CA.2011:units.Yield-Weight  0.99447   0.32150 3.0932   Unconstr
 ## CA.2011:units.Weight-Weight 0.23982   0.07394 3.2433   Positive
-## CA.2012:units.Yield-Yield   5.73847   1.31513 4.3634   Positive
-## CA.2012:units.Yield-Weight  1.28000   0.30152 4.2452   Unconstr
-## CA.2012:units.Weight-Weight 0.31804   0.07285 4.3655   Positive
-## CA.2013:units.Yield-Yield   2.56126   0.63993 4.0024   Positive
+## CA.2012:units.Yield-Yield   5.73887   1.31533 4.3631   Positive
+## CA.2012:units.Yield-Weight  1.28009   0.30157 4.2448   Unconstr
+## CA.2012:units.Weight-Weight 0.31806   0.07286 4.3652   Positive
+## CA.2013:units.Yield-Yield   2.56127   0.63993 4.0024   Positive
 ## CA.2013:units.Yield-Weight  0.44569   0.12645 3.5246   Unconstr
 ## CA.2013:units.Weight-Weight 0.12232   0.03057 4.0009   Positive
 ## =============================================================
 ## Fixed effects:
 ##    Trait      Effect Estimate Std.Error t.value
-## 1  Yield (Intercept)  16.4243    0.7891  20.814
+## 1  Yield (Intercept)  16.4243    0.7891  20.815
 ## 2 Weight (Intercept)   0.9866    0.1683   5.863
-## 3  Yield  EnvCA.2012  -5.7339    0.8267  -6.936
+## 3  Yield  EnvCA.2012  -5.7339    0.8266  -6.937
 ## 4 Weight  EnvCA.2012  -1.1998    0.1698  -7.066
-## 5  Yield  EnvCA.2013  -6.3129    0.8757  -7.209
-## 6 Weight  EnvCA.2013  -1.3621    0.1914  -7.115
+## 5  Yield  EnvCA.2013  -6.3128    0.8757  -7.209
+## 6 Weight  EnvCA.2013  -1.3621    0.1915  -7.114
 ## =============================================================
 ## Groups and observations:
 ##              Yield Weight
@@ -557,66 +554,64 @@ ans6 &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="kw"
               <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">vs</span>(<span class="kw">ds</span>(Env),units),
               <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      82.6331   17:35:9      2           0
-##     2      139.835   17:35:10      3           0
-##     3      173.247   17:35:12      5           0
-##     4      181.246   17:35:14      7           0
-##     5      181.631   17:35:16      9           0
-##     6      181.721   17:35:19      12           0
-##     7      181.757   17:35:21      14           0
-##     8      181.774   17:35:23      16           0
-##     9      181.783   17:35:25      18           0
-##     10      181.788   17:35:27      20           0
-##     11      181.791   17:35:29      22           0
-##     12      181.793   17:35:32      25           0
-##     13      181.794   17:35:34      27           0
-##     14      181.794   17:35:36      29           0</code></pre>
+##     1      53.5859   23:57:37      2           0
+##     2      140.385   23:57:39      4           0
+##     3      176.108   23:57:40      5           0
+##     4      181.454   23:57:42      7           0
+##     5      181.696   23:57:43      8           0
+##     6      181.755   23:57:46      11           0
+##     7      181.777   23:57:47      12           0
+##     8      181.787   23:57:49      14           0
+##     9      181.791   23:57:51      16           0
+##     10      181.793   23:57:53      18           0
+##     11      181.794   23:57:54      19           0
+##     12      181.795   23:57:56      21           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans6)</code></pre></div>
 <pre><code>## ====================================================================
 ##              Multivariate Linear Mixed Model fit by REML             
 ## **************************  sommer 3.7  ************************** 
 ## ====================================================================
 ##         logLik       AIC       BIC Method Converge
-## Value 181.7937 -351.5889 -328.1079     NR     TRUE
+## Value 181.7941 -351.5895 -328.1085     NR     TRUE
 ## ====================================================================
 ## Variance-Covariance components:
 ##                                    VarComp VarCompSE Zratio Constraint
-## CA.2011:Name.Yield-Yield           15.6464   5.35700  2.921   Positive
-## CA.2011:Name.Yield-Weight           3.3589   1.14631  2.930   Unconstr
-## CA.2011:Name.Weight-Weight          0.7182   0.24869  2.888   Positive
-## CA.2012:CA.2011:Name.Yield-Yield    6.5290   2.48623  2.626   Unconstr
+## CA.2011:Name.Yield-Yield           15.6405   5.35495  2.921   Positive
+## CA.2011:Name.Yield-Weight           3.3577   1.14603  2.930   Unconstr
+## CA.2011:Name.Weight-Weight          0.7180   0.24867  2.887   Positive
+## CA.2012:CA.2011:Name.Yield-Yield    6.5289   2.48598  2.626   Unconstr
 ## CA.2012:CA.2011:Name.Yield-Weight   1.3505   0.52388  2.578   Unconstr
-## CA.2012:CA.2011:Name.Weight-Weight  0.2842   0.11258  2.524   Unconstr
-## CA.2012:Name.Yield-Yield            4.7893   1.86186  2.572   Positive
-## CA.2012:Name.Yield-Weight           0.8640   0.38377  2.251   Unconstr
-## CA.2012:Name.Weight-Weight          0.1693   0.08354  2.026   Positive
-## CA.2013:CA.2011:Name.Yield-Yield    5.9932   2.93849  2.040   Unconstr
-## CA.2013:CA.2011:Name.Yield-Weight   1.4232   0.64977  2.190   Unconstr
+## CA.2012:CA.2011:Name.Weight-Weight  0.2842   0.11259  2.524   Unconstr
+## CA.2012:Name.Yield-Yield            4.7896   1.86200  2.572   Positive
+## CA.2012:Name.Yield-Weight           0.8641   0.38382  2.251   Unconstr
+## CA.2012:Name.Weight-Weight          0.1693   0.08355  2.027   Positive
+## CA.2013:CA.2011:Name.Yield-Yield    5.9941   2.93825  2.040   Unconstr
+## CA.2013:CA.2011:Name.Yield-Weight   1.4235   0.64974  2.191   Unconstr
 ## CA.2013:CA.2011:Name.Weight-Weight  0.3379   0.14681  2.302   Unconstr
-## CA.2013:CA.2012:Name.Yield-Yield    2.1001   1.44051  1.458   Unconstr
-## CA.2013:CA.2012:Name.Yield-Weight   0.5243   0.32360  1.620   Unconstr
-## CA.2013:CA.2012:Name.Weight-Weight  0.1343   0.07573  1.773   Unconstr
-## CA.2013:Name.Yield-Yield            8.6267   2.47859  3.480   Positive
-## CA.2013:Name.Yield-Weight           2.1050   0.58760  3.582   Unconstr
-## CA.2013:Name.Weight-Weight          0.5126   0.14288  3.588   Positive
-## CA.2011:units.Yield-Yield           4.9516   1.52694  3.243   Positive
-## CA.2011:units.Yield-Weight          0.9993   0.32285  3.095   Unconstr
+## CA.2013:CA.2012:Name.Yield-Yield    2.0970   1.44043  1.456   Unconstr
+## CA.2013:CA.2012:Name.Yield-Weight   0.5232   0.32355  1.617   Unconstr
+## CA.2013:CA.2012:Name.Weight-Weight  0.1339   0.07571  1.769   Unconstr
+## CA.2013:Name.Yield-Yield            8.6264   2.47808  3.481   Positive
+## CA.2013:Name.Yield-Weight           2.1046   0.58737  3.583   Unconstr
+## CA.2013:Name.Weight-Weight          0.5124   0.14279  3.588   Positive
+## CA.2011:units.Yield-Yield           4.9516   1.52693  3.243   Positive
+## CA.2011:units.Yield-Weight          0.9993   0.32286  3.095   Unconstr
 ## CA.2011:units.Weight-Weight         0.2411   0.07432  3.244   Positive
-## CA.2012:units.Yield-Yield           5.7791   1.32428  4.364   Positive
-## CA.2012:units.Yield-Weight          1.2914   0.30409  4.247   Unconstr
-## CA.2012:units.Weight-Weight         0.3212   0.07356  4.366   Positive
-## CA.2013:units.Yield-Yield           2.5567   0.63883  4.002   Positive
+## CA.2012:units.Yield-Yield           5.7783   1.32398  4.364   Positive
+## CA.2012:units.Yield-Weight          1.2912   0.30401  4.247   Unconstr
+## CA.2012:units.Weight-Weight         0.3211   0.07354  4.367   Positive
+## CA.2013:units.Yield-Yield           2.5567   0.63882  4.002   Positive
 ## CA.2013:units.Yield-Weight          0.4452   0.12631  3.524   Unconstr
 ## CA.2013:units.Weight-Weight         0.1223   0.03056  4.001   Positive
 ## ====================================================================
 ## Fixed effects:
 ##    Trait      Effect Estimate Std.Error t.value
-## 1  Yield (Intercept)  16.3342    0.8254  19.789
-## 2 Weight (Intercept)   0.9677    0.1771   5.466
-## 3  Yield  EnvCA.2012  -5.6637    0.7449  -7.603
-## 4 Weight  EnvCA.2012  -1.1855    0.1604  -7.389
-## 5  Yield  EnvCA.2013  -6.2153    0.8340  -7.452
-## 6 Weight  EnvCA.2013  -1.3406    0.1806  -7.425
+## 1  Yield (Intercept)  16.3339    0.8252  19.793
+## 2 Weight (Intercept)   0.9677    0.1770   5.467
+## 3  Yield  EnvCA.2012  -5.6635    0.7447  -7.605
+## 4 Weight  EnvCA.2012  -1.1855    0.1604  -7.391
+## 5  Yield  EnvCA.2013  -6.2152    0.8338  -7.454
+## 6 Weight  EnvCA.2013  -1.3406    0.1805  -7.426
 ## ====================================================================
 ## Groups and observations:
 ##                      Yield Weight
@@ -649,18 +644,18 @@ ans6 &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="kw"
            , <span class="dt">rcov=</span>~<span class="kw">vs</span>(units)
            , <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -166.081   17:35:37      1           0
-##     2      -147.588   17:35:37      1           0
-##     3      -137.701   17:35:37      1           0
-##     4      -136.239   17:35:37      1           0
-##     5      -136.222   17:35:38      2           0
-##     6      -136.222   17:35:38      2           0</code></pre>
+##     1      -145.279   23:57:56      0           0
+##     2      -138.353   23:57:57      1           0
+##     3      -136.403   23:57:57      1           0
+##     4      -136.224   23:57:57      1           0
+##     5      -136.222   23:57:57      1           0
+##     6      -136.222   23:57:57      1           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(mRR2)$varcomp</code></pre></div>
 <pre><code>##                         VarComp VarCompSE   Zratio Constraint
-## leg0:SUBJECT.Y-Y      2.5783203 0.6717074 3.838458   Positive
-## leg1:leg0:SUBJECT.Y-Y 0.4765587 0.2395195 1.989645   Unconstr
-## leg1:SUBJECT.Y-Y      0.3497639 0.2183367 1.601947   Positive
-## u:units.Y-Y           2.6911840 0.3824650 7.036420   Positive</code></pre>
+## leg0:SUBJECT.Y-Y      2.5782969 0.6717242 3.838326   Positive
+## leg1:leg0:SUBJECT.Y-Y 0.4765431 0.2394975 1.989763   Unconstr
+## leg1:SUBJECT.Y-Y      0.3497299 0.2183229 1.601893   Positive
+## u:units.Y-Y           2.6912226 0.3825197 7.035513   Positive</code></pre>
 <p>Here, a numeric covariate X is used to explain the trajectory of the SUBJECT’s and combined with an unstructured covariance matrix. The details can be found in the theory.</p>
 </div>
 <div id="gwas-models" class="section level2">
@@ -693,19 +688,19 @@ A &lt;-<span class="st"> </span><span class="kw">A.mat</span>(GT) <span class="c
              <span class="dt">data=</span>DT,
              <span class="dt">M=</span>GT, <span class="dt">gTerm =</span> <span class="st">&quot;u:id&quot;</span>)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -147.849   17:35:40      1           0
-##     2      -133.84   17:35:40      1           0
-##     3      -117.12   17:35:41      2           0
-##     4      -108.621   17:35:41      2           1
-##     5      -108.14   17:35:41      2           1
-##     6      -108.121   17:35:42      3           1
-##     7      -108.12   17:35:42      3           1
+##     1      -143.207   23:57:59      0           0
+##     2      -117.977   23:57:59      0           0
+##     3      -109.877   23:58:0      1           1
+##     4      -108.178   23:58:0      1           1
+##     5      -108.123   23:58:1      2           1
+##     6      -108.12   23:58:1      2           1
+##     7      -108.12   23:58:1      2           1
 ## Performing GWAS evaluation</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ms &lt;-<span class="st"> </span><span class="kw">as.data.frame</span>(<span class="kw">t</span>(mix1$scores))
 ms$Locus &lt;-<span class="st"> </span><span class="kw">rownames</span>(ms)
 MP2 &lt;-<span class="st"> </span><span class="kw">merge</span>(MP,ms,<span class="dt">by=</span><span class="st">&quot;Locus&quot;</span>,<span class="dt">all.x =</span> <span class="ot">TRUE</span>);
 <span class="kw">manhattan</span>(MP2, <span class="dt">pch=</span><span class="dv">20</span>,<span class="dt">cex=</span>.<span class="dv">5</span>, <span class="dt">PVCN =</span> <span class="st">&quot;color score&quot;</span>)</code></pre></div>
-<p><img src="data:image/png;base64,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" alt /><!-- --></p>
+<p><img src="data:image/png;base64,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BBIAASWgBHjIeouKQKwioAQUq09G66UIJAACSkAJ8JD1FhWBWEVACShWn4zWSxFIAASUgBLgIestKgKxioASUKw+Ga2XIpAACCgBJcBD1ltUBGIVASWgWH0yWi9FIAEQUAJKgIest6gIxCoCSkCx+mS0XopAAiCgBJQAD1lvURGIVQSUgGL1yWi9FIEEQEAJKAEest6iIhCrCCgBxeqT0XopAgmAgBJQAjxkvUVFIFYRUALKgSeDNdPlvvvuk65du8qTTz4pDBU6e/Zs+fbbbzMtbdCgQYI1xzNNE3wyO2UNHjxYevToIT/++GNwdhn2GXb1pZdesvfSu3dv2bBhgw0p++qrr2ZI6xwYM2aMdOvWzf59//33zuGwv9GWsXz5crnuuut8f1nhGrbgoBPR1sO5nPV5++237S7z6Nu3r9x8882yYMECJ4n+hkFACSgMMCdy+Pbbb5cuXbrI0KFDJTU1VYYMGSLbtm2TNWvWhM2WDbpfv35CQolGoi1r3rx5lkTgmzppAAALl0lEQVTef/99eeGFF7IsasCAATZmMu/lpptukscee0wYOzqzxjVq1CjhdZ988ol07NjxpJfBeMyffvqp/WPM6GhiUmdWmezcK2NiX3nllcI40ZQRI0ZI0aJF5cUXX5Q+ffpkVpyeIwJgbJWTiAACzptOnTr5ckxLSzOrV6820DbscTRgc/XVV9vzl112mcHLa9CYzfDhw83jjz9uQBC+a7PayE5ZCI5u0GjNxIkTzaWXXppVEaZNmzbG6/X60iFovQGZGgRYN88//7zp0KGD2bJli3njjTfMNddcY15//XXTvn17M3DgQAMCMgcOHPBdG24j0jLuvPNOc/3115uRI0farEaPHm2gbYTLNurj2anHlClTzPTp002vXr1seffff7+ZMWOG3T7nnHMCsIu6QglwgWpAJ/k7tHnzZildurQv16SkJKlSpYrdb9mypfTv318KFCggaLSydetWAfFI3bp17VfU4/H4rotkIztlUVtgOVylgatr7N+/P9Oi2H30r1e1atVs+qpVq8pTTz0lICCZOXOmzad79+7ywAMPWO2P2hI1JXb3spJIy+D9vvbaa3L55ZfbLNntYVf3ZEl26tGqVSspV66crwrUdKn1UnicGppKeASUgMJjk60zbJi04zhdqcWLF/tUcWfplyJFili7kD9RZaew7JTF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" alt /><!-- --></p>
 <p>Be aware that the marker matrix M has to be imputed (no missing data allowed) and make sure that the number of rows in the M matrix is equivalent to the levels of the gTerm specified (i.e. if the gTerm is “id” and has 300 levels or in other words 300 individuals, then M has dimensions 300 x p, being p the number of markers).</p>
 </div>
 <div id="including-special-functions" class="section level2">
@@ -752,28 +747,28 @@ MP2 &lt;-<span class="st"> </span><span class="kw">merge</span>(MP,ms,<span clas
               <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">vs</span>(<span class="kw">ds</span>(Env),units),
               <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -24.4279   17:36:6      0           0
-##     2      -19.9461   17:36:6      0           0
-##     3      -18.511   17:36:6      0           0
-##     4      -18.3462   17:36:6      0           0
-##     5      -18.3431   17:36:6      0           0
-##     6      -18.343   17:36:6      0           0</code></pre>
+##     1      -42.26   23:58:22      1           0
+##     2      -25.3744   23:58:22      1           0
+##     3      -19.1877   23:58:22      1           0
+##     4      -18.3538   23:58:22      1           0
+##     5      -18.3432   23:58:22      1           0
+##     6      -18.343   23:58:22      1           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans2)</code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
 ## **********************  sommer 3.7  ********************** 
 ## ============================================================
 ##          logLik      AIC      BIC Method Converge
-## Value -18.34307 42.68598 52.34705     NR     TRUE
+## Value -18.34316 42.68598 52.34705     NR     TRUE
 ## ============================================================
 ## Variance-Covariance components:
 ##                           VarComp VarCompSE Zratio Constraint
-## CA.2011:Name.Yield-Yield   17.214    6.1572  2.796   Positive
-## CA.2012:Name.Yield-Yield    4.598    1.8373  2.503   Positive
-## CA.2013:Name.Yield-Yield    8.790    2.5465  3.452   Positive
+## CA.2011:Name.Yield-Yield   17.214    6.1570  2.796   Positive
+## CA.2012:Name.Yield-Yield    4.597    1.8361  2.503   Positive
+## CA.2013:Name.Yield-Yield    8.790    2.5463  3.452   Positive
 ## CA.2011:units.Yield-Yield   4.954    1.5284  3.241   Positive
-## CA.2012:units.Yield-Yield   5.662    1.2974  4.364   Positive
-## CA.2013:units.Yield-Yield   2.557    0.6392  4.000   Positive
+## CA.2012:units.Yield-Yield   5.663    1.2984  4.362   Positive
+## CA.2013:units.Yield-Yield   2.557    0.6393  4.000   Positive
 ## ============================================================
 ## Fixed effects:
 ##   Trait      Effect Estimate Std.Error t.value
@@ -803,35 +798,35 @@ MP2 &lt;-<span class="st"> </span><span class="kw">merge</span>(MP,ms,<span clas
               <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">vs</span>(<span class="kw">ds</span>(Env),units, <span class="dt">Gtc=</span><span class="kw">diag</span>(<span class="dv">2</span>)),
               <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      73.0365   17:36:7      1           0
-##     2      18.4838   17:36:8      2           0
-##     3      68.5226   17:36:9      3           0
-##     4      91.8798   17:36:10      4           0
-##     5      92.4904   17:36:11      5           0
-##     6      92.4963   17:36:12      6           0
-##     7      92.4963   17:36:13      7           0</code></pre>
+##     1      -62.7426   23:58:23      1           0
+##     2      26.0621   23:58:24      2           0
+##     3      76.3155   23:58:24      2           0
+##     4      92.1779   23:58:26      4           0
+##     5      92.4933   23:58:26      4           0
+##     6      92.4963   23:58:27      5           0
+##     7      92.4963   23:58:28      6           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans2)</code></pre></div>
 <pre><code>## =============================================================
 ##           Multivariate Linear Mixed Model fit by REML          
 ## **********************  sommer 3.7  ********************** 
 ## =============================================================
-##         logLik       AIC       BIC Method Converge
-## Value 92.49628 -172.9927 -149.5116     NR     TRUE
+##        logLik       AIC       BIC Method Converge
+## Value 92.4963 -172.9927 -149.5116     NR     TRUE
 ## =============================================================
 ## Variance-Covariance components:
 ##                             VarComp VarCompSE Zratio Constraint
-## CA.2011:Name.Yield-Yield    17.2100   6.12625  2.809   Positive
-## CA.2011:Name.Yield-Weight    4.1997   1.30600  3.216   Unconstr
+## CA.2011:Name.Yield-Yield    17.2101   6.12630  2.809   Positive
+## CA.2011:Name.Yield-Weight    4.1997   1.30601  3.216   Unconstr
 ## CA.2011:Name.Weight-Weight   0.7979   0.28585  2.791   Positive
-## CA.2012:Name.Yield-Yield     4.9115   1.87432  2.620   Positive
-## CA.2012:Name.Yield-Weight    1.5623   0.36982  4.224   Unconstr
+## CA.2012:Name.Yield-Yield     4.9114   1.87421  2.620   Positive
+## CA.2012:Name.Yield-Weight    1.5623   0.36980  4.225   Unconstr
 ## CA.2012:Name.Weight-Weight   0.2031   0.08881  2.286   Positive
-## CA.2013:Name.Yield-Yield     8.7891   2.53797  3.463   Positive
-## CA.2013:Name.Yield-Weight    2.3723   0.60099  3.947   Unconstr
+## CA.2013:Name.Yield-Yield     8.7891   2.53798  3.463   Positive
+## CA.2013:Name.Yield-Weight    2.3723   0.60100  3.947   Unconstr
 ## CA.2013:Name.Weight-Weight   0.5259   0.14763  3.562   Positive
-## CA.2011:units.Yield-Yield    4.8687   1.49431  3.258   Positive
+## CA.2011:units.Yield-Yield    4.8687   1.49433  3.258   Positive
 ## CA.2011:units.Weight-Weight  0.2363   0.07249  3.259   Positive
-## CA.2012:units.Yield-Yield    5.4931   1.25622  4.373   Positive
+## CA.2012:units.Yield-Yield    5.4932   1.25629  4.373   Positive
 ## CA.2012:units.Weight-Weight  0.3031   0.06925  4.377   Positive
 ## CA.2013:units.Yield-Yield    2.5280   0.62975  4.014   Positive
 ## CA.2013:units.Weight-Weight  0.1209   0.03014  4.010   Positive
@@ -869,14 +864,14 @@ mix1 &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield~<span clas
               <span class="dt">rcov=</span>~units,
               <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -294.169   17:36:15      2           0
-##     2      -240.607   17:36:15      2           0
-##     3      -202.248   17:36:15      2           0
-##     4      -180.448   17:36:16      3           0
-##     5      -176.432   17:36:16      3           0
-##     6      -176.212   17:36:16      3           0
-##     7      -176.207   17:36:17      4           0
-##     8      -176.207   17:36:17      4           0</code></pre>
+##     1      -286.365   23:58:29      1           0
+##     2      -236.78   23:58:30      2           0
+##     3      -200.635   23:58:30      2           0
+##     4      -180.045   23:58:30      2           0
+##     5      -176.4   23:58:31      3           0
+##     6      -176.211   23:58:31      3           0
+##     7      -176.207   23:58:31      3           0
+##     8      -176.207   23:58:31      3           0</code></pre>
 <p>the matrix GT is provided as a random effect by encapsulating the matrix in a list and provided in the <code>vs()</code> function.</p>
 </div>
 <div id="the-overlay-function" class="section level2">
@@ -900,11 +895,11 @@ modh &lt;-<span class="st"> </span><span class="kw">mmer</span>(sugar~<span clas
              +<span class="st"> </span>genof,
              <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -7.04379   17:36:30      0           0
-##     2      -6.09505   17:36:30      0           0
-##     3      -5.71831   17:36:30      0           0
-##     4      -5.67487   17:36:30      0           0
-##     5      -5.67441   17:36:30      0           0</code></pre>
+##     1      -10.425   23:58:41      0           0
+##     2      -6.487   23:58:41      0           0
+##     3      -5.732   23:58:41      0           0
+##     4      -5.67494   23:58:41      0           0
+##     5      -5.67441   23:58:41      0           0</code></pre>
 <p>here the femalef and malef random effects are overlayed becoming a single random effect that has the same variance component.</p>
 </div>
 <div id="the-spl2d-function-using-the-2-dimensional-spline" class="section level2">
@@ -923,33 +918,30 @@ mix &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield~<span class
             <span class="dt">rcov=</span>~<span class="kw">vs</span>(units),
             <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -189.212   17:36:32      1           0
-##     2      -168.339   17:36:32      1           0
-##     3      -154.84   17:36:33      2           0
-##     4      -151.445   17:36:34      3           0
-##     5      -151.225   17:36:34      3           0
-##     6      -151.203   17:36:35      4           0
-##     7      -151.201   17:36:36      5           0
-##     8      -151.201   17:36:37      6           0</code></pre>
+##     1      -154.198   23:58:42      0           0
+##     2      -152.064   23:58:43      1           0
+##     3      -151.265   23:58:43      1           0
+##     4      -151.202   23:58:43      1           0
+##     5      -151.201   23:58:44      2           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(mix)</code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
 ## **********************  sommer 3.7  ********************** 
 ## ============================================================
 ##          logLik      AIC      BIC Method Converge
-## Value -151.2012 304.4021 308.2937     NR     TRUE
+## Value -151.2016 304.4021 308.2938     NR     TRUE
 ## ============================================================
 ## Variance-Covariance components:
 ##                     VarComp VarCompSE Zratio Constraint
-## u:id.Yield-Yield      783.3     319.2 2.4540   Positive
-## u:Rowf.Yield-Yield    814.9     391.0 2.0840   Positive
-## u:Colf.Yield-Yield    182.2     129.6 1.4056   Positive
-## u:Row.Yield-Yield     513.4     694.4 0.7393   Positive
-## u:units.Yield-Yield  2922.7     294.1 9.9365   Positive
+## u:id.Yield-Yield      783.4     319.3 2.4536   Positive
+## u:Rowf.Yield-Yield    814.7     390.5 2.0863   Positive
+## u:Colf.Yield-Yield    182.2     129.7 1.4053   Positive
+## u:Row.Yield-Yield     513.6     694.7 0.7393   Positive
+## u:units.Yield-Yield  2922.6     294.1 9.9368   Positive
 ## ============================================================
 ## Fixed effects:
 ##   Trait      Effect Estimate Std.Error t.value
-## 1 Yield (Intercept)    132.1     8.792   15.03
+## 1 Yield (Intercept)    132.1     8.791   15.03
 ## ============================================================
 ## Groups and observations:
 ##        Yield
@@ -1001,34 +993,34 @@ ansf &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="kw"
              <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">vs</span>(<span class="kw">ds</span>(Env),units),
              <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      33.8266   17:36:43      4           0
-##     2      102.773   17:36:46      7           0
-##     3      143.579   17:36:50      11           0
-##     4      156.074   17:36:52      13           0
-##     5      158.023   17:36:54      15           0
-##     6      158.868   17:36:56      17           0
-##     7      159.257   17:36:57      18           0
-##     8      159.432   17:36:59      20           0
-##     9      159.51   17:37:0      21           0
-##     10      159.545   17:37:2      23           0
-##     11      159.561   17:37:3      24           0
-##     12      159.567   17:37:5      26           0
-##     13      159.57   17:37:6      27           0
-##     14      159.572   17:37:8      29           0
-##     15      159.572   17:37:9      30           0</code></pre>
+##     1      -15.613   23:58:45      1           0
+##     2      96.0781   23:58:46      2           0
+##     3      146.282   23:58:47      3           0
+##     4      156.447   23:58:48      4           0
+##     5      158.156   23:58:49      5           0
+##     6      158.93   23:58:50      6           0
+##     7      159.285   23:58:51      7           0
+##     8      159.445   23:58:52      8           0
+##     9      159.516   23:58:53      9           0
+##     10      159.548   23:58:54      10           0
+##     11      159.562   23:58:55      11           0
+##     12      159.568   23:58:56      12           0
+##     13      159.571   23:58:57      13           0
+##     14      159.572   23:58:58      14           0
+##     15      159.572   23:58:59      15           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ansf)</code></pre></div>
 <pre><code>## =============================================================
 ##           Multivariate Linear Mixed Model fit by REML          
 ## **********************  sommer 3.7  ********************** 
 ## =============================================================
 ##         logLik       AIC       BIC Method Converge
-## Value 159.5718 -311.1448 -295.4908     NR     TRUE
+## Value 159.5719 -311.1449 -295.4909     NR     TRUE
 ## =============================================================
 ## Variance-Covariance components:
 ##                             VarComp VarCompSE Zratio Constraint
-## CA.2011:Name.Yield-Yield    51.6351  16.40155  3.148   Positive
-## CA.2011:Name.Yield-Weight   11.0588   3.50866  3.152   Unconstr
-## CA.2011:Name.Weight-Weight   2.3662   0.75361  3.140   Positive
+## CA.2011:Name.Yield-Yield    51.6351  16.40157  3.148   Positive
+## CA.2011:Name.Yield-Weight   11.0591   3.50882  3.152   Unconstr
+## CA.2011:Name.Weight-Weight   2.3664   0.75367  3.140   Positive
 ## CA.2012:Name.Yield-Yield     4.5017   1.81385  2.482   Positive
 ## CA.2012:Name.Yield-Weight    0.8621   0.38456  2.242   Unconstr
 ## CA.2012:Name.Weight-Weight   0.1824   0.08619  2.117   Positive
@@ -1048,9 +1040,9 @@ ansf &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="kw"
 ## Fixed effects:
 ##    Trait      Effect  Estimate Std.Error t.value
 ## 1  Yield (Intercept) 10.678099   0.33613 31.7678
-## 2 Weight (Intercept) -0.233710   0.07736 -3.0209
-## 3 Weight  EnvCA.2012  0.017250   0.04188  0.4118
-## 4 Weight  EnvCA.2013 -0.008683   0.04116 -0.2110
+## 2 Weight (Intercept) -0.233747   0.07737 -3.0213
+## 3 Weight  EnvCA.2012  0.017286   0.04188  0.4127
+## 4 Weight  EnvCA.2013 -0.008647   0.04116 -0.2101
 ## =============================================================
 ## Groups and observations:
 ##              Yield Weight
@@ -1066,34 +1058,33 @@ ans.uns &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="
              <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">vs</span>(units,<span class="dt">Gtc=</span><span class="kw">unsm</span>(<span class="dv">2</span>)),
              <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      52.3292   17:37:10      1           0
-##     2      107.273   17:37:10      1           0
-##     3      142.651   17:37:11      2           0
-##     4      154.389   17:37:11      2           0
-##     5      154.654   17:37:12      3           0
-##     6      154.655   17:37:12      3           0
-##     7      154.655   17:37:13      4           0</code></pre>
+##     1      56.6189   23:59:0      1           0
+##     2      117.266   23:59:0      1           0
+##     3      149.82   23:59:1      2           0
+##     4      154.605   23:59:1      2           0
+##     5      154.655   23:59:2      3           0
+##     6      154.655   23:59:2      3           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans.uns)</code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
 ## **********************  sommer 3.7  ********************** 
 ## ============================================================
 ##         logLik       AIC       BIC Method Converge
-## Value 154.6554 -297.3108 -273.8298     NR     TRUE
+## Value 154.6549 -297.3108 -273.8298     NR     TRUE
 ## ============================================================
 ## Variance-Covariance components:
 ##                       VarComp VarCompSE Zratio Constraint
-## u:Name.Yield-Yield     4.8593   1.52191  3.193   Positive
-## u:Name.Yield-Weight    1.1432   0.34858  3.280   Unconstr
-## u:Name.Weight-Weight   0.2737   0.08164  3.352   Positive
-## u:units.Yield-Yield    8.1017   0.96030  8.437   Positive
-## u:units.Yield-Weight   1.6523   0.20196  8.181   Unconstr
-## u:units.Weight-Weight  0.3792   0.04497  8.432   Positive
+## u:Name.Yield-Yield     4.8592   1.52160  3.193   Positive
+## u:Name.Yield-Weight    1.1432   0.34851  3.280   Unconstr
+## u:Name.Weight-Weight   0.2737   0.08163  3.353   Positive
+## u:units.Yield-Yield    8.1015   0.96013  8.438   Positive
+## u:units.Yield-Weight   1.6523   0.20192  8.183   Unconstr
+## u:units.Weight-Weight  0.3792   0.04496  8.434   Positive
 ## ============================================================
 ## Fixed effects:
 ##    Trait      Effect Estimate Std.Error t.value
 ## 1  Yield (Intercept)  16.3396    0.5824  28.058
-## 2 Weight (Intercept)   0.9641    0.1313   7.345
+## 2 Weight (Intercept)   0.9641    0.1312   7.345
 ## 3  Yield  EnvCA.2012  -5.6429    0.5712  -9.878
 ## 4 Weight  EnvCA.2012  -1.1739    0.1245  -9.429
 ## 5  Yield  EnvCA.2013  -6.1768    0.6064 -10.186
@@ -1109,25 +1100,24 @@ ans.uns &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="
              <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">vs</span>(units,<span class="dt">Gtc=</span><span class="kw">diag</span>(<span class="dv">2</span>)),
              <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      52.3292   17:37:14      1           0
-##     2      -73.3297   17:37:14      1           0
-##     3      -65.0646   17:37:14      1           0
-##     4      -63.8193   17:37:15      2           0
-##     5      -63.815   17:37:15      2           0
-##     6      -63.815   17:37:16      3           0</code></pre>
+##     1      -74.2545   23:59:3      1           0
+##     2      -65.3278   23:59:3      1           0
+##     3      -63.8888   23:59:3      1           0
+##     4      -63.8151   23:59:4      2           0
+##     5      -63.815   23:59:4      2           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans.diag)</code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
 ## **********************  sommer 3.7  ********************** 
 ## ============================================================
 ##          logLik      AIC      BIC Method Converge
-## Value -63.81504 139.6301 163.1111     NR     TRUE
+## Value -63.81513 139.6301 163.1111     NR     TRUE
 ## ============================================================
 ## Variance-Covariance components:
 ##                       VarComp VarCompSE Zratio Constraint
-## u:Name.Yield-Yield     4.8559   1.52342  3.188   Positive
-## u:Name.Weight-Weight   0.2733   0.08159  3.350   Positive
-## u:units.Yield-Yield    8.1086   0.96146  8.434   Positive
+## u:Name.Yield-Yield     4.8559   1.52330  3.188   Positive
+## u:Name.Weight-Weight   0.2733   0.08158  3.351   Positive
+## u:units.Yield-Yield    8.1086   0.96145  8.434   Positive
 ## u:units.Weight-Weight  0.3793   0.04499  8.432   Positive
 ## ============================================================
 ## Fixed effects:

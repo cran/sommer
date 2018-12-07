@@ -82,7 +82,7 @@ Keep in mind that sommer uses direct inversion (DI) algorithm which can be very 
 \section{Models Enabled}{
 
 
-The core of the package is the \code{\link{mmer}} (formula-based) function which solve the mixed model equations. The functions are an interface to call the `NR` Direct-Inversion Newton-Raphson, `AI` Direct-Inversion Average Information (Tunnicliffe 1989; Gilmour et al. 1995; Lee et al. 2016) or the `EMMA` efficient mixed model association algorithm (Kang et al. 2008). Since version 2.0 sommer can handle multivariate models. Following Maier et al. (2015), the multivariate (and by extension the univariate) mixed model implemented has the form:
+The core of the package is the \code{\link{mmer}} (formula-based) function which solve the mixed model equations. The functions are an interface to call the `NR` Direct-Inversion Newton-Raphson, `AI` Direct-Inversion Average Information (Tunnicliffe 1989; Gilmour et al. 1995; Lee et al. 2016). Since version 2.0 sommer can handle multivariate models. Following Maier et al. (2015), the multivariate (and by extension the univariate) mixed model implemented has the form:
 
 
 
@@ -123,8 +123,6 @@ where || is the determinant of a matrix. And the REML estimates are updated usin
 
 Where, \eqn{\theta} is the vector of variance components for random effects and covariance components among traits, H^{-1} is the inverse of the Hessian matrix of second derivatives for the kth cycle, dL/d\eqn{\sigma^2_i} is the vector of first derivatives of the likelihood with respect to the variance-covariance components. The Eigen decomposition of the relationship matrix proposed by Lee and Van Der Werf (2016) was included in the Newton-Raphson algorithm to improve time efficiency. Additionally, the popular pin function to estimate standard errors for linear combinations of variance components (i.e. heritabilities and genetic correlations) was added to the package as well.
 
-The EMMA method is the one proposed by Kang et al. (2008). Please refer to the canonical paper for further details.
-
 
 }
 
@@ -142,7 +140,7 @@ The variable \eqn{\tau} models the additive SNP effect as a fixed effect.  The r
   
   When principal components are included (P+K model), the loadings are determined from an eigenvalue decomposition of the K matrix and are used in the fixed effect part.
 
-The argument "P3D" introduced by Zhang et al. (2010) can be used with the P3D argument.  When P3D=FALSE, this function is equivalent to EMMA/AI/NR with REML where the variance components are estimated for each SNP or marker tested (Kang et al. 2008).  When P3D=TRUE, it is equivalent to EMMAX//NR (Kang et al. 2010) where the assumption is that variance components for all SNP/markers are the same and therefore the variance components are estimated only once (and markers are tested in a WLS framework being the the weight matrix (M) the inverse of the phenotypic variance matrix (V)).  Therefore, P3D=TRUE option is faster but can underestimate significance compared to P3D=FALSE.
+The argument "P3D" introduced by Zhang et al. (2010) can be used with the P3D argument.  When P3D=FALSE, this function is equivalent to AI/NR with REML where the variance components are estimated for each SNP or marker tested (Kang et al. 2008).  When P3D=TRUE, it is equivalent to NR (Kang et al. 2010) where the assumption is that variance components for all SNP/markers are the same and therefore the variance components are estimated only once (and markers are tested in a WLS framework being the the weight matrix (M) the inverse of the phenotypic variance matrix (V)).  Therefore, P3D=TRUE option is faster but can underestimate significance compared to P3D=FALSE.
 
 Multivariate GWAS are based in Covarrubias-Pazaran et al. (2018, In preparation), which adjusts betas for all response variables and then does the regular GWAS with such adjusted betas or marker effects.
 

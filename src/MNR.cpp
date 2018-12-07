@@ -271,7 +271,7 @@ Rcpp::List MNR(const arma::mat & Y, const Rcpp::List & X,
   // ****************************************************
   arma::mat base_var = cov(Y); // original variance
   arma::mat sc_var = cov(Ys); // scaled variance
-  arma::uword rankX = Xm.n_rows - rank(Xm); // rank
+  unsigned int rankX = Xm.n_rows - rank(Xm); // rank arma::uword
   // sigma
   arma::cube sigma(n_traits,n_traits,n_re);
   arma::cube sigma_scaled(n_traits,n_traits,n_re);
@@ -347,7 +347,7 @@ Rcpp::List MNR(const arma::mat & Y, const Rcpp::List & X,
   arma::vec seqrankX = seqCpp(0,rankX-1); // will be used to keep only the eigen values for 1:rankX
   arma::vec seqkk = seqCpp(0,kk-1);
   arma::vec popo = arma::vec(rankX, arma::fill::zeros);
-  for(int i=0; i < rankX; i++){popo(i) = 1;}
+  for(unsigned int i=0; i < rankX; i++){popo(i) = 1;}
   arma::mat A(kk,kk,arma::fill::zeros);
   arma::mat A_svd;
   arma::vec eigval2; // will be used for the decomposition of P, within the algorithm
@@ -629,7 +629,8 @@ Rcpp::List MNR(const arma::mat & Y, const Rcpp::List & X,
   arma::mat FISH = (sigma_cov % (dd*dd.t())) / (ee*ee.t());
   // recalculate V and P with original sigma values
   double AIC = (-2 * llik) + (2 * Xm.n_cols);
-  double BIC = (-2 * llik) + (log(Ym.n_elem) * Xm.n_cols);
+  unsigned int ny = Ym.n_elem;
+  double BIC = (-2 * llik) + (log(ny) * Xm.n_cols);
   // monitor
   sigma_store.each_col() %= dd;
   sigma_store.each_col() /= ee;

@@ -570,14 +570,28 @@ vs <- function(..., Gu=NULL, Gt=NULL, Gtc=NULL){
       Gtc <- mm
     }
   }
+  
   if(is.null(Gt)){
     # Gt[lower.tri(Gt)] <- 0
     if(!is.null(Gtc)){
       nt <- ncol(Gtc)
       if(is.residual){
-        mm <- ( matrix(1,nt,nt) * 0 + 1) * 0.04977728 + diag(0.02488864, nt,nt)
+        # mm <- ( matrix(1,nt,nt) * 0 + 1) * 0.04977728 + diag(0.02488864, nt,nt)
+        bnmm <- matrix(0.1,nt,nt)+diag(.05,nt)
+        # print(Gtc)
+        com <- (Gtc/Gtc); com[which(is.nan(com),arr.ind = TRUE)] <- 0
+        if((ncol(bnmm) == ncol(com)) & (nrow(bnmm) == nrow(com)) ){ # random
+          mm <- (bnmm*5)*com
+        }else{mm <- bnmm}#fixed
       }else{
-        mm <- (matrix(1,nt,nt) * 0 + 1) * 0.1 + diag(0.05, nt)
+        bnmm <- matrix(0.1,nt,nt)+diag(.05,nt)
+        # print(Gtc)
+        com <- (Gtc/Gtc); com[which(is.nan(com),arr.ind = TRUE)] <- 0
+        if((ncol(bnmm) == ncol(com)) & (nrow(bnmm) == nrow(com)) ){ # random
+          mm <- bnmm*com
+        }else{mm <- bnmm}#fixed
+        
+        # mm <- (matrix(1,nt,nt) * 0 + 1) * 0.1 + diag(0.05, nt)
       }
       Gt <- mm
     }
@@ -914,6 +928,7 @@ spl2D <-  function(x.coord,y.coord,at,at.levels, type="PSANOVA", nseg = c(10,10)
   
   names(multires) <- gsub(" ",".",names(multires))
   names(multires) <- gsub("#",".",names(multires))
+  names(multires) <- gsub("-",".",names(multires))
   names(multires) <- gsub("/",".",names(multires))
   names(multires) <- gsub("%",".",names(multires))
   names(multires) <- gsub("\\(",".",names(multires))
@@ -957,9 +972,9 @@ spl2D <-  function(x.coord,y.coord,at,at.levels, type="PSANOVA", nseg = c(10,10)
   # glist: is the argument to provide in group in asreml to indicate where each grouping starts and ends
   # funny: formula to add to your random formula
   dataflist <- lapply(dataflist,as.matrix)
-  fin <-dataflist#list(newdat=dataflist, funny=funny) # 
+  fin <- Reduce("+",dataflist)
+  # fin <-dataflist#list(newdat=dataflist, funny=funny) # 
   return(fin)
 }
-
 
 

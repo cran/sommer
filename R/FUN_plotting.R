@@ -608,9 +608,28 @@ manhattan <- function(map, col=NULL, fdr.level=0.05, show.fdr=TRUE, PVCN=NULL, y
   #legend("topleft", bty="n", legend=c("Markers selected"), cex=.6, lty=3, lwd=2, col="red")
   #marker <- as.character(map$Locus[marker])
 }
+
 spatPlots <- function(object, by=NULL, colfunc=NULL,row="ROW",range="RANGE", wire=FALSE){
   
   dat <- object$data
+  
+  if(is.null(terms)){
+    
+  }else{
+    if(!is.null(by)){
+      levs <- unique(na.omit(dat[,by]))
+      row2 <- paste(levs,c(row),sep=":")
+      range2 <- paste(levs,c(range),sep=":")
+    }else{
+      row2 <- paste("u",c(row),sep=":")
+      range2 <- paste("u",c(range),sep=":")
+    }
+  }
+  
+  
+  available <- names(object$sigma)
+  tolook <- sort(unique(c(grep(row,available),grep(range,available))))
+  pp <- predict(object, RtermsToForce = tolook)
   
   if(is.null(colfunc)){
     colfunc <- colorRampPalette(c("gold","springgreen","steelblue4"))

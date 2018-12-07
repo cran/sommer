@@ -53,7 +53,7 @@ mmer <- function(fixed, random, rcov, data, weights,
   if (class(mfna) == "try-error") {
     stop("Please provide the 'data' argument for your specified variables.\nYou may be specifying some variables in your model not present in your dataset.", call. = FALSE)
   }
-  mfna <- eval(mfna, parent.frame())
+  mfna <- eval(mfna, data, parent.frame())
   yvar <- as.matrix(model.response(mfna))
   nt <- ncol(yvar)
   if(nt==1){colnames(yvar) <- response}
@@ -70,6 +70,8 @@ mmer <- function(fixed, random, rcov, data, weights,
   ges <- list()
   gesI <- list()
   re_namel1 <- list()
+  # bn=0.1
+  bnmm <- matrix(0.1,nt,nt)+diag(.05,nt)
   # print(str(data))
   # print(str(model.matrix(~id-1,data)))
   # print(str(as(model.matrix(~id-1,data), Class = "sparseMatrix")))
@@ -78,7 +80,7 @@ mmer <- function(fixed, random, rcov, data, weights,
     check2d <- grep("spl2D\\(",rtermss[u])
     if(length(checkvs)>0){ ## if this term is a variance structure
       # print(mm)
-      ff <- eval(parse(text = rtermss[u]),envir = data) 
+      ff <- eval(parse(text = rtermss[u]),data, parent.frame())# envir = data) 
       # print(nrow(ff$Z[[1]]))
       # print(length(provdat$good))
       if(nrow(ff$Z[[1]]) != length(provdat$good)){
@@ -94,7 +96,8 @@ mmer <- function(fixed, random, rcov, data, weights,
         mml <- list()
         for(k in 1:length(ff$Z)){ ## the diagonal of the matrix should be 1 is vc and 2 if cov
           if(ff$typevc[k] == 2){div=2}else{div=1}## divisor
-          mml[[k]] <- (( matrix(1,nt,nt) * 0 + 1) * 0.1 + diag(0.05, nt))/div 
+          # mml[[k]] <- (( matrix(1,nt,nt) * 0 + 1) * 0.1 + diag(0.05, nt))/div 
+          mml[[k]] <- bnmm/div
         }
         ges[[u]] <- mml
       }else{ges[[u]] <- rep(list(ff$Gt),length(ff$Z))}
@@ -114,25 +117,25 @@ mmer <- function(fixed, random, rcov, data, weights,
       # print(ff$Gtc)
       # print(gesI[[u]])
     }else{ ## if is a normal term
-      if(length(check2d) > 0){
-        ff <- eval(parse(text = rtermss[u]),envir = data)  
-        re_namel1[[u]] <- names(ff)
-        zs[[u]] <- ff
-        ks[[u]] <- lapply(ff,function(x){pki <- diag(ncol(x));colnames(pki)<-rownames(pki) <- colnames(x);return(pki)})
-        gepki <- ( matrix(1,nt,nt) * 0 + 1) * 0.1 + diag(0.05, nt)
-        ges[[u]] <- rep(list(gepki),length(ff))
-        mm <- matrix(1,nt,nt); mm[lower.tri(mm)] <- 0; mm[upper.tri(mm)] <- 2
-        gesI[[u]] <- rep(list(mm),length(ff))
-      }else{
+      # if(length(check2d) > 0){
+      #   ff <- eval(parse(text = rtermss[u]),data,parent.frame())# envir = data)  
+      #   re_namel1[[u]] <- names(ff)
+      #   zs[[u]] <- ff
+      #   ks[[u]] <- lapply(ff,function(x){pki <- diag(ncol(x));colnames(pki)<-rownames(pki) <- colnames(x);return(pki)})
+      #   gepki <- ( matrix(1,nt,nt) * 0 + 1) * 0.1 + diag(0.05, nt)
+      #   ges[[u]] <- rep(list(gepki),length(ff))
+      #   mm <- matrix(1,nt,nt); mm[lower.tri(mm)] <- 0; mm[upper.tri(mm)] <- 2
+      #   gesI[[u]] <- rep(list(mm),length(ff))
+      # }else{
         zpp <- model.matrix(as.formula(paste("~",rtermss[u],"-1")), data=data)
         zs[[u]] <- list(zpp)
         nu <- ncol(zpp)
         ks[[u]] <- list(diag(1, nu,nu))
         re_namel1[[u]] <- list(rtermss[u])
-        ges[[u]] <- list(( matrix(1,nt,nt) * 0 + 1) * 0.1 + diag(0.05, nt)) 
+        ges[[u]] <- list(bnmm) 
         mm <- matrix(1,nt,nt); mm[lower.tri(mm)] <- 0; mm[upper.tri(mm)] <- 2
         gesI[[u]] <- list(mm)
-      }
+      # }
     }
   }
   Z <- unlist(zs,recursive=FALSE)
@@ -155,7 +158,7 @@ mmer <- function(fixed, random, rcov, data, weights,
   for(u in 1:length(rcovtermss)){
     checkvs <- grep("vs\\(",rcovtermss[u])
     if(length(checkvs)>0){ ## if this term is a variance structure
-      ff <- eval(parse(text = rcovtermss[u]),envir = data)  
+      ff <- eval(parse(text = rcovtermss[u]),data,parent.frame())# envir = data)  
       # if(nrow(ff$Z) != length(provdat$good)){
         ## if the incidence matrix is different than the size of good very likely the user provided a matrix
         # ff$Z <- ff$Z[provdat$good,provdat$good]
@@ -166,7 +169,8 @@ mmer <- function(fixed, random, rcov, data, weights,
         mml <- list()
         for(k in 1:length(ff$Z)){ ## the diagonal of the matrix should be 1 is vc and 2 if cov
           if(ff$typevc[k] == 2){div=2}else{div=1}## divisor
-          mml[[k]] <- (( matrix(1,nt,nt) * 0 + 1) * 0.04977728 + diag(0.02488864, nt,nt))/div 
+          # mml[[k]] <- (( matrix(1,nt,nt) * 0 + 1) * 0.04977728 + diag(0.02488864, nt,nt))/div 
+          mml[[k]] <- (bnmm/div)*5
         }
         gesr[[u]] <-  mml
       }else{gesr[[u]] <- rep(list(ff$Gt),length(ff$Z))}
@@ -185,7 +189,8 @@ mmer <- function(fixed, random, rcov, data, weights,
       rpp <- model.matrix(as.formula(paste("~",rcovtermss[u],"-1")), data=data)
       rs[[u]] <- list(rpp)
       re_namel2[[u]] <- rcovtermss[u]
-      gesr[[u]] <- list(( matrix(1,nt,nt) * 0 + 1) * 0.04977728 + diag(0.02488864, nt,nt))
+      # gesr[[u]] <- list(( matrix(1,nt,nt) * 0 + 1) * 0.04977728 + diag(0.02488864, nt,nt))
+      gesr[[u]] <- list(bnmm*5)
       mm <- matrix(1,nt,nt); mm[lower.tri(mm)] <- 0; mm[upper.tri(mm)] <- 2
       gesIr[[u]] <- list(mm)
     }
@@ -230,12 +235,32 @@ mmer <- function(fixed, random, rcov, data, weights,
     return(newy)
   })
   
+  # for(i in 1:length(fixedtermss)){
+  #   dotcheck <- grep(":",fixedtermss[i])
+  #   if(length(dotcheck) > 0){
+  #     divided <- strsplit(fixedtermss[i],":")[[1]]
+  #     model.matrix(as.formula(paste("~",fixedtermss[i])), data)
+  #     
+  #   }
+  # }
+  
   if(length(fixedtermss)==1 & fixedtermss[1] == "1"){
     types <- character()
     fixedtermss <- fixedtermss[which(fixedtermss != "1")]
     purefixedtermss <- purefixedtermss[which(purefixedtermss != "1")]
   }else{
-    types <- unlist(lapply(as.data.frame(data[,purefixedtermss]),class))
+    nlf <- length(purefixedtermss)
+    types <- character(length = nlf)
+    for(i in 1:nlf){
+      int0 <- intersect(colnames(data),purefixedtermss[i])
+      if(length(int0) > 0){
+        types[i] <- unlist(lapply(as.data.frame(data[,purefixedtermss[i]]),class))
+      }else{
+        touse0 <- strsplit(purefixedtermss[i],":")[[1]]
+        types[i] <- "interaction"#paste(unlist(lapply(as.data.frame(data[,touse0]),class)),collapse = ":")
+      }
+    }
+    # types <- unlist(lapply(as.data.frame(data[,purefixedtermss]),class))
     names(types) <- purefixedtermss
   }
   
@@ -252,21 +277,20 @@ mmer <- function(fixed, random, rcov, data, weights,
     types <- c("(Intercept)",types)
   }
   
-  
-  # print(head(baseX))
+  qr <- qr(baseX)
+  keepx <- qr$pivot[1:qr$rank]
+  nameskeepx <- colnames(baseX)[keepx]
+  colsdropped <- ncol(baseX) - length(nameskeepx)
+  baseX <- matrix(baseX[, keepx],nrow(yvar),qr$rank)
+  colnames(baseX) <- nameskeepx
+  if(colsdropped > 0){
+    cat(blue(paste("fixed-effect model matrix is rank deficient so dropping",colsdropped,"columns / coefficients\n")))
+  }
   
   for(u in 1:length(fixedtermss)){
     checkvs <- grep("vs\\(",fixedtermss[u])
     if(length(checkvs)>0){ ## if this term is a variance structure
-      # orterm <- gsub(",.*","",expi2(fixedtermss[u]))
-      # print(fixedtermss[u])
-      ffx <- eval(parse(text = fixedtermss[u]),envir = data)
-      # print(ffx$Gtc)
-      # print(str(ffx))
-       # print(head(ff))
-      # xs[[u]] <- list(
-      #   as.matrix(baseX[,which(gsub("(Intercept)","",colnames(baseX)) %in% colnames(ff$Z[[1]]))])
-      # )
+      ffx <- eval(parse(text = fixedtermss[u]),data,parent.frame())# envir = data)
       if(purefixedtermss[u] == "(Intercept)"){
         xpp <- as.matrix(baseX[,"(Intercept)"])
         colnames(xpp) <- "(Intercept)"
@@ -274,9 +298,16 @@ mmer <- function(fixed, random, rcov, data, weights,
         if(types[purefixedtermss[u]] == "numeric"){ #if is numeric just look for the name of the column
           findlevs <- purefixedtermss[u]
           xpp <- as.matrix(baseX[,findlevs]); colnames(xpp) <- purefixedtermss[u]
+        }else if(types[purefixedtermss[u]] == "interaction"){
+          findlevs <- colnames(model.matrix(as.formula(paste("~",purefixedtermss[u],"-1")), data=data))
+          findlevs2 <- which(colnames(baseX) %in% findlevs)
+          xpp <- as.matrix(baseX[, findlevs2])
+          colnames(xpp) <- colnames(baseX)[findlevs2]
         }else{
           findlevs <- paste0( purefixedtermss[u] , unique(as.character(na.omit(data[,purefixedtermss[u]]))) )
-          xpp <- as.matrix(baseX[, which(colnames(baseX) %in% findlevs)])
+          findlevs2 <- which(colnames(baseX) %in% findlevs)
+          xpp <- as.matrix(baseX[, findlevs2])
+          colnames(xpp) <- colnames(baseX)[findlevs2]
         }
       }
       # print(ff$Gtc)
@@ -297,12 +328,21 @@ mmer <- function(fixed, random, rcov, data, weights,
         if(types[purefixedtermss[u]] == "numeric"){ #if is numeric just look for the name of the column
           findlevs <- purefixedtermss[u]
           xpp <- as.matrix(baseX[,findlevs]); colnames(xpp) <- purefixedtermss[u]
+        }else if(types[purefixedtermss[u]] == "interaction"){
+          findlevs <- colnames(model.matrix(as.formula(paste("~",purefixedtermss[u],"-1")), data=data))
+          findlevs2 <- which(colnames(baseX) %in% findlevs)
+          xpp <- as.matrix(baseX[, findlevs2])
+          colnames(xpp) <- colnames(baseX)[findlevs2]
         }else{
           findlevs <- paste0( purefixedtermss[u] , unique(as.character(na.omit(data[,purefixedtermss[u]]))) )
-          xpp <- as.matrix(baseX[, which(colnames(baseX) %in% findlevs)])
+          findlevs2 <- which(colnames(baseX) %in% findlevs)
+          xpp <- as.matrix(baseX[, findlevs2])
+          colnames(xpp) <- colnames(baseX)[findlevs2]
         }
       }
+      # print(findlevs)
       # print(head(xpp))
+      
       xs[[u]] <- list(xpp)
       gesf[[u]] <- list(( matrix(1,nt,nt) * 0 + 1) * 0.1 + diag(0.05, nt)) 
       mm <- diag(1,nt,nt); mm[lower.tri(mm)] <- 0; #mm[upper.tri(mm)] <- 2
@@ -382,8 +422,11 @@ mmer <- function(fixed, random, rcov, data, weights,
     }else{namelist <- list()}
     # print(Gx)
     namesbeta <- lapply(as.list(1:length(X)),function(x){
+      # print(Gx[[x]])
       tt <- colnames(yvar)[as.logical(apply(Gx[[x]],1,sum))]
+      # print(head(X[[x]]))
       ttp <- expand.grid(tt,colnames(X[[x]]))
+      # print(ttp)
       return(ttp)
     })
     # print(namesbeta)
