@@ -609,101 +609,39 @@ manhattan <- function(map, col=NULL, fdr.level=0.05, show.fdr=TRUE, PVCN=NULL, y
   #marker <- as.character(map$Locus[marker])
 }
 
-spatPlots <- function(object, by=NULL, colfunc=NULL,row="ROW",range="RANGE", wire=FALSE){
+spatPlots <- function(object, by=NULL, colfunc=NULL,row="ROW",range="RANGE", wire=FALSE, terms=NULL){
   
-  dat <- object$data
-  
+  nameslist <- lapply(as.list(names(object$U)),function(x){strsplit(x,":")[[1]]})
   if(is.null(terms)){
-    
+    tolook <- 1:length(object$U)
   }else{
-    if(!is.null(by)){
-      levs <- unique(na.omit(dat[,by]))
-      row2 <- paste(levs,c(row),sep=":")
-      range2 <- paste(levs,c(range),sep=":")
-    }else{
-      row2 <- paste("u",c(row),sep=":")
-      range2 <- paste("u",c(range),sep=":")
-    }
+    tolook <- which(unlist(lapply(nameslist,function(x){y <- which(terms%in%x); if(length(y) > 0){return(TRUE)}else{return(FALSE)}})))
+    # tolook <- grep(terms,names(object$U))
   }
-  
-  
-  available <- names(object$sigma)
-  tolook <- sort(unique(c(grep(row,available),grep(range,available))))
   pp <- predict(object, RtermsToForce = tolook)
+  fits <- pp$fitted
+  resp <- colnames(fits)[grep("predicted.value",colnames(fits))]
+  if(is.null(by)){
+    form <- as.formula(paste(resp,"~",row,"*",range))
+  }else{
+    form <- as.formula(paste(resp,"~",row,"*",range,"|",by))
+  }
   
   if(is.null(colfunc)){
     colfunc <- colorRampPalette(c("gold","springgreen","steelblue4"))
   }
-  if(missing(dat)){
-    stop("dat argument needs to be provided.\n",call. = FALSE)
-  }
-  if(missing(object)){
-    stop("asreml object needs to be provided.\n",call. = FALSE)
-  }
-  rr <- which(colnames(dat) %in% c(row,range))
-  if(length(rr) != 2){
-    stop("row and range arguments didn't match column names in your model.\n", call. = FALSE)
-  }
   
-  #object$call
+  maint <- paste(terms,collapse = ",")
   
-  refs <- apply(data.frame(object$random.effs),1,function(x){
-    pp <- strsplit(x,":")[[1]]
-    return(pp[length(pp)])
-  })
-  (refs2 <- unique(refs))
-  ## find which index belong to each random effect
-  index <- numeric()
-  for(u in 1:length(refs2)){
-    v <- which(refs == refs2[u])
-    index[v] <- u
+  if(wire){ # wireframe
+    print(wireframe(form, data=fits,  
+                    aspect=c(61/87,0.4), drape=TRUE,
+                    light.source=c(10,0,10), #=colfunc,
+                    main=maint)
+    )
+  }else{ # levelplot
+    print(levelplot(form, data=fits, main=maint, col.regions = colfunc))
   }
-  ## correct in case if there's 2 dimnesional splines join them
-  v <- grep("_2Dspl",refs)
-  if(length(v)>0){
-    index[v] <- min(index[v])
-    refs[v] <- "spl2D"
-  }
-  refs2 <- unique(refs)
-  ##
-  uindex <- unique(index)
-  
-  fits <- list()
-  for(ui in uindex){ # ui <- uindex[1]
-    we <- which(index==ui)
-    fits[[ui]] <- apply(do.call(cbind,object$Zus[we]),1,sum)
-  }
-  fits[[length(fits)+1]] <- object$res.ordim
-  fits <- as.data.frame(do.call(cbind,fits))
-  refs2 <- gsub("\\(",".",refs2)
-  refs2 <- gsub(")",".",refs2)
-  colnames(fits) <- c(paste("fit",refs2,sep="_"),"residuals")
-  
-  fits <- data.frame(dat,fits)
-  colos <- c(paste("fit",refs2,sep="_"),"residuals")
-  
-  for(u in 1:length(colos)){
-    
-    resp <- colos[u]
-    
-    if(is.null(by)){
-      form <- as.formula(paste(resp,"~",row,"*",range))
-    }else{
-      form <- as.formula(paste(resp,"~",row,"*",range,"|",by))
-    }
-    
-    if(wire){ # wireframe
-      print(wireframe(form, data=fits,  
-                      aspect=c(61/87,0.4), drape=TRUE,
-                      light.source=c(10,0,10), #=colfunc,
-                      main=resp)
-      )
-    }else{ # levelplot
-      print(levelplot(form, data=fits, main=resp, col.regions = colfunc))
-    }
-    
-  }
-  #head(fittedv)
   return(fits)
 }
 transp <- function (col, alpha = 0.5) {

@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2018-12-06" />
+<meta name="date" content="2018-12-08" />
 
 <title>Quick start for the sommer package</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Quick start for the sommer package</h1>
 <h4 class="author"><em>Giovanny Covarrubias-Pazaran</em></h4>
-<h4 class="date"><em>2018-12-06</em></h4>
+<h4 class="date"><em>2018-12-08</em></h4>
 
 
 
@@ -245,12 +245,12 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
               <span class="dt">rcov=</span> ~<span class="st"> </span>units,
               <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -31.2668   23:57:19      0           0
-##     2      -23.2804   23:57:19      0           0
-##     3      -20.4746   23:57:19      0           0
-##     4      -20.1501   23:57:19      0           0
-##     5      -20.1454   23:57:19      0           0
-##     6      -20.1454   23:57:19      0           0</code></pre>
+##     1      -31.2668   23:18:1      0           0
+##     2      -23.2804   23:18:1      0           0
+##     3      -20.4746   23:18:1      0           0
+##     4      -20.1501   23:18:1      0           0
+##     5      -20.1454   23:18:1      0           0
+##     6      -20.1454   23:18:1      0           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans1)</code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
@@ -295,12 +295,12 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
               <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">vs</span>(<span class="kw">ds</span>(Env),units),
               <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -31.2668   23:57:19      0           0
-##     2      -19.8549   23:57:19      0           0
-##     3      -15.9797   23:57:19      0           0
-##     4      -15.4374   23:57:19      0           0
-##     5      -15.43   23:57:19      0           0
-##     6      -15.4298   23:57:19      0           0</code></pre>
+##     1      -31.2668   23:18:1      0           0
+##     2      -19.8549   23:18:1      0           0
+##     3      -15.9797   23:18:1      0           0
+##     4      -15.4374   23:18:1      0           0
+##     5      -15.43   23:18:1      0           0
+##     6      -15.4298   23:18:1      0           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans2)</code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
@@ -352,12 +352,12 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
              <span class="dt">rcov=</span>~<span class="kw">vs</span>(<span class="kw">us</span>(Env),units), 
              <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -37.9059   23:57:20      1           0
-##     2      -17.9745   23:57:20      1           0
-##     3      -12.2427   23:57:20      1           0
-##     4      -11.5121   23:57:20      1           0
-##     5      -11.5001   23:57:20      1           0
-##     6      -11.4997   23:57:20      1           0</code></pre>
+##     1      -37.9059   23:18:2      0           0
+##     2      -17.9745   23:18:2      0           0
+##     3      -12.2427   23:18:2      0           0
+##     4      -11.5121   23:18:2      0           0
+##     5      -11.5001   23:18:2      0           0
+##     6      -11.4997   23:18:2      0           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans3)</code></pre></div>
 <pre><code>## ===================================================================
 ##              Multivariate Linear Mixed Model fit by REML             
@@ -417,12 +417,12 @@ ans4 &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="kw"
               <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">vs</span>(units),
               <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      66.0395   23:57:21      1           0
-##     2      131.529   23:57:21      1           0
-##     3      162.769   23:57:22      2           0
-##     4      166.983   23:57:23      3           0
-##     5      167.025   23:57:23      3           0
-##     6      167.025   23:57:24      4           0</code></pre>
+##     1      66.0395   23:18:3      1           0
+##     2      131.529   23:18:4      2           0
+##     3      162.769   23:18:4      2           0
+##     4      166.983   23:18:5      3           0
+##     5      167.025   23:18:6      4           0
+##     6      167.025   23:18:6      4           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans4)</code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
@@ -478,14 +478,14 @@ ans5 &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="kw"
               <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">vs</span>(<span class="kw">ds</span>(Env),units),
               <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      66.0395   23:57:25      1           0
-##     2      138.617   23:57:27      3           0
-##     3      172.682   23:57:28      4           0
-##     4      177.662   23:57:30      6           0
-##     5      177.801   23:57:31      7           0
-##     6      177.813   23:57:32      8           0
-##     7      177.815   23:57:34      10           0
-##     8      177.815   23:57:35      11           0</code></pre>
+##     1      66.0395   23:18:7      1           0
+##     2      138.617   23:18:8      2           0
+##     3      172.682   23:18:9      3           0
+##     4      177.662   23:18:11      5           0
+##     5      177.801   23:18:12      6           0
+##     6      177.813   23:18:13      7           0
+##     7      177.815   23:18:14      8           0
+##     8      177.815   23:18:15      9           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans5)</code></pre></div>
 <pre><code>## =============================================================
 ##           Multivariate Linear Mixed Model fit by REML          
@@ -554,18 +554,18 @@ ans6 &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="kw"
               <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">vs</span>(<span class="kw">ds</span>(Env),units),
               <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      53.5859   23:57:37      2           0
-##     2      140.385   23:57:39      4           0
-##     3      176.108   23:57:40      5           0
-##     4      181.454   23:57:42      7           0
-##     5      181.696   23:57:43      8           0
-##     6      181.755   23:57:46      11           0
-##     7      181.777   23:57:47      12           0
-##     8      181.787   23:57:49      14           0
-##     9      181.791   23:57:51      16           0
-##     10      181.793   23:57:53      18           0
-##     11      181.794   23:57:54      19           0
-##     12      181.795   23:57:56      21           0</code></pre>
+##     1      53.5859   23:18:16      1           0
+##     2      140.385   23:18:18      3           0
+##     3      176.108   23:18:19      4           0
+##     4      181.454   23:18:21      6           0
+##     5      181.696   23:18:22      7           0
+##     6      181.755   23:18:23      8           0
+##     7      181.777   23:18:25      10           0
+##     8      181.787   23:18:26      11           0
+##     9      181.791   23:18:27      12           0
+##     10      181.793   23:18:29      14           0
+##     11      181.794   23:18:30      15           0
+##     12      181.795   23:18:31      16           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans6)</code></pre></div>
 <pre><code>## ====================================================================
 ##              Multivariate Linear Mixed Model fit by REML             
@@ -644,12 +644,12 @@ ans6 &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="kw"
            , <span class="dt">rcov=</span>~<span class="kw">vs</span>(units)
            , <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -145.279   23:57:56      0           0
-##     2      -138.353   23:57:57      1           0
-##     3      -136.403   23:57:57      1           0
-##     4      -136.224   23:57:57      1           0
-##     5      -136.222   23:57:57      1           0
-##     6      -136.222   23:57:57      1           0</code></pre>
+##     1      -145.279   23:18:32      0           0
+##     2      -138.353   23:18:32      0           0
+##     3      -136.403   23:18:32      0           0
+##     4      -136.224   23:18:32      0           0
+##     5      -136.222   23:18:33      1           0
+##     6      -136.222   23:18:33      1           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(mRR2)$varcomp</code></pre></div>
 <pre><code>##                         VarComp VarCompSE   Zratio Constraint
 ## leg0:SUBJECT.Y-Y      2.5782969 0.6717242 3.838326   Positive
@@ -688,13 +688,13 @@ A &lt;-<span class="st"> </span><span class="kw">A.mat</span>(GT) <span class="c
              <span class="dt">data=</span>DT,
              <span class="dt">M=</span>GT, <span class="dt">gTerm =</span> <span class="st">&quot;u:id&quot;</span>)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -143.207   23:57:59      0           0
-##     2      -117.977   23:57:59      0           0
-##     3      -109.877   23:58:0      1           1
-##     4      -108.178   23:58:0      1           1
-##     5      -108.123   23:58:1      2           1
-##     6      -108.12   23:58:1      2           1
-##     7      -108.12   23:58:1      2           1
+##     1      -143.207   23:18:34      0           0
+##     2      -117.977   23:18:34      0           0
+##     3      -109.877   23:18:35      1           1
+##     4      -108.178   23:18:35      1           1
+##     5      -108.123   23:18:35      1           1
+##     6      -108.12   23:18:36      2           1
+##     7      -108.12   23:18:36      2           1
 ## Performing GWAS evaluation</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ms &lt;-<span class="st"> </span><span class="kw">as.data.frame</span>(<span class="kw">t</span>(mix1$scores))
 ms$Locus &lt;-<span class="st"> </span><span class="kw">rownames</span>(ms)
@@ -747,12 +747,12 @@ MP2 &lt;-<span class="st"> </span><span class="kw">merge</span>(MP,ms,<span clas
               <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">vs</span>(<span class="kw">ds</span>(Env),units),
               <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -42.26   23:58:22      1           0
-##     2      -25.3744   23:58:22      1           0
-##     3      -19.1877   23:58:22      1           0
-##     4      -18.3538   23:58:22      1           0
-##     5      -18.3432   23:58:22      1           0
-##     6      -18.343   23:58:22      1           0</code></pre>
+##     1      -42.26   23:18:52      0           0
+##     2      -25.3744   23:18:53      1           0
+##     3      -19.1877   23:18:53      1           0
+##     4      -18.3538   23:18:53      1           0
+##     5      -18.3432   23:18:53      1           0
+##     6      -18.343   23:18:53      1           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans2)</code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
@@ -798,13 +798,13 @@ MP2 &lt;-<span class="st"> </span><span class="kw">merge</span>(MP,ms,<span clas
               <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">vs</span>(<span class="kw">ds</span>(Env),units, <span class="dt">Gtc=</span><span class="kw">diag</span>(<span class="dv">2</span>)),
               <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -62.7426   23:58:23      1           0
-##     2      26.0621   23:58:24      2           0
-##     3      76.3155   23:58:24      2           0
-##     4      92.1779   23:58:26      4           0
-##     5      92.4933   23:58:26      4           0
-##     6      92.4963   23:58:27      5           0
-##     7      92.4963   23:58:28      6           0</code></pre>
+##     1      -62.7426   23:18:54      1           0
+##     2      26.0621   23:18:54      1           0
+##     3      76.3155   23:18:55      2           0
+##     4      92.1779   23:18:56      3           0
+##     5      92.4933   23:18:57      4           0
+##     6      92.4963   23:18:57      4           0
+##     7      92.4963   23:18:58      5           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans2)</code></pre></div>
 <pre><code>## =============================================================
 ##           Multivariate Linear Mixed Model fit by REML          
@@ -864,14 +864,14 @@ mix1 &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield~<span clas
               <span class="dt">rcov=</span>~units,
               <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -286.365   23:58:29      1           0
-##     2      -236.78   23:58:30      2           0
-##     3      -200.635   23:58:30      2           0
-##     4      -180.045   23:58:30      2           0
-##     5      -176.4   23:58:31      3           0
-##     6      -176.211   23:58:31      3           0
-##     7      -176.207   23:58:31      3           0
-##     8      -176.207   23:58:31      3           0</code></pre>
+##     1      -286.365   23:18:59      1           0
+##     2      -236.78   23:19:0      2           0
+##     3      -200.635   23:19:0      2           0
+##     4      -180.045   23:19:0      2           0
+##     5      -176.4   23:19:0      2           0
+##     6      -176.211   23:19:1      3           0
+##     7      -176.207   23:19:1      3           0
+##     8      -176.207   23:19:1      3           0</code></pre>
 <p>the matrix GT is provided as a random effect by encapsulating the matrix in a list and provided in the <code>vs()</code> function.</p>
 </div>
 <div id="the-overlay-function" class="section level2">
@@ -895,11 +895,11 @@ modh &lt;-<span class="st"> </span><span class="kw">mmer</span>(sugar~<span clas
              +<span class="st"> </span>genof,
              <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -10.425   23:58:41      0           0
-##     2      -6.487   23:58:41      0           0
-##     3      -5.732   23:58:41      0           0
-##     4      -5.67494   23:58:41      0           0
-##     5      -5.67441   23:58:41      0           0</code></pre>
+##     1      -10.425   23:19:9      0           0
+##     2      -6.487   23:19:9      0           0
+##     3      -5.732   23:19:9      0           0
+##     4      -5.67494   23:19:9      0           0
+##     5      -5.67441   23:19:9      0           0</code></pre>
 <p>here the femalef and malef random effects are overlayed becoming a single random effect that has the same variance component.</p>
 </div>
 <div id="the-spl2d-function-using-the-2-dimensional-spline" class="section level2">
@@ -918,11 +918,11 @@ mix &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield~<span class
             <span class="dt">rcov=</span>~<span class="kw">vs</span>(units),
             <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -154.198   23:58:42      0           0
-##     2      -152.064   23:58:43      1           0
-##     3      -151.265   23:58:43      1           0
-##     4      -151.202   23:58:43      1           0
-##     5      -151.201   23:58:44      2           0</code></pre>
+##     1      -154.198   23:19:11      1           0
+##     2      -152.064   23:19:11      1           0
+##     3      -151.265   23:19:12      2           0
+##     4      -151.202   23:19:12      2           0
+##     5      -151.201   23:19:12      2           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(mix)</code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
@@ -974,9 +974,9 @@ mix &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield~<span class
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">fixm</span>(<span class="dv">4</span>)</code></pre></div>
 <pre><code>##      [,1] [,2] [,3] [,4]
 ## [1,]    3    3    3    3
-## [2,]    0    3    3    3
-## [3,]    0    0    3    3
-## [4,]    0    0    0    3</code></pre>
+## [2,]    3    3    3    3
+## [3,]    3    3    3    3
+## [4,]    3    3    3    3</code></pre>
 <p>can be used in vs(x,Gtc=fixm(4),Gt=mm) to specify a fixed var-cov model for RE x and Gt needs to be provided</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">fcm</span>(<span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">0</span>))</code></pre></div>
 <pre><code>##      [,1] [,2]
@@ -993,21 +993,21 @@ ansf &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="kw"
              <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">vs</span>(<span class="kw">ds</span>(Env),units),
              <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -15.613   23:58:45      1           0
-##     2      96.0781   23:58:46      2           0
-##     3      146.282   23:58:47      3           0
-##     4      156.447   23:58:48      4           0
-##     5      158.156   23:58:49      5           0
-##     6      158.93   23:58:50      6           0
-##     7      159.285   23:58:51      7           0
-##     8      159.445   23:58:52      8           0
-##     9      159.516   23:58:53      9           0
-##     10      159.548   23:58:54      10           0
-##     11      159.562   23:58:55      11           0
-##     12      159.568   23:58:56      12           0
-##     13      159.571   23:58:57      13           0
-##     14      159.572   23:58:58      14           0
-##     15      159.572   23:58:59      15           0</code></pre>
+##     1      -15.613   23:19:14      1           0
+##     2      96.0781   23:19:14      1           0
+##     3      146.282   23:19:15      2           0
+##     4      156.447   23:19:16      3           0
+##     5      158.156   23:19:17      4           0
+##     6      158.93   23:19:18      5           0
+##     7      159.285   23:19:19      6           0
+##     8      159.445   23:19:20      7           0
+##     9      159.516   23:19:21      8           0
+##     10      159.548   23:19:22      9           0
+##     11      159.562   23:19:23      10           0
+##     12      159.568   23:19:24      11           0
+##     13      159.571   23:19:25      12           0
+##     14      159.572   23:19:25      12           0
+##     15      159.572   23:19:26      13           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ansf)</code></pre></div>
 <pre><code>## =============================================================
 ##           Multivariate Linear Mixed Model fit by REML          
@@ -1058,12 +1058,12 @@ ans.uns &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="
              <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">vs</span>(units,<span class="dt">Gtc=</span><span class="kw">unsm</span>(<span class="dv">2</span>)),
              <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      56.6189   23:59:0      1           0
-##     2      117.266   23:59:0      1           0
-##     3      149.82   23:59:1      2           0
-##     4      154.605   23:59:1      2           0
-##     5      154.655   23:59:2      3           0
-##     6      154.655   23:59:2      3           0</code></pre>
+##     1      56.6189   23:19:27      0           0
+##     2      117.266   23:19:27      0           0
+##     3      149.82   23:19:28      1           0
+##     4      154.605   23:19:28      1           0
+##     5      154.655   23:19:29      2           0
+##     6      154.655   23:19:29      2           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans.uns)</code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
@@ -1100,11 +1100,11 @@ ans.uns &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="
              <span class="dt">rcov=</span> ~<span class="st"> </span><span class="kw">vs</span>(units,<span class="dt">Gtc=</span><span class="kw">diag</span>(<span class="dv">2</span>)),
              <span class="dt">data=</span>DT)</code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -74.2545   23:59:3      1           0
-##     2      -65.3278   23:59:3      1           0
-##     3      -63.8888   23:59:3      1           0
-##     4      -63.8151   23:59:4      2           0
-##     5      -63.815   23:59:4      2           0</code></pre>
+##     1      -74.2545   23:19:29      0           0
+##     2      -65.3278   23:19:30      1           0
+##     3      -63.8888   23:19:30      1           0
+##     4      -63.8151   23:19:30      1           0
+##     5      -63.815   23:19:31      2           0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(ans.diag)</code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         

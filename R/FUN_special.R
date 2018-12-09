@@ -411,7 +411,7 @@ uncm <- function(x){
 }
 fixm <- function(x){
   mm <- matrix(3,x,x)
-  mm[lower.tri(mm)] <- 0
+  # mm[lower.tri(mm)] <- 0
   return(mm)
 }
 fcm <- function(x){

@@ -1,11 +1,11 @@
 Package: sommer
 Type: Package
 Title: Solving Mixed Model Equations in R
-Version: 3.7.1
+Version: 3.7.2
 Date: 2019-01-01
 Author: Giovanny Covarrubias-Pazaran
 Maintainer: Giovanny Covarrubias-Pazaran <cova_ruber@live.com.mx>
-Description: Structural multivariate-univariate linear mixed model solver for multiple random effects allowing the specification of variance-covariance structures for random effects and allowing the fit of heterogeneous and special variance models (Covarrubias-Pazaran, 2016 <doi:10.1371/journal.pone.0156744>; Maier et al., 2015 <doi:10.1016/j.ajhg.2014.12.006>). ML/REML estimates can be obtained using the Direct-Inversion Newton-Raphson, Direct-Inversion Average Information and Efficient Mixed Model Association algorithms. Designed for genomic prediction and genome wide association studies (GWAS), particularly focused in the p > n problem (more coefficients than observations) to include multiple relationship matrices or other covariance structures. Spatial models can be fitted using the two-dimensional spline functionality in sommer.
+Description: Structural multivariate-univariate linear mixed model solver for multiple random effects allowing the specification of variance-covariance structures for random effects and allowing the fit of heterogeneous and special variance models (Covarrubias-Pazaran, 2016 <doi:10.1371/journal.pone.0156744>; Maier et al., 2015 <doi:10.1016/j.ajhg.2014.12.006>). ML/REML estimates can be obtained using the Direct-Inversion Newton-Raphson and Direct-Inversion Average Information algorithms. Designed for genomic prediction and genome wide association studies (GWAS), particularly focused in the p > n problem (more coefficients than observations) to include multiple relationship matrices or other covariance structures. Spatial models can be fitted using the two-dimensional spline functionality in sommer.
 Depends: R (>= 2.10), Matrix (>= 1.1.1), methods, stats, MASS, lattice,
         crayon
 License: GPL (>= 2)
@@ -14,6 +14,6 @@ LinkingTo: Rcpp, RcppArmadillo
 Suggests: knitr, plyr, parallel, orthopolynom
 VignetteBuilder: knitr
 NeedsCompilation: yes
-Packaged: 2018-12-06 22:59:05 UTC; cova_ruber
+Packaged: 2018-12-08 22:19:33 UTC; cova_ruber
 Repository: CRAN
-Date/Publication: 2018-12-07 07:40:03 UTC
+Date/Publication: 2018-12-09 14:50:03 UTC

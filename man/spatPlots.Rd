@@ -9,7 +9,8 @@ Plot fitted values for all terms in a model to assess spatial fit.
 }
 \usage{
 spatPlots(object, by=NULL, colfunc=NULL,
-         row="ROW",range="RANGE", wire=FALSE)
+         row="ROW",range="RANGE", wire=FALSE,
+         terms=NULL)
 
 }
 
@@ -29,6 +30,9 @@ name of the column in the dataset that identifies the spatial position in the y 
 }
 \item{wire}{
 a TRUE/FALSE statement indicating if the function should return a wire plot or the default levelplot.
+}
+\item{terms}{
+a character vector specifying the term(s) to be fitted in the spatial plot.
 }
 }
 \details{
@@ -55,7 +59,7 @@ Rodriguez-Alvarez, M.X, Boer, M.P., van Eeuwijk, F.A., and Eilers, P.H.C. (2017)
 }
 
 \examples{
-data("DT_cpdata")
+# data("DT_cpdata")
 # ### mimic two fields
 # aa <- DT; bb <- DT
 # aa$FIELD <- "A";bb$FIELD <- "B"
@@ -65,12 +69,16 @@ data("DT_cpdata")
 # head(DT2)
 # A <- A.mat(GT)
 # mix <- mmer(Yield~1,
-#             random=~vs(ds(FIELD),id, Gu=A) + 
+#             random=~vs(ds(FIELD),id, Gu=A) +
 #               vs(ds(FIELD),Rowf) +
 #               vs(ds(FIELD),Colf) +
-#                 vs(ds(FIELD),spl2D(Row,Col)),
+#                 vs(ds(FIELD),spl2D(Row,Col, at=FIELD)),
 #             rcov=~vs(ds(FIELD),units),
 #             data=DT2)
-
+# summary(mix)$varcomp
+# 
+# 
+# ss <- spatPlots(object=mix, by="FIELD", colfunc=NULL,
+#           row="Row",range="Col", wire=FALSE, terms = c("Rowf","Colf","Row"))
 }
 \seealso{\code{\link{mmer}} -- the core function of the package }
