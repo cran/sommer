@@ -1,6 +1,7 @@
 // -*- mode: C++; c-indent-level: 4; c-basic-offset: 4; indent-tabs-mode: nil; -*-
 
 // we only include RcppArmadillo.h which pulls Rcpp.h in for us
+#define ARMA_DONT_PRINT_ERRORS
 #include "RcppArmadillo.h"
 
 // via the depends attribute we tell Rcpp to create hooks for
@@ -401,13 +402,32 @@ Rcpp::List MNR(const arma::mat & Y, const Rcpp::List & X,
       }
     }
     // invert V and P (projection matrix)
-    try{
-      Vi = arma::inv_sympd(V);// arma::solve(W,D);// arma::solve(W,D,arma::solve_opts::fast);  // enable fast mode, set W to NULL arma::inv(W); //
-    }catch(std::exception &ex) {
-      Rcpp::Rcout << "V not full rank" << arma::endl;
+    
+    arma::inv_sympd(Vi,V); // try to invert normally
+    if(Vi.n_rows == 0){ // if fails try to invert with diag(1e-6)
       V = V + (D*tolparinv);
-      Vi = arma::inv_sympd(V);
+      arma::inv_sympd(Vi,V);
+      if(Vi.n_rows == 0){// if fails try to invert with diag(1e-5)
+        V = V + (D*(tolparinv*10));
+        arma::inv_sympd(Vi,V);
+        if(Vi.n_rows == 0){ // if fails try to invert with diag(1e-4)
+          V = V + (D*(tolparinv*100));
+          arma::inv_sympd(Vi,V);
+          if(Vi.n_rows == 0){ // finally, if fails try to invert with diag(1e-3)
+            V = V + (D*(tolparinv*1000));
+            arma::inv_sympd(Vi,V);
+          }
+        }
+      }
     }
+    
+    // try{
+    //   Vi = arma::inv_sympd(V);// arma::solve(W,D);// arma::solve(W,D,arma::solve_opts::fast);  // enable fast mode, set W to NULL arma::inv(W); //
+    // }catch(std::exception &ex) { // if failed try to make it full rank
+    //     Rcpp::Rcout << "V not full rank trying to make it full rank" << arma::endl;
+    //     V = V + (D*tolparinv);
+    //     Vi = arma::inv_sympd(V);
+    // }
     // if last iteration let's make Xm in the opposite direction
     if(last_iteration == true){
       // Xm = arma::kron(X,Gx);
@@ -425,12 +445,23 @@ Rcpp::List MNR(const arma::mat & Y, const Rcpp::List & X,
     arma::mat tXVX = Xm.t() * VX;
     
     arma::mat tXVXVX;
-    try{
-      tXVXVX = arma::solve(tXVX, VX.t());//, arma::solve_opts::fast); 
-    }catch(std::exception &ex) {
-      // tXVXVX <- try(solve((t(X)%*%VX + (tolparinv * diag(dim(t(X)%*%VX)[2]))),t(VX)), silent = TRUE)
-      tXVXVX = arma::solve(tXVX + (D*tolparinv), VX.t());
+    tXVXVX = arma::solve(tXVX, VX.t());
+    arma::solve(tXVXVX,tXVX,VX.t());
+    if(tXVXVX.n_rows == 0){ // if fails try to invert with diag(1e-6)
+      arma::solve(tXVXVX,tXVX + (D*(tolparinv)),VX.t());
+      if(tXVXVX.n_rows == 0){// if fails try to invert with diag(1e-5)
+        arma::solve(tXVXVX,tXVX + (D*(tolparinv*10)),VX.t());
+        if(tXVXVX.n_rows == 0){ // if fails try to invert with diag(1e-4)
+          arma::solve(tXVXVX,tXVX + (D*(tolparinv*100)),VX.t());
+        }
+      }
     }
+    // try{
+    //   tXVXVX = arma::solve(tXVX, VX.t());//, arma::solve_opts::fast); 
+    // }catch(std::exception &ex) {
+    //   // tXVXVX <- try(solve((t(X)%*%VX + (tolparinv * diag(dim(t(X)%*%VX)[2]))),t(VX)), silent = TRUE)
+    //   tXVXVX = arma::solve(tXVX + (D*tolparinv), VX.t());
+    // }
     // projection matrix
     P = Vi - (VX*tXVXVX); // set V to NULL
     
@@ -589,7 +620,13 @@ Rcpp::List MNR(const arma::mat & Y, const Rcpp::List & X,
       
     }else{// if we are in the last iteration now we calculate u, PEV, B, XB
       
-      tXVXi = inv(tXVX);
+      arma::inv(tXVXi,tXVX);
+      if(tXVXi.n_rows == 0){ // if fails try to invert with diag(1e-6)
+        arma::inv(tXVXi,tXVX+(D*(tolparinv)));
+        if(tXVXi.n_rows == 0){// if fails try to invert with diag(1e-5)
+          arma::inv(tXVXi,tXVX+(D*(tolparinv*10)));
+        }
+      }
       // arma::vec Ym_rw = vectorise(Y.t());
       if(retscaled == true){// if we have to return scaled results we use Yms
         beta = tXVXi * ((Xm.t() * Vi) * Ysm);

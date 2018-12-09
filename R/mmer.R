@@ -394,8 +394,8 @@ mmer <- function(fixed, random, rcov, data, weights,
     good <- provdat$good
     res <- list(yvar, X,Gx,Z,K,R,GES,GESI, ws,
                 iters, tolpar, tolparinv, 
-                selected,getPEV,verbose,re_names,
-                good,fixedtermss
+                selected,getPEV,verbose, FALSE,
+                re_names,good,fixedtermss
                 )
   }else{
     res <- .Call("_sommer_MNR",PACKAGE = "sommer",yvar, X,Gx,Z,K,R,GES,GESI, ws,

@@ -759,7 +759,8 @@ plot.mmer <- function(x, stnd=TRUE, ...) {
     packageStartupMessage(magenta("[]  Type 'vignette('sommer.start')' for a short tutorial          []"),appendLF=TRUE)
     packageStartupMessage(magenta("[]  Type 'citation('sommer')' to know how to cite sommer          []"),appendLF=TRUE)
     packageStartupMessage(magenta(paste("[]================================================================[]")),appendLF=TRUE)
-    packageStartupMessage(magenta("UPDATE 'sommer' EVERY 3-MONTHS USING 'install.packages('sommer')'"),appendLF=TRUE)
+    packageStartupMessage(magenta("sommer is updated on CRAN every 3-months. Please update it as well. "),appendLF=TRUE)
+    packageStartupMessage(magenta("Development site can be found at https://github.com"),appendLF=TRUE)
     
     #if(yyy > current){ # yyy < current in CRAN
     #  packageStartupMessage(paste("Version",current,"is now available."),appendLF=TRUE) # version current

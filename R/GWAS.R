@@ -99,7 +99,8 @@ GWAS <- function(fixed, random, rcov, data, weights,
       H2inv <- lastmodel$Vi
     }
     ## get names of random effects
-    re_names <- unlist(res[[16]])
+    re_names <- unlist(res[[17]])
+    # print(re_names)
     re_names <- gsub("\\(Intercept):","",re_names)
     
     gTermi <- which(re_names %in% gTerm)

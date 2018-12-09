@@ -29,15 +29,19 @@ mmer(fixed, random, rcov, data, weights,
 \arguments{
   \item{fixed}{a formula specifying the \strong{response variable(s)} \strong{and fixed effects}, i.e:
   
-  \emph{Yield ~ Location} for univariate models
+  \emph{response ~ covariate} for univariate models
   
-  \emph{cbind(Yield,color) ~ Location} for multivariate models.}
+  \emph{cbind(response.i,response.j) ~ covariate} for multivariate models
+  
+  The \code{\link{fcm}(x)} function can be used to constrain fixed effects in multi-response models.
+  
+  }
   
   \item{random}{a formula specifying the name of the \strong{random effects}, i.e. \emph{random= ~ genotype + year}.
   
   Useful functions can be used to fit heterogeneous variances and other special models (\emph{see 'Special Functions' in the Details section for more information}):
   
-  \code{\link{vs}(...,Gu,Gt,Gtc)} is the main function to specify special variance-covariance structures for random effects. On the ... argument you provide the unknown variance-covariance structures (i.e. us,ds,at,cs) and the random effect where such covariance structure will be used (the random effect of interest). Auxiliar functions for building the variance models are:
+  \code{\link{vs}(...,Gu,Gt,Gtc)} is the main function to specify variance models and special structures for random effects. On the ... argument you provide the unknown variance-covariance structures (i.e. us,ds,at,cs) and the random effect where such covariance structure will be used (the random effect of interest). Gu is used to provide known covariance structures, Gt initial values and Gtc for constraints. Auxiliar functions for building the variance models are:
   
   * \code{\link{ds}(x)}, \code{\link{us}(x)}, \code{\link{cs}(x)} can be used to specify unknown diagonal, unstructured and customized covariance structures respectively among levels of a random effect to be estimated by REML.
   
@@ -52,25 +56,24 @@ mmer(fixed, random, rcov, data, weights,
   }
   \item{rcov}{a formula specifying the name of the \strong{error term}, i.e. \emph{rcov= ~ units}.
   
-  The functions that can be used to fit heterogeneous residual variances are the same used on the random term but the random effect is always "units", i.e. \emph{rcov=~vs(ds(Location),units)}
+  Special variance models for the residual part are the same used on the random term but the name of the random effect is always "units" which can be thought as a column with as many levels as rows in the data, i.e. \emph{rcov=~vs(ds(covariate),units)}
   
   }
   \item{data}{a data frame containing the variables specified in the formulas for response, fixed, and random effects.}
   \item{weights}{name of the covariate for weights. To be used for the product R = Wsi*R*Wsi, where * is the matrix product, Wsi is the square root of the inverse of W and R is the residual matrix.}
-   \item{iters}{Maximum number of iterations allowed.  Default value is
-    15.}
-  \item{tolpar}{Convergence criteria.}
-  \item{tolparinv}{tolerance parameter for matrix inverse used when singularities are encountered.}
-  \item{init}{initial values for the variance components. By default this is NULL and variance components are estimated by the method selected, but in case the user want to provide initial values for ALL var-cov components this argument is functional. It has to be provided as a list or an array, where each list element is one variance component and if multitrait model is pursued each element of the list is a matrix of variance covariance components among traits. Initial values can also be provided in the Gt argument of the \link{vs} function.Is highly encouraged to use the Gt and Gtc arguments of the \link{vs} function instead of this argument}
-  \item{constraints}{when initial values are provided these have to be accompanied by their constraints. See the \link{vs} function for more details on the constraints. Is highly encouraged to use the Gt and Gtc arguments of the \link{vs} function instead of this argument.}
+   \item{iters}{Maximum number of iterations allowed.}
+  \item{tolpar}{Convergence criteria for the change in log-likelihood.}
+  \item{tolparinv}{tolerance parameter for matrix inverse used when singularities are encountered in the estimation procedure.}
+  \item{init}{initial values for the variance components. By default this is NULL and initial values for the variance components are provided by the algorithm, but in case the user want to provide initial values for ALL var-cov components this argument is functional. It has to be provided as a list, where each list element corresponds to one random effect (1x1 matrix) and if multitrait model is pursued each element of the list is a matrix of variance covariance components among traits for such random effect. Initial values can also be provided in the Gt argument of the \link{vs} function. Is highly encouraged to use the Gt and Gtc arguments of the \link{vs} function instead of this argument, but these argument can be used to provide all initial values at once}
+  \item{constraints}{when initial values are provided these have to be accompanied by their constraints. See the \link{vs} function for more details on the constraints. Is highly encouraged to use the Gt and Gtc arguments of the \link{vs} function instead of this argument but these argument can be used to provide all constraints at once.}
   \item{method}{this refers to the method or algorithm to be used for estimating variance components. Direct-inversion Newton-Raphson \strong{NR} and Average Information \strong{AI} (Tunnicliffe 1989; Gilmour et al. 1995; Lee et al. 2015).}
   \item{getPEV}{a TRUE/FALSE value indicating if the program should return the predicted error variance and variance for random effects. This option is provided since this can take a long time for certain models where p is > n by a big extent.}
    \item{na.method.X}{one of the two possible values; "include" or "exclude". If "include" is selected then the function will impute the X matrices for fixed effects with the median value. If "exclude" is selected it will get rid of all rows with missing values for the X (fixed) covariates. The default is "exclude". The "include" option should be used carefully.}
-   \item{na.method.Y}{one of the three possible values; "include", "include2" or "exclude". If "include" is selected then the function will impute the response variables with the median value. The difference between "include" and "include2" is only available in the multitrait models when the imputation can happen for the entire matrix of responses or only for complete cases ("include2"). If "exclude" is selected it will get rid of rows in responses where missing values are present for the estimation of variance components. The default is "exclude".}
-   \item{return.param}{a TRUE/FALSE value to indicate if the program should return the parameters used for modeling without fitting the model.}
+   \item{na.method.Y}{one of the three possible values; "include", "include2" or "exclude" (default) to treat the observations in response variable to be used in the estimation of variance components. The first option "include" will impute the response variables for all rows with the median value, whereas "include2" imputes the responses only for rows where there is observation(s) for at least one of the responses (only available in the multi-response models). If "exclude" is selected (default) it will get rid of rows in response(s) where missing values are present for at least one of the responses.}
+   \item{return.param}{a TRUE/FALSE value to indicate if the program should return the parameters to be used for fitting the model instead of fitting the model.}
    \item{date.warning}{a TRUE/FALSE value to indicate if the program should warn you when is time to update the sommer package.}
   \item{verbose}{a TRUE/FALSE value to indicate if the program should return the progress of the iterative algorithm.}
-  \item{reshape.output}{a TRUE/FALSE value to indicate if the output should be reshaped to be easier to use, some information is missing from the multivariate models for an easy interpretation.}
+  \item{reshape.output}{a TRUE/FALSE value to indicate if the output should be reshaped to be easier to interpret for the user, some information is missing from the multivariate models for an easy interpretation.}
     
 }
 
@@ -103,6 +106,10 @@ mmer(fixed, random, rcov, data, weights,
   \code{\link{vs}(\link{leg}(x,n),y)}
       
   can be used to fit a random regression model using a numerical variable \code{x} that marks the trayectory for the random effect \code{y}. The leg function can be combined with the special functions \code{ds}, \code{us} \code{at} and \code{cs}. For example \emph{random=~vs(us(leg(x,1)),y)}.
+  
+  \code{\link{vs}(x,Gtc=\link{fcm}(v))}
+      
+  can be used to constrain fixed effects in the multi-response mixed models. This is a vector that specifies if the fixed effect is to be estimated for such trait. For example \emph{fixed=cbind(response.i, response.j)~vs(Rowf, Gtc=fcm(c(1,0)))} means that the fixed effect Rowf should only be estimated for the first response and the second should only have the intercept.
 
 For a short tutorial on how to use this special functions you can look at the vignettes by typing in the terminal:
 
