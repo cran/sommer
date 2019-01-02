@@ -14,24 +14,32 @@ Giovanny Covarrubias-Pazaran
 }
 \description{
 
-Sommer is a structural multivariate-univariate linear mixed model solver for multiple random effects allowing the specification and/or estimation of variance covariance structures. ML/REML estimates can be obtained using the Direct-Inversion Newton-Raphson, Average Information and Efficient Mixed Model Association algorithms coded in C++ using the Armadillo library to opmitime dense matrix operations common in the derect-inversion algorithms. Designed for genomic prediction and genome wide association studies (GWAS) to include additive, dominance and epistatic relationship structures or other covariance structures, but also functional as a regular mixed model program.  
+Sommer is a structural multivariate-univariate linear mixed model solver for multiple random effects allowing the specification and/or estimation of variance covariance structures. ML/REML estimates can be obtained using the Direct-Inversion Newton-Raphson, Average Information and Efficient Mixed Model Association algorithms coded in C++ using the Armadillo library to optimize dense matrix operations common in genomic selection models. Sommer was designed for genomic prediction and genome wide association studies (GWAS) to include i.e. additive, dominance and epistatic relationship structures or other covariance structures, but also functional as a regular mixed model program.  
 
-The sommer package has been developed to provide R users with open-source code to understand how most popular likelihood algorithms in mixed model analysis work, but at the same time allowing to perform their real analysis in diploid and polyploid organisms with small and medium-size data sets (<10,000 observations for average computers given the computational burden of the direct-inversion algorithms). The package is focused in the p > n problem and dense covariance structures when the direct-inversion algorithm becomes faster than MME-based algorithms. \strong{ The core of the package is the \code{\link{mmer}} (formula-based) function} that fit the multivariate linear mixed models. This package returns variance-covariance components, BLUPs, BLUEs, residuals, fitted values, variances-covariances for fixed and random effects, etc. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices for diploid and polyploid organisms. It also provides flexibility to fit other genetic models such as full and half diallel models as well. In addition the \code{\link{pin}} function can be used to estimate standard errors for linear combinations of variance components (i.e. ratios like h2). A good converter from letter code to numeric format is implemented in the function \code{\link{atcg1234}}, which supports higher ploidy levels than diploid. Recently, spatial modeling has been added added to sommer using the two-dimensional splines (\code{\link{spl2D}}) to face the lack of AR1 covariance structures in sommer.
+The sommer package has been developed to provide R users with open-source code to understand how most popular likelihood algorithms in mixed model analysis work, but at the same time allowing to perform their real analysis in diploid and polyploid organisms with small and medium-size data sets (< 10,000 observations for average computers given the computational burden carried by the direct-inversion algorithms). The package is focused in the p > n problem and dense covariance structures when the direct-inversion algorithm becomes faster than MME-based algorithms. \strong{ The core of the package is the \code{\link{mmer}} (formula-based) function} that fit the multivariate linear mixed models. This package returns variance-covariance components, BLUPs, BLUEs, residuals, fitted values, variances-covariances for fixed and random effects, etc. The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices for diploid and polyploid organisms. It also provides flexibility to fit other genetic models such as full and half diallel models and random regression models. In addition the \code{\link{pin}} function can be used to estimate standard errors for linear combinations of variance components (i.e. ratios like h2). A good converter from letter code to numeric format is implemented in the function \code{\link{atcg1234}}, which supports higher ploidy levels than diploid. Recently, spatial modeling has been added added to sommer using the two-dimensional splines (\code{\link{spl2D}}) to face the lack of AR1 covariance structures in sommer.
 
 Starting with version 3.0 the GWAS models that use the M argument have their own function \code{\link{GWAS}} and is not part of the \code{\link{mmer}} function.
 }
 
+\section{Keeping updated}{
+The sommer package is updated on CRAN every 3-months due to CRAN policies but you can find the latest source at https://github.com/covaruber/sommer . This can be easily installed easily typing the following in the R console:
+
+library(devtools)
+
+install_github("covaruber/sommer")
+
+This is recommended since bugs fixes will be immediately available in the GitHub source but not in CRAN until the next update.
+}
+
 \section{Tutorials}{
 
-\strong{For tutorials} on how to perform different analysis with sommer please look at the vignettes by typing in the terminal:
+ \strong{For tutorials} on how to perform different analysis with sommer please look at the vignettes by typing in the terminal:
 
-\emph{vignette("sommer.start")} 
+\strong{vignette("sommer.start")} 
 
-\emph{vignette("sommer")}
+\strong{vignette("sommer")}
 
-Please update 'sommer' every 2 months using:
-
-\emph{install.packages("sommer")}
+or visit \strong{https://covaruber.github.io}
 
 }
 
@@ -204,9 +212,9 @@ head(DT)
 
 ## Compound simmetry (CS) model
 ans1 <- mmer(Yield~Env,
-              random= ~ Name + Env:Name,
-              rcov= ~ units,
-              data=DT)
+             random= ~ Name + Env:Name,
+             rcov= ~ units,
+             data=DT)
 summary(ans1)
 
 ####===========================================####
@@ -215,9 +223,9 @@ summary(ans1)
 
 ## Compound simmetry (CS) + Diagonal (DIAG) model
 ans2 <- mmer(Yield~Env,
-              random= ~Name + vs(ds(Env),Name),
-              rcov= ~ vs(ds(Env),units),
-              data=DT)
+             random= ~Name + vs(ds(Env),Name),
+             rcov= ~ vs(ds(Env),units),
+             data=DT)
 summary(ans2)
 
 ####===========================================####
@@ -237,8 +245,8 @@ summary(ans3)
 # ## Multivariate Compound simmetry (CS) model
 # DT$EnvName <- paste(DT$Env,DT$Name)
 # ans4 <- mmer(cbind(Yield, Weight) ~ Env,
-#               random= ~ vs(Name) + vs(EnvName),
-#               rcov= ~ vs(units),
+#               random= ~ vs(Name, Gtc = unsm(2)) + vs(EnvName,Gtc = unsm(2)),
+#               rcov= ~ vs(units, Gtc = unsm(2)),
 #               data=DT)
 # summary(ans4)
 # 
@@ -248,8 +256,8 @@ summary(ans3)
 # 
 # ## Multivariate Compound simmetry (CS) + Diagonal (DIAG) model
 # ans5 <- mmer(cbind(Yield, Weight) ~ Env,
-#               random= ~ vs(Name) + vs(ds(Env),Name),
-#               rcov= ~ vs(ds(Env),units),
+#               random= ~ vs(Name, Gtc = unsm(2)) + vs(ds(Env),Name, Gtc = unsm(2)),
+#               rcov= ~ vs(ds(Env),units, Gtc = unsm(2)),
 #               data=DT)
 # summary(ans5)
 # 
@@ -258,8 +266,8 @@ summary(ans3)
 # ####===========================================####
 # 
 # ans6 <- mmer(cbind(Yield, Weight) ~ Env,
-#               random= ~ vs(us(Env),Name),
-#               rcov= ~ vs(ds(Env),units),
+#               random= ~ vs(us(Env),Name, Gtc = unsm(2)),
+#               rcov= ~ vs(ds(Env),units, Gtc = unsm(2)),
 #               data=DT)
 # summary(ans6)
 

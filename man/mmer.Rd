@@ -9,11 +9,21 @@
 
 Fits a multivariate/univariate linear mixed model by likelihood methods (REML). The optimization methods are; Direct-Inversion Newton-Raphson (NR), Average Information (AI) (Tunnicliffe 1989; Lee et al. 2015; Maier et al. 2015), and Efficient Mixed Model Association (EMMA) (Kang et al. 2008) coded in C++ using the Armadillo library to opmitime dense matrix operations common in the derect-inversion algorithms. These algorithms are \strong{intended to be used for problems of the type p > n or dense matrices}. For problems with sparse covariance structures, or problems of the type n > p, the MME-based algorithms are faster and we recommend to shift to the use of such software (i.e. lme4, breedR, or asreml-R).
 
-The package also provides functions to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices to model covariances among genotypes for plant and animal breeding problems. Overlayed models can be implemented as well (\code{\link{overlay}} function). Spatial modeling can be done through the two dimensional splines (\code{\link{spl2D}}). Autoregresive (\code{\link{AR1}}), compound symmetry (\code{\link{CS}}) and autoregressive moving average (\code{\link{ARMA}}) covariance matrices can be used in sommer, but the user needs to fix the correlation value for such models. Random regression models can also be fitted through the (\code{\link{leg}}) function (orthopolynom package installation is needed for using the leg function). \strong{For tutorials} on how to perform different analysis with sommer please look at the vignettes by typing in the terminal:
+The package also provides functions to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices to model covariances among genotypes for plant and animal breeding problems. Overlayed models can be implemented as well (\code{\link{overlay}} function). Spatial modeling can be done through the two dimensional splines (\code{\link{spl2D}}). Autoregresive (\code{\link{AR1}}), compound symmetry (\code{\link{CS}}) and autoregressive moving average (\code{\link{ARMA}}) covariance matrices can be used in sommer, but the user needs to fix the correlation value for such models. Random regression models can also be fitted through the (\code{\link{leg}}) function (orthopolynom package installation is needed for using the leg function).
+
+The sommer package is updated on CRAN every 3-months due to CRAN policies but you can find the latest source at https://github.com/covaruber/sommer . This can be easily installed easily typing the following in the R console:
+
+library(devtools)
+
+install_github("covaruber/sommer")
+
+This is recommended since bugs fixes will be immediately available in the GitHub source. \strong{For tutorials} on how to perform different analysis with sommer please look at the vignettes by typing in the terminal:
 
 \strong{vignette("sommer.start")} 
 
 \strong{vignette("sommer")}
+
+or visit \strong{https://covaruber.github.io}
 
 }
 \usage{
@@ -117,7 +127,9 @@ For a short tutorial on how to use this special functions you can look at the vi
 
 \strong{Bug report and contact}{
 
-If you have any questions or suggestions please post it in https://stackoverflow.com or https://stats.stackexchange.com and send me an email with the link at cova_ruber@live.com.mx
+If you have any technical questions or suggestions please post it in https://stackoverflow.com or https://stats.stackexchange.com and send me an email with the link at cova_ruber@live.com.mx
+
+If you have any bug report please go to https://github.com/covaruber/sommer or send me an email to address it asap.
 
 }
 \strong{Example Datasets}
@@ -218,129 +230,49 @@ Giovanny Covarrubias-Pazaran
 ####=========================================####
 #### For CRAN time limitations most lines in the 
 #### examples are silenced with one '#' mark, 
-#### remove them and run the examples using
-#### command + shift + C |OR| control + shift + C
+#### remove them and run the examples
 ####=========================================####
 
 ####=========================================####
-####=========================================####
-#### EXAMPLE 1
-#### 3 variance components
-#### one random effect with variance covariance structure
-####=========================================####
+#### EXAMPLES
+#### Different models with sommer
 ####=========================================####
 
-data("DT_cpdata")
+data(DT_example)
 head(DT)
-GT[1:4,1:4]
-#### create the variance-covariance matrix
-A <- A.mat(GT)
-#### look at the data and fit the model
-head(DT)
-mix1 <- mmer(Yield~1,
-             random=~vs(id, Gu=A) + Rowf,
-             rcov=~units,
+
+####=========================================####
+#### Univariate homogeneous variance models  ####
+####=========================================####
+
+## Compound simmetry (CS) model
+ans1 <- mmer(Yield~Env,
+             random= ~ Name + Env:Name,
+             rcov= ~ units,
              data=DT)
-summary(mix1)$varcomp
-#### calculate heritability
-pin(mix1, h1 ~ V1/(V1+V3) )
-### assumes diag(trait) structure for univariate models
+summary(ans1)
 
-# #### multi trait example
-# mix2 <- mmer(cbind(Yield,color)~1,
-#               random = ~ vs(id, Gu=A) +
-#                             vs(Rowf, Gtc=diag(2)) + # diagonal structure at trait level
-#                                 vs(Colf, Gtc=diag(2)), # diagonal structure at trait level
-#               rcov = ~ vs(units),
-#               data=DT)
-# summary(mix2)
+####===========================================####
+#### Univariate heterogeneous variance models  ####
+####===========================================####
 
-########################################################
-########################################################
-########################################################
-########################################################
-########################################################
-########################################################
+## Compound simmetry (CS) + Diagonal (DIAG) model
+ans2 <- mmer(Yield~Env,
+             random= ~Name + vs(ds(Env),Name),
+             rcov= ~ vs(ds(Env),units),
+             data=DT)
+summary(ans2)
 
-####=========================================####
-####=========================================####
-#### EXAMPLE 2
-#### breeding values with 3 variance components
-#### for hybrid prediction
-####=========================================####
-####=========================================####
-# data("DT_cornhybrids")
-# K1 <- GT[levels(DT$GCA1), levels(DT$GCA1)]; dim(K1)
-# K2 <- GT[levels(DT$GCA2), levels(DT$GCA2)]; dim(K2)
-# S <- kronecker(K1, K2, make.dimnames=TRUE) ; dim(S)
-# 
-# head(DT)
-# ans <- mmer(Yield ~ Location,
-#             random = ~ vs(GCA1, Gu=K1) + vs(GCA2, Gu=K2) + vs(SCA, Gu=S),
-#             rcov = ~ units,
-#             data=DT)
-# summary(ans)
-# #### you can specify heterogeneus variances
-# ans <- mmer(Yield ~ 1,
-#              random = ~ GCA2 + vs(ds(Location),GCA2),
-#              rcov = ~ vs(Location,units),
-#              data=DT)
-# summary(ans)
-# 
-# ##### example of multivariate model
-# ans <- mmer(cbind(Yield,PlantHeight) ~ 1,
-#              random = ~ vs(GCA2, Gu=K2),
-#              rcov = ~ vs(units, Gtc=diag(2)),
-#              data=DT)
-# summary(ans)
+####===========================================####
+####  Univariate unstructured variance models  ####
+####===========================================####
 
-########################################################
-########################################################
-########################################################
-########################################################
-########################################################
-########################################################
+ans3 <- mmer(Yield~Env,
+             random=~ vs(us(Env),Name),
+             rcov=~vs(us(Env),units), 
+             data=DT)
+summary(ans3)
 
-# ####=========================================####
-# #### EXAMPLE 3
-# #### different models with sommer
-# ####=========================================####
-# 
-# data(DT_example)
-# head(DT)
-# 
-# ####=========================================####
-# #### Univariate homogeneous variance models  ####
-# ####=========================================####
-# 
-# ## Compound simmetry (CS) model
-# ans1 <- mmer(Yield~Env,
-#              random= ~ Name + Env:Name,
-#              rcov= ~ units,
-#              data=DT)
-# summary(ans1)
-# 
-# ####===========================================####
-# #### Univariate heterogeneous variance models  ####
-# ####===========================================####
-# 
-# ## Compound simmetry (CS) + Diagonal (DIAG) model
-# ans2 <- mmer(Yield~Env,
-#              random= ~Name + vs(ds(Env),Name),
-#              rcov= ~ vs(ds(Env),units),
-#              data=DT)
-# summary(ans2)
-# 
-# ####===========================================####
-# ####  Univariate unstructured variance models  ####
-# ####===========================================####
-# 
-# ans3 <- mmer(Yield~Env,
-#              random=~ vs(us(Env),Name),
-#              rcov=~vs(us(Env),units), 
-#              data=DT)
-# summary(ans3)
-# 
 # ####==========================================####
 # #### Multivariate homogeneous variance models ####
 # ####==========================================####
@@ -348,8 +280,8 @@ pin(mix1, h1 ~ V1/(V1+V3) )
 # ## Multivariate Compound simmetry (CS) model
 # DT$EnvName <- paste(DT$Env,DT$Name)
 # ans4 <- mmer(cbind(Yield, Weight) ~ Env,
-#               random= ~ vs(Name) + vs(EnvName),
-#               rcov= ~ vs(units),
+#               random= ~ vs(Name, Gtc = unsm(2)) + vs(EnvName,Gtc = unsm(2)),
+#               rcov= ~ vs(units, Gtc = unsm(2)),
 #               data=DT)
 # summary(ans4)
 # 
@@ -359,8 +291,8 @@ pin(mix1, h1 ~ V1/(V1+V3) )
 # 
 # ## Multivariate Compound simmetry (CS) + Diagonal (DIAG) model
 # ans5 <- mmer(cbind(Yield, Weight) ~ Env,
-#               random= ~ vs(Name) + vs(ds(Env),Name),
-#               rcov= ~ vs(ds(Env),units),
+#               random= ~ vs(Name, Gtc = unsm(2)) + vs(ds(Env),Name, Gtc = unsm(2)),
+#               rcov= ~ vs(ds(Env),units, Gtc = unsm(2)),
 #               data=DT)
 # summary(ans5)
 # 
@@ -369,27 +301,50 @@ pin(mix1, h1 ~ V1/(V1+V3) )
 # ####===========================================####
 # 
 # ans6 <- mmer(cbind(Yield, Weight) ~ Env,
-#               random= ~ vs(us(Env),Name),
-#               rcov= ~ vs(ds(Env),units),
+#               random= ~ vs(us(Env),Name, Gtc = unsm(2)),
+#               rcov= ~ vs(ds(Env),units, Gtc = unsm(2)),
 #               data=DT)
 # summary(ans6)
-
-########################################################
-########################################################
-########################################################
-########################################################
-########################################################
-########################################################
-
-####=========================================####
-#### EXAMPLE 4
-#### comparison with lmer, install 'lme4' 
-#### and run the code below
-####=========================================####
-
-#### lmer cannot use var-cov matrices so we will not 
-#### use them in this comparison example
-
+# 
+# ####=========================================####
+# ####=========================================####
+# #### EXAMPLE SET 2
+# #### 2 variance components
+# #### one random effect with variance covariance structure
+# ####=========================================####
+# ####=========================================####
+# 
+# data("DT_cpdata")
+# head(DT)
+# GT[1:4,1:4]
+# #### create the variance-covariance matrix
+# A <- A.mat(GT)
+# #### look at the data and fit the model
+# mix1 <- mmer(Yield~1,
+#              random=~vs(id, Gu=A) + Rowf,
+#              rcov=~units,
+#              data=DT)
+# summary(mix1)$varcomp
+# #### calculate heritability
+# pin(mix1, h1 ~ V1/(V1+V3) )
+# #### multi trait example
+# mix2 <- mmer(cbind(Yield,color)~1,
+#               random = ~ vs(id, Gu=A, Gtc = unsm(2)) + # unstructured at trait level
+#                             vs(Rowf, Gtc=diag(2)) + # diagonal structure at trait level
+#                                 vs(Colf, Gtc=diag(2)), # diagonal structure at trait level
+#               rcov = ~ vs(units, Gtc = unsm(2)), # unstructured at trait level
+#               data=DT)
+# summary(mix2)
+# 
+# ####=========================================####
+# #### EXAMPLE SET 3
+# #### comparison with lmer, install 'lme4' 
+# #### and run the code below
+# ####=========================================####
+# 
+# #### lmer cannot use var-cov matrices so we will not 
+# #### use them in this comparison example
+# 
 # library(lme4)
 # library(sommer)
 # data("DT_cornhybrids")
@@ -409,13 +364,12 @@ pin(mix1, h1 ~ V1/(V1+V3) )
 # 
 # ### a more complex model specifying which locations
 # head(DT)
-# out2 <- mmer(Yield ~ 1,
-#               random = ~ vs(at(Location,c("3","4")),GCA2) + 
+# out2 <- mmer(Yield ~ Location,
+#               random = ~ vs(at(Location,c("3","4")),GCA2) +
 #                          vs(at(Location,c("3","4")),SCA),
 #               rcov = ~ vs(ds(Location),units),
 #               data=DT)
 # summary(out2)
-
 
 
 }

@@ -416,18 +416,13 @@ Rcpp::List MNR(const arma::mat & Y, const Rcpp::List & X,
           if(Vi.n_rows == 0){ // finally, if fails try to invert with diag(1e-3)
             V = V + (D*(tolparinv*1000));
             arma::inv_sympd(Vi,V);
+            if(Vi.n_rows == 0){ // finally stop
+              Rcpp::Rcout << "Sistem is singular. Stopping the job" << arma::endl;
+            }
           }
         }
       }
     }
-    
-    // try{
-    //   Vi = arma::inv_sympd(V);// arma::solve(W,D);// arma::solve(W,D,arma::solve_opts::fast);  // enable fast mode, set W to NULL arma::inv(W); //
-    // }catch(std::exception &ex) { // if failed try to make it full rank
-    //     Rcpp::Rcout << "V not full rank trying to make it full rank" << arma::endl;
-    //     V = V + (D*tolparinv);
-    //     Vi = arma::inv_sympd(V);
-    // }
     // if last iteration let's make Xm in the opposite direction
     if(last_iteration == true){
       // Xm = arma::kron(X,Gx);
@@ -453,6 +448,9 @@ Rcpp::List MNR(const arma::mat & Y, const Rcpp::List & X,
         arma::solve(tXVXVX,tXVX + (D*(tolparinv*10)),VX.t());
         if(tXVXVX.n_rows == 0){ // if fails try to invert with diag(1e-4)
           arma::solve(tXVXVX,tXVX + (D*(tolparinv*100)),VX.t());
+          if(tXVXVX.n_rows == 0){ // finally stop
+            Rcpp::Rcout << "Sistem is singular. Stopping the job" << arma::endl;
+          }
         }
       }
     }
@@ -625,6 +623,9 @@ Rcpp::List MNR(const arma::mat & Y, const Rcpp::List & X,
         arma::inv(tXVXi,tXVX+(D*(tolparinv)));
         if(tXVXi.n_rows == 0){// if fails try to invert with diag(1e-5)
           arma::inv(tXVXi,tXVX+(D*(tolparinv*10)));
+          if(tXVXi.n_rows == 0){
+            Rcpp::Rcout << "Sistem is singular. Stopping the job" << arma::endl;
+          }
         }
       }
       // arma::vec Ym_rw = vectorise(Y.t());
@@ -672,8 +673,9 @@ Rcpp::List MNR(const arma::mat & Y, const Rcpp::List & X,
   sigma_store.each_col() %= dd;
   sigma_store.each_col() /= ee;
   arma::mat monitor = join_cols(llik_store,sigma_store);
-  arma::uvec indices(cycle2,arma::fill::ones);
-  arma::mat monitor2 = monitor.cols(find(indices == 1));
+  // arma::uvec indices(cycle2,arma::fill::ones);
+  // arma::mat monitor2 = monitor.cols(find(indices == 1));
+  arma::mat monitor2 = monitor.cols(0, cycle2);
   // ****************************************************
   // return the results
   // ****************************************************

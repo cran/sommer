@@ -75,9 +75,9 @@
   }
   ## get the index for each fixed effect
   nfixedeff <- length(prov[[2]])
-  if(nfixedeff != length(prov[[18]])){
-    fnames <- c("(Intercept)",prov[[18]])
-  }else{fnames <- c(prov[[18]])}
+  if(nfixedeff != length(prov[[19]])){
+    fnames <- c("(Intercept)",prov[[19]])
+  }else{fnames <- c(prov[[19]])}
   
   fnamesindex <- list()
   counter <- 1
@@ -377,7 +377,7 @@
   ################################################
   cat(paste(rep("=",nmaxchar), collapse = ""))
   cat(paste("\n",rlt,"Multivariate Linear Mixed Model fit by REML",rlt,"\n", collapse = ""))
-  cat(paste(rlh," sommer 3.7 ",rlh, "\n", collapse = ""))
+  cat(paste(rlh," sommer 3.8 ",rlh, "\n", collapse = ""))
   cat(paste(rep("=",nmaxchar), collapse = ""))
   cat("\n")
   cat("")
@@ -502,6 +502,7 @@ anova.mmer <- function(object, object2=NULL, type=1, ...) {
       strsplit(as.character((as.formula(paste("~",x)))[2]), split = "[+]")[[1]]
     })
     fixedtermss <- fixedtermss[which(fixedtermss != "-1")]
+    fixedtermss <- fixedtermss[which(fixedtermss != "1")]
     fixedtermss <- c("1",fixedtermss)
     response <- strsplit(as.character(fixed[2]), split = "[+]")[[1]]
     # responsef <- as.formula(paste(response,"~1"))
@@ -522,6 +523,7 @@ anova.mmer <- function(object, object2=NULL, type=1, ...) {
       if(i == (length(fixedtermss)+1)){ # first the full model
         myf <- paste(response,"~",paste(fixedtermss,collapse = " + "))
         fixedi <- as.formula(myf)
+        usef <- fixedtermss
       }else if(i == 1){
         myf <- paste(response,"~1")
         fixedi <- as.formula(myf)
@@ -622,6 +624,7 @@ anova.mmer <- function(object, object2=NULL, type=1, ...) {
     myanovaf <- rbind(myanova,myanova2)
     
     myanovaf$F.value <- myanovaf$Mean.Sq/vare
+    # print(c(myanovaf,dfe))
     myanovaf$`Pr(>F)` <- round(apply(myanovaf,1,function(x){1-pf(x[4],x[1],dfe)}),4)
     myanovaf[nrow(myanovaf),4:5] <- NA
     myanovaf$Models <- c(rev(models),"")
@@ -734,7 +737,7 @@ plot.mmer <- function(x, stnd=TRUE, ...) {
     stop("This package requires R 2.1 or later")
   assign(".sommer.home", file.path(library, pkg),
          pos=match("package:sommer", search()))
-  sommer.version = "3.7 (2019-01-01)" # usually 2 months before it expires
+  sommer.version = "3.8 (2019-01-01)" # usually 2 months before it expires
   
   ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ### check which version is more recent
@@ -750,23 +753,24 @@ plot.mmer <- function(x, stnd=TRUE, ...) {
   assign(".sommer.version", sommer.version, pos=match("package:sommer", search()))
   if(interactive())
   {
-    packageStartupMessage(magenta(paste("[]================================================================[]")),appendLF=TRUE)
-    packageStartupMessage(magenta(paste("[]  Solving Mixed Model Equations in R (sommer) ", sommer.version, "  []",sep="")),appendLF=TRUE)
-    packageStartupMessage(magenta(paste("[]  ------------ Multivariate Linear Mixed Models --------------  []")),appendLF=TRUE)
-    packageStartupMessage(magenta("[]  Author: Giovanny Covarrubias-Pazaran                          []"),appendLF=TRUE)
-    packageStartupMessage(magenta("[]  Published: PLoS ONE 2016, 11(6):1-15                          []"),appendLF=TRUE)
-    packageStartupMessage(magenta("[]  Dedicated to my alma mater: Universidad Autonoma Chapingo     []"),appendLF=TRUE)
-    packageStartupMessage(magenta("[]  Type 'vignette('sommer.start')' for a short tutorial          []"),appendLF=TRUE)
-    packageStartupMessage(magenta("[]  Type 'citation('sommer')' to know how to cite sommer          []"),appendLF=TRUE)
-    packageStartupMessage(magenta(paste("[]================================================================[]")),appendLF=TRUE)
-    packageStartupMessage(magenta("sommer is updated on CRAN every 3-months. Please update it as well. "),appendLF=TRUE)
-    packageStartupMessage(magenta("Development site can be found at https://github.com"),appendLF=TRUE)
+    packageStartupMessage(magenta(paste("[]==================================================================[]")),appendLF=TRUE)
+    packageStartupMessage(magenta(paste("[]   Solving Mixed Model Equations in R (sommer) ", sommer.version, "   []",sep="")),appendLF=TRUE)
+    packageStartupMessage(magenta(paste("[]   ------------ Multivariate Linear Mixed Models --------------   []")),appendLF=TRUE)
+    packageStartupMessage(magenta("[]   Author: Giovanny Covarrubias-Pazaran                           []"),appendLF=TRUE)
+    packageStartupMessage(magenta("[]   Published: PLoS ONE 2016, 11(6):1-15                           []"),appendLF=TRUE)
+    packageStartupMessage(magenta("[]   Dedicated to my alma mater the Universidad Autonoma Chapingo   []"),appendLF=TRUE)
+    packageStartupMessage(magenta("[]   Type 'vignette('sommer.start')' for a short tutorial           []"),appendLF=TRUE)
+    packageStartupMessage(magenta("[]   Type 'citation('sommer')' to know how to cite sommer           []"),appendLF=TRUE)
+    packageStartupMessage(magenta(paste("[]==================================================================[]")),appendLF=TRUE)
+    packageStartupMessage(magenta("sommer is updated on CRAN every 3-months due to CRAN policies"),appendLF=TRUE)
+    packageStartupMessage(magenta("Newest source is available at https://github.com/covaruber/sommer"),appendLF=TRUE)
+    packageStartupMessage(magenta("To install type: library(devtools); install_github('covaruber/sommer')"),appendLF=TRUE)
     
     #if(yyy > current){ # yyy < current in CRAN
     #  packageStartupMessage(paste("Version",current,"is now available."),appendLF=TRUE) # version current
     #  packageStartupMessage(paste("Please update 'sommer' installing the new version."),appendLF=TRUE) # version current
     #}
-    #print(image(diag(10),main="sommer 3.7"))
+    #print(image(diag(10),main="sommer 3.8"))
   }
   invisible()
 }
