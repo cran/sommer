@@ -2,9 +2,9 @@
 #### =========== ######
 ## PREDICT FUNCTION #
 #### =========== ######
-"predict.mmer" <- function(object,classify=NULL,newdata=NULL,RtermsToForce=NULL,FtermsToForce=NULL,...){
+"predict.mmer" <- function(object,classify=NULL,RtermsToForce=NULL,FtermsToForce=NULL,...){
   
- 
+  newdata=NULL
   if(is.null(newdata)){
     newdata <- object$data
   }
@@ -81,16 +81,23 @@
   
   fnamesindex <- list()
   counter <- 1
+  kept <- numeric()
   for(i in 1:nfixedeff){
-    pX <- kronecker(prov[[2]][[i]],prov[[3]][[i]])
-    # pX <- kronecker(prov[[3]][[i]],prov[[2]][[i]])
-    endcounter <- (counter+ncol(pX)-1)
-    fnamesindex[[i]] <- counter:endcounter
-    counter <- endcounter+1
+    if(ncol(prov[[2]][[i]]) > 0){ # the fixed effect was fitted
+      pX <- kronecker(prov[[2]][[i]],prov[[3]][[i]])
+      # pX <- kronecker(prov[[3]][[i]],prov[[2]][[i]])
+      endcounter <- (counter+ncol(pX)-1)
+      fnamesindex[[i]] <- counter:endcounter
+      counter <- endcounter+1
+      kept[i] <- i
+    }
   }
+  fnamesindex <- fnamesindex[which(unlist(lapply(fnamesindex,length)) > 0)]
+  nfixedeff <- length(fnamesindex)
+  fnames <- fnames[na.omit(kept)]
   # fpicked <- which(fnames %in% c("(Intercept)",classify.split))
   if(!is.null(FtermsToForce)){
-    fpicked <- FtermsToForce
+    fpicked <- intersect(FtermsToForce,1:nfixedeff)
   }else{
     fpicked <- 1:length(fnames)
   }
@@ -141,7 +148,7 @@
     }
     Xmv <- Xm# Xmv/ncol(Xmv)
     # Xm <- Xm/ncol(Xm)
-   
+    
     #### cov(b,u - u.hat), xvxi, pev (C12,C11,C22)
     cov.b.pev <- 0 - t(prov2$P %*% (Xmv)) %*% prov2$Vi %*% t(ZKfv)
     # xvxi <- as.matrix(prov2$VarBeta[fpickedindex,fpickedindex])
@@ -151,7 +158,7 @@
     # xvxi <- xvxi*3
     # xvxi[2:3,2:3] <- xvxi[2:3,2:3]/3
     pev <- do.call(adiag1,prov2$PevU[arepresent])
-
+    
     MMsp <- Xm# for predictions
     MMspv <- Xmv# for SE's
     Zl2 <- lapply(as.list((arepresent)),function(x){
@@ -164,7 +171,7 @@
     standard.errors <- sqrt(rowSums((MMspv%*%xvxi)*MMspv) + 
                               rowSums(2*(MMspv%*%cov.b.pev)*MMnsp) + 
                               rowSums((MMnsp%*%pev)*MMnsp))
-
+    
     blups <- unlist(prov2$U[arepresent])
     blues <- prov2$Beta#[fpickedindex,]
     
@@ -191,7 +198,7 @@
     # Xmv <- Xm
     # print(fnonpicked)
     if(length(fnonpicked) > 0){ #then we have to average across those terms
-      for(ifnp in fnonpicked){
+      for(ifnp in fnonpicked){ # ifnp <- fnonpicked[5]
         fnonpickedindex <- fnamesindex[[ifnp]]
         if(ncol(as.matrix(Xm[,fnonpickedindex])) > 1){ ## if is factor or character type
           Xm[,fnonpickedindex] <- ((Xm[,fnonpickedindex]*0)+1)/(ncol(as.matrix(Xm[,fnonpickedindex]))+1)
@@ -235,7 +242,6 @@
   
   return(toreturn2)
 }
-
 
 "print.predict.mmer"<- function(x, digits = max(3, getOption("digits") - 3), ...) {
   aver <- paste(x$FE.nonused,collapse = ", ")
@@ -347,6 +353,7 @@
   mycons <- do.call(rbind,consl)
   
   rrr <- lapply(vcsl,rownames)
+  rrr <- rrr[which(unlist(lapply(rrr, length)) > 0)]
   for(o in 1:length(rrr)){rrr[[o]] <- paste(names(rrr)[o],rrr[[o]],sep=".")}
   rownames(mys2) <- as.vector(unlist(rrr))
   
@@ -377,7 +384,7 @@
   ################################################
   cat(paste(rep("=",nmaxchar), collapse = ""))
   cat(paste("\n",rlt,"Multivariate Linear Mixed Model fit by REML",rlt,"\n", collapse = ""))
-  cat(paste(rlh," sommer 3.8 ",rlh, "\n", collapse = ""))
+  cat(paste(rlh," sommer 3.9 ",rlh, "\n", collapse = ""))
   cat(paste(rep("=",nmaxchar), collapse = ""))
   cat("\n")
   cat("")
@@ -650,7 +657,7 @@ anova.mmer <- function(object, object2=NULL, type=1, ...) {
   digits = max(3, getOption("digits") - 3)
   if(is.null(object2)){
     # stop("The 'anova' function for the sommer package only works to compare mixed models by likelihood ratio tests (LRT), was not intended to provide regular sum of squares output.")
-    sequential.fit(object,type=type)
+    result <- sequential.fit(object,type=type)
   }else{
     #if(object$maxim){ # user used REML=TRUE, not possible to do LRT
     #  stop("Please fit the models using ML instead of REML by setting the argument REML=FALSE and try again")
@@ -685,12 +692,13 @@ anova.mmer <- function(object, object2=NULL, type=1, ...) {
                         ChiDf=c("",as.character(df)), PrChisq=c("",chichi2 ))
       rownames(result) <- c(mods[vv],mods[vv2])
       print(result)
+      # print(result)
       cat("==============================================================\n")
       cat("Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1")
     }
     #}
   }
-  #return(result)
+  return(result)
 }
 #### =========== ####
 ## PLOTING FUNCTION #
@@ -737,7 +745,7 @@ plot.mmer <- function(x, stnd=TRUE, ...) {
     stop("This package requires R 2.1 or later")
   assign(".sommer.home", file.path(library, pkg),
          pos=match("package:sommer", search()))
-  sommer.version = "3.8 (2019-01-01)" # usually 2 months before it expires
+  sommer.version = "3.9 (2019-04-01)" # usually 2 months before it expires
   
   ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ### check which version is more recent
@@ -753,24 +761,24 @@ plot.mmer <- function(x, stnd=TRUE, ...) {
   assign(".sommer.version", sommer.version, pos=match("package:sommer", search()))
   if(interactive())
   {
-    packageStartupMessage(magenta(paste("[]==================================================================[]")),appendLF=TRUE)
-    packageStartupMessage(magenta(paste("[]   Solving Mixed Model Equations in R (sommer) ", sommer.version, "   []",sep="")),appendLF=TRUE)
-    packageStartupMessage(magenta(paste("[]   ------------ Multivariate Linear Mixed Models --------------   []")),appendLF=TRUE)
-    packageStartupMessage(magenta("[]   Author: Giovanny Covarrubias-Pazaran                           []"),appendLF=TRUE)
-    packageStartupMessage(magenta("[]   Published: PLoS ONE 2016, 11(6):1-15                           []"),appendLF=TRUE)
-    packageStartupMessage(magenta("[]   Dedicated to my alma mater the Universidad Autonoma Chapingo   []"),appendLF=TRUE)
-    packageStartupMessage(magenta("[]   Type 'vignette('sommer.start')' for a short tutorial           []"),appendLF=TRUE)
-    packageStartupMessage(magenta("[]   Type 'citation('sommer')' to know how to cite sommer           []"),appendLF=TRUE)
-    packageStartupMessage(magenta(paste("[]==================================================================[]")),appendLF=TRUE)
-    packageStartupMessage(magenta("sommer is updated on CRAN every 3-months due to CRAN policies"),appendLF=TRUE)
-    packageStartupMessage(magenta("Newest source is available at https://github.com/covaruber/sommer"),appendLF=TRUE)
-    packageStartupMessage(magenta("To install type: library(devtools); install_github('covaruber/sommer')"),appendLF=TRUE)
+    packageStartupMessage(cyan(paste("[]==================================================================[]")),appendLF=TRUE)
+    packageStartupMessage(cyan(paste("[]   Solving Mixed Model Equations in R (sommer) ", sommer.version, "   []",sep="")),appendLF=TRUE)
+    packageStartupMessage(cyan(paste("[]   ------------ Multivariate Linear Mixed Models --------------   []")),appendLF=TRUE)
+    packageStartupMessage(cyan("[]   Author: Giovanny Covarrubias-Pazaran                           []"),appendLF=TRUE)
+    packageStartupMessage(cyan("[]   Published: PLoS ONE 2016, 11(6):1-15                           []"),appendLF=TRUE)
+    packageStartupMessage(cyan("[]   Dedicated to the University of Chapingo and the UW-Madison     []"),appendLF=TRUE)
+    packageStartupMessage(cyan("[]   Type 'vignette('sommer.start')' for a short tutorial           []"),appendLF=TRUE)
+    packageStartupMessage(cyan("[]   Type 'citation('sommer')' to know how to cite sommer           []"),appendLF=TRUE)
+    packageStartupMessage(cyan(paste("[]==================================================================[]")),appendLF=TRUE)
+    packageStartupMessage(cyan("sommer is updated on CRAN every 3-months due to CRAN policies"),appendLF=TRUE)
+    packageStartupMessage(cyan("Newest source is available at https://github.com/covaruber/sommer"),appendLF=TRUE)
+    packageStartupMessage(cyan("To install type: library(devtools); install_github('covaruber/sommer')"),appendLF=TRUE)
     
     #if(yyy > current){ # yyy < current in CRAN
     #  packageStartupMessage(paste("Version",current,"is now available."),appendLF=TRUE) # version current
     #  packageStartupMessage(paste("Please update 'sommer' installing the new version."),appendLF=TRUE) # version current
     #}
-    #print(image(diag(10),main="sommer 3.8"))
+    #print(image(diag(10),main="sommer 3.9"))
   }
   invisible()
 }

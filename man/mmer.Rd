@@ -9,9 +9,9 @@
 
 Fits a multivariate/univariate linear mixed model by likelihood methods (REML). The optimization methods are; Direct-Inversion Newton-Raphson (NR), Average Information (AI) (Tunnicliffe 1989; Lee et al. 2015; Maier et al. 2015), and Efficient Mixed Model Association (EMMA) (Kang et al. 2008) coded in C++ using the Armadillo library to opmitime dense matrix operations common in the derect-inversion algorithms. These algorithms are \strong{intended to be used for problems of the type p > n or dense matrices}. For problems with sparse covariance structures, or problems of the type n > p, the MME-based algorithms are faster and we recommend to shift to the use of such software (i.e. lme4, breedR, or asreml-R).
 
-The package also provides functions to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices to model covariances among genotypes for plant and animal breeding problems. Overlayed models can be implemented as well (\code{\link{overlay}} function). Spatial modeling can be done through the two dimensional splines (\code{\link{spl2D}}). Autoregresive (\code{\link{AR1}}), compound symmetry (\code{\link{CS}}) and autoregressive moving average (\code{\link{ARMA}}) covariance matrices can be used in sommer, but the user needs to fix the correlation value for such models. Random regression models can also be fitted through the (\code{\link{leg}}) function (orthopolynom package installation is needed for using the leg function).
+The package also provides functions to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), and epistatic (\code{\link{E.mat}}) relationship matrices to model known covariances among genotypes typical in plant and animal breeding problems. Other functions to build known covariance structures among levels of random effects are autoregresive (\code{\link{AR1}}), compound symmetry (\code{\link{CS}}) and autoregressive moving average (\code{\link{ARMA}}) where the user needs to fix the correlation value for such models (this is different to estimating unknown covariance structures). Additionally, overlayed models can be implemented as well (\code{\link{overlay}} function). Spatial modeling can be done through the two dimensional splines (\code{\link{spl2D}}). Random regression models can also be fitted through the (\code{\link{leg}}) function (orthopolynom package installation is needed for using the leg function).
 
-The sommer package is updated on CRAN every 3-months due to CRAN policies but you can find the latest source at https://github.com/covaruber/sommer . This can be easily installed easily typing the following in the R console:
+The sommer package is updated on CRAN every 3-months due to CRAN policies but you can find the latest source at https://github.com/covaruber/sommer . This can be easily installed typing the following in the R console:
 
 library(devtools)
 
@@ -21,6 +21,10 @@ This is recommended since bugs fixes will be immediately available in the GitHub
 
 \strong{vignette("sommer.start")} 
 
+\strong{vignette("sommer.changes")}
+
+\strong{vignette("sommer.FAQ")}
+
 \strong{vignette("sommer")}
 
 or visit \strong{https://covaruber.github.io}
@@ -28,13 +32,10 @@ or visit \strong{https://covaruber.github.io}
 }
 \usage{
 
-mmer(fixed, random, rcov, data, weights, 
-    iters=20, tolpar = 1e-03, tolparinv = 1e-06, 
-    init=NULL, constraints=NULL,method="NR", 
-    getPEV=TRUE,na.method.X="exclude",
-    na.method.Y="exclude",return.param=FALSE, 
-    date.warning=TRUE,verbose=TRUE,
-    reshape.output=TRUE)
+mmer(fixed, random, rcov, data, weights, iters=20, tolpar = 1e-03, 
+     tolparinv = 1e-06, init=NULL, constraints=NULL,method="NR", getPEV=TRUE,
+     na.method.X="exclude", na.method.Y="exclude",return.param=FALSE, 
+     date.warning=TRUE,verbose=TRUE, reshape.output=TRUE)
 }
 \arguments{
   \item{fixed}{a formula specifying the \strong{response variable(s)} \strong{and fixed effects}, i.e:
@@ -43,7 +44,7 @@ mmer(fixed, random, rcov, data, weights,
   
   \emph{cbind(response.i,response.j) ~ covariate} for multivariate models
   
-  The \code{\link{fcm}(x)} function can be used to constrain fixed effects in multi-response models.
+  The \code{\link{fcm}()} function can be used to constrain fixed effects in multi-response models.
   
   }
   
@@ -51,22 +52,18 @@ mmer(fixed, random, rcov, data, weights,
   
   Useful functions can be used to fit heterogeneous variances and other special models (\emph{see 'Special Functions' in the Details section for more information}):
   
-  \code{\link{vs}(...,Gu,Gt,Gtc)} is the main function to specify variance models and special structures for random effects. On the ... argument you provide the unknown variance-covariance structures (i.e. us,ds,at,cs) and the random effect where such covariance structure will be used (the random effect of interest). Gu is used to provide known covariance structures, Gt initial values and Gtc for constraints. Auxiliar functions for building the variance models are:
+  \code{\link{vs}(...,Gu,Gt,Gtc)} is the main function to specify variance models and special structures for random effects. On the ... argument you provide the unknown variance-covariance structures (i.e. us,ds,at,cs) and the random effect where such covariance structure will be used (the random effect of interest). Gu is used to provide known covariance matrices among the levels of the random effect, Gt initial values and Gtc for constraints. Auxiliar functions for building the variance models are:
   
-  * \code{\link{ds}(x)}, \code{\link{us}(x)}, \code{\link{cs}(x)} can be used to specify unknown diagonal, unstructured and customized covariance structures respectively among levels of a random effect to be estimated by REML.
+  ** \code{\link{ds}(x)}, \code{\link{us}(x)}, \code{\link{cs}(x)} and \code{\link{at}(x,levs)} can be used to specify unknown diagonal, unstructured and customized unstructured and diagonal covariance structures to be estimated by REML.
   
-  * \code{\link{at}(x,levs)} can be used to specify heterogeneous variance for specific levels of a random effect
+  ** \code{\link{unsm}(x)}, \code{\link{uncm}(x)}, \code{\link{fixm}(x)} and \code{\link{diag}(x)} can be used to build easily matrices to specify constraints in the Gtc argument of the \code{\link{vs}()} function.
   
-  * \code{\link{overlay}(...,rlist,prefix)} can be used to specify overlay of design matrices of random effects
-
-  * \code{\link{spl2D}(...)}   can be used to fit a 2-dimensional spline (i.e. spatial modeling; see Special functions section below).
-  
-  * \code{\link{leg}(...)}   can be used to fit a random regression model.
+  ** \code{\link{overlay}()}, \code{\link{spl2D}()}, and \code{\link{leg}()} functions can be used to specify overlayed of design matrices of random effects, two dimensional spline and random regression models within the \code{\link{vs}()} function.
   
   }
   \item{rcov}{a formula specifying the name of the \strong{error term}, i.e. \emph{rcov= ~ units}.
   
-  Special variance models for the residual part are the same used on the random term but the name of the random effect is always "units" which can be thought as a column with as many levels as rows in the data, i.e. \emph{rcov=~vs(ds(covariate),units)}
+  Special heterogeneous and special variance models and constraints for the residual part are the same used on the random term but the name of the random effect is always "units" which can be thought as a column with as many levels as rows in the data, i.e. \emph{rcov=~vs(ds(covariate),units)}
   
   }
   \item{data}{a data frame containing the variables specified in the formulas for response, fixed, and random effects.}
@@ -174,7 +171,7 @@ If all parameters are correctly indicated the program will return a list with th
 \item{Vi}{the inverse of the phenotypic variance matrix V^- = (ZGZ+R)^-1}
 \item{sigma}{a list with the values of the variance-covariance components with one list element for each random effect.}
 \item{sigma_scaled}{a list with the values of the scaled variance-covariance components with one list element for each random effect.}
-\item{sigmaSE}{standard errors for the variance covariance components.}
+\item{sigmaSE}{Hessian matrix containing the variance-covariance for the variance components. SE's can be obtained taking the square root of the diagonal values of the Hessian.}
 \item{Beta}{a data frame for trait BLUEs (fixed effects).}
 \item{VarBeta}{a variance-covariance matrix for trait BLUEs}
 \item{U}{a list (one element for each random effect) with a data frame for trait BLUPs.}
