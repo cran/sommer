@@ -10,7 +10,7 @@ library(sommer)
 data(DT_cpdata)
 mix.rrblup <- mmer(fixed=cbind(color,Yield)~1,
                    random=~vs(GT,Gtc=unsm(2)) + vs(Rowf,Gtc=diag(2)),
-                   rcov=~vs(units,Gtc=unsm(2)),
+                   rcov=~vs(units,Gtc=unsm(2)), getPEV = FALSE,
                    data=DT)
 summary(mix.rrblup)
 ## GBLUP for individuals

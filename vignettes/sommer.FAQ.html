@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2019-03-25" />
+<meta name="date" content="2019-04-03" />
 
 <title>Frequently asked questions for the sommer package</title>
 
@@ -292,7 +292,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 <h1 class="title toc-ignore">Frequently asked questions for the sommer package</h1>
 <h4 class="author"><em>Giovanny Covarrubias-Pazaran</em></h4>
-<h4 class="date"><em>2019-03-25</em></h4>
+<h4 class="date"><em>2019-04-03</em></h4>
 
 
 
@@ -323,17 +323,17 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <a class="sourceLine" id="cb7-2" data-line-number="2"><span class="kw">data</span>(DT_cpdata)</a>
 <a class="sourceLine" id="cb7-3" data-line-number="3">mix.rrblup &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt">fixed=</span><span class="kw">cbind</span>(color,Yield)<span class="op">~</span><span class="dv">1</span>,</a>
 <a class="sourceLine" id="cb7-4" data-line-number="4">                   <span class="dt">random=</span><span class="op">~</span><span class="kw">vs</span>(GT,<span class="dt">Gtc=</span><span class="kw">unsm</span>(<span class="dv">2</span>)) <span class="op">+</span><span class="st"> </span><span class="kw">vs</span>(Rowf,<span class="dt">Gtc=</span><span class="kw">diag</span>(<span class="dv">2</span>)),</a>
-<a class="sourceLine" id="cb7-5" data-line-number="5">                   <span class="dt">rcov=</span><span class="op">~</span><span class="kw">vs</span>(units,<span class="dt">Gtc=</span><span class="kw">unsm</span>(<span class="dv">2</span>)),</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">                   <span class="dt">rcov=</span><span class="op">~</span><span class="kw">vs</span>(units,<span class="dt">Gtc=</span><span class="kw">unsm</span>(<span class="dv">2</span>)), <span class="dt">getPEV =</span> <span class="ot">FALSE</span>,</a>
 <a class="sourceLine" id="cb7-6" data-line-number="6">                   <span class="dt">data=</span>DT)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -533.942   20:38:56      6           0
-##     2      -373.864   20:39:1      11           0
-##     3      -292.05   20:39:4      14           0
-##     4      -259.206   20:39:8      18           0
-##     5      -255.006   20:39:13      23           0
-##     6      -254.802   20:39:18      28           0
-##     7      -254.795   20:39:21      31           0
-##     8      -254.794   20:39:25      35           0</code></pre>
+##     1      -533.942   19:54:26      5           0
+##     2      -373.864   19:54:31      10           0
+##     3      -292.05   19:54:35      14           0
+##     4      -259.206   19:54:39      18           0
+##     5      -255.006   19:54:43      22           0
+##     6      -254.802   19:54:47      26           0
+##     7      -254.795   19:54:51      30           0
+##     8      -254.794   19:54:56      35           0</code></pre>
 <pre class="sourceCode r" id="cb9"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="kw">summary</span>(mix.rrblup)</a></code></pre>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
@@ -371,13 +371,13 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <a class="sourceLine" id="cb11-5" data-line-number="5">                  <span class="dt">rcov=</span><span class="op">~</span><span class="kw">vs</span>(units,<span class="dt">Gtc=</span><span class="kw">unsm</span>(<span class="dv">2</span>)),</a>
 <a class="sourceLine" id="cb11-6" data-line-number="6">                  <span class="dt">data=</span>DT)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -362.46   20:40:40      5           0
-##     2      -289.256   20:40:44      9           0
-##     3      -259.023   20:40:49      14           0
-##     4      -254.901   20:40:53      18           0
-##     5      -254.799   20:40:57      22           0
-##     6      -254.794   20:41:1      26           0
-##     7      -254.794   20:41:5      30           0</code></pre>
+##     1      -362.46   19:55:27      4           0
+##     2      -289.256   19:55:31      8           0
+##     3      -259.023   19:55:35      12           0
+##     4      -254.901   19:55:39      16           0
+##     5      -254.799   19:55:45      22           0
+##     6      -254.794   19:55:49      26           0
+##     7      -254.794   19:55:53      30           0</code></pre>
 <pre class="sourceCode r" id="cb13"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" data-line-number="1"><span class="kw">summary</span>(mix.gblup)</a></code></pre>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         

@@ -1,9 +1,9 @@
 06ac315649c32d8e40abc8a191b9779d *CHANGELOG
-8856c17c1f8148a1ef15825ecfb44547 *DESCRIPTION
+cd7d6fedfaa34c48bfbf4cffd984a3c7 *DESCRIPTION
 94aa6946ab545fe54f513705dcbd590c *NAMESPACE
 51c59cd048dc4bb553ce2eae156dd737 *R/FUN_algorithms.R
 3b4cb7520354cbb7da93c6b0ddf1e783 *R/FUN_emmeans.R
-f345062c1a76ddccd8fac44bd9a55872 *R/FUN_markers.R
+7d52e0e2d25448345864e82682c38567 *R/FUN_markers.R
 55e5d894097c405adb2060555a7a6846 *R/FUN_plotting.R
 06a4327f2f2ae555d332fa25f923a61d *R/FUN_relationships.R
 4bf3854c34eed796acf9aa507f4fdb5e *R/FUN_spatial.R
@@ -12,7 +12,7 @@ b4cd5e0abd5cf8ea0457961a07ee86ea *R/FUN_stats.R
 c4ea29e7b9d1dd51e6650925d26d4f47 *R/FUN_utils.R
 22f17ff7b9aec8dae4986666e14e84bd *R/GWAS.R
 3835df70573067319dd8dd1eba83da7a *R/RcppExports.R
-26351af9dfe1d4c2b13987cff5ca7ff2 *R/mmer.R
+6c0611f9a97bbd8f42e4d556824c16d7 *R/mmer.R
 b74e8665a72e8f2ed3a511e59e0af655 *R/mydeprecated.R
 7626c55caccb331986a22f8471e19374 *README.md
 30eea6226344957deb264e5334da1a3d *build/vignette.rds
@@ -34,8 +34,8 @@ a61bd19bf810b5af3ba21fda187e2733 *data/DT_technow.RData
 0935ed3399ff97e96f09f559027d2378 *data/DT_yatesoats.RData
 ecab825f67d66dd82e5561f25b468e47 *data/datalist
 b35527d65768083a92f152afcf7f93c3 *inst/CITATION
-e711ebdbe2309fbde7cf69cbae0c231c *inst/doc/sommer.FAQ.R
-1186b3e99b48a0ca48ece92af5e6d2af *inst/doc/sommer.FAQ.Rmd
+cd4b23b790b3a830d9f0f88a25c44599 *inst/doc/sommer.FAQ.R
+079aec561cd7ce33897273441359bc5e *inst/doc/sommer.FAQ.Rmd
 cd52d0be63c85ae95e0e136b2d64fe41 *inst/doc/sommer.FAQ.pdf
 d1b49be23bdbd6414d672902ea8b7b03 *inst/doc/sommer.R
 5d3e840eef7963cbd302527625b8ab9b *inst/doc/sommer.Rmd
@@ -108,7 +108,7 @@ ebc82d3c9f713b54c8bb877a723b7efe *man/randef.Rd
 85bb2279cc269f482ab09a74c120c7fc *man/residuals.Rd
 29957ebc89e5a0ab6ec4e257a5cc7685 *man/sommer-package.Rd
 f59161e3ddd5821f9f577fcf3d0090cc *man/spatPlots.Rd
-02d63dcdb6baa20c633c4eaea2c889c8 *man/spl2D.Rd
+3bddf5b377e8d8290187ead2e40843b2 *man/spl2D.Rd
 27538f5a5572a9194b8a3d785c9fe007 *man/summary.Rd
 e50f017807fc029ac6cfd0c48ddf19c3 *man/transformConstraints.Rd
 aa886e1a44f68508a788dc778dc57d3d *man/transp.Rd
@@ -120,11 +120,11 @@ e4644ec86eca073cb8cb0bc5a2141497 *src/MNR.cpp
 61059660eb073d93e00e8ee054237071 *src/Makevars
 61059660eb073d93e00e8ee054237071 *src/Makevars.win
 18a602ec12f8ae4bec4ddff2769bd185 *src/RcppExports.cpp
-1186b3e99b48a0ca48ece92af5e6d2af *vignettes/sommer.FAQ.Rmd
-5ba8f6de22ab52e1b3a5c46e076440cd *vignettes/sommer.FAQ.html
+079aec561cd7ce33897273441359bc5e *vignettes/sommer.FAQ.Rmd
+1b2a07304b4122208bbf6ec706d94d75 *vignettes/sommer.FAQ.html
 5d3e840eef7963cbd302527625b8ab9b *vignettes/sommer.Rmd
 81dcdc3cf1214e05cd5d17ea96080379 *vignettes/sommer.changes.Rmd
-e39aa5cd4360981ad1bb10772acb9231 *vignettes/sommer.changes.html
-52c23019bd13229911c131af8a0e3b24 *vignettes/sommer.html
+f51d1cf746e16b0908d1c99eb3e83cf2 *vignettes/sommer.changes.html
+a237515c12b4d10ace3c7f727f19790f *vignettes/sommer.html
 8ba37c52de27cda883efc93a85b428bb *vignettes/sommer.start.Rmd
-8102cc340b6a7d1316a7aeb8079c05c1 *vignettes/sommer.start.html
+229b5517ea57ceb0eaef0293a4e41800 *vignettes/sommer.start.html
