@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2019-04-03" />
+<meta name="date" content="2019-07-02" />
 
 <title>Quick start for the sommer package</title>
 
@@ -292,7 +292,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 <h1 class="title toc-ignore">Quick start for the sommer package</h1>
 <h4 class="author"><em>Giovanny Covarrubias-Pazaran</em></h4>
-<h4 class="date"><em>2019-04-03</em></h4>
+<h4 class="date"><em>2019-07-02</em></h4>
 
 
 
@@ -469,16 +469,16 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <a class="sourceLine" id="cb3-3" data-line-number="3">              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</a>
 <a class="sourceLine" id="cb3-4" data-line-number="4">              <span class="dt">data=</span>DT)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -31.2668   19:58:2      0           0
-##     2      -23.2804   19:58:2      0           0
-##     3      -20.4746   19:58:2      0           0
-##     4      -20.1501   19:58:2      0           0
-##     5      -20.1454   19:58:2      0           0
-##     6      -20.1454   19:58:2      0           0</code></pre>
+##     1      -31.2668   11:5:53      0           0
+##     2      -23.2804   11:5:53      0           0
+##     3      -20.4746   11:5:53      0           0
+##     4      -20.1501   11:5:53      0           0
+##     5      -20.1454   11:5:53      0           0
+##     6      -20.1454   11:5:53      0           0</code></pre>
 <pre class="sourceCode r" id="cb5"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="kw">summary</span>(ans1)</a></code></pre>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
-## **********************  sommer 3.9  ********************** 
+## **********************  sommer 4.0  ********************** 
 ## ============================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -20.14538 46.29075 55.95182     NR     TRUE
@@ -519,16 +519,16 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <a class="sourceLine" id="cb9-3" data-line-number="3">              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(<span class="kw">ds</span>(Env),units),</a>
 <a class="sourceLine" id="cb9-4" data-line-number="4">              <span class="dt">data=</span>DT)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -31.2668   19:58:2      0           0
-##     2      -19.8549   19:58:3      1           0
-##     3      -15.9797   19:58:3      1           0
-##     4      -15.4374   19:58:3      1           0
-##     5      -15.43   19:58:3      1           0
-##     6      -15.4298   19:58:3      1           0</code></pre>
+##     1      -31.2668   11:5:53      0           0
+##     2      -19.8549   11:5:53      0           0
+##     3      -15.9797   11:5:53      0           0
+##     4      -15.4374   11:5:53      0           0
+##     5      -15.43   11:5:53      0           0
+##     6      -15.4298   11:5:53      0           0</code></pre>
 <pre class="sourceCode r" id="cb11"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="kw">summary</span>(ans2)</a></code></pre>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
-## **********************  sommer 3.9  ********************** 
+## **********************  sommer 4.0  ********************** 
 ## ============================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -15.42983 36.85965 46.52072     NR     TRUE
@@ -576,16 +576,16 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <a class="sourceLine" id="cb15-3" data-line-number="3">             <span class="dt">rcov=</span><span class="op">~</span><span class="kw">vs</span>(<span class="kw">us</span>(Env),units), </a>
 <a class="sourceLine" id="cb15-4" data-line-number="4">             <span class="dt">data=</span>DT)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -37.9059   19:58:3      0           0
-##     2      -17.9745   19:58:3      0           0
-##     3      -12.2427   19:58:3      0           0
-##     4      -11.5121   19:58:3      0           0
-##     5      -11.5001   19:58:3      0           0
-##     6      -11.4997   19:58:3      0           0</code></pre>
+##     1      -37.9059   11:5:53      0           0
+##     2      -17.9745   11:5:53      0           0
+##     3      -12.2427   11:5:54      1           0
+##     4      -11.5121   11:5:54      1           0
+##     5      -11.5001   11:5:54      1           0
+##     6      -11.4997   11:5:54      1           0</code></pre>
 <pre class="sourceCode r" id="cb17"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="kw">summary</span>(ans3)</a></code></pre>
 <pre><code>## ===================================================================
 ##              Multivariate Linear Mixed Model fit by REML             
-## **************************  sommer 3.9  ************************** 
+## **************************  sommer 4.0  ************************** 
 ## ===================================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -11.49971 28.99943 38.66049     NR     TRUE
@@ -641,16 +641,16 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <a class="sourceLine" id="cb21-4" data-line-number="4">              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(units, <span class="dt">Gtc=</span><span class="kw">unsm</span>(<span class="dv">2</span>)),</a>
 <a class="sourceLine" id="cb21-5" data-line-number="5">              <span class="dt">data=</span>DT)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      66.0395   19:58:4      1           0
-##     2      131.529   19:58:5      2           0
-##     3      162.769   19:58:5      2           0
-##     4      166.983   19:58:6      3           0
-##     5      167.025   19:58:6      3           0
-##     6      167.025   19:58:7      4           0</code></pre>
+##     1      66.0395   11:5:54      0           0
+##     2      131.529   11:5:55      1           0
+##     3      162.769   11:5:55      1           0
+##     4      166.983   11:5:56      2           0
+##     5      167.025   11:5:57      3           0
+##     6      167.025   11:5:57      3           0</code></pre>
 <pre class="sourceCode r" id="cb23"><code class="sourceCode r"><a class="sourceLine" id="cb23-1" data-line-number="1"><span class="kw">summary</span>(ans4)</a></code></pre>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
-## **********************  sommer 3.9  ********************** 
+## **********************  sommer 4.0  ********************** 
 ## ============================================================
 ##         logLik       AIC       BIC Method Converge
 ## Value 167.0252 -322.0505 -298.5695     NR     TRUE
@@ -702,18 +702,18 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <a class="sourceLine" id="cb27-4" data-line-number="4">              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(<span class="kw">ds</span>(Env),units, <span class="dt">Gtc=</span><span class="kw">unsm</span>(<span class="dv">2</span>)),</a>
 <a class="sourceLine" id="cb27-5" data-line-number="5">              <span class="dt">data=</span>DT)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      66.0395   19:58:8      1           0
-##     2      138.617   19:58:9      2           0
-##     3      172.682   19:58:10      3           0
-##     4      177.662   19:58:11      4           0
-##     5      177.801   19:58:12      5           0
-##     6      177.813   19:58:13      6           0
-##     7      177.815   19:58:14      7           0
-##     8      177.815   19:58:15      8           0</code></pre>
+##     1      66.0395   11:5:58      1           0
+##     2      138.617   11:5:59      2           0
+##     3      172.682   11:6:0      3           0
+##     4      177.662   11:6:1      4           0
+##     5      177.801   11:6:2      5           0
+##     6      177.813   11:6:4      7           0
+##     7      177.815   11:6:5      8           0
+##     8      177.815   11:6:6      9           0</code></pre>
 <pre class="sourceCode r" id="cb29"><code class="sourceCode r"><a class="sourceLine" id="cb29-1" data-line-number="1"><span class="kw">summary</span>(ans5)</a></code></pre>
 <pre><code>## =============================================================
 ##           Multivariate Linear Mixed Model fit by REML          
-## **********************  sommer 3.9  ********************** 
+## **********************  sommer 4.0  ********************** 
 ## =============================================================
 ##         logLik       AIC       BIC Method Converge
 ## Value 177.8154 -343.6308 -320.1497     NR     TRUE
@@ -778,23 +778,23 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <a class="sourceLine" id="cb33-4" data-line-number="4">              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(<span class="kw">ds</span>(Env),units, <span class="dt">Gtc=</span><span class="kw">unsm</span>(<span class="dv">2</span>)),</a>
 <a class="sourceLine" id="cb33-5" data-line-number="5">              <span class="dt">data=</span>DT)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      56.6189   19:58:17      2           0
-##     2      140.894   19:58:18      3           0
-##     3      176.238   19:58:19      4           0
-##     4      181.462   19:58:21      6           0
-##     5      181.688   19:58:22      7           0
-##     6      181.746   19:58:24      9           0
-##     7      181.77   19:58:25      10           0
-##     8      181.781   19:58:26      11           0
-##     9      181.787   19:58:28      13           0
-##     10      181.791   19:58:29      14           0
-##     11      181.793   19:58:31      16           0
-##     12      181.794   19:58:32      17           0
-##     13      181.794   19:58:33      18           0</code></pre>
+##     1      56.6189   11:6:7      1           0
+##     2      140.894   11:6:8      2           0
+##     3      176.238   11:6:10      4           0
+##     4      181.462   11:6:11      5           0
+##     5      181.688   11:6:12      6           0
+##     6      181.746   11:6:14      8           0
+##     7      181.77   11:6:15      9           0
+##     8      181.781   11:6:17      11           0
+##     9      181.787   11:6:18      12           0
+##     10      181.791   11:6:19      13           0
+##     11      181.793   11:6:21      15           0
+##     12      181.794   11:6:22      16           0
+##     13      181.794   11:6:23      17           0</code></pre>
 <pre class="sourceCode r" id="cb35"><code class="sourceCode r"><a class="sourceLine" id="cb35-1" data-line-number="1"><span class="kw">summary</span>(ans6)</a></code></pre>
 <pre><code>## ====================================================================
 ##              Multivariate Linear Mixed Model fit by REML             
-## **************************  sommer 3.9  ************************** 
+## **************************  sommer 4.0  ************************** 
 ## ====================================================================
 ##         logLik       AIC       BIC Method Converge
 ## Value 181.7945 -351.5889 -328.1079     NR     TRUE
@@ -991,12 +991,12 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <a class="sourceLine" id="cb49-3" data-line-number="3">           , <span class="dt">rcov=</span><span class="op">~</span><span class="kw">vs</span>(units)</a>
 <a class="sourceLine" id="cb49-4" data-line-number="4">           , <span class="dt">data=</span>DT)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -145.279   19:58:34      0           0
-##     2      -138.353   19:58:34      0           0
-##     3      -136.403   19:58:34      0           0
-##     4      -136.224   19:58:34      0           0
-##     5      -136.222   19:58:34      0           0
-##     6      -136.222   19:58:35      1           0</code></pre>
+##     1      -145.279   11:6:24      0           0
+##     2      -138.353   11:6:24      0           0
+##     3      -136.403   11:6:24      0           0
+##     4      -136.224   11:6:24      0           0
+##     5      -136.222   11:6:25      1           0
+##     6      -136.222   11:6:25      1           0</code></pre>
 <pre class="sourceCode r" id="cb51"><code class="sourceCode r"><a class="sourceLine" id="cb51-1" data-line-number="1"><span class="kw">summary</span>(mRR2)<span class="op">$</span>varcomp</a></code></pre>
 <pre><code>##                         VarComp VarCompSE   Zratio Constraint
 ## leg0:SUBJECT.Y-Y      2.5782969 0.6717242 3.838326   Positive
@@ -1039,13 +1039,13 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <a class="sourceLine" id="cb59-5" data-line-number="5">             <span class="dt">data=</span>DT,</a>
 <a class="sourceLine" id="cb59-6" data-line-number="6">             <span class="dt">M=</span>GT, <span class="dt">gTerm =</span> <span class="st">&quot;u:id&quot;</span>)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -143.207   19:58:36      0           0
-##     2      -117.977   19:58:36      0           0
-##     3      -109.877   19:58:37      1           1
-##     4      -108.178   19:58:37      1           1
-##     5      -108.123   19:58:37      1           1
-##     6      -108.12   19:58:38      2           1
-##     7      -108.12   19:58:38      2           1
+##     1      -143.207   11:6:26      0           0
+##     2      -117.977   11:6:26      0           0
+##     3      -109.877   11:6:27      1           1
+##     4      -108.178   11:6:27      1           1
+##     5      -108.123   11:6:27      1           1
+##     6      -108.12   11:6:28      2           1
+##     7      -108.12   11:6:28      2           1
 ## Performing GWAS evaluation</code></pre>
 <pre class="sourceCode r" id="cb61"><code class="sourceCode r"><a class="sourceLine" id="cb61-1" data-line-number="1">ms &lt;-<span class="st"> </span><span class="kw">as.data.frame</span>(<span class="kw">t</span>(mix1<span class="op">$</span>scores))</a>
 <a class="sourceLine" id="cb61-2" data-line-number="2">ms<span class="op">$</span>Locus &lt;-<span class="st"> </span><span class="kw">rownames</span>(ms)</a>
@@ -1075,11 +1075,11 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <a class="sourceLine" id="cb64-7" data-line-number="7">             <span class="op">+</span><span class="st"> </span>genof,</a>
 <a class="sourceLine" id="cb64-8" data-line-number="8">             <span class="dt">data=</span>DT)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -10.425   19:58:58      0           0
-##     2      -6.487   19:58:58      0           0
-##     3      -5.732   19:58:58      0           0
-##     4      -5.67494   19:58:58      0           0
-##     5      -5.67441   19:58:58      0           0</code></pre>
+##     1      -10.425   11:6:44      0           0
+##     2      -6.487   11:6:44      0           0
+##     3      -5.732   11:6:44      0           0
+##     4      -5.67494   11:6:44      0           0
+##     5      -5.67441   11:6:44      0           0</code></pre>
 <p>here the femalef and malef random effects are overlayed becoming a single random effect that has the same variance component.</p>
 </div>
 <div id="spatial-models-using-the-2-dimensional-spline" class="section level1">
@@ -1098,15 +1098,15 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <a class="sourceLine" id="cb66-9" data-line-number="9">            <span class="dt">rcov=</span><span class="op">~</span><span class="kw">vs</span>(units),</a>
 <a class="sourceLine" id="cb66-10" data-line-number="10">            <span class="dt">data=</span>DT)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -154.198   19:58:59      0           0
-##     2      -152.064   19:59:0      1           0
-##     3      -151.265   19:59:0      1           0
-##     4      -151.202   19:59:0      1           0
-##     5      -151.201   19:59:1      2           0</code></pre>
+##     1      -154.198   11:6:45      0           0
+##     2      -152.064   11:6:46      1           0
+##     3      -151.265   11:6:46      1           0
+##     4      -151.202   11:6:47      2           0
+##     5      -151.201   11:6:47      2           0</code></pre>
 <pre class="sourceCode r" id="cb68"><code class="sourceCode r"><a class="sourceLine" id="cb68-1" data-line-number="1"><span class="kw">summary</span>(mix)</a></code></pre>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
-## **********************  sommer 3.9  ********************** 
+## **********************  sommer 4.0  ********************** 
 ## ============================================================
 ##          logLik      AIC      BIC Method Converge
 ## Value -151.2011 304.4021 308.2938     NR     TRUE
@@ -1149,14 +1149,14 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <a class="sourceLine" id="cb72-4" data-line-number="4">              <span class="dt">rcov=</span><span class="op">~</span>units,</a>
 <a class="sourceLine" id="cb72-5" data-line-number="5">              <span class="dt">data=</span>DT)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -286.365   19:59:2      1           0
-##     2      -236.78   19:59:3      2           0
-##     3      -200.635   19:59:3      2           0
-##     4      -180.045   19:59:3      2           0
-##     5      -176.4   19:59:3      2           0
-##     6      -176.211   19:59:4      3           0
-##     7      -176.207   19:59:4      3           0
-##     8      -176.207   19:59:4      3           0</code></pre>
+##     1      -286.365   11:6:48      1           0
+##     2      -236.78   11:6:48      1           0
+##     3      -200.635   11:6:49      2           0
+##     4      -180.045   11:6:49      2           0
+##     5      -176.4   11:6:49      2           0
+##     6      -176.211   11:6:49      2           0
+##     7      -176.207   11:6:50      3           0
+##     8      -176.207   11:6:50      3           0</code></pre>
 <p>the matrix GT is provided as a random effect by encapsulating the matrix in a list and provided in the <code>vs()</code> function.</p>
 <div id="genomic-selection" class="section level2">
 <h2>10) Genomic selection</h2>
@@ -1191,12 +1191,12 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <a class="sourceLine" id="cb76-4" data-line-number="4">            <span class="dt">rcov=</span><span class="op">~</span>units, </a>
 <a class="sourceLine" id="cb76-5" data-line-number="5">            <span class="dt">data=</span>y.trn) <span class="co"># kinship based</span></a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -202.344   19:59:15      1           0
-##     2      -198.717   19:59:16      2           0
-##     3      -197.634   19:59:17      3           0
-##     4      -197.51   19:59:18      4           0
-##     5      -197.508   19:59:18      4           0
-##     6      -197.508   19:59:19      5           0</code></pre>
+##     1      -202.344   11:6:59      1           0
+##     2      -198.717   11:6:59      1           0
+##     3      -197.634   11:7:0      2           0
+##     4      -197.51   11:7:0      2           0
+##     5      -197.508   11:7:1      3           0
+##     6      -197.508   11:7:1      3           0</code></pre>
 <pre class="sourceCode r" id="cb78"><code class="sourceCode r"><a class="sourceLine" id="cb78-1" data-line-number="1">ans<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:id</span><span class="st">`</span><span class="op">$</span>X1 &lt;-<span class="st"> </span><span class="kw">as.data.frame</span>(ans<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:id</span><span class="st">`</span><span class="op">$</span>X1)</a>
 <a class="sourceLine" id="cb78-2" data-line-number="2"><span class="kw">rownames</span>(ans<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:id</span><span class="st">`</span><span class="op">$</span>X1) &lt;-<span class="st"> </span><span class="kw">gsub</span>(<span class="st">&quot;id&quot;</span>,<span class="st">&quot;&quot;</span>,<span class="kw">rownames</span>(ans<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:id</span><span class="st">`</span><span class="op">$</span>X1))</a>
 <a class="sourceLine" id="cb78-3" data-line-number="3"><span class="kw">cor</span>(ans<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:id</span><span class="st">`</span><span class="op">$</span>X1[vv,],DT[vv,<span class="st">&quot;X1&quot;</span>], <span class="dt">use=</span><span class="st">&quot;complete&quot;</span>)</a></code></pre>
@@ -1207,13 +1207,13 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <a class="sourceLine" id="cb80-4" data-line-number="4">             <span class="dt">rcov=</span><span class="op">~</span>units,</a>
 <a class="sourceLine" id="cb80-5" data-line-number="5">             <span class="dt">data=</span>y.trn) <span class="co"># kinship based</span></a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -343.082   19:59:21      2           0
-##     2      -243.965   19:59:22      3           0
-##     3      -208.257   19:59:22      3           0
-##     4      -197.982   19:59:23      4           0
-##     5      -197.519   19:59:23      4           0
-##     6      -197.508   19:59:24      5           0
-##     7      -197.508   19:59:25      6           0</code></pre>
+##     1      -343.082   11:7:3      1           0
+##     2      -243.965   11:7:4      2           0
+##     3      -208.257   11:7:5      3           0
+##     4      -197.982   11:7:5      3           0
+##     5      -197.519   11:7:6      4           0
+##     6      -197.508   11:7:6      4           0
+##     7      -197.508   11:7:7      5           0</code></pre>
 <pre class="sourceCode r" id="cb82"><code class="sourceCode r"><a class="sourceLine" id="cb82-1" data-line-number="1">u &lt;-<span class="st"> </span>GT <span class="op">%*%</span><span class="st"> </span><span class="kw">as.matrix</span>(ans2<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:GT</span><span class="st">`</span><span class="op">$</span>X1) <span class="co"># BLUPs for individuals</span></a>
 <a class="sourceLine" id="cb82-2" data-line-number="2"><span class="kw">rownames</span>(u) &lt;-<span class="st"> </span><span class="kw">rownames</span>(GT)</a>
 <a class="sourceLine" id="cb82-3" data-line-number="3"><span class="kw">cor</span>(u[vv,],DT[vv,<span class="st">&quot;X1&quot;</span>]) <span class="co"># same correlation</span></a></code></pre>
