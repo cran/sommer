@@ -1,6 +1,7 @@
 ## ------------------------------------------------------------------------
 library(sommer)
 data(DT_example)
+DT <- DT_example
 head(DT)
 
 ans1 <- mmer(Yield~Env,
@@ -13,6 +14,7 @@ summary(ans1)
 ## ------------------------------------------------------------------------
 
 data(DT_example)
+DT <- DT_example
 head(DT)
 ans2 <- mmer(Yield~Env,
               random= ~Name + vs(ds(Env),Name),
@@ -24,6 +26,7 @@ summary(ans2)
 ## ------------------------------------------------------------------------
 
 data(DT_example)
+DT <- DT_example
 head(DT)
 ans3 <- mmer(Yield~Env,
              random=~ vs(us(Env),Name),
@@ -35,6 +38,7 @@ summary(ans3)
 ## ------------------------------------------------------------------------
 
 data(DT_example)
+DT <- DT_example
 head(DT)
 DT$EnvName <- paste(DT$Env,DT$Name)
 ans4 <- mmer(cbind(Yield, Weight) ~ Env,
@@ -47,6 +51,7 @@ summary(ans4)
 ## ------------------------------------------------------------------------
 
 data(DT_example)
+DT <- DT_example
 head(DT)
 DT$EnvName <- paste(DT$Env,DT$Name)
 ans5 <- mmer(cbind(Yield, Weight) ~ Env,
@@ -59,6 +64,7 @@ summary(ans5)
 ## ------------------------------------------------------------------------
 
 data(DT_example)
+DT <- DT_example
 head(DT)
 DT$EnvName <- paste(DT$Env,DT$Name)
 ans6 <- mmer(cbind(Yield, Weight) ~ Env,
@@ -83,6 +89,7 @@ fcm(c(1,0,1,0))
 ## ------------------------------------------------------------------------
 library(orthopolynom)
 data(DT_legendre)
+DT <- DT_legendre
 head(DT)
 mRR2<-mmer(Y~ 1 + Xf
            , random=~ vs(us(leg(X,1)),SUBJECT)
@@ -94,6 +101,9 @@ summary(mRR2)$varcomp
 ## ------------------------------------------------------------------------
 
 data(DT_cpdata)
+DT <- DT_cpdata
+GT <- GT_cpdata
+MP <- MP_cpdata
 #### create the variance-covariance matrix
 A <- A.mat(GT) # additive relationship matrix
 #### look at the data and fit the model
@@ -116,6 +126,7 @@ manhattan(MP2, pch=20,cex=.5, PVCN = "color score")
 ## ------------------------------------------------------------------------
 
 data("DT_halfdiallel")
+DT <- DT_halfdiallel
 head(DT)
 DT$femalef <- as.factor(DT$female)
 DT$malef <- as.factor(DT$male)
@@ -128,7 +139,10 @@ modh <- mmer(sugar~1,
 
 
 ## ------------------------------------------------------------------------
-data("DT_cpdata")
+data(DT_cpdata)
+DT <- DT_cpdata
+GT <- GT_cpdata
+MP <- MP_cpdata
 ### mimic two fields
 A <- A.mat(GT)
 mix <- mmer(Yield~1,
@@ -143,6 +157,9 @@ summary(mix)
 ## ------------------------------------------------------------------------
 
 data(DT_cpdata)
+DT <- DT_cpdata
+GT <- GT_cpdata
+MP <- MP_cpdata
 GT[1:4,1:4]
 #### look at the data and fit the model
 mix1 <- mmer(Yield~1,
@@ -152,7 +169,9 @@ mix1 <- mmer(Yield~1,
 
 
 ## ------------------------------------------------------------------------
-data("DT_wheat"); 
+data(DT_wheat)
+DT <- DT_wheat
+GT <- GT_wheat
 colnames(DT) <- paste0("X",1:ncol(DT))
 DT <- as.data.frame(DT);DT$id <- as.factor(rownames(DT))
 # select environment 1

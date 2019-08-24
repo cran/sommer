@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2019-07-02" />
+<meta name="date" content="2019-08-24" />
 
 <title>Quantitative genetics using the sommer package</title>
 
@@ -292,7 +292,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 <h1 class="title toc-ignore">Quantitative genetics using the sommer package</h1>
 <h4 class="author"><em>Giovanny Covarrubias-Pazaran</em></h4>
-<h4 class="date"><em>2019-07-02</em></h4>
+<h4 class="date"><em>2019-08-24</em></h4>
 
 
 
@@ -371,65 +371,63 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <p>The following dataset has 41 potato lines evaluated in 5 locations across 3 years in an RCBD design. We show how to fit the model and extract the variance components to calculate the <span class="math inline">\(h^2\)</span>.</p>
 <pre class="sourceCode r" id="cb1"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">library</span>(sommer)</a>
 <a class="sourceLine" id="cb1-2" data-line-number="2"><span class="kw">data</span>(DT_example)</a>
-<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="kw">head</span>(DT)</a></code></pre>
-<pre><code>##                   Name     Env Loc Year     Block Yield    Weight
-## 33  Manistee(MSL292-A) CA.2013  CA 2013 CA.2013.1     4 -1.904711
-## 65          CO02024-9W CA.2013  CA 2013 CA.2013.1     5 -1.446958
-## 66  Manistee(MSL292-A) CA.2013  CA 2013 CA.2013.2     5 -1.516271
-## 67            MSL007-B CA.2011  CA 2011 CA.2011.2     5 -1.435510
-## 68           MSR169-8Y CA.2013  CA 2013 CA.2013.1     5 -1.469051
-## 103         AC05153-1W CA.2013  CA 2013 CA.2013.1     6 -1.307167</code></pre>
-<pre class="sourceCode r" id="cb3"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">ans1 &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span><span class="dv">1</span>,</a>
-<a class="sourceLine" id="cb3-2" data-line-number="2">             <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span>Name <span class="op">+</span><span class="st"> </span>Env <span class="op">+</span><span class="st"> </span>Env<span class="op">:</span>Name <span class="op">+</span><span class="st"> </span>Env<span class="op">:</span>Block,</a>
-<a class="sourceLine" id="cb3-3" data-line-number="3">             <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</a>
-<a class="sourceLine" id="cb3-4" data-line-number="4">             <span class="dt">data=</span>DT)</a></code></pre>
+<a class="sourceLine" id="cb1-3" data-line-number="3">DT &lt;-<span class="st"> </span>DT_example</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">A &lt;-<span class="st"> </span>A_example</a>
+<a class="sourceLine" id="cb1-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb1-6" data-line-number="6">ans1 &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span><span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb1-7" data-line-number="7">             <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span>Name <span class="op">+</span><span class="st"> </span>Env <span class="op">+</span><span class="st"> </span>Env<span class="op">:</span>Name <span class="op">+</span><span class="st"> </span>Env<span class="op">:</span>Block,</a>
+<a class="sourceLine" id="cb1-8" data-line-number="8">             <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</a>
+<a class="sourceLine" id="cb1-9" data-line-number="9">             <span class="dt">data=</span>DT)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -40.765   11:3:47      0           0
-##     2      -30.2657   11:3:47      0           0
-##     3      -25.8227   11:3:47      0           1
-##     4      -24.7277   11:3:47      0           1
-##     5      -24.7203   11:3:47      0           1
-##     6      -24.7202   11:3:47      0           1</code></pre>
-<pre class="sourceCode r" id="cb5"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="kw">summary</span>(ans1)<span class="op">$</span>varcomp</a></code></pre>
+##     1      -40.765   8:5:47      0           0
+##     2      -30.2657   8:5:47      0           0
+##     3      -25.8227   8:5:47      0           1
+##     4      -24.7277   8:5:47      0           1
+##     5      -24.7203   8:5:47      0           1
+##     6      -24.7202   8:5:47      0           1</code></pre>
+<pre class="sourceCode r" id="cb3"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">summary</span>(ans1)<span class="op">$</span>varcomp</a></code></pre>
 <pre><code>##                         VarComp  VarCompSE    Zratio Constraint
 ## Name.Yield-Yield       3.718279  1.6959834 2.1924029   Positive
 ## Env.Yield-Yield       12.008450 12.2771178 0.9781164   Positive
 ## Env:Name.Yield-Yield   5.152643  1.4923912 3.4526091   Positive
 ## Env:Block.Yield-Yield  0.000000  0.1156675 0.0000000   Positive
 ## units.Yield-Yield      4.366189  0.6573086 6.6425245   Positive</code></pre>
-<pre class="sourceCode r" id="cb7"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1">(n.env &lt;-<span class="st"> </span><span class="kw">length</span>(<span class="kw">levels</span>(DT<span class="op">$</span>Env)))</a></code></pre>
+<pre class="sourceCode r" id="cb5"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1">(n.env &lt;-<span class="st"> </span><span class="kw">length</span>(<span class="kw">levels</span>(DT<span class="op">$</span>Env)))</a></code></pre>
 <pre><code>## [1] 3</code></pre>
-<pre class="sourceCode r" id="cb9"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="kw">pin</span>(ans1, h2 <span class="op">~</span><span class="st"> </span>V1 <span class="op">/</span><span class="st"> </span>( V1 <span class="op">+</span><span class="st"> </span>(V3<span class="op">/</span>n.env) <span class="op">+</span><span class="st"> </span>(V5<span class="op">/</span>(<span class="dv">2</span><span class="op">*</span>n.env)) ) )</a></code></pre>
+<pre class="sourceCode r" id="cb7"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="kw">pin</span>(ans1, h2 <span class="op">~</span><span class="st"> </span>V1 <span class="op">/</span><span class="st"> </span>( V1 <span class="op">+</span><span class="st"> </span>(V3<span class="op">/</span>n.env) <span class="op">+</span><span class="st"> </span>(V5<span class="op">/</span>(<span class="dv">2</span><span class="op">*</span>n.env)) ) )</a></code></pre>
 <pre><code>##     Estimate        SE
 ## h2 0.6032715 0.1344582</code></pre>
 <p>Recently with markers becoming cheaper, thousand of markers can be run in the breeding materials. When markers are available, an special design is not neccesary to disect the additive genetic variance. The availability of the additive, dominance and epistatic relationship matrices allow us to estimate <span class="math inline">\(\sigma^2_A\)</span>, <span class="math inline">\(\sigma^2_D\)</span> and <span class="math inline">\(\sigma^2_I\)</span>, although given that A, D and E are not orthogonal the interpretation of models that fit more than A and D become cumbersome.</p>
 <p>Assume you have a population (even unreplicated) in the field but in addition we have genetic markers. Now we can fit the model and estimate the genomic heritability that explains a portion of the additive genetic variance (with high marker density <span class="math inline">\(\sigma^2_A\)</span> = <span class="math inline">\(\sigma^2_g\)</span>)</p>
-<pre class="sourceCode r" id="cb11"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="kw">data</span>(<span class="st">&quot;DT_cpdata&quot;</span>)</a>
-<a class="sourceLine" id="cb11-2" data-line-number="2">DT<span class="op">$</span>idd &lt;-DT<span class="op">$</span>id; DT<span class="op">$</span>ide &lt;-DT<span class="op">$</span>id</a>
-<a class="sourceLine" id="cb11-3" data-line-number="3">### look at the data</a>
-<a class="sourceLine" id="cb11-4" data-line-number="4">A &lt;-<span class="st"> </span><span class="kw">A.mat</span>(GT) <span class="co"># additive relationship matrix</span></a>
-<a class="sourceLine" id="cb11-5" data-line-number="5">D &lt;-<span class="st"> </span><span class="kw">D.mat</span>(GT) <span class="co"># dominance relationship matrix</span></a>
-<a class="sourceLine" id="cb11-6" data-line-number="6">E &lt;-<span class="st"> </span><span class="kw">E.mat</span>(GT) <span class="co"># epistatic relationship matrix</span></a>
-<a class="sourceLine" id="cb11-7" data-line-number="7">ans.ADE &lt;-<span class="st"> </span><span class="kw">mmer</span>(color<span class="op">~</span><span class="dv">1</span>, </a>
-<a class="sourceLine" id="cb11-8" data-line-number="8">                 <span class="dt">random=</span><span class="op">~</span><span class="kw">vs</span>(id,<span class="dt">Gu=</span>A) <span class="op">+</span><span class="st"> </span><span class="kw">vs</span>(idd,<span class="dt">Gu=</span>D), </a>
-<a class="sourceLine" id="cb11-9" data-line-number="9">                 <span class="dt">rcov=</span><span class="op">~</span>units,</a>
-<a class="sourceLine" id="cb11-10" data-line-number="10">                 <span class="dt">data=</span>DT)</a></code></pre>
+<pre class="sourceCode r" id="cb9"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="kw">data</span>(DT_cpdata)</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2">DT &lt;-<span class="st"> </span>DT_cpdata</a>
+<a class="sourceLine" id="cb9-3" data-line-number="3">GT &lt;-<span class="st"> </span>GT_cpdata</a>
+<a class="sourceLine" id="cb9-4" data-line-number="4">MP &lt;-<span class="st"> </span>MP_cpdata</a>
+<a class="sourceLine" id="cb9-5" data-line-number="5">DT<span class="op">$</span>idd &lt;-DT<span class="op">$</span>id; DT<span class="op">$</span>ide &lt;-DT<span class="op">$</span>id</a>
+<a class="sourceLine" id="cb9-6" data-line-number="6">### look at the data</a>
+<a class="sourceLine" id="cb9-7" data-line-number="7">A &lt;-<span class="st"> </span><span class="kw">A.mat</span>(GT) <span class="co"># additive relationship matrix</span></a>
+<a class="sourceLine" id="cb9-8" data-line-number="8">D &lt;-<span class="st"> </span><span class="kw">D.mat</span>(GT) <span class="co"># dominance relationship matrix</span></a>
+<a class="sourceLine" id="cb9-9" data-line-number="9">E &lt;-<span class="st"> </span><span class="kw">E.mat</span>(GT) <span class="co"># epistatic relationship matrix</span></a>
+<a class="sourceLine" id="cb9-10" data-line-number="10">ans.ADE &lt;-<span class="st"> </span><span class="kw">mmer</span>(color<span class="op">~</span><span class="dv">1</span>, </a>
+<a class="sourceLine" id="cb9-11" data-line-number="11">                 <span class="dt">random=</span><span class="op">~</span><span class="kw">vs</span>(id,<span class="dt">Gu=</span>A) <span class="op">+</span><span class="st"> </span><span class="kw">vs</span>(idd,<span class="dt">Gu=</span>D), </a>
+<a class="sourceLine" id="cb9-12" data-line-number="12">                 <span class="dt">rcov=</span><span class="op">~</span>units,</a>
+<a class="sourceLine" id="cb9-13" data-line-number="13">                 <span class="dt">data=</span>DT)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -123   11:3:49      0           0
-##     2      -107.864   11:3:49      0           0
-##     3      -103.867   11:3:50      1           0
-##     4      -103.315   11:3:50      1           0
-##     5      -103.294   11:3:50      1           0
-##     6      -103.293   11:3:51      2           0</code></pre>
-<pre class="sourceCode r" id="cb13"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" data-line-number="1">(<span class="kw">summary</span>(ans.ADE)<span class="op">$</span>varcomp)</a></code></pre>
+##     1      -123   8:5:50      1           0
+##     2      -107.864   8:5:50      1           0
+##     3      -103.867   8:5:50      1           0
+##     4      -103.315   8:5:50      1           0
+##     5      -103.294   8:5:51      2           0
+##     6      -103.293   8:5:51      2           0</code></pre>
+<pre class="sourceCode r" id="cb11"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" data-line-number="1">(<span class="kw">summary</span>(ans.ADE)<span class="op">$</span>varcomp)</a></code></pre>
 <pre><code>##                       VarComp    VarCompSE   Zratio Constraint
 ## u:id.color-color  0.003662202 0.0012194130 3.003250   Positive
 ## u:idd.color-color 0.001820079 0.0007406216 2.457502   Positive
 ## units.color-color 0.002106929 0.0002864724 7.354736   Positive</code></pre>
-<pre class="sourceCode r" id="cb15"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" data-line-number="1"><span class="kw">pin</span>(ans.ADE, h2 <span class="op">~</span><span class="st"> </span>(V1) <span class="op">/</span><span class="st"> </span>( V1<span class="op">+</span>V3) )</a></code></pre>
+<pre class="sourceCode r" id="cb13"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" data-line-number="1"><span class="kw">pin</span>(ans.ADE, h2 <span class="op">~</span><span class="st"> </span>(V1) <span class="op">/</span><span class="st"> </span>( V1<span class="op">+</span>V3) )</a></code></pre>
 <pre><code>##     Estimate         SE
 ## h2 0.6347926 0.08840488</code></pre>
-<pre class="sourceCode r" id="cb17"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="kw">pin</span>(ans.ADE, h2 <span class="op">~</span><span class="st"> </span>(V1<span class="op">+</span>V2) <span class="op">/</span><span class="st"> </span>( V1<span class="op">+</span>V2<span class="op">+</span>V3) )</a></code></pre>
+<pre class="sourceCode r" id="cb15"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" data-line-number="1"><span class="kw">pin</span>(ans.ADE, h2 <span class="op">~</span><span class="st"> </span>(V1<span class="op">+</span>V2) <span class="op">/</span><span class="st"> </span>( V1<span class="op">+</span>V2<span class="op">+</span>V3) )</a></code></pre>
 <pre><code>##     Estimate         SE
 ## h2 0.7223783 0.05563774</code></pre>
 <p>In the previous example we showed how to estimate the additive (<span class="math inline">\(\sigma^2_A\)</span>), dominance (<span class="math inline">\(\sigma^2_D\)</span>), and epistatic (<span class="math inline">\(\sigma^2_I\)</span>) variance components based on markers and estimate broad (<span class="math inline">\(H^2\)</span>) and narrow sense heritability (<span class="math inline">\(h^2\)</span>). Notice that we used the <code>vs()</code> function which indicates that the random effect inside the parenthesis (i.e. id, idd or ide) has a covariance matrix (A, D, or E), that will be specified in the Gu argument of the vs() function. Please DO NOT provide the inverse but the original covariance matrix.</p>
@@ -438,20 +436,23 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <h2>2) Specifying heterogeneous variances in univariate models</h2>
 <p>Very often in multi-environment trials, the assumption that genetic variance is the same across locations may be too naive. Because of that, specifying a general genetic component and a location specific genetic variance is the way to go.</p>
 <p>We estimate variance components for <span class="math inline">\(GCA_2\)</span> and <span class="math inline">\(SCA\)</span> specifying the variance structure.</p>
-<pre class="sourceCode r" id="cb19"><code class="sourceCode r"><a class="sourceLine" id="cb19-1" data-line-number="1"><span class="kw">data</span>(<span class="st">&quot;DT_cornhybrids&quot;</span>)</a>
-<a class="sourceLine" id="cb19-2" data-line-number="2">### fit the model</a>
-<a class="sourceLine" id="cb19-3" data-line-number="3">modFD &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span><span class="dv">1</span>, </a>
-<a class="sourceLine" id="cb19-4" data-line-number="4">               <span class="dt">random=</span><span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(<span class="kw">at</span>(Location,<span class="kw">c</span>(<span class="st">&quot;3&quot;</span>,<span class="st">&quot;4&quot;</span>)),GCA2), </a>
-<a class="sourceLine" id="cb19-5" data-line-number="5">               <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(<span class="kw">ds</span>(Location),units),</a>
-<a class="sourceLine" id="cb19-6" data-line-number="6">               <span class="dt">data=</span>DT)</a></code></pre>
+<pre class="sourceCode r" id="cb17"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="kw">data</span>(DT_cornhybrids)</a>
+<a class="sourceLine" id="cb17-2" data-line-number="2">DT &lt;-<span class="st"> </span>DT_cornhybrids</a>
+<a class="sourceLine" id="cb17-3" data-line-number="3">DTi &lt;-<span class="st"> </span>DTi_cornhybrids</a>
+<a class="sourceLine" id="cb17-4" data-line-number="4">GT &lt;-<span class="st"> </span>GT_cornhybrids</a>
+<a class="sourceLine" id="cb17-5" data-line-number="5">### fit the model</a>
+<a class="sourceLine" id="cb17-6" data-line-number="6">modFD &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span><span class="dv">1</span>, </a>
+<a class="sourceLine" id="cb17-7" data-line-number="7">               <span class="dt">random=</span><span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(<span class="kw">at</span>(Location,<span class="kw">c</span>(<span class="st">&quot;3&quot;</span>,<span class="st">&quot;4&quot;</span>)),GCA2), </a>
+<a class="sourceLine" id="cb17-8" data-line-number="8">               <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(<span class="kw">ds</span>(Location),units),</a>
+<a class="sourceLine" id="cb17-9" data-line-number="9">               <span class="dt">data=</span>DT)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -190.104   11:3:51      0           0
-##     2      -171.543   11:3:52      1           0
-##     3      -165.319   11:3:52      1           0
-##     4      -164.691   11:3:53      2           0
-##     5      -164.684   11:3:53      2           0
-##     6      -164.684   11:3:54      3           0</code></pre>
-<pre class="sourceCode r" id="cb21"><code class="sourceCode r"><a class="sourceLine" id="cb21-1" data-line-number="1"><span class="kw">summary</span>(modFD)</a></code></pre>
+##     1      -190.104   8:5:52      0           0
+##     2      -171.543   8:5:53      1           0
+##     3      -165.319   8:5:53      1           0
+##     4      -164.691   8:5:54      2           0
+##     5      -164.684   8:5:54      2           0
+##     6      -164.684   8:5:55      3           0</code></pre>
+<pre class="sourceCode r" id="cb19"><code class="sourceCode r"><a class="sourceLine" id="cb19-1" data-line-number="1"><span class="kw">summary</span>(modFD)</a></code></pre>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
 ## **********************  sommer 4.0  ********************** 
@@ -480,27 +481,30 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 ## Use the '$' sign to access results and parameters</code></pre>
 <p>In the previous example we showed how the <code>at()</code> function is used in the <code>mmer</code> solver. By using the <code>at</code> function you can specify that i.e. the GCA2 has a different variance in different Locations, in this case locations 3 and 4, but also a main GCA variance. This is considered a CS + DIAG (compound symmetry + diagonal) model.</p>
 <p>In addition, other functions can be added on top to fit models with covariance structures, i.e. the Gu argument from the <code>vs()</code> function to indicate a covariance matrix (A, pedigree or genomic relationship matrix)</p>
-<pre class="sourceCode r" id="cb23"><code class="sourceCode r"><a class="sourceLine" id="cb23-1" data-line-number="1"><span class="kw">data</span>(<span class="st">&quot;DT_cornhybrids&quot;</span>)</a>
-<a class="sourceLine" id="cb23-2" data-line-number="2">GT[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>]</a></code></pre>
+<pre class="sourceCode r" id="cb21"><code class="sourceCode r"><a class="sourceLine" id="cb21-1" data-line-number="1"><span class="kw">data</span>(DT_cornhybrids)</a>
+<a class="sourceLine" id="cb21-2" data-line-number="2">DT &lt;-<span class="st"> </span>DT_cornhybrids</a>
+<a class="sourceLine" id="cb21-3" data-line-number="3">DTi &lt;-<span class="st"> </span>DTi_cornhybrids</a>
+<a class="sourceLine" id="cb21-4" data-line-number="4">GT &lt;-<span class="st"> </span>GT_cornhybrids</a>
+<a class="sourceLine" id="cb21-5" data-line-number="5">GT[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>]</a></code></pre>
 <pre><code>##             A258       A634        A641        A680
 ## A258  2.23285528 -0.3504778 -0.04756856 -0.32239362
 ## A634 -0.35047780  1.4529169  0.45203869 -0.02293680
 ## A641 -0.04756856  0.4520387  1.96940221 -0.09896791
 ## A680 -0.32239362 -0.0229368 -0.09896791  1.65221984</code></pre>
-<pre class="sourceCode r" id="cb25"><code class="sourceCode r"><a class="sourceLine" id="cb25-1" data-line-number="1">### fit the model</a>
-<a class="sourceLine" id="cb25-2" data-line-number="2">modFD &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span><span class="dv">1</span>, </a>
-<a class="sourceLine" id="cb25-3" data-line-number="3">              <span class="dt">random=</span><span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(<span class="kw">at</span>(Location,<span class="kw">c</span>(<span class="st">&quot;3&quot;</span>,<span class="st">&quot;4&quot;</span>)),GCA2,<span class="dt">Gu=</span>GT), </a>
-<a class="sourceLine" id="cb25-4" data-line-number="4">              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(<span class="kw">ds</span>(Location),units),</a>
-<a class="sourceLine" id="cb25-5" data-line-number="5">              <span class="dt">data=</span>DT)</a></code></pre>
+<pre class="sourceCode r" id="cb23"><code class="sourceCode r"><a class="sourceLine" id="cb23-1" data-line-number="1">### fit the model</a>
+<a class="sourceLine" id="cb23-2" data-line-number="2">modFD &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span><span class="dv">1</span>, </a>
+<a class="sourceLine" id="cb23-3" data-line-number="3">              <span class="dt">random=</span><span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(<span class="kw">at</span>(Location,<span class="kw">c</span>(<span class="st">&quot;3&quot;</span>,<span class="st">&quot;4&quot;</span>)),GCA2,<span class="dt">Gu=</span>GT), </a>
+<a class="sourceLine" id="cb23-4" data-line-number="4">              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(<span class="kw">ds</span>(Location),units),</a>
+<a class="sourceLine" id="cb23-5" data-line-number="5">              <span class="dt">data=</span>DT)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -191.286   11:3:54      0           0
-##     2      -172.247   11:3:55      1           0
-##     3      -165.948   11:3:55      1           0
-##     4      -165.248   11:3:56      2           0
-##     5      -165.23   11:3:56      2           0
-##     6      -165.229   11:3:57      3           0
-##     7      -165.229   11:3:57      3           0</code></pre>
-<pre class="sourceCode r" id="cb27"><code class="sourceCode r"><a class="sourceLine" id="cb27-1" data-line-number="1"><span class="kw">summary</span>(modFD)</a></code></pre>
+##     1      -191.286   8:5:55      0           0
+##     2      -172.247   8:5:56      1           0
+##     3      -165.948   8:5:56      1           0
+##     4      -165.248   8:5:57      2           0
+##     5      -165.23   8:5:57      2           0
+##     6      -165.229   8:5:58      3           0
+##     7      -165.229   8:5:58      3           0</code></pre>
+<pre class="sourceCode r" id="cb25"><code class="sourceCode r"><a class="sourceLine" id="cb25-1" data-line-number="1"><span class="kw">summary</span>(modFD)</a></code></pre>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
 ## **********************  sommer 4.0  ********************** 
@@ -531,26 +535,29 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <div id="using-the-pin-calculator" class="section level2">
 <h2>3) Using the pin calculator</h2>
 <p>Sometimes the user needs to calculate ratios or functions of specific variance-covariance components and obtain the standard error for such parameters. Examples of these are the genetic correlations, heritabilities, etc. Using the CPdata we will show how to estimate the heritability and the standard error using the pin function that uses the delta method to come up with these parameters. This can be extended for any linear combination of the variance components.</p>
-<pre class="sourceCode r" id="cb29"><code class="sourceCode r"><a class="sourceLine" id="cb29-1" data-line-number="1"><span class="kw">data</span>(<span class="st">&quot;DT_cpdata&quot;</span>)</a>
-<a class="sourceLine" id="cb29-2" data-line-number="2">### look at the data</a>
-<a class="sourceLine" id="cb29-3" data-line-number="3">A &lt;-<span class="st"> </span><span class="kw">A.mat</span>(GT) <span class="co"># additive relationship matrix</span></a>
-<a class="sourceLine" id="cb29-4" data-line-number="4">ans &lt;-<span class="st"> </span><span class="kw">mmer</span>(color<span class="op">~</span><span class="dv">1</span>, </a>
-<a class="sourceLine" id="cb29-5" data-line-number="5">                <span class="dt">random=</span><span class="op">~</span><span class="kw">vs</span>(id,<span class="dt">Gu=</span>A), </a>
-<a class="sourceLine" id="cb29-6" data-line-number="6">                <span class="dt">rcov=</span><span class="op">~</span>units,</a>
-<a class="sourceLine" id="cb29-7" data-line-number="7">                <span class="dt">data=</span>DT)</a></code></pre>
+<pre class="sourceCode r" id="cb27"><code class="sourceCode r"><a class="sourceLine" id="cb27-1" data-line-number="1"><span class="kw">data</span>(DT_cpdata)</a>
+<a class="sourceLine" id="cb27-2" data-line-number="2">DT &lt;-<span class="st"> </span>DT_cpdata</a>
+<a class="sourceLine" id="cb27-3" data-line-number="3">GT &lt;-<span class="st"> </span>GT_cpdata</a>
+<a class="sourceLine" id="cb27-4" data-line-number="4">MP &lt;-<span class="st"> </span>MP_cpdata</a>
+<a class="sourceLine" id="cb27-5" data-line-number="5">### look at the data</a>
+<a class="sourceLine" id="cb27-6" data-line-number="6">A &lt;-<span class="st"> </span><span class="kw">A.mat</span>(GT) <span class="co"># additive relationship matrix</span></a>
+<a class="sourceLine" id="cb27-7" data-line-number="7">ans &lt;-<span class="st"> </span><span class="kw">mmer</span>(color<span class="op">~</span><span class="dv">1</span>, </a>
+<a class="sourceLine" id="cb27-8" data-line-number="8">                <span class="dt">random=</span><span class="op">~</span><span class="kw">vs</span>(id,<span class="dt">Gu=</span>A), </a>
+<a class="sourceLine" id="cb27-9" data-line-number="9">                <span class="dt">rcov=</span><span class="op">~</span>units,</a>
+<a class="sourceLine" id="cb27-10" data-line-number="10">                <span class="dt">data=</span>DT)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -137.304   11:3:58      0           0
-##     2      -115.507   11:3:59      1           0
-##     3      -111.236   11:3:59      1           0
-##     4      -110.755   11:3:59      1           0
-##     5      -110.741   11:3:59      1           0
-##     6      -110.741   11:4:0      2           0</code></pre>
-<pre class="sourceCode r" id="cb31"><code class="sourceCode r"><a class="sourceLine" id="cb31-1" data-line-number="1">(<span class="kw">summary</span>(ans.ADE)<span class="op">$</span>varcomp)</a></code></pre>
+##     1      -137.304   8:5:59      0           0
+##     2      -115.507   8:5:59      0           0
+##     3      -111.236   8:6:0      1           0
+##     4      -110.755   8:6:0      1           0
+##     5      -110.741   8:6:0      1           0
+##     6      -110.741   8:6:0      1           0</code></pre>
+<pre class="sourceCode r" id="cb29"><code class="sourceCode r"><a class="sourceLine" id="cb29-1" data-line-number="1">(<span class="kw">summary</span>(ans.ADE)<span class="op">$</span>varcomp)</a></code></pre>
 <pre><code>##                       VarComp    VarCompSE   Zratio Constraint
 ## u:id.color-color  0.003662202 0.0012194130 3.003250   Positive
 ## u:idd.color-color 0.001820079 0.0007406216 2.457502   Positive
 ## units.color-color 0.002106929 0.0002864724 7.354736   Positive</code></pre>
-<pre class="sourceCode r" id="cb33"><code class="sourceCode r"><a class="sourceLine" id="cb33-1" data-line-number="1"><span class="kw">pin</span>(ans, h2 <span class="op">~</span><span class="st"> </span>(V1) <span class="op">/</span><span class="st"> </span>( V1<span class="op">+</span>V2) )</a></code></pre>
+<pre class="sourceCode r" id="cb31"><code class="sourceCode r"><a class="sourceLine" id="cb31-1" data-line-number="1"><span class="kw">pin</span>(ans, h2 <span class="op">~</span><span class="st"> </span>(V1) <span class="op">/</span><span class="st"> </span>( V1<span class="op">+</span>V2) )</a></code></pre>
 <pre><code>##     Estimate         SE
 ## h2 0.6512157 0.06107574</code></pre>
 <p>The same can be used for multivariate models. Please check the documentation of the <code>pin</code> function to see more examples.</p>
@@ -563,42 +570,46 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <p><span class="math inline">\(y = X\beta + Zu_1 + Zu_2 + Zu_S + \epsilon\)</span></p>
 <p><br></p>
 <p>We estimate variance components for <span class="math inline">\(GCA_1\)</span>, <span class="math inline">\(GCA_2\)</span> and <span class="math inline">\(SCA\)</span> and use them to estimate heritability. Additionally BLUPs for GCA and SCA effects can be used to predict crosses.</p>
-<pre class="sourceCode r" id="cb35"><code class="sourceCode r"><a class="sourceLine" id="cb35-1" data-line-number="1"><span class="kw">data</span>(<span class="st">&quot;DT_cornhybrids&quot;</span>)</a>
-<a class="sourceLine" id="cb35-2" data-line-number="2"></a>
-<a class="sourceLine" id="cb35-3" data-line-number="3">modFD &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span>Location, </a>
-<a class="sourceLine" id="cb35-4" data-line-number="4">               <span class="dt">random=</span><span class="op">~</span>GCA1<span class="op">+</span>GCA2<span class="op">+</span>SCA, </a>
-<a class="sourceLine" id="cb35-5" data-line-number="5">               <span class="dt">rcov=</span><span class="op">~</span>units,</a>
-<a class="sourceLine" id="cb35-6" data-line-number="6">               <span class="dt">data=</span>DT)</a></code></pre>
+<pre class="sourceCode r" id="cb33"><code class="sourceCode r"><a class="sourceLine" id="cb33-1" data-line-number="1"><span class="kw">data</span>(DT_cornhybrids)</a>
+<a class="sourceLine" id="cb33-2" data-line-number="2">DT &lt;-<span class="st"> </span>DT_cornhybrids</a>
+<a class="sourceLine" id="cb33-3" data-line-number="3">DTi &lt;-<span class="st"> </span>DTi_cornhybrids</a>
+<a class="sourceLine" id="cb33-4" data-line-number="4">GT &lt;-<span class="st"> </span>GT_cornhybrids</a>
+<a class="sourceLine" id="cb33-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb33-6" data-line-number="6">modFD &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span>Location, </a>
+<a class="sourceLine" id="cb33-7" data-line-number="7">               <span class="dt">random=</span><span class="op">~</span>GCA1<span class="op">+</span>GCA2<span class="op">+</span>SCA, </a>
+<a class="sourceLine" id="cb33-8" data-line-number="8">               <span class="dt">rcov=</span><span class="op">~</span>units,</a>
+<a class="sourceLine" id="cb33-9" data-line-number="9">               <span class="dt">data=</span>DT)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -149.436   11:4:0      0           0
-##     2      -136.475   11:4:1      1           1
-##     3      -132.852   11:4:1      1           1
-##     4      -132.625   11:4:1      1           1
-##     5      -132.596   11:4:2      2           1
-##     6      -132.59   11:4:2      2           1
-##     7      -132.589   11:4:2      2           1
-##     8      -132.589   11:4:3      3           1</code></pre>
-<pre class="sourceCode r" id="cb37"><code class="sourceCode r"><a class="sourceLine" id="cb37-1" data-line-number="1">(suma &lt;-<span class="st"> </span><span class="kw">summary</span>(modFD)<span class="op">$</span>varcomp)</a></code></pre>
+##     1      -149.436   8:6:1      0           0
+##     2      -136.475   8:6:1      0           1
+##     3      -132.852   8:6:2      1           1
+##     4      -132.625   8:6:2      1           1
+##     5      -132.596   8:6:3      2           1
+##     6      -132.59   8:6:3      2           1
+##     7      -132.589   8:6:3      2           1
+##     8      -132.589   8:6:4      3           1</code></pre>
+<pre class="sourceCode r" id="cb35"><code class="sourceCode r"><a class="sourceLine" id="cb35-1" data-line-number="1">(suma &lt;-<span class="st"> </span><span class="kw">summary</span>(modFD)<span class="op">$</span>varcomp)</a></code></pre>
 <pre><code>##                      VarComp VarCompSE     Zratio Constraint
 ## GCA1.Yield-Yield    0.000000  16.50337  0.0000000   Positive
 ## GCA2.Yield-Yield    7.412226  18.94200  0.3913116   Positive
 ## SCA.Yield-Yield   187.560303  41.59428  4.5092817   Positive
 ## units.Yield-Yield 221.142463  18.14716 12.1860656   Positive</code></pre>
-<pre class="sourceCode r" id="cb39"><code class="sourceCode r"><a class="sourceLine" id="cb39-1" data-line-number="1">Vgca &lt;-<span class="st"> </span><span class="kw">sum</span>(suma[<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>,<span class="dv">1</span>])</a>
-<a class="sourceLine" id="cb39-2" data-line-number="2">Vsca &lt;-<span class="st"> </span>suma[<span class="dv">3</span>,<span class="dv">1</span>]</a>
-<a class="sourceLine" id="cb39-3" data-line-number="3">Ve &lt;-<span class="st"> </span>suma[<span class="dv">4</span>,<span class="dv">1</span>]</a>
-<a class="sourceLine" id="cb39-4" data-line-number="4">Va =<span class="st"> </span><span class="dv">4</span><span class="op">*</span>Vgca</a>
-<a class="sourceLine" id="cb39-5" data-line-number="5">Vd =<span class="st"> </span><span class="dv">4</span><span class="op">*</span>Vsca</a>
-<a class="sourceLine" id="cb39-6" data-line-number="6">Vg &lt;-<span class="st"> </span>Va <span class="op">+</span><span class="st"> </span>Vd</a>
-<a class="sourceLine" id="cb39-7" data-line-number="7">(H2 &lt;-<span class="st"> </span>Vg <span class="op">/</span><span class="st"> </span>(Vg <span class="op">+</span><span class="st"> </span>(Ve)) )</a></code></pre>
+<pre class="sourceCode r" id="cb37"><code class="sourceCode r"><a class="sourceLine" id="cb37-1" data-line-number="1">Vgca &lt;-<span class="st"> </span><span class="kw">sum</span>(suma[<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>,<span class="dv">1</span>])</a>
+<a class="sourceLine" id="cb37-2" data-line-number="2">Vsca &lt;-<span class="st"> </span>suma[<span class="dv">3</span>,<span class="dv">1</span>]</a>
+<a class="sourceLine" id="cb37-3" data-line-number="3">Ve &lt;-<span class="st"> </span>suma[<span class="dv">4</span>,<span class="dv">1</span>]</a>
+<a class="sourceLine" id="cb37-4" data-line-number="4">Va =<span class="st"> </span><span class="dv">4</span><span class="op">*</span>Vgca</a>
+<a class="sourceLine" id="cb37-5" data-line-number="5">Vd =<span class="st"> </span><span class="dv">4</span><span class="op">*</span>Vsca</a>
+<a class="sourceLine" id="cb37-6" data-line-number="6">Vg &lt;-<span class="st"> </span>Va <span class="op">+</span><span class="st"> </span>Vd</a>
+<a class="sourceLine" id="cb37-7" data-line-number="7">(H2 &lt;-<span class="st"> </span>Vg <span class="op">/</span><span class="st"> </span>(Vg <span class="op">+</span><span class="st"> </span>(Ve)) )</a></code></pre>
 <pre><code>## [1] 0.7790856</code></pre>
-<pre class="sourceCode r" id="cb41"><code class="sourceCode r"><a class="sourceLine" id="cb41-1" data-line-number="1">(h2 &lt;-<span class="st"> </span>Va <span class="op">/</span><span class="st"> </span>(Vg <span class="op">+</span><span class="st"> </span>(Ve)) )</a></code></pre>
+<pre class="sourceCode r" id="cb39"><code class="sourceCode r"><a class="sourceLine" id="cb39-1" data-line-number="1">(h2 &lt;-<span class="st"> </span>Va <span class="op">/</span><span class="st"> </span>(Vg <span class="op">+</span><span class="st"> </span>(Ve)) )</a></code></pre>
 <pre><code>## [1] 0.02961832</code></pre>
 <p>Don’t worry too much about the small h2 value, the data was simulated to be mainly dominance variance, therefore the Va was simulated extremely small leading to such value of narrow sense h2.</p>
 <p>In this second data set we show a small half diallel with 7 parents crossed in one direction. n(n-1)/2 crosses are possible 7(6)/2 = 21 unique crosses. Parents appear as males or females indistictly. Each with two replications in a CRD. For a half diallel design a single GCA variance component for both males and females can be estimated and an SCA as well (<span class="math inline">\(\sigma^2_GCA\)</span> and <span class="math inline">\(\sigma^2_SCA\)</span> respectively), and BLUPs for GCA and SCA of the parents can be extracted. We would show first how to use it with the <code>mmer</code> function using the <code>overlay()</code> function. The specific model here is:</p>
 <p><span class="math inline">\(y = X\beta + Zu_g + Zu_s + \epsilon\)</span></p>
-<pre class="sourceCode r" id="cb43"><code class="sourceCode r"><a class="sourceLine" id="cb43-1" data-line-number="1"><span class="kw">data</span>(<span class="st">&quot;DT_halfdiallel&quot;</span>)</a>
-<a class="sourceLine" id="cb43-2" data-line-number="2"><span class="kw">head</span>(DT)</a></code></pre>
+<pre class="sourceCode r" id="cb41"><code class="sourceCode r"><a class="sourceLine" id="cb41-1" data-line-number="1"><span class="kw">data</span>(<span class="st">&quot;DT_halfdiallel&quot;</span>)</a>
+<a class="sourceLine" id="cb41-2" data-line-number="2">DT &lt;-<span class="st"> </span>DT_halfdiallel</a>
+<a class="sourceLine" id="cb41-3" data-line-number="3"><span class="kw">head</span>(DT)</a></code></pre>
 <pre><code>##   rep geno male female     sugar
 ## 1   1   12    1      2 13.950509
 ## 2   2   12    1      2  9.756918
@@ -606,21 +617,21 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 ## 4   2   13    1      3  9.119455
 ## 5   1   14    1      4  5.174483
 ## 6   2   14    1      4  8.452221</code></pre>
-<pre class="sourceCode r" id="cb45"><code class="sourceCode r"><a class="sourceLine" id="cb45-1" data-line-number="1">DT<span class="op">$</span>femalef &lt;-<span class="st"> </span><span class="kw">as.factor</span>(DT<span class="op">$</span>female)</a>
-<a class="sourceLine" id="cb45-2" data-line-number="2">DT<span class="op">$</span>malef &lt;-<span class="st"> </span><span class="kw">as.factor</span>(DT<span class="op">$</span>male)</a>
-<a class="sourceLine" id="cb45-3" data-line-number="3">DT<span class="op">$</span>genof &lt;-<span class="st"> </span><span class="kw">as.factor</span>(DT<span class="op">$</span>geno)</a>
-<a class="sourceLine" id="cb45-4" data-line-number="4">#### model using overlay</a>
-<a class="sourceLine" id="cb45-5" data-line-number="5">modh &lt;-<span class="st"> </span><span class="kw">mmer</span>(sugar<span class="op">~</span><span class="dv">1</span>, </a>
-<a class="sourceLine" id="cb45-6" data-line-number="6">             <span class="dt">random=</span><span class="op">~</span><span class="kw">vs</span>(<span class="kw">overlay</span>(femalef,malef)) </a>
-<a class="sourceLine" id="cb45-7" data-line-number="7">             <span class="op">+</span><span class="st"> </span>genof,</a>
-<a class="sourceLine" id="cb45-8" data-line-number="8">             <span class="dt">data=</span>DT)</a></code></pre>
+<pre class="sourceCode r" id="cb43"><code class="sourceCode r"><a class="sourceLine" id="cb43-1" data-line-number="1">DT<span class="op">$</span>femalef &lt;-<span class="st"> </span><span class="kw">as.factor</span>(DT<span class="op">$</span>female)</a>
+<a class="sourceLine" id="cb43-2" data-line-number="2">DT<span class="op">$</span>malef &lt;-<span class="st"> </span><span class="kw">as.factor</span>(DT<span class="op">$</span>male)</a>
+<a class="sourceLine" id="cb43-3" data-line-number="3">DT<span class="op">$</span>genof &lt;-<span class="st"> </span><span class="kw">as.factor</span>(DT<span class="op">$</span>geno)</a>
+<a class="sourceLine" id="cb43-4" data-line-number="4">#### model using overlay</a>
+<a class="sourceLine" id="cb43-5" data-line-number="5">modh &lt;-<span class="st"> </span><span class="kw">mmer</span>(sugar<span class="op">~</span><span class="dv">1</span>, </a>
+<a class="sourceLine" id="cb43-6" data-line-number="6">             <span class="dt">random=</span><span class="op">~</span><span class="kw">vs</span>(<span class="kw">overlay</span>(femalef,malef)) </a>
+<a class="sourceLine" id="cb43-7" data-line-number="7">             <span class="op">+</span><span class="st"> </span>genof,</a>
+<a class="sourceLine" id="cb43-8" data-line-number="8">             <span class="dt">data=</span>DT)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -10.425   11:4:3      0           0
-##     2      -6.487   11:4:3      0           0
-##     3      -5.732   11:4:3      0           0
-##     4      -5.67494   11:4:3      0           0
-##     5      -5.67441   11:4:3      0           0</code></pre>
-<pre class="sourceCode r" id="cb47"><code class="sourceCode r"><a class="sourceLine" id="cb47-1" data-line-number="1"><span class="kw">summary</span>(modh)<span class="op">$</span>varcomp</a></code></pre>
+##     1      -10.425   8:6:4      0           0
+##     2      -6.487   8:6:4      0           0
+##     3      -5.732   8:6:4      0           0
+##     4      -5.67494   8:6:4      0           0
+##     5      -5.67441   8:6:4      0           0</code></pre>
+<pre class="sourceCode r" id="cb45"><code class="sourceCode r"><a class="sourceLine" id="cb45-1" data-line-number="1"><span class="kw">summary</span>(modh)<span class="op">$</span>varcomp</a></code></pre>
 <pre><code>##                        VarComp VarCompSE   Zratio Constraint
 ## u:femalef.sugar-sugar 5.507899 3.5741151 1.541052   Positive
 ## genof.sugar-sugar     1.815784 1.3629575 1.332238   Positive
@@ -634,19 +645,21 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <p><span class="math inline">\(y = X\beta + Zu + \epsilon\)</span></p>
 <p><br></p>
 <p>and takes advantage of the variance covariance matrix for the genotype effect known as the additive relationship matrix (A) and calculated using the <code>A.mat</code> function to establish connections among all individuals and predict the BLUPs for individuals that were not measured. The prediction accuracy depends on several factors such as the heritability (<span class="math inline">\(h^2\)</span>), training population used (TP), size of TP, etc.</p>
-<pre class="sourceCode r" id="cb49"><code class="sourceCode r"><a class="sourceLine" id="cb49-1" data-line-number="1"><span class="kw">data</span>(<span class="st">&quot;DT_wheat&quot;</span>); </a>
-<a class="sourceLine" id="cb49-2" data-line-number="2"><span class="kw">colnames</span>(DT) &lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class="st">&quot;X&quot;</span>,<span class="dv">1</span><span class="op">:</span><span class="kw">ncol</span>(DT))</a>
-<a class="sourceLine" id="cb49-3" data-line-number="3">DT &lt;-<span class="st"> </span><span class="kw">as.data.frame</span>(DT);DT<span class="op">$</span>id &lt;-<span class="st"> </span><span class="kw">as.factor</span>(<span class="kw">rownames</span>(DT))</a>
-<a class="sourceLine" id="cb49-4" data-line-number="4"><span class="co"># select environment 1</span></a>
-<a class="sourceLine" id="cb49-5" data-line-number="5"><span class="kw">rownames</span>(GT) &lt;-<span class="st"> </span><span class="kw">rownames</span>(DT)</a>
-<a class="sourceLine" id="cb49-6" data-line-number="6">K &lt;-<span class="st"> </span><span class="kw">A.mat</span>(GT) <span class="co"># additive relationship matrix</span></a>
-<a class="sourceLine" id="cb49-7" data-line-number="7"><span class="kw">colnames</span>(K) &lt;-<span class="st"> </span><span class="kw">rownames</span>(K) &lt;-<span class="st"> </span><span class="kw">rownames</span>(DT)</a>
-<a class="sourceLine" id="cb49-8" data-line-number="8"><span class="co"># GBLUP pedigree-based approach</span></a>
-<a class="sourceLine" id="cb49-9" data-line-number="9"><span class="kw">set.seed</span>(<span class="dv">12345</span>)</a>
-<a class="sourceLine" id="cb49-10" data-line-number="10">y.trn &lt;-<span class="st"> </span>DT</a>
-<a class="sourceLine" id="cb49-11" data-line-number="11">vv &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">rownames</span>(DT),<span class="kw">round</span>(<span class="kw">nrow</span>(DT)<span class="op">/</span><span class="dv">5</span>))</a>
-<a class="sourceLine" id="cb49-12" data-line-number="12">y.trn[vv,<span class="st">&quot;X1&quot;</span>] &lt;-<span class="st"> </span><span class="ot">NA</span></a>
-<a class="sourceLine" id="cb49-13" data-line-number="13"><span class="kw">head</span>(y.trn)</a></code></pre>
+<pre class="sourceCode r" id="cb47"><code class="sourceCode r"><a class="sourceLine" id="cb47-1" data-line-number="1"><span class="kw">data</span>(DT_wheat)</a>
+<a class="sourceLine" id="cb47-2" data-line-number="2">DT &lt;-<span class="st"> </span>DT_wheat</a>
+<a class="sourceLine" id="cb47-3" data-line-number="3">GT &lt;-<span class="st"> </span>GT_wheat</a>
+<a class="sourceLine" id="cb47-4" data-line-number="4"><span class="kw">colnames</span>(DT) &lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class="st">&quot;X&quot;</span>,<span class="dv">1</span><span class="op">:</span><span class="kw">ncol</span>(DT))</a>
+<a class="sourceLine" id="cb47-5" data-line-number="5">DT &lt;-<span class="st"> </span><span class="kw">as.data.frame</span>(DT);DT<span class="op">$</span>id &lt;-<span class="st"> </span><span class="kw">as.factor</span>(<span class="kw">rownames</span>(DT))</a>
+<a class="sourceLine" id="cb47-6" data-line-number="6"><span class="co"># select environment 1</span></a>
+<a class="sourceLine" id="cb47-7" data-line-number="7"><span class="kw">rownames</span>(GT) &lt;-<span class="st"> </span><span class="kw">rownames</span>(DT)</a>
+<a class="sourceLine" id="cb47-8" data-line-number="8">K &lt;-<span class="st"> </span><span class="kw">A.mat</span>(GT) <span class="co"># additive relationship matrix</span></a>
+<a class="sourceLine" id="cb47-9" data-line-number="9"><span class="kw">colnames</span>(K) &lt;-<span class="st"> </span><span class="kw">rownames</span>(K) &lt;-<span class="st"> </span><span class="kw">rownames</span>(DT)</a>
+<a class="sourceLine" id="cb47-10" data-line-number="10"><span class="co"># GBLUP pedigree-based approach</span></a>
+<a class="sourceLine" id="cb47-11" data-line-number="11"><span class="kw">set.seed</span>(<span class="dv">12345</span>)</a>
+<a class="sourceLine" id="cb47-12" data-line-number="12">y.trn &lt;-<span class="st"> </span>DT</a>
+<a class="sourceLine" id="cb47-13" data-line-number="13">vv &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">rownames</span>(DT),<span class="kw">round</span>(<span class="kw">nrow</span>(DT)<span class="op">/</span><span class="dv">5</span>))</a>
+<a class="sourceLine" id="cb47-14" data-line-number="14">y.trn[vv,<span class="st">&quot;X1&quot;</span>] &lt;-<span class="st"> </span><span class="ot">NA</span></a>
+<a class="sourceLine" id="cb47-15" data-line-number="15"><span class="kw">head</span>(y.trn)</a></code></pre>
 <pre><code>##              X1          X2          X3         X4   id
 ## 775          NA -1.72746986 -1.89028479  0.0509159  775
 ## 2166 -0.2527028  0.40952243  0.30938553 -1.7387588 2166
@@ -654,40 +667,40 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 ## 2465         NA  0.09394919  0.57046773  0.5517574 2465
 ## 3881         NA -0.28248062  1.61868192 -0.1142848 3881
 ## 3889  2.3360969  0.62647587  0.07353311  0.7195856 3889</code></pre>
-<pre class="sourceCode r" id="cb51"><code class="sourceCode r"><a class="sourceLine" id="cb51-1" data-line-number="1">## GBLUP</a>
-<a class="sourceLine" id="cb51-2" data-line-number="2">ans &lt;-<span class="st"> </span><span class="kw">mmer</span>(X1<span class="op">~</span><span class="dv">1</span>,</a>
-<a class="sourceLine" id="cb51-3" data-line-number="3">            <span class="dt">random=</span><span class="op">~</span><span class="kw">vs</span>(id,<span class="dt">Gu=</span>K), </a>
-<a class="sourceLine" id="cb51-4" data-line-number="4">            <span class="dt">rcov=</span><span class="op">~</span>units, </a>
-<a class="sourceLine" id="cb51-5" data-line-number="5">            <span class="dt">data=</span>y.trn) <span class="co"># kinship based</span></a></code></pre>
+<pre class="sourceCode r" id="cb49"><code class="sourceCode r"><a class="sourceLine" id="cb49-1" data-line-number="1">## GBLUP</a>
+<a class="sourceLine" id="cb49-2" data-line-number="2">ans &lt;-<span class="st"> </span><span class="kw">mmer</span>(X1<span class="op">~</span><span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb49-3" data-line-number="3">            <span class="dt">random=</span><span class="op">~</span><span class="kw">vs</span>(id,<span class="dt">Gu=</span>K), </a>
+<a class="sourceLine" id="cb49-4" data-line-number="4">            <span class="dt">rcov=</span><span class="op">~</span>units, </a>
+<a class="sourceLine" id="cb49-5" data-line-number="5">            <span class="dt">data=</span>y.trn) <span class="co"># kinship based</span></a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -202.344   11:4:4      0           0
-##     2      -198.717   11:4:5      1           0
-##     3      -197.634   11:4:5      1           0
-##     4      -197.51   11:4:6      2           0
-##     5      -197.508   11:4:6      2           0
-##     6      -197.508   11:4:7      3           0</code></pre>
-<pre class="sourceCode r" id="cb53"><code class="sourceCode r"><a class="sourceLine" id="cb53-1" data-line-number="1">ans<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:id</span><span class="st">`</span><span class="op">$</span>X1 &lt;-<span class="st"> </span><span class="kw">as.data.frame</span>(ans<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:id</span><span class="st">`</span><span class="op">$</span>X1)</a>
-<a class="sourceLine" id="cb53-2" data-line-number="2"><span class="kw">rownames</span>(ans<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:id</span><span class="st">`</span><span class="op">$</span>X1) &lt;-<span class="st"> </span><span class="kw">gsub</span>(<span class="st">&quot;id&quot;</span>,<span class="st">&quot;&quot;</span>,<span class="kw">rownames</span>(ans<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:id</span><span class="st">`</span><span class="op">$</span>X1))</a>
-<a class="sourceLine" id="cb53-3" data-line-number="3"><span class="kw">cor</span>(ans<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:id</span><span class="st">`</span><span class="op">$</span>X1[vv,],DT[vv,<span class="st">&quot;X1&quot;</span>], <span class="dt">use=</span><span class="st">&quot;complete&quot;</span>)</a></code></pre>
+##     1      -202.344   8:6:5      0           0
+##     2      -198.717   8:6:6      1           0
+##     3      -197.634   8:6:6      1           0
+##     4      -197.51   8:6:7      2           0
+##     5      -197.508   8:6:7      2           0
+##     6      -197.508   8:6:8      3           0</code></pre>
+<pre class="sourceCode r" id="cb51"><code class="sourceCode r"><a class="sourceLine" id="cb51-1" data-line-number="1">ans<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:id</span><span class="st">`</span><span class="op">$</span>X1 &lt;-<span class="st"> </span><span class="kw">as.data.frame</span>(ans<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:id</span><span class="st">`</span><span class="op">$</span>X1)</a>
+<a class="sourceLine" id="cb51-2" data-line-number="2"><span class="kw">rownames</span>(ans<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:id</span><span class="st">`</span><span class="op">$</span>X1) &lt;-<span class="st"> </span><span class="kw">gsub</span>(<span class="st">&quot;id&quot;</span>,<span class="st">&quot;&quot;</span>,<span class="kw">rownames</span>(ans<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:id</span><span class="st">`</span><span class="op">$</span>X1))</a>
+<a class="sourceLine" id="cb51-3" data-line-number="3"><span class="kw">cor</span>(ans<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:id</span><span class="st">`</span><span class="op">$</span>X1[vv,],DT[vv,<span class="st">&quot;X1&quot;</span>], <span class="dt">use=</span><span class="st">&quot;complete&quot;</span>)</a></code></pre>
 <pre><code>## [1] 0.4885674</code></pre>
-<pre class="sourceCode r" id="cb55"><code class="sourceCode r"><a class="sourceLine" id="cb55-1" data-line-number="1">## rrBLUP</a>
-<a class="sourceLine" id="cb55-2" data-line-number="2">ans2 &lt;-<span class="st"> </span><span class="kw">mmer</span>(X1<span class="op">~</span><span class="dv">1</span>,</a>
-<a class="sourceLine" id="cb55-3" data-line-number="3">             <span class="dt">random=</span><span class="op">~</span><span class="kw">vs</span>(<span class="kw">list</span>(GT)), </a>
-<a class="sourceLine" id="cb55-4" data-line-number="4">             <span class="dt">rcov=</span><span class="op">~</span>units,</a>
-<a class="sourceLine" id="cb55-5" data-line-number="5">             <span class="dt">data=</span>y.trn) <span class="co"># kinship based</span></a></code></pre>
+<pre class="sourceCode r" id="cb53"><code class="sourceCode r"><a class="sourceLine" id="cb53-1" data-line-number="1">## rrBLUP</a>
+<a class="sourceLine" id="cb53-2" data-line-number="2">ans2 &lt;-<span class="st"> </span><span class="kw">mmer</span>(X1<span class="op">~</span><span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb53-3" data-line-number="3">             <span class="dt">random=</span><span class="op">~</span><span class="kw">vs</span>(<span class="kw">list</span>(GT)), </a>
+<a class="sourceLine" id="cb53-4" data-line-number="4">             <span class="dt">rcov=</span><span class="op">~</span>units,</a>
+<a class="sourceLine" id="cb53-5" data-line-number="5">             <span class="dt">data=</span>y.trn) <span class="co"># kinship based</span></a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -343.082   11:4:9      2           0
-##     2      -243.965   11:4:9      2           0
-##     3      -208.257   11:4:10      3           0
-##     4      -197.982   11:4:11      4           0
-##     5      -197.519   11:4:11      4           0
-##     6      -197.508   11:4:12      5           0
-##     7      -197.508   11:4:12      5           0</code></pre>
-<pre class="sourceCode r" id="cb57"><code class="sourceCode r"><a class="sourceLine" id="cb57-1" data-line-number="1">u &lt;-<span class="st"> </span>GT <span class="op">%*%</span><span class="st"> </span><span class="kw">as.matrix</span>(ans2<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:GT</span><span class="st">`</span><span class="op">$</span>X1) <span class="co"># BLUPs for individuals</span></a>
-<a class="sourceLine" id="cb57-2" data-line-number="2"><span class="kw">rownames</span>(u) &lt;-<span class="st"> </span><span class="kw">rownames</span>(GT)</a>
-<a class="sourceLine" id="cb57-3" data-line-number="3"><span class="kw">cor</span>(u[vv,],DT[vv,<span class="st">&quot;X1&quot;</span>]) <span class="co"># same correlation</span></a></code></pre>
+##     1      -343.082   8:6:10      2           0
+##     2      -243.965   8:6:10      2           0
+##     3      -208.257   8:6:11      3           0
+##     4      -197.982   8:6:12      4           0
+##     5      -197.519   8:6:13      5           0
+##     6      -197.508   8:6:13      5           0
+##     7      -197.508   8:6:14      6           0</code></pre>
+<pre class="sourceCode r" id="cb55"><code class="sourceCode r"><a class="sourceLine" id="cb55-1" data-line-number="1">u &lt;-<span class="st"> </span>GT <span class="op">%*%</span><span class="st"> </span><span class="kw">as.matrix</span>(ans2<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:GT</span><span class="st">`</span><span class="op">$</span>X1) <span class="co"># BLUPs for individuals</span></a>
+<a class="sourceLine" id="cb55-2" data-line-number="2"><span class="kw">rownames</span>(u) &lt;-<span class="st"> </span><span class="kw">rownames</span>(GT)</a>
+<a class="sourceLine" id="cb55-3" data-line-number="3"><span class="kw">cor</span>(u[vv,],DT[vv,<span class="st">&quot;X1&quot;</span>]) <span class="co"># same correlation</span></a></code></pre>
 <pre><code>## [1] 0.4885716</code></pre>
-<pre class="sourceCode r" id="cb59"><code class="sourceCode r"><a class="sourceLine" id="cb59-1" data-line-number="1"><span class="co"># the same can be applied in multi-response models in GBLUP or rrBLUP</span></a></code></pre>
+<pre class="sourceCode r" id="cb57"><code class="sourceCode r"><a class="sourceLine" id="cb57-1" data-line-number="1"><span class="co"># the same can be applied in multi-response models in GBLUP or rrBLUP</span></a></code></pre>
 </div>
 <div id="single-cross-prediction" class="section level2">
 <h2>6) Single cross prediction</h2>
@@ -702,33 +715,38 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <p><span class="math inline">\(u_s\)</span> ~ N(0, <span class="math inline">\(K_3\)</span><span class="math inline">\(\sigma^2_us\)</span>)</p>
 <p><br></p>
 <p>And we can specify the K matrices. The main difference between this model and the full and half diallel designs is the fact that this model will include variance covariance structures in each of the three random effects (GCA1, GCA2 and SCA) to be able to predict the crosses that have not ocurred yet. We will use the data published by Technow et al. (2015) to show how to do prediction of single crosses.</p>
-<pre class="sourceCode r" id="cb60"><code class="sourceCode r"><a class="sourceLine" id="cb60-1" data-line-number="1"><span class="kw">data</span>(<span class="st">&quot;DT_technow&quot;</span>)</a>
-<a class="sourceLine" id="cb60-2" data-line-number="2"><span class="co"># RUN THE PREDICTION MODEL</span></a>
-<a class="sourceLine" id="cb60-3" data-line-number="3">y.trn &lt;-<span class="st"> </span>DT</a>
-<a class="sourceLine" id="cb60-4" data-line-number="4">vv1 &lt;-<span class="st"> </span><span class="kw">which</span>(<span class="op">!</span><span class="kw">is.na</span>(DT<span class="op">$</span>GY))</a>
-<a class="sourceLine" id="cb60-5" data-line-number="5">vv2 &lt;-<span class="st"> </span><span class="kw">sample</span>(vv1, <span class="dv">100</span>)</a>
-<a class="sourceLine" id="cb60-6" data-line-number="6">y.trn[vv2,<span class="st">&quot;GY&quot;</span>] &lt;-<span class="st"> </span><span class="ot">NA</span></a>
-<a class="sourceLine" id="cb60-7" data-line-number="7">anss2 &lt;-<span class="st"> </span><span class="kw">mmer</span>(GY<span class="op">~</span><span class="dv">1</span>, </a>
-<a class="sourceLine" id="cb60-8" data-line-number="8">               <span class="dt">random=</span><span class="op">~</span><span class="kw">vs</span>(dent,<span class="dt">Gu=</span>Ad) <span class="op">+</span><span class="st"> </span><span class="kw">vs</span>(flint,<span class="dt">Gu=</span>Af), </a>
-<a class="sourceLine" id="cb60-9" data-line-number="9">               <span class="dt">rcov=</span><span class="op">~</span>units,</a>
-<a class="sourceLine" id="cb60-10" data-line-number="10">               <span class="dt">data=</span>y.trn) </a></code></pre>
+<pre class="sourceCode r" id="cb58"><code class="sourceCode r"><a class="sourceLine" id="cb58-1" data-line-number="1"><span class="kw">data</span>(DT_technow)</a>
+<a class="sourceLine" id="cb58-2" data-line-number="2">DT &lt;-<span class="st"> </span>DT_technow</a>
+<a class="sourceLine" id="cb58-3" data-line-number="3">Md &lt;-<span class="st"> </span>Md_technow</a>
+<a class="sourceLine" id="cb58-4" data-line-number="4">Mf &lt;-<span class="st"> </span>Mf_technow</a>
+<a class="sourceLine" id="cb58-5" data-line-number="5">Ad &lt;-<span class="st"> </span>Ad_technow</a>
+<a class="sourceLine" id="cb58-6" data-line-number="6">Af &lt;-<span class="st"> </span>Af_technow</a>
+<a class="sourceLine" id="cb58-7" data-line-number="7"><span class="co"># RUN THE PREDICTION MODEL</span></a>
+<a class="sourceLine" id="cb58-8" data-line-number="8">y.trn &lt;-<span class="st"> </span>DT</a>
+<a class="sourceLine" id="cb58-9" data-line-number="9">vv1 &lt;-<span class="st"> </span><span class="kw">which</span>(<span class="op">!</span><span class="kw">is.na</span>(DT<span class="op">$</span>GY))</a>
+<a class="sourceLine" id="cb58-10" data-line-number="10">vv2 &lt;-<span class="st"> </span><span class="kw">sample</span>(vv1, <span class="dv">100</span>)</a>
+<a class="sourceLine" id="cb58-11" data-line-number="11">y.trn[vv2,<span class="st">&quot;GY&quot;</span>] &lt;-<span class="st"> </span><span class="ot">NA</span></a>
+<a class="sourceLine" id="cb58-12" data-line-number="12">anss2 &lt;-<span class="st"> </span><span class="kw">mmer</span>(GY<span class="op">~</span><span class="dv">1</span>, </a>
+<a class="sourceLine" id="cb58-13" data-line-number="13">               <span class="dt">random=</span><span class="op">~</span><span class="kw">vs</span>(dent,<span class="dt">Gu=</span>Ad) <span class="op">+</span><span class="st"> </span><span class="kw">vs</span>(flint,<span class="dt">Gu=</span>Af), </a>
+<a class="sourceLine" id="cb58-14" data-line-number="14">               <span class="dt">rcov=</span><span class="op">~</span>units,</a>
+<a class="sourceLine" id="cb58-15" data-line-number="15">               <span class="dt">data=</span>y.trn) </a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      93.142   11:4:22      8           0
-##     2      135.18   11:4:30      16           0
-##     3      145.517   11:4:37      23           0
-##     4      147.085   11:4:45      31           0
-##     5      147.178   11:4:52      38           0
-##     6      147.184   11:5:0      46           0
-##     7      147.184   11:5:8      54           0</code></pre>
-<pre class="sourceCode r" id="cb62"><code class="sourceCode r"><a class="sourceLine" id="cb62-1" data-line-number="1"><span class="kw">summary</span>(anss2)<span class="op">$</span>varcomp</a></code></pre>
+##     1      93.142   8:6:24      8           0
+##     2      135.18   8:6:31      15           0
+##     3      145.517   8:6:39      23           0
+##     4      147.085   8:6:46      30           0
+##     5      147.178   8:6:53      37           0
+##     6      147.184   8:7:0      44           0
+##     7      147.184   8:7:8      52           0</code></pre>
+<pre class="sourceCode r" id="cb60"><code class="sourceCode r"><a class="sourceLine" id="cb60-1" data-line-number="1"><span class="kw">summary</span>(anss2)<span class="op">$</span>varcomp</a></code></pre>
 <pre><code>##                VarComp VarCompSE    Zratio Constraint
 ## u:dent.GY-GY  16.93639 2.6917284  6.292012   Positive
 ## u:flint.GY-GY 12.47174 2.3248074  5.364634   Positive
 ## units.GY-GY   16.75020 0.7662471 21.860045   Positive</code></pre>
-<pre class="sourceCode r" id="cb64"><code class="sourceCode r"><a class="sourceLine" id="cb64-1" data-line-number="1">zu1 &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(<span class="op">~</span>dent<span class="dv">-1</span>,y.trn) <span class="op">%*%</span><span class="st"> </span>anss2<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:dent</span><span class="st">`</span><span class="op">$</span>GY</a>
-<a class="sourceLine" id="cb64-2" data-line-number="2">zu2 &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(<span class="op">~</span>flint<span class="dv">-1</span>,y.trn) <span class="op">%*%</span><span class="st"> </span>anss2<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:flint</span><span class="st">`</span><span class="op">$</span>GY</a>
-<a class="sourceLine" id="cb64-3" data-line-number="3">u &lt;-<span class="st"> </span>zu1<span class="op">+</span>zu2<span class="op">+</span>anss2<span class="op">$</span>Beta[<span class="dv">1</span>,<span class="st">&quot;Estimate&quot;</span>]</a>
-<a class="sourceLine" id="cb64-4" data-line-number="4"><span class="kw">cor</span>(u[vv2,], DT<span class="op">$</span>GY[vv2])</a></code></pre>
+<pre class="sourceCode r" id="cb62"><code class="sourceCode r"><a class="sourceLine" id="cb62-1" data-line-number="1">zu1 &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(<span class="op">~</span>dent<span class="dv">-1</span>,y.trn) <span class="op">%*%</span><span class="st"> </span>anss2<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:dent</span><span class="st">`</span><span class="op">$</span>GY</a>
+<a class="sourceLine" id="cb62-2" data-line-number="2">zu2 &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(<span class="op">~</span>flint<span class="dv">-1</span>,y.trn) <span class="op">%*%</span><span class="st"> </span>anss2<span class="op">$</span>U<span class="op">$</span><span class="st">`</span><span class="dt">u:flint</span><span class="st">`</span><span class="op">$</span>GY</a>
+<a class="sourceLine" id="cb62-3" data-line-number="3">u &lt;-<span class="st"> </span>zu1<span class="op">+</span>zu2<span class="op">+</span>anss2<span class="op">$</span>Beta[<span class="dv">1</span>,<span class="st">&quot;Estimate&quot;</span>]</a>
+<a class="sourceLine" id="cb62-4" data-line-number="4"><span class="kw">cor</span>(u[vv2,], DT<span class="op">$</span>GY[vv2])</a></code></pre>
 <pre><code>## [1] 0.8234584</code></pre>
 <p>In the previous model we only used the GCA effects (GCA1 and GCA2) for practicity, altough it’s been shown that the SCA effect doesn’t actually help that much in increasing prediction accuracy and increase a lot the computation intensity required since the variance covariance matrix for SCA is the kronecker product of the variance covariance matrices for the GCA effects, resulting in a 10578x10578 matrix that increases in a very intensive manner the computation required.</p>
 <p>A model without covariance structures would show that the SCA variance component is insignificant compared to the GCA effects. This is why including the third random effect doesn’t increase the prediction accuracy.</p>
@@ -738,23 +756,26 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <p>We will use the CPdata to show the use of 2-dimensional splines for accomodating spatial effects in field experiments. In early generation variety trials the availability of seed is low, which makes the use of unreplicated design a neccesity more than anything else. Experimental designs such as augmented designs and partially-replicated (p-rep) designs become every day more common this days.</p>
 <p>In order to do a good job modeling the spatial trends happening in the field special covariance structures have been proposed to accomodate such spatial trends (i.e. autoregressive residuals; ar1). Unfortunately, some of these covariance structures make the modeling rather unstable. More recently other research groups have proposed the use of 2-dimensional splines to overcome such issues and have a more robust modeling of the spatial terms (Lee et al. 2013; Rodríguez-Álvarez et al. 2018).</p>
 <p>In this example we assume an unreplicated population where row and range information is available which allows us to fit a 2 dimensional spline model.</p>
-<pre class="sourceCode r" id="cb66"><code class="sourceCode r"><a class="sourceLine" id="cb66-1" data-line-number="1"><span class="kw">data</span>(<span class="st">&quot;DT_cpdata&quot;</span>)</a>
-<a class="sourceLine" id="cb66-2" data-line-number="2">### mimic two fields</a>
-<a class="sourceLine" id="cb66-3" data-line-number="3">A &lt;-<span class="st"> </span><span class="kw">A.mat</span>(GT)</a>
-<a class="sourceLine" id="cb66-4" data-line-number="4">mix &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span><span class="dv">1</span>,</a>
-<a class="sourceLine" id="cb66-5" data-line-number="5">            <span class="dt">random=</span><span class="op">~</span><span class="kw">vs</span>(id, <span class="dt">Gu=</span>A) <span class="op">+</span></a>
-<a class="sourceLine" id="cb66-6" data-line-number="6"><span class="st">              </span><span class="kw">vs</span>(Rowf) <span class="op">+</span></a>
-<a class="sourceLine" id="cb66-7" data-line-number="7"><span class="st">              </span><span class="kw">vs</span>(Colf) <span class="op">+</span></a>
-<a class="sourceLine" id="cb66-8" data-line-number="8"><span class="st">              </span><span class="kw">vs</span>(<span class="kw">spl2D</span>(Row,Col)),</a>
-<a class="sourceLine" id="cb66-9" data-line-number="9">            <span class="dt">rcov=</span><span class="op">~</span><span class="kw">vs</span>(units),</a>
-<a class="sourceLine" id="cb66-10" data-line-number="10">            <span class="dt">data=</span>DT)</a></code></pre>
+<pre class="sourceCode r" id="cb64"><code class="sourceCode r"><a class="sourceLine" id="cb64-1" data-line-number="1"><span class="kw">data</span>(DT_cpdata)</a>
+<a class="sourceLine" id="cb64-2" data-line-number="2">DT &lt;-<span class="st"> </span>DT_cpdata</a>
+<a class="sourceLine" id="cb64-3" data-line-number="3">GT &lt;-<span class="st"> </span>GT_cpdata</a>
+<a class="sourceLine" id="cb64-4" data-line-number="4">MP &lt;-<span class="st"> </span>MP_cpdata</a>
+<a class="sourceLine" id="cb64-5" data-line-number="5">### mimic two fields</a>
+<a class="sourceLine" id="cb64-6" data-line-number="6">A &lt;-<span class="st"> </span><span class="kw">A.mat</span>(GT)</a>
+<a class="sourceLine" id="cb64-7" data-line-number="7">mix &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span><span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb64-8" data-line-number="8">            <span class="dt">random=</span><span class="op">~</span><span class="kw">vs</span>(id, <span class="dt">Gu=</span>A) <span class="op">+</span></a>
+<a class="sourceLine" id="cb64-9" data-line-number="9"><span class="st">              </span><span class="kw">vs</span>(Rowf) <span class="op">+</span></a>
+<a class="sourceLine" id="cb64-10" data-line-number="10"><span class="st">              </span><span class="kw">vs</span>(Colf) <span class="op">+</span></a>
+<a class="sourceLine" id="cb64-11" data-line-number="11"><span class="st">              </span><span class="kw">vs</span>(<span class="kw">spl2D</span>(Row,Col)),</a>
+<a class="sourceLine" id="cb64-12" data-line-number="12">            <span class="dt">rcov=</span><span class="op">~</span><span class="kw">vs</span>(units),</a>
+<a class="sourceLine" id="cb64-13" data-line-number="13">            <span class="dt">data=</span>DT)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -154.198   11:5:10      0           0
-##     2      -152.064   11:5:11      1           0
-##     3      -151.265   11:5:11      1           0
-##     4      -151.202   11:5:11      1           0
-##     5      -151.201   11:5:12      2           0</code></pre>
-<pre class="sourceCode r" id="cb68"><code class="sourceCode r"><a class="sourceLine" id="cb68-1" data-line-number="1"><span class="kw">summary</span>(mix)</a></code></pre>
+##     1      -154.198   8:7:10      0           0
+##     2      -152.064   8:7:10      0           0
+##     3      -151.265   8:7:11      1           0
+##     4      -151.202   8:7:11      1           0
+##     5      -151.201   8:7:12      2           0</code></pre>
+<pre class="sourceCode r" id="cb66"><code class="sourceCode r"><a class="sourceLine" id="cb66-1" data-line-number="1"><span class="kw">summary</span>(mix)</a></code></pre>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
 ## **********************  sommer 4.0  ********************** 
@@ -787,25 +808,28 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t' + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_t K{
 <div id="multivariate-genetic-models-and-genetic-correlations" class="section level2">
 <h2>8) Multivariate genetic models and genetic correlations</h2>
 <p>Sometimes is important to estimate genetic variance-covariance among traits, multi-reponse models are very useful for such task. Let see an example with 3 traits (color, Yield, and Firmness) and a single random effect (genotype; id) although multiple effects can be modeled as well. We need to use a variance covariance structure for the random effect to be able to obtain the genetic covariance among traits.</p>
-<pre class="sourceCode r" id="cb70"><code class="sourceCode r"><a class="sourceLine" id="cb70-1" data-line-number="1"><span class="kw">data</span>(<span class="st">&quot;DT_cpdata&quot;</span>)</a>
-<a class="sourceLine" id="cb70-2" data-line-number="2">A &lt;-<span class="st"> </span><span class="kw">A.mat</span>(GT)</a>
-<a class="sourceLine" id="cb70-3" data-line-number="3">ans.m &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="kw">cbind</span>(Yield,color)<span class="op">~</span><span class="dv">1</span>,</a>
-<a class="sourceLine" id="cb70-4" data-line-number="4">               <span class="dt">random=</span><span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(id, <span class="dt">Gu=</span>A, <span class="dt">Gtc=</span><span class="kw">unsm</span>(<span class="dv">2</span>))</a>
-<a class="sourceLine" id="cb70-5" data-line-number="5">               <span class="op">+</span><span class="st"> </span><span class="kw">vs</span>(Rowf,<span class="dt">Gtc=</span><span class="kw">diag</span>(<span class="dv">2</span>))</a>
-<a class="sourceLine" id="cb70-6" data-line-number="6">               <span class="op">+</span><span class="st"> </span><span class="kw">vs</span>(Colf,<span class="dt">Gtc=</span><span class="kw">diag</span>(<span class="dv">2</span>)),</a>
-<a class="sourceLine" id="cb70-7" data-line-number="7">               <span class="dt">rcov=</span><span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(units, <span class="dt">Gtc=</span><span class="kw">unsm</span>(<span class="dv">2</span>)),</a>
-<a class="sourceLine" id="cb70-8" data-line-number="8">               <span class="dt">data=</span>DT)</a></code></pre>
+<pre class="sourceCode r" id="cb68"><code class="sourceCode r"><a class="sourceLine" id="cb68-1" data-line-number="1"><span class="kw">data</span>(DT_cpdata)</a>
+<a class="sourceLine" id="cb68-2" data-line-number="2">DT &lt;-<span class="st"> </span>DT_cpdata</a>
+<a class="sourceLine" id="cb68-3" data-line-number="3">GT &lt;-<span class="st"> </span>GT_cpdata</a>
+<a class="sourceLine" id="cb68-4" data-line-number="4">MP &lt;-<span class="st"> </span>MP_cpdata</a>
+<a class="sourceLine" id="cb68-5" data-line-number="5">A &lt;-<span class="st"> </span><span class="kw">A.mat</span>(GT)</a>
+<a class="sourceLine" id="cb68-6" data-line-number="6">ans.m &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="kw">cbind</span>(Yield,color)<span class="op">~</span><span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb68-7" data-line-number="7">               <span class="dt">random=</span><span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(id, <span class="dt">Gu=</span>A, <span class="dt">Gtc=</span><span class="kw">unsm</span>(<span class="dv">2</span>))</a>
+<a class="sourceLine" id="cb68-8" data-line-number="8">               <span class="op">+</span><span class="st"> </span><span class="kw">vs</span>(Rowf,<span class="dt">Gtc=</span><span class="kw">diag</span>(<span class="dv">2</span>))</a>
+<a class="sourceLine" id="cb68-9" data-line-number="9">               <span class="op">+</span><span class="st"> </span><span class="kw">vs</span>(Colf,<span class="dt">Gtc=</span><span class="kw">diag</span>(<span class="dv">2</span>)),</a>
+<a class="sourceLine" id="cb68-10" data-line-number="10">               <span class="dt">rcov=</span><span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(units, <span class="dt">Gtc=</span><span class="kw">unsm</span>(<span class="dv">2</span>)),</a>
+<a class="sourceLine" id="cb68-11" data-line-number="11">               <span class="dt">data=</span>DT)</a></code></pre>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -375.872   11:5:17      4           0
-##     2      -291.932   11:5:22      9           0
-##     3      -258.273   11:5:26      13           0
-##     4      -253.459   11:5:31      18           0
-##     5      -253.291   11:5:36      23           0
-##     6      -253.278   11:5:40      27           0
-##     7      -253.277   11:5:45      32           0
-##     8      -253.277   11:5:49      36           0</code></pre>
+##     1      -375.872   8:7:17      5           0
+##     2      -291.932   8:7:21      9           0
+##     3      -258.273   8:7:25      13           0
+##     4      -253.459   8:7:30      18           0
+##     5      -253.291   8:7:34      22           0
+##     6      -253.278   8:7:38      26           0
+##     7      -253.277   8:7:42      30           0
+##     8      -253.277   8:7:47      35           0</code></pre>
 <p>Now you can extract the BLUPs using the ‘randef’ function or simple accesing with the ‘$’ sign and pick ‘u.hat’. Also, genetic correlations and heritabilities can be calculated easily.</p>
-<pre class="sourceCode r" id="cb72"><code class="sourceCode r"><a class="sourceLine" id="cb72-1" data-line-number="1"><span class="kw">cov2cor</span>(ans.m<span class="op">$</span>sigma<span class="op">$</span><span class="st">`</span><span class="dt">u:id</span><span class="st">`</span>)</a></code></pre>
+<pre class="sourceCode r" id="cb70"><code class="sourceCode r"><a class="sourceLine" id="cb70-1" data-line-number="1"><span class="kw">cov2cor</span>(ans.m<span class="op">$</span>sigma<span class="op">$</span><span class="st">`</span><span class="dt">u:id</span><span class="st">`</span>)</a></code></pre>
 <pre><code>##           Yield     color
 ## Yield 1.0000000 0.1234441
 ## color 0.1234441 1.0000000</code></pre>

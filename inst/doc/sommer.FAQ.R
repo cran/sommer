@@ -1,13 +1,15 @@
 ## ------------------------------------------------------------------------
 # iteration    LogLik     wall    cpu(sec)   restrained
 #     1      -224.676   18:11:23      3           0
-# Sistem is singular. Stopping the job
-# matrix multiplication: incompatible matrix dimensions: 0x0 and ...x...
+# Sistem is singular. Aborting the job. You could try a bigger tolparinv value.
 
 ## ------------------------------------------------------------------------
 library(sommer)
 ## rrBLUP for makers
 data(DT_cpdata)
+DT <- DT_cpdata
+GT <- GT_cpdata
+MP <- MP_cpdata
 mix.rrblup <- mmer(fixed=color~1,
                    random=~vs(GT,Gtc=unsm(1)) + vs(Rowf,Gtc=diag(1)),
                    rcov=~vs(units,Gtc=unsm(1)), getPEV = FALSE,
@@ -27,6 +29,9 @@ plot(GT%*%mix.rrblup$U$`u:GT`$color, mix.gblup$U$`u:id`$color)
 library(sommer)
 
 data(DT_cpdata)
+DT <- DT_cpdata
+GT <- GT_cpdata
+MP <- MP_cpdata
 #### create the variance-covariance matrix
 A <- A.mat(GT) # additive relationship matrix
 #### look at the data and fit the model
@@ -57,6 +62,7 @@ length(mix2$U$`u:id`$Yield) # now 363 levels
 ## ------------------------------------------------------------------------
 library(sommer)
 data(DT_cpdata)
+DT <- DT_cpdata
 mix1 <- mmer(Yield~1,
               random=~ Rowf + Colf,
               rcov=~units,
@@ -66,6 +72,7 @@ summary(mix1)$varcomp
 ## ------------------------------------------------------------------------
 library(sommer)
 data(DT_cpdata)
+DT <- DT_cpdata
 mixAR1row <- mmer(Yield~1,
              random=~ vs(Rowf, Gu=AR1(Rowf, rho=0.3)) + Colf,
              rcov=~units,
@@ -75,6 +82,7 @@ summary(mixAR1row)$varcomp
 ## ------------------------------------------------------------------------
 library(sommer)
 data(DT_cpdata)
+DT <- DT_cpdata
 mixAR1col <- mmer(Yield~1,
              random=~ Rowf + vs(Colf, Gu=AR1(Colf, rho=0.3)),
              rcov=~units,
@@ -84,6 +92,7 @@ summary(mixAR1col)$varcomp
 ## ------------------------------------------------------------------------
 library(sommer)
 data(DT_cpdata)
+DT <- DT_cpdata
 mixAR1rowcol <- mmer(Yield~1,
                   random=~ vs(Rowf:Colf, 
                               Gu=kronecker(AR1(Rowf, rho=0.3),AR1(Colf, rho=0.3),make.dimnames = TRUE) 
@@ -95,6 +104,8 @@ summary(mixAR1rowcol)$varcomp
 ## ------------------------------------------------------------------------
 library(sommer)
 data(DT_example)
+DT <- DT_example
+A <- A_example
 M <- matrix(rep(0,41*1000),1000,41)
 for (i in 1:41) {
   M[,i] <- ifelse(runif(1000)<0.5,-1,1)

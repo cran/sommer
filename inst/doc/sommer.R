@@ -1,7 +1,8 @@
 ## ------------------------------------------------------------------------
 library(sommer)
 data(DT_example)
-head(DT)
+DT <- DT_example
+A <- A_example
 
 ans1 <- mmer(Yield~1,
              random= ~ Name + Env + Env:Name + Env:Block,
@@ -12,7 +13,10 @@ summary(ans1)$varcomp
 pin(ans1, h2 ~ V1 / ( V1 + (V3/n.env) + (V5/(2*n.env)) ) )
 
 ## ------------------------------------------------------------------------
-data("DT_cpdata")
+data(DT_cpdata)
+DT <- DT_cpdata
+GT <- GT_cpdata
+MP <- MP_cpdata
 DT$idd <-DT$id; DT$ide <-DT$id
 ### look at the data
 A <- A.mat(GT) # additive relationship matrix
@@ -27,7 +31,10 @@ pin(ans.ADE, h2 ~ (V1) / ( V1+V3) )
 pin(ans.ADE, h2 ~ (V1+V2) / ( V1+V2+V3) )
 
 ## ---- fig.show='hold'----------------------------------------------------
-data("DT_cornhybrids")
+data(DT_cornhybrids)
+DT <- DT_cornhybrids
+DTi <- DTi_cornhybrids
+GT <- GT_cornhybrids
 ### fit the model
 modFD <- mmer(Yield~1, 
                random=~ vs(at(Location,c("3","4")),GCA2), 
@@ -36,7 +43,10 @@ modFD <- mmer(Yield~1,
 summary(modFD)
 
 ## ------------------------------------------------------------------------
-data("DT_cornhybrids")
+data(DT_cornhybrids)
+DT <- DT_cornhybrids
+DTi <- DTi_cornhybrids
+GT <- GT_cornhybrids
 GT[1:4,1:4]
 ### fit the model
 modFD <- mmer(Yield~1, 
@@ -46,7 +56,10 @@ modFD <- mmer(Yield~1,
 summary(modFD)
 
 ## ------------------------------------------------------------------------
-data("DT_cpdata")
+data(DT_cpdata)
+DT <- DT_cpdata
+GT <- GT_cpdata
+MP <- MP_cpdata
 ### look at the data
 A <- A.mat(GT) # additive relationship matrix
 ans <- mmer(color~1, 
@@ -57,7 +70,10 @@ ans <- mmer(color~1,
 pin(ans, h2 ~ (V1) / ( V1+V2) )
 
 ## ------------------------------------------------------------------------
-data("DT_cornhybrids")
+data(DT_cornhybrids)
+DT <- DT_cornhybrids
+DTi <- DTi_cornhybrids
+GT <- GT_cornhybrids
 
 modFD <- mmer(Yield~Location, 
                random=~GCA1+GCA2+SCA, 
@@ -75,6 +91,7 @@ Vg <- Va + Vd
 
 ## ------------------------------------------------------------------------
 data("DT_halfdiallel")
+DT <- DT_halfdiallel
 head(DT)
 DT$femalef <- as.factor(DT$female)
 DT$malef <- as.factor(DT$male)
@@ -87,7 +104,9 @@ modh <- mmer(sugar~1,
 summary(modh)$varcomp
 
 ## ------------------------------------------------------------------------
-data("DT_wheat"); 
+data(DT_wheat)
+DT <- DT_wheat
+GT <- GT_wheat
 colnames(DT) <- paste0("X",1:ncol(DT))
 DT <- as.data.frame(DT);DT$id <- as.factor(rownames(DT))
 # select environment 1
@@ -121,7 +140,12 @@ cor(u[vv,],DT[vv,"X1"]) # same correlation
 # the same can be applied in multi-response models in GBLUP or rrBLUP
 
 ## ------------------------------------------------------------------------
-data("DT_technow")
+data(DT_technow)
+DT <- DT_technow
+Md <- Md_technow
+Mf <- Mf_technow
+Ad <- Ad_technow
+Af <- Af_technow
 # RUN THE PREDICTION MODEL
 y.trn <- DT
 vv1 <- which(!is.na(DT$GY))
@@ -139,7 +163,10 @@ u <- zu1+zu2+anss2$Beta[1,"Estimate"]
 cor(u[vv2,], DT$GY[vv2])
 
 ## ------------------------------------------------------------------------
-data("DT_cpdata")
+data(DT_cpdata)
+DT <- DT_cpdata
+GT <- GT_cpdata
+MP <- MP_cpdata
 ### mimic two fields
 A <- A.mat(GT)
 mix <- mmer(Yield~1,
@@ -152,7 +179,10 @@ mix <- mmer(Yield~1,
 summary(mix)
 
 ## ------------------------------------------------------------------------
-data("DT_cpdata")
+data(DT_cpdata)
+DT <- DT_cpdata
+GT <- GT_cpdata
+MP <- MP_cpdata
 A <- A.mat(GT)
 ans.m <- mmer(cbind(Yield,color)~1,
                random=~ vs(id, Gu=A, Gtc=unsm(2))

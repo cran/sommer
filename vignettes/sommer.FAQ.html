@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2019-07-02" />
+<meta name="date" content="2019-08-24" />
 
 <title>Frequently asked questions for the sommer package</title>
 
@@ -292,7 +292,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 <h1 class="title toc-ignore">Frequently asked questions for the sommer package</h1>
 <h4 class="author"><em>Giovanny Covarrubias-Pazaran</em></h4>
-<h4 class="date"><em>2019-07-02</em></h4>
+<h4 class="date"><em>2019-08-24</em></h4>
 
 
 
@@ -302,9 +302,8 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <h3>1) I got an error similar to:</h3>
 <pre class="sourceCode r" id="cb1"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="co"># iteration    LogLik     wall    cpu(sec)   restrained</span></a>
 <a class="sourceLine" id="cb1-2" data-line-number="2"><span class="co">#     1      -224.676   18:11:23      3           0</span></a>
-<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="co"># Sistem is singular. Stopping the job</span></a>
-<a class="sourceLine" id="cb1-4" data-line-number="4"><span class="co"># matrix multiplication: incompatible matrix dimensions: 0x0 and ...x...</span></a></code></pre>
-<p>This error indicates that your model is singular (phenotypic variance V matrix is not invertible) and therefore the model is stopped throwing the “incompatible matrix dimensions: 0x0 and …x…” error message. Whether you can try a simpler model or just modify the argument <code>tolparinv</code> in the <code>mmer</code> function. The default is 1e-6, which means that it will try to invert V and if it fails it will try to add a small value to the diagonal of V of 1e-6 to make it invertible. If this fails then the program will stop returning that error message which should make you check the quality of your data or model attempted.</p>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="co"># Sistem is singular. Aborting the job. You could try a bigger tolparinv value.</span></a></code></pre>
+<p>This error indicates that your model is singular (phenotypic variance V matrix is not invertible) and therefore the model is stopped throwing the error message and returning an empty list. Whether you can try a simpler model or just modify the argument <code>tolparinv</code> in the <code>mmer</code> function. The default is 1e-3, which means that it will try to invert V and if it fails it will try to add a small value to the diagonal of V of 1e-3 to make it invertible and try bigger and biger numbers. If this fails then the program will return the empty list.</p>
 <p>Sometimes the model becomes singular when you use variance covariance matrices (i.e. genomic relationship matrices) that are not full-rank. You can try to make it full-rank and try again.</p>
 </div>
 <div id="my-model-runs-very-slow" class="section level2">
@@ -321,11 +320,14 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <pre><code>## Loading required package: crayon</code></pre>
 <pre class="sourceCode r" id="cb7"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1">## rrBLUP for makers</a>
 <a class="sourceLine" id="cb7-2" data-line-number="2"><span class="kw">data</span>(DT_cpdata)</a>
-<a class="sourceLine" id="cb7-3" data-line-number="3">mix.rrblup &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt">fixed=</span>color<span class="op">~</span><span class="dv">1</span>,</a>
-<a class="sourceLine" id="cb7-4" data-line-number="4">                   <span class="dt">random=</span><span class="op">~</span><span class="kw">vs</span>(GT,<span class="dt">Gtc=</span><span class="kw">unsm</span>(<span class="dv">1</span>)) <span class="op">+</span><span class="st"> </span><span class="kw">vs</span>(Rowf,<span class="dt">Gtc=</span><span class="kw">diag</span>(<span class="dv">1</span>)),</a>
-<a class="sourceLine" id="cb7-5" data-line-number="5">                   <span class="dt">rcov=</span><span class="op">~</span><span class="kw">vs</span>(units,<span class="dt">Gtc=</span><span class="kw">unsm</span>(<span class="dv">1</span>)), <span class="dt">getPEV =</span> <span class="ot">FALSE</span>,</a>
-<a class="sourceLine" id="cb7-6" data-line-number="6">                   <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</a>
-<a class="sourceLine" id="cb7-7" data-line-number="7"><span class="kw">summary</span>(mix.rrblup)</a></code></pre>
+<a class="sourceLine" id="cb7-3" data-line-number="3">DT &lt;-<span class="st"> </span>DT_cpdata</a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">GT &lt;-<span class="st"> </span>GT_cpdata</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">MP &lt;-<span class="st"> </span>MP_cpdata</a>
+<a class="sourceLine" id="cb7-6" data-line-number="6">mix.rrblup &lt;-<span class="st"> </span><span class="kw">mmer</span>(<span class="dt">fixed=</span>color<span class="op">~</span><span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb7-7" data-line-number="7">                   <span class="dt">random=</span><span class="op">~</span><span class="kw">vs</span>(GT,<span class="dt">Gtc=</span><span class="kw">unsm</span>(<span class="dv">1</span>)) <span class="op">+</span><span class="st"> </span><span class="kw">vs</span>(Rowf,<span class="dt">Gtc=</span><span class="kw">diag</span>(<span class="dv">1</span>)),</a>
+<a class="sourceLine" id="cb7-8" data-line-number="8">                   <span class="dt">rcov=</span><span class="op">~</span><span class="kw">vs</span>(units,<span class="dt">Gtc=</span><span class="kw">unsm</span>(<span class="dv">1</span>)), <span class="dt">getPEV =</span> <span class="ot">FALSE</span>,</a>
+<a class="sourceLine" id="cb7-9" data-line-number="9">                   <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</a>
+<a class="sourceLine" id="cb7-10" data-line-number="10"><span class="kw">summary</span>(mix.rrblup)</a></code></pre>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
 ## **********************  sommer 4.0  ********************** 
@@ -390,12 +392,15 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <pre class="sourceCode r" id="cb12"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" data-line-number="1"><span class="kw">library</span>(sommer)</a>
 <a class="sourceLine" id="cb12-2" data-line-number="2"></a>
 <a class="sourceLine" id="cb12-3" data-line-number="3"><span class="kw">data</span>(DT_cpdata)</a>
-<a class="sourceLine" id="cb12-4" data-line-number="4">#### create the variance-covariance matrix</a>
-<a class="sourceLine" id="cb12-5" data-line-number="5">A &lt;-<span class="st"> </span><span class="kw">A.mat</span>(GT) <span class="co"># additive relationship matrix</span></a>
-<a class="sourceLine" id="cb12-6" data-line-number="6">#### look at the data and fit the model</a>
-<a class="sourceLine" id="cb12-7" data-line-number="7"><span class="kw">set.seed</span>(<span class="dv">12</span>)</a>
-<a class="sourceLine" id="cb12-8" data-line-number="8">DT2 &lt;-<span class="st"> </span><span class="kw">droplevels</span>(DT[<span class="kw">sample</span>(<span class="dv">1</span><span class="op">:</span><span class="kw">nrow</span>(DT),<span class="dv">100</span>),]) <span class="co"># we simulate a dataset with only 100 animals</span></a>
-<a class="sourceLine" id="cb12-9" data-line-number="9"><span class="kw">nrow</span>(DT2); <span class="kw">length</span>(<span class="kw">levels</span>(DT2<span class="op">$</span>id))</a></code></pre>
+<a class="sourceLine" id="cb12-4" data-line-number="4">DT &lt;-<span class="st"> </span>DT_cpdata</a>
+<a class="sourceLine" id="cb12-5" data-line-number="5">GT &lt;-<span class="st"> </span>GT_cpdata</a>
+<a class="sourceLine" id="cb12-6" data-line-number="6">MP &lt;-<span class="st"> </span>MP_cpdata</a>
+<a class="sourceLine" id="cb12-7" data-line-number="7">#### create the variance-covariance matrix</a>
+<a class="sourceLine" id="cb12-8" data-line-number="8">A &lt;-<span class="st"> </span><span class="kw">A.mat</span>(GT) <span class="co"># additive relationship matrix</span></a>
+<a class="sourceLine" id="cb12-9" data-line-number="9">#### look at the data and fit the model</a>
+<a class="sourceLine" id="cb12-10" data-line-number="10"><span class="kw">set.seed</span>(<span class="dv">12</span>)</a>
+<a class="sourceLine" id="cb12-11" data-line-number="11">DT2 &lt;-<span class="st"> </span><span class="kw">droplevels</span>(DT[<span class="kw">sample</span>(<span class="dv">1</span><span class="op">:</span><span class="kw">nrow</span>(DT),<span class="dv">100</span>),]) <span class="co"># we simulate a dataset with only 100 animals</span></a>
+<a class="sourceLine" id="cb12-12" data-line-number="12"><span class="kw">nrow</span>(DT2); <span class="kw">length</span>(<span class="kw">levels</span>(DT2<span class="op">$</span>id))</a></code></pre>
 <pre><code>## [1] 100</code></pre>
 <pre><code>## [1] 100</code></pre>
 <pre class="sourceCode r" id="cb15"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" data-line-number="1"><span class="co"># we fit a model with the reduced datatset where only 100 blups will be returned since only</span></a>
@@ -475,11 +480,12 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <p>For example, in the DT_cpdata dataset we have a field with row and column coordinates. This allows to fit row and column as random effects:</p>
 <pre class="sourceCode r" id="cb23"><code class="sourceCode r"><a class="sourceLine" id="cb23-1" data-line-number="1"><span class="kw">library</span>(sommer)</a>
 <a class="sourceLine" id="cb23-2" data-line-number="2"><span class="kw">data</span>(DT_cpdata)</a>
-<a class="sourceLine" id="cb23-3" data-line-number="3">mix1 &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span><span class="dv">1</span>,</a>
-<a class="sourceLine" id="cb23-4" data-line-number="4">              <span class="dt">random=</span><span class="op">~</span><span class="st"> </span>Rowf <span class="op">+</span><span class="st"> </span>Colf,</a>
-<a class="sourceLine" id="cb23-5" data-line-number="5">              <span class="dt">rcov=</span><span class="op">~</span>units,</a>
-<a class="sourceLine" id="cb23-6" data-line-number="6">              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</a>
-<a class="sourceLine" id="cb23-7" data-line-number="7"><span class="kw">summary</span>(mix1)<span class="op">$</span>varcomp</a></code></pre>
+<a class="sourceLine" id="cb23-3" data-line-number="3">DT &lt;-<span class="st"> </span>DT_cpdata</a>
+<a class="sourceLine" id="cb23-4" data-line-number="4">mix1 &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span><span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb23-5" data-line-number="5">              <span class="dt">random=</span><span class="op">~</span><span class="st"> </span>Rowf <span class="op">+</span><span class="st"> </span>Colf,</a>
+<a class="sourceLine" id="cb23-6" data-line-number="6">              <span class="dt">rcov=</span><span class="op">~</span>units,</a>
+<a class="sourceLine" id="cb23-7" data-line-number="7">              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</a>
+<a class="sourceLine" id="cb23-8" data-line-number="8"><span class="kw">summary</span>(mix1)<span class="op">$</span>varcomp</a></code></pre>
 <pre><code>##                     VarComp VarCompSE    Zratio Constraint
 ## Rowf.Yield-Yield   832.2879  393.8951  2.112968   Positive
 ## Colf.Yield-Yield   153.9201  126.7582  1.214281   Positive
@@ -487,11 +493,12 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <p>If the user wants to relax the independence between rows and define an AR1 covariance structure among rows then the model could be fitted as:</p>
 <pre class="sourceCode r" id="cb25"><code class="sourceCode r"><a class="sourceLine" id="cb25-1" data-line-number="1"><span class="kw">library</span>(sommer)</a>
 <a class="sourceLine" id="cb25-2" data-line-number="2"><span class="kw">data</span>(DT_cpdata)</a>
-<a class="sourceLine" id="cb25-3" data-line-number="3">mixAR1row &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span><span class="dv">1</span>,</a>
-<a class="sourceLine" id="cb25-4" data-line-number="4">             <span class="dt">random=</span><span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(Rowf, <span class="dt">Gu=</span><span class="kw">AR1</span>(Rowf, <span class="dt">rho=</span><span class="fl">0.3</span>)) <span class="op">+</span><span class="st"> </span>Colf,</a>
-<a class="sourceLine" id="cb25-5" data-line-number="5">             <span class="dt">rcov=</span><span class="op">~</span>units,</a>
-<a class="sourceLine" id="cb25-6" data-line-number="6">             <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</a>
-<a class="sourceLine" id="cb25-7" data-line-number="7"><span class="kw">summary</span>(mixAR1row)<span class="op">$</span>varcomp</a></code></pre>
+<a class="sourceLine" id="cb25-3" data-line-number="3">DT &lt;-<span class="st"> </span>DT_cpdata</a>
+<a class="sourceLine" id="cb25-4" data-line-number="4">mixAR1row &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span><span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb25-5" data-line-number="5">             <span class="dt">random=</span><span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(Rowf, <span class="dt">Gu=</span><span class="kw">AR1</span>(Rowf, <span class="dt">rho=</span><span class="fl">0.3</span>)) <span class="op">+</span><span class="st"> </span>Colf,</a>
+<a class="sourceLine" id="cb25-6" data-line-number="6">             <span class="dt">rcov=</span><span class="op">~</span>units,</a>
+<a class="sourceLine" id="cb25-7" data-line-number="7">             <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</a>
+<a class="sourceLine" id="cb25-8" data-line-number="8"><span class="kw">summary</span>(mixAR1row)<span class="op">$</span>varcomp</a></code></pre>
 <pre><code>##                      VarComp VarCompSE    Zratio Constraint
 ## u:Rowf.Yield-Yield  791.8219  387.8695  2.041465   Positive
 ## Colf.Yield-Yield    154.5660  126.8094  1.218885   Positive
@@ -499,11 +506,12 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <p>Same could be done for the column random effect:</p>
 <pre class="sourceCode r" id="cb27"><code class="sourceCode r"><a class="sourceLine" id="cb27-1" data-line-number="1"><span class="kw">library</span>(sommer)</a>
 <a class="sourceLine" id="cb27-2" data-line-number="2"><span class="kw">data</span>(DT_cpdata)</a>
-<a class="sourceLine" id="cb27-3" data-line-number="3">mixAR1col &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span><span class="dv">1</span>,</a>
-<a class="sourceLine" id="cb27-4" data-line-number="4">             <span class="dt">random=</span><span class="op">~</span><span class="st"> </span>Rowf <span class="op">+</span><span class="st"> </span><span class="kw">vs</span>(Colf, <span class="dt">Gu=</span><span class="kw">AR1</span>(Colf, <span class="dt">rho=</span><span class="fl">0.3</span>)),</a>
-<a class="sourceLine" id="cb27-5" data-line-number="5">             <span class="dt">rcov=</span><span class="op">~</span>units,</a>
-<a class="sourceLine" id="cb27-6" data-line-number="6">             <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</a>
-<a class="sourceLine" id="cb27-7" data-line-number="7"><span class="kw">summary</span>(mixAR1col)<span class="op">$</span>varcomp</a></code></pre>
+<a class="sourceLine" id="cb27-3" data-line-number="3">DT &lt;-<span class="st"> </span>DT_cpdata</a>
+<a class="sourceLine" id="cb27-4" data-line-number="4">mixAR1col &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span><span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb27-5" data-line-number="5">             <span class="dt">random=</span><span class="op">~</span><span class="st"> </span>Rowf <span class="op">+</span><span class="st"> </span><span class="kw">vs</span>(Colf, <span class="dt">Gu=</span><span class="kw">AR1</span>(Colf, <span class="dt">rho=</span><span class="fl">0.3</span>)),</a>
+<a class="sourceLine" id="cb27-6" data-line-number="6">             <span class="dt">rcov=</span><span class="op">~</span>units,</a>
+<a class="sourceLine" id="cb27-7" data-line-number="7">             <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</a>
+<a class="sourceLine" id="cb27-8" data-line-number="8"><span class="kw">summary</span>(mixAR1col)<span class="op">$</span>varcomp</a></code></pre>
 <pre><code>##                      VarComp VarCompSE    Zratio Constraint
 ## Rowf.Yield-Yield    830.3623  392.8264  2.113815   Positive
 ## u:Colf.Yield-Yield  178.7490  134.2703  1.331262   Positive
@@ -511,13 +519,14 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <p>If on the other hand, you would like to stablish the presence of correlation in row and columns at the same time the model would look like this:</p>
 <pre class="sourceCode r" id="cb29"><code class="sourceCode r"><a class="sourceLine" id="cb29-1" data-line-number="1"><span class="kw">library</span>(sommer)</a>
 <a class="sourceLine" id="cb29-2" data-line-number="2"><span class="kw">data</span>(DT_cpdata)</a>
-<a class="sourceLine" id="cb29-3" data-line-number="3">mixAR1rowcol &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span><span class="dv">1</span>,</a>
-<a class="sourceLine" id="cb29-4" data-line-number="4">                  <span class="dt">random=</span><span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(Rowf<span class="op">:</span>Colf, </a>
-<a class="sourceLine" id="cb29-5" data-line-number="5">                              <span class="dt">Gu=</span><span class="kw">kronecker</span>(<span class="kw">AR1</span>(Rowf, <span class="dt">rho=</span><span class="fl">0.3</span>),<span class="kw">AR1</span>(Colf, <span class="dt">rho=</span><span class="fl">0.3</span>),<span class="dt">make.dimnames =</span> <span class="ot">TRUE</span>) </a>
-<a class="sourceLine" id="cb29-6" data-line-number="6">                              ),</a>
-<a class="sourceLine" id="cb29-7" data-line-number="7">                  <span class="dt">rcov=</span><span class="op">~</span>units,</a>
-<a class="sourceLine" id="cb29-8" data-line-number="8">                  <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</a>
-<a class="sourceLine" id="cb29-9" data-line-number="9"><span class="kw">summary</span>(mixAR1rowcol)<span class="op">$</span>varcomp</a></code></pre>
+<a class="sourceLine" id="cb29-3" data-line-number="3">DT &lt;-<span class="st"> </span>DT_cpdata</a>
+<a class="sourceLine" id="cb29-4" data-line-number="4">mixAR1rowcol &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span><span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb29-5" data-line-number="5">                  <span class="dt">random=</span><span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(Rowf<span class="op">:</span>Colf, </a>
+<a class="sourceLine" id="cb29-6" data-line-number="6">                              <span class="dt">Gu=</span><span class="kw">kronecker</span>(<span class="kw">AR1</span>(Rowf, <span class="dt">rho=</span><span class="fl">0.3</span>),<span class="kw">AR1</span>(Colf, <span class="dt">rho=</span><span class="fl">0.3</span>),<span class="dt">make.dimnames =</span> <span class="ot">TRUE</span>) </a>
+<a class="sourceLine" id="cb29-7" data-line-number="7">                              ),</a>
+<a class="sourceLine" id="cb29-8" data-line-number="8">                  <span class="dt">rcov=</span><span class="op">~</span>units,</a>
+<a class="sourceLine" id="cb29-9" data-line-number="9">                  <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</a>
+<a class="sourceLine" id="cb29-10" data-line-number="10"><span class="kw">summary</span>(mixAR1rowcol)<span class="op">$</span>varcomp</a></code></pre>
 <pre><code>##                          VarComp VarCompSE   Zratio Constraint
 ## u:Rowf:Colf.Yield-Yield 2474.339  730.1474 3.388821   Positive
 ## units.Yield-Yield       2025.584  622.1023 3.256030   Positive</code></pre>
@@ -530,11 +539,13 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <p>We first make up marker data for the MET data for example purposes</p>
 <pre class="sourceCode r" id="cb31"><code class="sourceCode r"><a class="sourceLine" id="cb31-1" data-line-number="1"><span class="kw">library</span>(sommer)</a>
 <a class="sourceLine" id="cb31-2" data-line-number="2"><span class="kw">data</span>(DT_example)</a>
-<a class="sourceLine" id="cb31-3" data-line-number="3">M &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">rep</span>(<span class="dv">0</span>,<span class="dv">41</span><span class="op">*</span><span class="dv">1000</span>),<span class="dv">1000</span>,<span class="dv">41</span>)</a>
-<a class="sourceLine" id="cb31-4" data-line-number="4"><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="dv">41</span>) {</a>
-<a class="sourceLine" id="cb31-5" data-line-number="5">  M[,i] &lt;-<span class="st"> </span><span class="kw">ifelse</span>(<span class="kw">runif</span>(<span class="dv">1000</span>)<span class="op">&lt;</span><span class="fl">0.5</span>,<span class="op">-</span><span class="dv">1</span>,<span class="dv">1</span>)</a>
-<a class="sourceLine" id="cb31-6" data-line-number="6">}</a>
-<a class="sourceLine" id="cb31-7" data-line-number="7">tM &lt;-<span class="st"> </span><span class="kw">t</span>(M)</a></code></pre>
+<a class="sourceLine" id="cb31-3" data-line-number="3">DT &lt;-<span class="st"> </span>DT_example</a>
+<a class="sourceLine" id="cb31-4" data-line-number="4">A &lt;-<span class="st"> </span>A_example</a>
+<a class="sourceLine" id="cb31-5" data-line-number="5">M &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">rep</span>(<span class="dv">0</span>,<span class="dv">41</span><span class="op">*</span><span class="dv">1000</span>),<span class="dv">1000</span>,<span class="dv">41</span>)</a>
+<a class="sourceLine" id="cb31-6" data-line-number="6"><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="dv">41</span>) {</a>
+<a class="sourceLine" id="cb31-7" data-line-number="7">  M[,i] &lt;-<span class="st"> </span><span class="kw">ifelse</span>(<span class="kw">runif</span>(<span class="dv">1000</span>)<span class="op">&lt;</span><span class="fl">0.5</span>,<span class="op">-</span><span class="dv">1</span>,<span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb31-8" data-line-number="8">}</a>
+<a class="sourceLine" id="cb31-9" data-line-number="9">tM &lt;-<span class="st"> </span><span class="kw">t</span>(M)</a></code></pre>
 <p>We then fit the MET model of the type compound simmetry (CS) and evaluate the GWAS for the main genetic term “Name”:</p>
 <pre class="sourceCode r" id="cb32"><code class="sourceCode r"><a class="sourceLine" id="cb32-1" data-line-number="1">## GWAS for main term in CS model</a>
 <a class="sourceLine" id="cb32-2" data-line-number="2">ansx &lt;-<span class="st"> </span><span class="kw">GWAS</span>(Yield<span class="op">~</span>Env,</a>
