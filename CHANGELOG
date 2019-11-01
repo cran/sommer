@@ -353,6 +353,7 @@ version 4.0 (2019-07-01)
 ########################
 
  + No updates for now other than documentation
+ + Bug in the GWAS function for P3D=TRUE/FALSE fixed
 
 ######################
 ## PENDINGS

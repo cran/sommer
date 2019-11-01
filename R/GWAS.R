@@ -14,6 +14,10 @@ GWAS <- function(fixed, random, rcov, data, weights,
     stop("Please provide the name of the genetic term in the model in the gTerm argument", call. = FALSE)
   }
   
+  if(length(which(is.na(M))) > 0){
+    stop("Please provide an imputed marker matrix (M).", call. = FALSE)
+  }
+  
   qvalue <- function(p) {
     smooth.df = 3
     if (min(p) < 0 || max(p) > 1) {
@@ -97,6 +101,12 @@ GWAS <- function(fixed, random, rcov, data, weights,
                          res[[10]],res[[11]],res[[12]], res[[13]],res[[14]],res[[15]],
                          TRUE)
       H2inv <- lastmodel$Vi
+    }else{
+      lastmodel <- .Call("_sommer_MNR",PACKAGE = "sommer",res[[1]], res[[2]],res[[3]],
+                         res[[4]],res[[5]],res[[6]],res[[7]],res[[8]],res[[9]],
+                         res[[10]],res[[11]],res[[12]], res[[13]],res[[14]],FALSE,
+                         TRUE)
+      H2inv <- lastmodel$Vi
     }
     ## get names of random effects
     re_names <- unlist(res[[17]])
@@ -166,11 +176,18 @@ GWAS <- function(fixed, random, rcov, data, weights,
         v1 <- 1
         v2 <- n2 - p
         if (!P3D) {## estimate varcomp for each marker 
-          lastmodel <- .Call("_sommer_MNR",PACKAGE = "sommer",res[[1]], res[[2]],res[[3]],
+          # lastmodel <- .Call("_sommer_MNR",PACKAGE = "sommer",res[[1]], res[[2]],res[[3]],
+          #                    res[[4]],res[[5]],res[[6]],res[[7]],res[[8]],res[[9]],
+          #                    res[[10]],res[[11]],res[[12]], res[[13]],res[[14]],FALSE,
+          #                    TRUE)
+          # H2inv <- lastmodel$Vi
+          # print(as.matrix(X3))
+          lastmodel <- .Call("_sommer_MNR",PACKAGE = "sommer",res[[1]], list(as.matrix(X3)) ,res[[3]],
                              res[[4]],res[[5]],res[[6]],res[[7]],res[[8]],res[[9]],
                              res[[10]],res[[11]],res[[12]], res[[13]],res[[14]],FALSE,
                              TRUE)
           H2inv <- lastmodel$Vi
+          # print(lastmodel$sigma)
         }
         W <- crossprod(X3, H2inv %*% X3)
         Winv <- try(solve(W), silent = TRUE)
@@ -220,7 +237,7 @@ GWAS <- function(fixed, random, rcov, data, weights,
     tokeep <- which(!unlist(lapply(scores, is.null)))
     
     scores <- do.call(cbind,scores[tokeep])
-    
+    # print(scores)
     # scores <- matrix(scores,nrow=(nt*3)+2,byrow = FALSE)
     
     mm <- as.data.frame(expand.grid(ntnames,c("beta","score","Fstat")))
