@@ -1,5 +1,5 @@
 789b33e235947c7891196bf104030c5a *CHANGELOG
-9b12ceaa6a033ff97f7e9bc4e2c445db *DESCRIPTION
+98fd9a9dd06fb037e0f84595c88a37db *DESCRIPTION
 9212dc95f2d9adab70a6f44e80ee978e *NAMESPACE
 51c59cd048dc4bb553ce2eae156dd737 *R/FUN_algorithms.R
 3b4cb7520354cbb7da93c6b0ddf1e783 *R/FUN_emmeans.R
@@ -9,10 +9,10 @@
 4bf3854c34eed796acf9aa507f4fdb5e *R/FUN_spatial.R
 36425601d02a6dfc4264ce168afdd438 *R/FUN_special.R
 c02f74b755af8f0f911bd719daeaacc3 *R/FUN_stats.R
-76c2b224c0e0af6249bf99068ce8179c *R/FUN_utils.R
+c8363de5ceaab9d27275966ca5ac7308 *R/FUN_utils.R
 a8038701119a2dff6e331649b2ae2ba6 *R/GWAS.R
 3835df70573067319dd8dd1eba83da7a *R/RcppExports.R
-815894ae57072ed7b43bc09ae8885178 *R/mmer.R
+c07a06e1ef31f3725a8076404af9c503 *R/mmer.R
 b74e8665a72e8f2ed3a511e59e0af655 *R/mydeprecated.R
 7626c55caccb331986a22f8471e19374 *README.md
 00238e817dae6b44cb7d2fe65581a3dd *build/vignette.rds
@@ -126,6 +126,6 @@ a13528672a74e6a24b3f6f3de00d2f2c *vignettes/sommer.FAQ.html
 6ab098e0fa66328358171ce0ebf7ec78 *vignettes/sommer.Rmd
 81dcdc3cf1214e05cd5d17ea96080379 *vignettes/sommer.changes.Rmd
 e7a7616a522c0563a43f499a5b1e3e91 *vignettes/sommer.changes.html
-dfe41f52584ac173fb6894bceca73bfd *vignettes/sommer.html
+0ae79ca7f3c6149d8fcf551aeca47149 *vignettes/sommer.html
 b10dcf43746dfb193ffb4d488b0105a5 *vignettes/sommer.start.Rmd
-83d82e5dbc63a73caf01b5e5c2f6a485 *vignettes/sommer.start.html
+18be2128bb1cd9059e4ad077542d498b *vignettes/sommer.start.html
