@@ -1,9 +1,9 @@
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # iteration    LogLik     wall    cpu(sec)   restrained
 #     1      -224.676   18:11:23      3           0
 # Sistem is singular. Aborting the job. You could try a bigger tolparinv value.
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library(sommer)
 ## rrBLUP for makers
 data(DT_cpdata)
@@ -25,7 +25,7 @@ summary(mix.gblup)
 ## Equivalence
 plot(GT%*%mix.rrblup$U$`u:GT`$color, mix.gblup$U$`u:id`$color)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library(sommer)
 
 data(DT_cpdata)
@@ -59,7 +59,7 @@ mix2 <- mmer(Yield~1,
 summary(mix2)
 length(mix2$U$`u:id`$Yield) # now 363 levels
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library(sommer)
 data(DT_cpdata)
 DT <- DT_cpdata
@@ -69,7 +69,7 @@ mix1 <- mmer(Yield~1,
               data=DT, verbose = FALSE)
 summary(mix1)$varcomp
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library(sommer)
 data(DT_cpdata)
 DT <- DT_cpdata
@@ -79,7 +79,7 @@ mixAR1row <- mmer(Yield~1,
              data=DT, verbose = FALSE)
 summary(mixAR1row)$varcomp
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library(sommer)
 data(DT_cpdata)
 DT <- DT_cpdata
@@ -89,7 +89,7 @@ mixAR1col <- mmer(Yield~1,
              data=DT, verbose = FALSE)
 summary(mixAR1col)$varcomp
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library(sommer)
 data(DT_cpdata)
 DT <- DT_cpdata
@@ -101,7 +101,7 @@ mixAR1rowcol <- mmer(Yield~1,
                   data=DT, verbose = FALSE)
 summary(mixAR1rowcol)$varcomp
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library(sommer)
 data(DT_example)
 DT <- DT_example
@@ -112,7 +112,7 @@ for (i in 1:41) {
 }
 tM <- t(M)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ## GWAS for main term in CS model
 ansx <- GWAS(Yield~Env,
              random= ~ Name + Env:Name,
@@ -124,7 +124,7 @@ ansx <- GWAS(Yield~Env,
 ms <- as.data.frame(t(ansx$scores))
 plot(ms$`Yield score`, ylim=c(0,8))
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ## GWAS for the interaction term in CS model
 E <- matrix(1,nrow = length(unique(DT$Env)));E
 EtM <- kronecker(E,tM)
@@ -138,7 +138,7 @@ ansx <- GWAS(Yield~Env,
 ms <- as.data.frame(t(ansx$scores))
 plot(ms$`Yield score`, ylim=c(0,8))
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ## GWAS for the interaction term in DIAG model
 E <- matrix(1,nrow = length(unique(DT$Env)));E
 EtM <- kronecker(E,tM)
@@ -152,7 +152,7 @@ ansx <- GWAS(Yield~Env,
 ms <- as.data.frame(t(ansx$scores))
 plot(ms$`Yield score`, ylim=c(0,8))
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ## GWAS for main term in US model
 ansx <- GWAS(Yield~Env,
              random= ~vs(us(Env),Name),
@@ -164,7 +164,7 @@ ansx <- GWAS(Yield~Env,
 ms <- as.data.frame(t(ansx$scores))
 plot(ms$`Yield score`, ylim=c(0,8))
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ## GWAS for main term in multitrait DIAG model
 ansx <- GWAS(cbind(Weight,Yield)~Env,
              random= ~vs(ds(Env),Name, Gtc=unsm(2)),
