@@ -176,3 +176,85 @@ ansx <- GWAS(cbind(Weight,Yield)~Env,
 ms <- as.data.frame(t(ansx$scores))
 plot(ms$`Yield score`, ylim=c(0,8))
 
+## -----------------------------------------------------------------------------
+data(DT_cpdata)
+DT <- DT_cpdata
+GT <- GT_cpdata
+MP <- MP_cpdata
+#### create the variance-covariance matrix
+A <- A.mat(GT) # additive relationship matrix
+#### look at the data and fit the model
+mix1 <- mmer(Yield~1,
+              random=~vs(id,Gu=A),
+              rcov=~units,
+              data=DT, verbose = FALSE)
+mix1$sigma$`u:id`
+
+## -----------------------------------------------------------------------------
+data(DT_cpdata)
+DT <- DT_cpdata
+GT <- GT_cpdata
+MP <- MP_cpdata
+#### create the variance-covariance matrix
+A <- A.mat(GT) # additive relationship matrix
+#### look at the data and fit the model
+mix2 <- mmer(cbind(Yield,color)~1,
+              random=~vs(id,Gu=A, Gtc=unsm(2)),
+              rcov=~vs(units,Gtc=diag(2)),
+              data=DT, verbose = FALSE)
+mix2$sigma$`u:id`
+
+## -----------------------------------------------------------------------------
+unsm(2)
+mix2$sigma$`u:id`
+
+## -----------------------------------------------------------------------------
+diag(2)
+mix2$sigma$`u:units`
+
+## -----------------------------------------------------------------------------
+
+mm <- matrix(3,1,1) ## matrix to fix the var comp
+initialVal <- mix1$sigma_scaled$`u:id`/2 # we want to fix the vc to be half of the previous uinvariate model
+
+mix3 <- mmer(Yield~1,
+              random=~vs(id, Gu=A, Gti=initialVal, Gtc=mm), # constrained
+              rcov=~vs(units), # unconstrained
+              data=DT, verbose = FALSE)
+
+# analyze variance components
+summary(mix1)$varcomp
+summary(mix3)$varcomp
+
+## -----------------------------------------------------------------------------
+library("MASS")  ## needed for mvrnorm
+n <- 100
+mu <- c(1,2)
+Sigma <- matrix(c(10,5,5,10),2,2)
+Y <- mvrnorm(n,mu,Sigma); colnames(Y) <- c("y1","y2")
+## this simulates multivariate normal rvs
+y <- as.vector(t(Y))
+df1 <- data.frame(Y)
+df2 <- data.frame(y)
+
+## -----------------------------------------------------------------------------
+mix1 <- mmer(cbind(y1,y2)~1, rcov=~vs(units, Gtc=unsm(2)), data=df1, verbose = FALSE)
+mix1$sigma
+
+## -----------------------------------------------------------------------------
+X <- kronecker(rep(1,n),diag(1,2))
+V1 <- matrix(c(1,0,0,0),2,2)
+V2 <- matrix(c(0,0,0,1),2,2)
+V3 <- matrix(c(0,1,1,0),2,2)
+sig1 <- kronecker(diag(1,n),V1) # variance component 1
+sig2 <- kronecker(diag(1,n),V2) # variance component 2
+gam <- kronecker(diag(1,n),V3) # covariance component
+# now fit the model
+mix2 <- mmer(y~X-1, rcov = ~vs(sig1)+vs(sig2)+vs(gam), data=df2, verbose = FALSE)
+summary(mix2)$varcomp
+
+## -----------------------------------------------------------------------------
+sig <- sig1+sig2
+mix3 <- mmer(y~X-1, rcov = ~vs(sig)+vs(gam), data=df2, iters=30, verbose = FALSE)
+summary(mix3)$varcomp
+

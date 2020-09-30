@@ -2,12 +2,11 @@
 library(sommer)
 data(DT_example)
 DT <- DT_example
-head(DT)
 
 ans1 <- mmer(Yield~Env,
               random= ~ Name + Env:Name,
               rcov= ~ units,
-              data=DT)
+              data=DT, verbose = FALSE)
 summary(ans1)
 
 
@@ -15,11 +14,11 @@ summary(ans1)
 
 data(DT_example)
 DT <- DT_example
-head(DT)
+
 ans2 <- mmer(Yield~Env,
               random= ~Name + vs(ds(Env),Name),
               rcov= ~ vs(ds(Env),units),
-              data=DT)
+              data=DT, verbose = FALSE)
 summary(ans2)
 
 
@@ -27,11 +26,11 @@ summary(ans2)
 
 data(DT_example)
 DT <- DT_example
-head(DT)
+
 ans3 <- mmer(Yield~Env,
              random=~ vs(us(Env),Name),
              rcov=~vs(us(Env),units), 
-             data=DT)
+             data=DT, verbose = FALSE)
 summary(ans3)
 
 
@@ -39,12 +38,12 @@ summary(ans3)
 
 data(DT_example)
 DT <- DT_example
-head(DT)
 DT$EnvName <- paste(DT$Env,DT$Name)
+
 ans4 <- mmer(cbind(Yield, Weight) ~ Env,
               random= ~ vs(Name, Gtc=unsm(2)) + vs(EnvName, Gtc=unsm(2)),
               rcov= ~ vs(units, Gtc=unsm(2)),
-              data=DT)
+              data=DT, verbose = FALSE)
 summary(ans4)
 
 
@@ -52,12 +51,12 @@ summary(ans4)
 
 data(DT_example)
 DT <- DT_example
-head(DT)
 DT$EnvName <- paste(DT$Env,DT$Name)
+
 ans5 <- mmer(cbind(Yield, Weight) ~ Env,
               random= ~ vs(Name, Gtc=unsm(2)) + vs(ds(Env),Name, Gtc=unsm(2)),
               rcov= ~ vs(ds(Env),units, Gtc=unsm(2)),
-              data=DT)
+              data=DT, verbose = FALSE)
 summary(ans5)
 
 
@@ -65,12 +64,12 @@ summary(ans5)
 
 data(DT_example)
 DT <- DT_example
-head(DT)
 DT$EnvName <- paste(DT$Env,DT$Name)
+
 ans6 <- mmer(cbind(Yield, Weight) ~ Env,
               random= ~ vs(us(Env),Name, Gtc=unsm(2)),
               rcov= ~ vs(ds(Env),units, Gtc=unsm(2)),
-              data=DT)
+              data=DT, verbose = FALSE)
 summary(ans6)
 
 
@@ -90,11 +89,11 @@ fcm(c(1,0,1,0))
 library(orthopolynom)
 data(DT_legendre)
 DT <- DT_legendre
-head(DT)
+
 mRR2<-mmer(Y~ 1 + Xf
            , random=~ vs(us(leg(X,1)),SUBJECT)
            , rcov=~vs(units)
-           , data=DT)
+           , data=DT, verbose = FALSE)
 summary(mRR2)$varcomp
 
 
@@ -115,7 +114,8 @@ mix1 <- GWAS(color~1,
              + Rowf + Colf,
              rcov=~units,
              data=DT,
-             M=GT, gTerm = "u:id")
+             M=GT, gTerm = "u:id", 
+             verbose = FALSE)
 
 ms <- as.data.frame(t(mix1$scores))
 ms$Locus <- rownames(ms)
@@ -135,7 +135,7 @@ DT$genof <- as.factor(DT$geno)
 modh <- mmer(sugar~1, 
              random=~vs(overlay(femalef,malef)) 
              + genof,
-             data=DT)
+             data=DT,verbose = FALSE)
 
 
 ## -----------------------------------------------------------------------------
@@ -151,7 +151,7 @@ mix <- mmer(Yield~1,
               vs(Colf) +
               vs(spl2D(Row,Col)),
             rcov=~vs(units),
-            data=DT)
+            data=DT,verbose = FALSE)
 summary(mix)
 
 ## -----------------------------------------------------------------------------
@@ -160,12 +160,12 @@ data(DT_cpdata)
 DT <- DT_cpdata
 GT <- GT_cpdata
 MP <- MP_cpdata
-GT[1:4,1:4]
+
 #### look at the data and fit the model
 mix1 <- mmer(Yield~1,
               random=~vs(list(GT)),
               rcov=~units,
-              data=DT)
+              data=DT,verbose = FALSE)
 
 
 ## -----------------------------------------------------------------------------
@@ -183,12 +183,12 @@ set.seed(12345)
 y.trn <- DT
 vv <- sample(rownames(DT),round(nrow(DT)/5))
 y.trn[vv,"X1"] <- NA
-head(y.trn)
+
 ## GBLUP
 ans <- mmer(X1~1,
             random=~vs(id,Gu=K), 
             rcov=~units, 
-            data=y.trn) # kinship based
+            data=y.trn,verbose = FALSE) # kinship based
 ans$U$`u:id`$X1 <- as.data.frame(ans$U$`u:id`$X1)
 rownames(ans$U$`u:id`$X1) <- gsub("id","",rownames(ans$U$`u:id`$X1))
 cor(ans$U$`u:id`$X1[vv,],DT[vv,"X1"], use="complete")
@@ -197,10 +197,69 @@ cor(ans$U$`u:id`$X1[vv,],DT[vv,"X1"], use="complete")
 ans2 <- mmer(X1~1,
              random=~vs(list(GT)), 
              rcov=~units,
-             data=y.trn) # kinship based
+             data=y.trn,verbose = FALSE) # kinship based
 
 u <- GT %*% as.matrix(ans2$U$`u:GT`$X1) # BLUPs for individuals
 rownames(u) <- rownames(GT)
 cor(u[vv,],DT[vv,"X1"]) # same correlation
 # the same can be applied in multi-response models in GBLUP or rrBLUP
+
+## -----------------------------------------------------------------------------
+data(DT_cpdata)
+DT <- DT_cpdata
+GT <- GT_cpdata
+MP <- MP_cpdata
+### mimic two fields
+A <- A.mat(GT)
+
+mix1 <- mmer(Yield~1,
+            random=~vs(id, Gu=A) +
+              vs(Rowf) +
+              vs(Colf),
+            rcov=~vs(units),
+            data=DT, verbose = FALSE)
+
+## -----------------------------------------------------------------------------
+mix2 <- mmer(Yield~1,
+            random=~vs(id, Gu=A) +
+              vs(Rowf) +
+              vs(Colf) +
+              vs(spl2D(Row,Col)),
+            rcov=~vs(units),
+            data=DT,verbose = FALSE)
+
+## -----------------------------------------------------------------------------
+lrt <- anova(mix1, mix2)
+
+## -----------------------------------------------------------------------------
+
+data(DT_example)
+DT <- DT_example
+
+DT$EnvName <- paste(DT$Env,DT$Name)
+modelBase <- mmer(cbind(Yield, Weight) ~ Env,
+              random= ~ vs(Name, Gtc=diag(2)), # here is diag()
+              rcov= ~ vs(units, Gtc=unsm(2)),
+              data=DT,verbose = FALSE)
+
+modelCov <- mmer(cbind(Yield, Weight) ~ Env,
+              random= ~ vs(us(Env),Name, Gtc=unsm(2)), # here is unsm()
+              rcov= ~ vs(ds(Env),units, Gtc=unsm(2)),
+              data=DT,verbose = FALSE)
+
+lrt <- anova(modelBase, modelCov)
+
+## -----------------------------------------------------------------------------
+library(sommer)
+data(DT_yatesoats)
+DT <- DT_yatesoats
+m3 <- mmer(fixed=Y ~ V + N + V:N,
+           random = ~ B + B:MP,
+           rcov=~units,
+           data = DT, verbose=FALSE)
+summary(m3)$varcomp
+
+## -----------------------------------------------------------------------------
+p0 <- predict.mmer(object=m3, classify = "N")
+p0$pvals
 

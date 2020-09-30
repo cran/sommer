@@ -19,14 +19,14 @@ export(at,cs,ds,us,vs,
        unsm,uncm,fixm,fcm,
        list2usmat, transformConstraints,
        overlay, spl2D,
-       bivariateRun, unsBLUP)
+       bivariateRun)
 
 ## FUN_markers
 export(atcg1234,build.HMM,h2.fun)
 
 ## FUN_stats
 export(adiag1, imputev,
-       leg,
+       leg, wald.test,
        pin)
 
 ## FUN_relationships
@@ -46,6 +46,8 @@ S3method(summary, mmer)
 S3method(print, summary.mmer)
 #S3method(summary, mmergwas)
 #S3method(print, summary.mmergwas)
+S3method(print, wald.test)
+
 S3method(residuals, mmer)
 S3method(print, residuals.mmer)
 S3method(fitted, mmer)
