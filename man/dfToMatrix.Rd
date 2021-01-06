@@ -1,11 +1,13 @@
-\name{pedtoK}
-\alias{pedtoK}
-\title{Pedigree to matrix}
+\name{dfToMatrix}
+\alias{dfToMatrix}
+\title{data frame to matrix}
 \description{
-  This function creates takes the inverse of the asreml Ainverse function (ginv element) and creates the additive relationship matrix to use it as a covariance matrix for a random effect. Other packages that allows you to obtain an additive relationship matrix from a pedigree is the `pedigreemm` package.
+  This function takes a matrix that is in data frame format and transforms it into a matrix. Other packages that allows you to obtain an additive relationship matrix from a pedigree is the `pedigreemm` package.
 }
 \usage{
-  pedtoK(x, row="Row",column="Column",value="Ainverse", returnInverse=TRUE)
+  dfToMatrix(x, row="Row",column="Column",
+             value="Ainverse", returnInverse=FALSE, 
+             bend=1e-6)
 }
 
 \arguments{
@@ -14,6 +16,7 @@
   \item{column}{name of the column in x that indicates the column in the original relationship matrix.}
   \item{value}{name of the column in x that indicates the value for a given row and column in the original relationship matrix.}
   \item{returnInverse}{a TRUE/FALSE value indicating if the inverse of the x matrix should be computed once the data frame x is converted into a matrix.}
+    \item{bend}{a numeric value to add to the diagonal matrix in case matrix is singular for inversion.}
 }
 \value{
     
@@ -30,8 +33,16 @@
 }
 \examples{
 
-# Ks <- pedtoK(asreml.model$ginv)
-# A <- Ks$K
+library(Matrix)
+m <- matrix(1:9,3,3)
+m <- tcrossprod(m)
+
+mdf <- as.data.frame(as.table(m))
+mdf
+
+dfToMatrix(mdf, row = "Var1", column = "Var2", 
+            value = "Freq",returnInverse=FALSE )
+
 
 }
 \seealso{The core functions of the package \code{\link{mmer}} }

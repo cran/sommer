@@ -143,150 +143,20 @@ vcsExtract <- function(object){
   ################################################
 }
 
-#### =========== ####
-## SUMMARY FUNCTION mmergwas #
-#### =========== ####
-# "summary.mmergwas" <- function(object, ...) {
-#   
-#   #dim(object$u.hat)
-#   digits = max(3, getOption("digits") - 3)
-#   #forget <- length(object)
-#   
-#   groupss.nn <- lapply(object$U,function(x){
-#     dim(x)
-#   })
-#   groupss.nn <- as.data.frame(do.call(rbind,groupss.nn))
-#   
-#   lll <- object$monitor[1,]
-#   lll <- lll[which(lll > 1e-300 | lll < 0)]
-#   lll2 <- lll[length(lll)]
-#   
-#   LLAIC <- data.frame(as.numeric(lll2), as.numeric(object$AIC),
-#                       as.numeric(object$BIC), object$method, object$convergence)
-#   colnames(LLAIC) = c("logLik","AIC","BIC","Method","Converge")
-#   rownames(LLAIC) <- "Value"
-#   
-#   method=object$method
-#   #extract fixed effects
-#   coef <- data.frame(Estimate=unlist(object$Beta))#, Std.Error=(matrix(sqrt(diag(object$Var.beta.hat)),ncol=1)), t.value=(matrix((object$beta.hat-0)/sqrt(diag(object$Var.beta.hat)), ncol=1)))
-#   # if(dim(coef)[1] == 1){rownames(coef) <- "Intercept"}
-#   
-#   ## se and t values for fixed effects
-#   ts <- dim(object$sigma)[1]
-#   s2.beta <- diag(as.matrix(object$VarBeta))
-#   coef$Std.Error <- sqrt(abs(s2.beta))
-#   coef$t.value <- coef$Estimate/coef$Std.Error
-#   # print(coef)
-#   # nse.beta <- length(s2.beta)/ts
-#   # inits <- seq(1,length(s2.beta),nse.beta)
-#   # ends <- inits+nse.beta-1
-#   # seti <- list() # stardard errors partitioned by trait
-#   # for(u in 1:ts){
-#   #   prox <- data.frame(coef[,u],sqrt(abs(s2.beta[inits[u]:ends[u]])))
-#   #   prox$`t value` <- prox[,1]/prox[,2]
-#   #   colnames(prox) <- c("Estimate","Std. Error","t value")
-#   #   rownames(prox) <- rownames(coef)
-#   #   seti[[u]] <- prox
-#   # }
-#   # names(seti) <- colnames(object$sigma[[1]])
-#   
-#   vcsl <- list()
-#   consl <- list()
-#   nnn <- dim(object$sigma)
-#   for(k in 1:nnn[3]){
-#     x <- as.matrix(object$sigma[,,k])
-#     y <- object$constraints[[k]]
-#     xn <- k#names(object$sigma)[k]
-#     vcs <- numeric()
-#     cons <- numeric()
-#     counter <-1
-#     for(i in 1:ncol(x)){
-#       for(j in i:ncol(x)){
-#         # print(y[i,j])
-#         if( y[i,j] != 0 ){
-#           vcs[counter] <- x[i,j]
-#           cons[counter] <- y[i,j]
-#           names(vcs)[counter] <- paste(colnames(x)[i],colnames(x)[j],sep="-" )
-#           counter <- counter+1
-#         }
-#       }
-#     }
-#     vcsl[[xn]] <- as.data.frame(vcs)
-#     consl[[xn]] <- as.data.frame(cons)
-#   }
-#   mys2 <- do.call(rbind,vcsl)
-#   mycons <- do.call(rbind,consl)
-#   
-#   # rrr <- lapply(vcsl,rownames)
-#   # rrr <- rrr[which(unlist(lapply(rrr, length)) > 0)]
-#   # for(o in 1:length(rrr)){rrr[[o]] <- paste(names(rrr)[o],rrr[[o]],sep=".")}
-#   # rownames(mys2) <- as.vector(unlist(rrr))
-#   
-#   varcomp <- as.data.frame(cbind(mys2,sqrt(abs(diag(object$sigmaSE)))))
-#   varcomp[,3] <- varcomp[,1]/varcomp[,2]
-#   colnames(varcomp) <- c("VarComp","VarCompSE","Zratio")
-#   varcomp$Constraint <- replace.values(mycons$cons, 1:3, c("Positive","Unconstr","Fixed"))
-#   
-#   output <- list(groups=groupss.nn, varcomp=varcomp, betas=coef, method=method,logo=LLAIC)
-#   attr(output, "class")<-c("summary.mmergwas", "list")
-#   return(output)
-# }
-# 
-# "print.summary.mmergwas"<-function (x, digits = max(3, getOption("digits") - 3),  ...){
-#   
-#   nmaxchar0 <- max(as.vector(unlist(apply(data.frame(rownames(x$varcomp)),1,nchar))),na.rm = TRUE)
-#   
-#   if(nmaxchar0 < 26){
-#     nmaxchar0 <- 26
-#   } # + 26 spaces we have nmaxchar0+26  spaces to put the title
-#   
-#   nmaxchar <- nmaxchar0+34 ## add spaces from the 3 columns
-#   nmaxchar2 <- nmaxchar0+18
-#   nmaxchar3 <- nmaxchar0+34-46 #round(nmaxchar0/2)
-#   rlh <- paste(rep("*",round(nmaxchar2/2)),collapse = "")
-#   rlt <- paste(rep(" ",ceiling(nmaxchar3/2)),collapse = "")
-#   digits = max(3, getOption("digits") - 3)
-#   ################################################
-#   cat(paste(rep("=",nmaxchar), collapse = ""))
-#   cat(paste("\n",rlt,"Multivariate Linear Mixed Model fit by REML",rlt,"\n", collapse = ""))
-#   cat(paste(rlh," sommer 4.1 ",rlh, "\n", collapse = ""))
-#   cat(paste(rep("=",nmaxchar), collapse = ""))
-#   cat("\n")
-#   cat("")
-#   print(x$logo)#, digits = digits)
-#   cat(paste(rep("=",nmaxchar), collapse = ""))
-#   cat("\nScaled Variance-Covariance components:\n")
-#   print(x$varcomp, digits = digits)
-#   cat(paste(rep("=",nmaxchar), collapse = ""))
-#   cat("\nScaled Fixed effects:\n")
-#   if(nrow(x$betas) > 8){
-#     print(x$betas[1:8,], digits = digits)
-#     cat("   ... please access the object to see more\n")
-#   }else{
-#     print(x$betas, digits = digits)
-#   }
-#   cat(paste(rep("=",nmaxchar), collapse = ""))
-#   cat("\nGroups and observations:\n")
-#   print(x$groups, digits = digits)
-#   cat(paste(rep("=",nmaxchar), collapse = ""))
-#   cat("\nUse the '$' sign to access results and parameters")#\nArguments set to FALSE for multiresponse models:\n'draw', and 'gwas.plots'\n")
-#   ################################################
-# }
-
 #### =========== ######
 ## RESIDUALS FUNCTION #
 #### =========== ######
 "residuals.mmer" <- function(object, ...) {
   digits = max(3, getOption("digits") - 3)
   
-  # if(type=="conditional"){
-  #   output <- object$cond.residuals
-  #   #colnames(output) <- names(object)
-  # }else{
-  output <- object$residuals
-  #colnames(output) <- names(object)
-  # }
-  return(output)
+  pp <- fitted.mmer(object)
+  responses <- object$terms$response[[1]]
+  dat <- pp$dataWithFitted
+  for(ir in 1:length(responses)){
+    dat[,paste0(responses[ir],".residuals")] = dat[,responses[ir]] - dat[,paste0(responses[ir],".fitted")]
+  }
+
+  return(dat)
 }
 
 "print.residuals.mmer"<- function(x, digits = max(3, getOption("digits") - 3), ...) {
@@ -308,10 +178,6 @@ vcsExtract <- function(object){
   return(output)
 }
 
-#"print.ranef.mmer"<- function(x, digits = max(3, getOption("digits") - 3), ...) {
-#  print((x))
-#}
-
 #### =========== ######
 ## FIXEF FUNCTION #
 #### =========== ######
@@ -331,23 +197,105 @@ vcsExtract <- function(object){
 ## FITTED FUNCTION ##
 #### =========== ####
 
-"fitted.mmer" <- function(object, type="complete", ...) {
-  #type="complete" 
-  # digits = max(3, getOption("digits") - 3)
-  # if(type=="complete"){
-  #   output<- object$fitted.y
-  #   #colnames(output) <- names(object)
-  # }else{
-  #   output<- object$fitted.u
-  #   #colnames(output) <- names(object)
-  # }
-  output<- object$fitted
-  return(output)
+"fitted.mmer" <- function(object,...){
+  
+  if(is.null(object$call$random)){
+    originalModelForMatrices <- mmer(fixed=object$call$fixed,
+                                     # random=object$call$random,
+                                     rcov=object$call$rcov,
+                                     data=object$dataOriginal, return.param = TRUE,#reshape.output =FALSE,
+                                     init = object$sigma_scaled, constraints = object$constraints,
+                                     na.method.Y = object$call$na.method.Y,
+                                     na.method.X = object$call$na.method.X,...)
+    
+    originalModelForParameters <- mmer(fixed=object$call$fixed,
+                                       # random=object$call$random,
+                                       rcov=object$call$rcov, iters=1, verbose=FALSE,
+                                       data=object$dataOriginal, reshape.output =FALSE,
+                                       init = object$sigma_scaled, constraints = object$constraints,
+                                       na.method.Y = object$call$na.method.Y,
+                                       na.method.X = object$call$na.method.X,...)
+  }else{
+    originalModelForMatrices <- mmer(fixed=object$call$fixed,
+                                     random=object$call$random,
+                                     rcov=object$call$rcov,
+                                     data=object$dataOriginal, return.param = TRUE,#reshape.output =FALSE,
+                                     init = object$sigma_scaled, constraints = object$constraints,
+                                     na.method.Y = object$call$na.method.Y,
+                                     na.method.X = object$call$na.method.X,...)
+    
+    originalModelForParameters <- mmer(fixed=object$call$fixed,
+                                       random=object$call$random,
+                                       rcov=object$call$rcov, iters=1, verbose=FALSE,
+                                       data=object$dataOriginal, reshape.output =FALSE,
+                                       init = object$sigma_scaled, constraints = object$constraints,
+                                       na.method.Y = object$call$na.method.Y,
+                                       na.method.X = object$call$na.method.X,...)
+  }
+  ys <- object$terms$response[[1]]
+  nt <- length(ys) # number of traits
+  TT <- diag(nt) # diagonal matrix
+  
+  Xo <- do.call(cbind,originalModelForMatrices$X)
+  X.mv.original <- kronecker(Xo,TT)
+  
+  Xb=X.mv.original%*%originalModelForParameters$Beta
+  
+  Zu=NULL
+  if(!is.null(object$call$random)){
+    nz <- length(originalModelForMatrices$Z)
+    Zu <- vector(mode = "list", length = nz) # list for Zu
+    for(ir in 1:nz){ # for each random effect
+      Z <- originalModelForMatrices$Z[[ir]] # provisional Z
+      Zu[[ir]] <- kronecker(Z,TT) %*% originalModelForParameters$U[[ir]] # calculate Zu
+    }
+  }
+  names(Zu) <- names(object$U)
+  
+  if(!is.null(object$call$random)){
+    y.hat <- Xb + Reduce("+",Zu) # y.hat = Xb + Zu.1 + ... + Zu.n
+  }else{
+    y.hat <- Xb # y.hat = Xb
+  }
+  
+  Zudf <- as.matrix(do.call(cbind,Zu)); colnames(Zudf) <- paste0(names(Zu),".fitted")
+  Xbdf <- as.matrix(Xb); colnames(Xbdf) <- "Xb.fitted"
+  y.hat.df <- matrix(y.hat[,1],byrow = TRUE, ncol=nt)
+  colnames(y.hat.df) <- paste0(object$terms$response[[1]],".fitted")
+  dataWithFitted <- cbind(object$data,y.hat.df,Xbdf,Zudf)
+  # build summary table
+  nLevels <- c(unlist(lapply(originalModelForMatrices$X,ncol)), unlist(lapply(originalModelForMatrices$Z,ncol)))
+  namesLevels <- c(unlist(object$terms$fixed),names(object$U))
+  formLevels <- c(rep("fixed",length(unlist(object$terms$fixed))),rep("random",length(names(object$U))))
+  id <- 1:length(formLevels)
+  used <- rep(TRUE,length(id))
+  fittedSummary <- data.frame(namesLevels,formLevels,nLevels,id,used)
+  colnames(fittedSummary) <- c("term","type","nLevels","id","used")
+  
+  return(list(dataWithFitted=dataWithFitted,Xb=Xb, Zu=Zu,fittedSummary=fittedSummary))
 }
 
 "print.fitted.mmer"<- function(x, digits = max(3, getOption("digits") - 3), ...) {
-  print((x))
-} 
+  cat(blue(paste("\n  The fitted values are obtained by adding Xb + Zu.1 + ... + Zu.n
+                 containing: \n")
+  ))
+  print(x$fittedSummary)
+  cat(blue(paste("\n  head of fitted values: \n")
+  ))
+  head(x$dataWithFitted,...)
+}
+
+"head.fitted.mmer"<- function(x, digits = max(3, getOption("digits") - 3), ...) {
+  cat(blue(paste("\n  The fitted values are obtained by adding Xb + Zu.1 + ... + Zu.n
+                 containing: \n")
+  ))
+  print(x$fittedSummary)
+  cat(blue(paste("\n  head of fitted values: \n")
+  ))
+  head(x$dataWithFitted,...)
+}
+
+
 
 
 #### =========== ####
@@ -589,12 +537,17 @@ plot.mmer <- function(x, stnd=TRUE, ...) {
   # std vs residuals, QQplot (std vs teor quantiles), sqrt(std residuals) vs fitted, std res vs leverage = cook's distance
   traits <- ncol(x$fitted)
   layout(matrix(1:4,2,2))
+  
+  resp <- x$terms$response[[1]]
+  # ff <- fitted(x)
+  rr <- residuals.mmer(x)
   for(i in 1:traits){
-    plot(x$fitted[,i],scale(x$residuals[,i]),pch=20, col=transp("cadetblue"), ylab="Std Residuals", xlab="Fitted values", main="Residual vs Fitted", bty="n", ...); grid()
-    plot(x$fitted[,i],sqrt(abs(scale(x$residuals[,i]))),pch=20, col=transp("thistle4"), ylab="Sqrt Abs Std Residuals", xlab="Fitted values", main="Scale-Location", bty="n", ...); grid()
-    qqnorm(scale(x$residuals), pch=20, col=transp("tomato1"), ylab="Std Residuals", bty="n",...); grid()
+    
+    plot(rr[,paste0(resp[i],".fitted")],scale(rr[,paste0(resp[i],".residuals")]),pch=20, col=transp("cadetblue"), ylab="Std Residuals", xlab="Fitted values", main="Residual vs Fitted", bty="n", ...); grid()
+    plot(rr[,paste0(resp[i],".fitted")],sqrt(abs(scale(rr[,paste0(resp[i],".residuals")]))),pch=20, col=transp("thistle4"), ylab="Sqrt Abs Std Residuals", xlab="Fitted values", main="Scale-Location", bty="n", ...); grid()
+    qqnorm(scale(rr[,paste0(resp[i],".residuals")]), pch=20, col=transp("tomato1"), ylab="Std Residuals", bty="n",...); grid()
     hat <- Xm%*%solve(t(Xm)%*%x$Vi%*%Xm)%*%t(Xm)%*%x$Vi # leverage including variance from random effects H= X(X'V-X)X'V-
-    plot(diag(hat), scale(x$residuals), pch=20, col=transp("springgreen3"), ylab="Std Residuals", xlab="Leverage", main="Residual vs Leverage", bty="n", ...); grid()
+    plot(diag(hat), scale(rr[,paste0(resp[i],".residuals")]), pch=20, col=transp("springgreen3"), ylab="Std Residuals", xlab="Leverage", main="Residual vs Leverage", bty="n", ...); grid()
   }
   #####################
   layout(matrix(1,1,1))
@@ -610,7 +563,7 @@ plot.mmer <- function(x, stnd=TRUE, ...) {
     stop("This package requires R 2.1 or later")
   assign(".sommer.home", file.path(library, pkg),
          pos=match("package:sommer", search()))
-  sommer.version = "4.1 (2020-10-01)" # usually 2 months before it expires
+  sommer.version = "4.1.2 (2021-01-01)" # usually 2 months before it expires
   
   ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ### check which version is more recent
@@ -626,24 +579,23 @@ plot.mmer <- function(x, stnd=TRUE, ...) {
   assign(".sommer.version", sommer.version, pos=match("package:sommer", search()))
   if(interactive())
   {
-    packageStartupMessage(blue$bold(paste("[]==================================================================[]")),appendLF=TRUE)
-    packageStartupMessage(blue$bold(paste("[]   Solving Mixed Model Equations in R (sommer) ", sommer.version, "   []",sep="")),appendLF=TRUE)
-    packageStartupMessage(blue$bold(paste("[]   ------------ Multivariate Linear Mixed Models --------------   []")),appendLF=TRUE)
-    packageStartupMessage(blue$bold("[]   Author: Giovanny Covarrubias-Pazaran                           []"),appendLF=TRUE)
-    packageStartupMessage(blue$bold("[]   Published: PLoS ONE 2016, 11(6):1-15                           []"),appendLF=TRUE)
-    packageStartupMessage(blue$bold("[]   Dedicated to the University of Chapingo and the UW-Madison     []"),appendLF=TRUE)
-    packageStartupMessage(blue$bold("[]   Type 'vignette('v1.sommer.quick.start')' for a short tutorial  []"),appendLF=TRUE)
-    packageStartupMessage(blue$bold("[]   Type 'citation('sommer')' to know how to cite sommer           []"),appendLF=TRUE)
-    packageStartupMessage(blue$bold(paste("[]==================================================================[]")),appendLF=TRUE)
-    packageStartupMessage(blue$bold("sommer is updated on CRAN every 4-months due to CRAN policies"),appendLF=TRUE)
-    packageStartupMessage(blue$bold("Newest source is available at https://github.com/covaruber/sommer"),appendLF=TRUE)
-    packageStartupMessage(blue$bold("To install type: library(devtools); install_github('covaruber/sommer')"),appendLF=TRUE)
+    packageStartupMessage(magenta(paste("[]==================================================================[]")),appendLF=TRUE)
+    packageStartupMessage(magenta(paste("[]   Solving Mixed Model Equations in R (sommer) ", sommer.version, " []",sep="")),appendLF=TRUE)
+    packageStartupMessage(magenta(paste("[]   ------------- Multivariate Linear Mixed Models --------------  []")),appendLF=TRUE)
+    packageStartupMessage(magenta("[]   Author: Giovanny Covarrubias-Pazaran                           []"),appendLF=TRUE)
+    packageStartupMessage(magenta("[]   Published: PLoS ONE 2016, 11(6):1-15                           []"),appendLF=TRUE)
+    packageStartupMessage(magenta("[]   Dedicated to the University of Chapingo and UW-Madison         []"),appendLF=TRUE)
+    packageStartupMessage(magenta("[]   Type 'vignette('v1.sommer.quick.start')' for a short tutorial  []"),appendLF=TRUE)
+    packageStartupMessage(magenta("[]   Type 'citation('sommer')' to know how to cite sommer           []"),appendLF=TRUE)
+    packageStartupMessage(magenta(paste("[]==================================================================[]")),appendLF=TRUE)
+    packageStartupMessage(magenta("sommer is updated on CRAN every 4-months due to CRAN policies"),appendLF=TRUE)
+    packageStartupMessage(magenta("Newest source is available at https://github.com/covaruber/sommer"),appendLF=TRUE)
+    packageStartupMessage(magenta("To install type: library(devtools); install_github('covaruber/sommer')"),appendLF=TRUE)
     
     #if(yyy > current){ # yyy < current in CRAN
     #  packageStartupMessage(paste("Version",current,"is now available."),appendLF=TRUE) # version current
     #  packageStartupMessage(paste("Please update 'sommer' installing the new version."),appendLF=TRUE) # version current
     #}
-    #print(image(diag(10),main="sommer 4.1"))
   }
   invisible()
 }

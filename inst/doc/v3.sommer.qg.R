@@ -10,7 +10,7 @@ ans1 <- mmer(Yield~1,
              data=DT, verbose = FALSE)
 summary(ans1)$varcomp
 (n.env <- length(levels(DT$Env)))
-pin(ans1, h2 ~ V1 / ( V1 + (V3/n.env) + (V5/(2*n.env)) ) )
+vpredict(ans1, h2 ~ V1 / ( V1 + (V3/n.env) + (V5/(2*n.env)) ) )
 
 ## -----------------------------------------------------------------------------
 data(DT_cpdata)
@@ -27,8 +27,8 @@ ans.ADE <- mmer(color~1,
                  rcov=~units,
                  data=DT,verbose = FALSE)
 (summary(ans.ADE)$varcomp)
-pin(ans.ADE, h2 ~ (V1) / ( V1+V3) )
-pin(ans.ADE, h2 ~ (V1+V2) / ( V1+V2+V3) )
+vpredict(ans.ADE, h2 ~ (V1) / ( V1+V3) )
+vpredict(ans.ADE, h2 ~ (V1+V2) / ( V1+V2+V3) )
 
 ## ---- fig.show='hold'---------------------------------------------------------
 data(DT_cornhybrids)
@@ -67,7 +67,7 @@ ans <- mmer(color~1,
                 rcov=~units,
                 data=DT, verbose = FALSE)
 (summary(ans.ADE)$varcomp)
-pin(ans, h2 ~ (V1) / ( V1+V2) )
+vpredict(ans, h2 ~ (V1) / ( V1+V2) )
 
 
 ## -----------------------------------------------------------------------------
@@ -79,7 +79,7 @@ mix3 <- mmer(cbind(tarsus, back) ~ sex,
                data = DT, verbose = FALSE)
 summary(mix3)
 #### calculate the genetic correlation
-pin(mix3, gen.cor ~ V2 / sqrt(V1*V3))
+vpredict(mix3, gen.cor ~ V2 / sqrt(V1*V3))
 
 ## -----------------------------------------------------------------------------
 data(DT_cornhybrids)
