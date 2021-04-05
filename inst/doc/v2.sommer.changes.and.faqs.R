@@ -251,10 +251,10 @@ sig2 <- kronecker(diag(1,n),V2) # variance component 2
 gam <- kronecker(diag(1,n),V3) # covariance component
 # now fit the model
 mix2 <- mmer(y~X-1, rcov = ~vs(sig1)+vs(sig2)+vs(gam), data=df2, verbose = FALSE)
-summary(mix2)$varcomp
+mix2$sigmaVector
 
 ## -----------------------------------------------------------------------------
 sig <- sig1+sig2
 mix3 <- mmer(y~X-1, rcov = ~vs(sig)+vs(gam), data=df2, iters=30, verbose = FALSE)
-summary(mix3)$varcomp
+mix3$sigmaVector
 

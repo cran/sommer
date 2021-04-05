@@ -152,6 +152,53 @@ cor(u[vv,],DT[vv,"X1"]) # same correlation
 # the same can be applied in multi-response models in GBLUP or rrBLUP
 
 ## -----------------------------------------------------------------------------
+data(DT_ige)
+DT <- DT_ige
+Af <- A_ige
+An <- A_ige
+
+## Direct genetic effects model
+modDGE <- mmer(trait ~ block,
+               random = ~ focal,
+               rcov = ~ units,
+               data = DT, verbose=FALSE)
+summary(modDGE)$varcomp
+
+
+## -----------------------------------------------------------------------------
+data(DT_ige)
+DT <- DT_ige
+A <- A_ige
+
+## Indirect genetic effects model
+modDGE <- mmer(trait ~ block,
+               random = ~ focal + neighbour,
+               rcov = ~ units,
+               data = DT, verbose=FALSE)
+summary(modDGE)$varcomp
+
+
+## -----------------------------------------------------------------------------
+
+### Indirect genetic effects model
+modIGE <- mmer(trait ~ block,
+               random = ~ gvs(focal, neighbour),
+               rcov = ~ units, 
+               data = DT, verbose=FALSE)
+summary(modIGE)$varcomp
+
+
+## -----------------------------------------------------------------------------
+
+### Indirect genetic effects model
+modIGE <- mmer(trait ~ block,
+               random = ~ gvs(focal, neighbour, Gu=list(Af,An)),
+               rcov = ~ units, 
+               data = DT, verbose=FALSE)
+summary(modIGE)$varcomp
+
+
+## -----------------------------------------------------------------------------
 data(DT_technow)
 DT <- DT_technow
 Md <- Md_technow

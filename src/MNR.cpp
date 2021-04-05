@@ -647,6 +647,7 @@ Rcpp::List MNR(const arma::mat & Y, const Rcpp::List & X,
   arma::vec popo = arma::vec(rankX, arma::fill::zeros);
   for(int i=0; i < rankX; i++){popo(i) = 1;}
   arma::mat A(kk,kk,arma::fill::zeros); // to store second derivatives
+  arma::vec ww(kk); // vector to store first derivatives, the product Y'PViPY - tr(PVi) = dL/ds 
   arma::mat A_svd;
   arma::vec eigval2; // will be used for the decomposition of P, within the algorithm
   arma::mat eigvec2; // will be used for the decomposition of P
@@ -793,7 +794,7 @@ Rcpp::List MNR(const arma::mat & Y, const Rcpp::List & X,
       }
       
       // calculate first derivatives (dL/ds)
-      arma::vec ww(kk); // vector to store the product Y'PViPY - tr(PVi) = dL/ds
+      
       arma::cube PdViList(nom,nom,kk); // list to store the multivariate derivatives * P or PVi=P*dZKZ'/ds
       for(int i=0; i < kk; i++){
         int re = re_mapper(i);
@@ -850,7 +851,8 @@ Rcpp::List MNR(const arma::mat & Y, const Rcpp::List & X,
         // rest0 = '(';  rest1=cc.n_elem; rest2 = 'restrained)';
         arma::uvec no_restrain = find((constraints == 1 && coef_ut_unC > 0) || (constraints > 1)); // indices of columns that are OK to use
         arma::mat Ac = A.submat(no_restrain,no_restrain); // subset of A
-        arma::mat Ac_svd = arma::inv(Ac); // Inverse of Fishers (subset of A)
+        arma::mat Ac_svd;
+        arma::inv(Ac_svd, Ac); // Inverse of Fishers (subset of A)
         if(Ac_svd.n_rows == 0){ // if fails 
           Rcpp::Rcout << "System is singular (Ac_svd). Stopping the job. Try a bigger number of tolparinv." << arma::endl;
           return 0;
@@ -1013,6 +1015,8 @@ Rcpp::List MNR(const arma::mat & Y, const Rcpp::List & X,
     Rcpp::Named("AIC") = AIC,
     Rcpp::Named("BIC") = BIC,
     Rcpp::Named("convergence") = convergence,
-    Rcpp::Named("monitor") = monitor2
+    Rcpp::Named("monitor") = monitor2,
+    Rcpp::Named("dL") = ww,
+    Rcpp::Named("dL2") = A
   );
 }
