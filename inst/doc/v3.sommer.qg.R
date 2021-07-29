@@ -27,8 +27,8 @@ ans.ADE <- mmer(color~1,
                  rcov=~units,
                  data=DT,verbose = FALSE)
 (summary(ans.ADE)$varcomp)
-vpredict(ans.ADE, h2 ~ (V1) / ( V1+V3) )
-vpredict(ans.ADE, h2 ~ (V1+V2) / ( V1+V2+V3) )
+vpredict(ans.ADE, h2 ~ (V1) / ( V1+V3) ) # narrow sense
+vpredict(ans.ADE, h2 ~ (V1+V2) / ( V1+V2+V3) ) # broad-sense
 
 ## ---- fig.show='hold'---------------------------------------------------------
 data(DT_cornhybrids)
@@ -142,8 +142,8 @@ cor(ans$U$`u:id`$X1[vv,],DT[vv,"X1"], use="complete")
 
 ## rrBLUP
 ans2 <- mmer(X1~1,
-             random=~vs(list(GT)), 
-             rcov=~units,
+             random=~vs(list(GT), buildGu = FALSE), 
+             rcov=~units, getPEV = FALSE,
              data=y.trn, verbose = FALSE) # kinship based
 
 u <- GT %*% as.matrix(ans2$U$`u:GT`$X1) # BLUPs for individuals
@@ -278,7 +278,7 @@ me.marker <- mix.marker$U$`u:M`$color
 # PARTITIONED GBLUP MODEL
 ################
 
-MMT<-M%*%t(M) ## additive relationship matrix 
+MMT <-tcrossprod(M) ## MM' = additive relationship matrix 
 MMTinv<-solve(MMT) ## inverse
 MTMMTinv<-t(M)%*%MMTinv # M' %*% (M'M)-
 

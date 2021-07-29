@@ -26,7 +26,8 @@ Sommer is a structural multivariate-univariate linear mixed model solver for mul
 mmer(fixed, random, rcov, data, weights, iters=20, tolpar = 1e-03, 
      tolparinv = 1e-06, init=NULL, constraints=NULL,method="NR", getPEV=TRUE,
      na.method.X="exclude", na.method.Y="exclude",return.param=FALSE, 
-     date.warning=TRUE,verbose=TRUE, reshape.output=TRUE)
+     date.warning=TRUE,verbose=TRUE, reshape.output=TRUE, stepweight=NULL,
+     emupdate=NULL)
 }
 \arguments{
   \item{fixed}{A formula specifying the \strong{response variable(s)} \strong{and fixed effects}, i.e:
@@ -74,6 +75,8 @@ mmer(fixed, random, rcov, data, weights, iters=20, tolpar = 1e-03,
    \item{date.warning}{A TRUE/FALSE value to indicate if the program should warn you when is time to update the sommer package.}
   \item{verbose}{A TRUE/FALSE value to indicate if the program should return the progress of the iterative algorithm.}
   \item{reshape.output}{A TRUE/FALSE value to indicate if the output should be reshaped to be easier to interpret for the user, some information is missing from the multivariate models for an easy interpretation.}
+  \item{stepweight}{A vector of values (of length equal to the number of iterations) indicating the weight used to multiply the update (delta) for variance components at each iteration. If NULL the 1st iteration will be multiplied by 0.5, the 2nd by 0.7, and the rest by 0.9. This argument can help to avoid that variance components go outside the parameter space in the initial iterations which doesn't happen very often with the NR method but it can be detected by looking at the behavior of the likelihood. In that case you may want to give a smaller weight to the initial 8-10 iterations.}
+  \item{emupdate}{A vector of values (of length equal to the number of iterations) indicating with 1's the iterations where the algorithm should calculate an EM update instead of an update based on first and second derivatives indicated with zeros (i.e. NR or AI methods).}
     
 }
 
@@ -187,6 +190,7 @@ If all parameters are correctly indicated the program will return a list with th
 \item{BIC}{Bayesian information criterion}
 \item{convergence}{a TRUE/FALSE statement indicating if the model converged.}
 \item{monitor}{The values of log-likelihood and variance-covariance components across iterations during the REML estimation.}
+\item{percChange}{The percent change of variance components across iterations. There should be one column less than the number of iterations. Calculated as percChange = ((x_i/x_i-1) - 1) * 100 where i is the ith iteration.}
 \item{dL}{The vector of first derivatives of the likelihood with respect to the ith variance-covariance component.}
 \item{dL2}{The matrix of second derivatives of the likelihood with respect to the i.j th variance-covariance component.}
 \item{method}{The method for extimation of variance components specified by the user.}
@@ -278,7 +282,7 @@ summary(ans2)
 
 ans3 <- mmer(Yield~Env,
              random=~ vs(us(Env),Name),
-             rcov=~vs(us(Env),units), 
+             rcov=~vs(ds(Env),units), 
              data=DT)
 summary(ans3)
 

@@ -11,7 +11,7 @@ DT <- DT_cpdata
 GT <- GT_cpdata
 MP <- MP_cpdata
 mix.rrblup <- mmer(fixed=color~1,
-                   random=~vs(GT,Gtc=unsm(1)) + vs(Rowf,Gtc=diag(1)),
+                   random=~vs(GT,Gtc=unsm(1), buildGu = FALSE) + vs(Rowf,Gtc=diag(1)),
                    rcov=~vs(units,Gtc=unsm(1)), getPEV = FALSE,
                    data=DT, verbose = FALSE)
 summary(mix.rrblup)
