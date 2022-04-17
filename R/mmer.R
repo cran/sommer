@@ -10,7 +10,7 @@ mmer <- function(fixed, random, rcov, data, weights,
                  stepweight=NULL, emupdate=NULL){
 
   my.year <- 2022
-  my.month <- 3 #month when the user will start to get notifications the 1st day of next month
+  my.month <- 6 #month when the user will start to get notifications the 1st day of next month
   ### if my month = 5, user will start to get notification in June 1st (next month)
   datee <- Sys.Date()
   year.mo.day <- as.numeric(strsplit(as.character(datee),"-")[[1]])# <- as.numeric(strsplit(gsub("....-","",datee),"-")[[1]])
@@ -54,7 +54,7 @@ mmer <- function(fixed, random, rcov, data, weights,
   response <- strsplit(as.character(fixed[2]), split = "[+]")[[1]]
   responsef <- as.formula(paste(response,"~1"))
   mfna <- try(model.frame(responsef, data = data, na.action = na.pass), silent = TRUE)
-  if (class(mfna) == "try-error") {
+  if (is(mfna, "try-error") ) { # class(mfna) == "try-error"
     stop("Please provide the 'data' argument for your specified variables.\nYou may be specifying some variables in your model not present in your dataset.", call. = FALSE)
   }
   mfna <- eval(mfna, data, parent.frame())
@@ -303,7 +303,8 @@ mmer <- function(fixed, random, rcov, data, weights,
   baseX <- matrix(baseX[, keepx],nrow(yvar),qr$rank)
   colnames(baseX) <- nameskeepx
   if(colsdropped > 0){
-    cat(blue(paste("fixed-effect model matrix is rank deficient so dropping",colsdropped,"columns / coefficients\n")))
+    warning(paste("fixed-effect model matrix is rank deficient so dropping",colsdropped,"columns / coefficients\n"),call. = FALSE)
+    # cat(blue(paste("fixed-effect model matrix is rank deficient so dropping",colsdropped,"columns / coefficients\n")))
   }
   # print(colnames(baseX))
   xs <- list()

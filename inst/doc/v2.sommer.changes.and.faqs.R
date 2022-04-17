@@ -122,7 +122,7 @@ ansx <- GWAS(Yield~Env,
              gTerm = "Name", verbose = FALSE)
 
 ms <- as.data.frame(ansx$scores)
-plot(ms$Yield, ylim=c(0,8))
+# plot(ms$Yield, ylim=c(0,8))
 
 ## -----------------------------------------------------------------------------
 ## GWAS for the interaction term in CS model
@@ -136,7 +136,7 @@ ansx <- GWAS(Yield~Env,
              gTerm = "Env:Name", verbose = FALSE)
 
 ms <- as.data.frame(ansx$scores)
-plot(ms$Yield, ylim=c(0,8))
+# plot(ms$Yield, ylim=c(0,8))
 
 ## -----------------------------------------------------------------------------
 ## GWAS for the interaction term in DIAG model
@@ -150,7 +150,7 @@ ansx <- GWAS(Yield~Env,
              gTerm = "CA.2011:Name", verbose = FALSE )
 
 ms <- as.data.frame(ansx$scores)
-plot(ms$Yield, ylim=c(0,8))
+# plot(ms$Yield, ylim=c(0,8))
 
 ## -----------------------------------------------------------------------------
 ## GWAS for main term in US model
@@ -162,7 +162,7 @@ ansx <- GWAS(Yield~Env,
              gTerm = "CA.2011:Name", verbose = FALSE)
 
 ms <- as.data.frame(ansx$scores)
-plot(ms$Yield, ylim=c(0,8))
+# plot(ms$Yield, ylim=c(0,8))
 
 ## -----------------------------------------------------------------------------
 ## GWAS for main term in multitrait DIAG model
@@ -174,7 +174,7 @@ ansx <- GWAS(cbind(Weight,Yield)~Env,
              gTerm = "CA.2011:Name", verbose = FALSE)
 
 ms <- as.data.frame(ansx$scores)
-plot(ms$Yield, ylim=c(0,8))
+# plot(ms$Yield, ylim=c(0,8))
 
 ## -----------------------------------------------------------------------------
 data(DT_cpdata)

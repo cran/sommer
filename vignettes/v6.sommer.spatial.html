@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2021-12-14" />
+<meta name="date" content="2022-04-16" />
 
 <title>Spatial modeling using the sommer package</title>
 
@@ -315,7 +315,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Spatial modeling using the sommer package</h1>
 <h4 class="author">Giovanny Covarrubias-Pazaran</h4>
-<h4 class="date">2021-12-14</h4>
+<h4 class="date">2022-04-16</h4>
 
 
 
@@ -390,7 +390,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb1-45"><a href="#cb1-45"></a>m1.sommer &lt;-<span class="st"> </span><span class="kw">mmer</span>(Y<span class="op">~</span><span class="dv">1</span><span class="op">+</span>V<span class="op">+</span><span class="kw">spl2Db</span>(col,row, <span class="dt">nsegments =</span> <span class="kw">c</span>(<span class="dv">14</span>,<span class="dv">21</span>), <span class="dt">degree =</span> <span class="kw">c</span>(<span class="dv">3</span>,<span class="dv">3</span>), <span class="dt">penaltyord =</span> <span class="kw">c</span>(<span class="dv">2</span>,<span class="dv">2</span>), <span class="dt">what =</span> <span class="st">&quot;base&quot;</span>), </span>
 <span id="cb1-46"><a href="#cb1-46"></a>                  <span class="dt">random =</span> <span class="op">~</span>R<span class="op">+</span>C<span class="op">+</span><span class="kw">spl2Db</span>(col,row, <span class="dt">nsegments =</span> <span class="kw">c</span>(<span class="dv">14</span>,<span class="dv">21</span>), <span class="dt">degree =</span> <span class="kw">c</span>(<span class="dv">3</span>,<span class="dv">3</span>), <span class="dt">penaltyord =</span> <span class="kw">c</span>(<span class="dv">2</span>,<span class="dv">2</span>), <span class="dt">what=</span><span class="st">&quot;bits&quot;</span>),</span>
 <span id="cb1-47"><a href="#cb1-47"></a>                  <span class="dt">data=</span>DT, <span class="dt">tolpar =</span> <span class="fl">1e-6</span>, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span></code></pre></div>
-<pre><code>## fixed-effect model matrix is rank deficient so dropping 8 columns / coefficients</code></pre>
+<pre><code>## Warning: fixed-effect model matrix is rank deficient so dropping 8 columns / coefficients</code></pre>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw">summary</span>(m1.sommer)<span class="op">$</span>varcomp</span></code></pre></div>
 <pre><code>##                VarComp VarCompSE     Zratio Constraint
 ## R.Y-Y       125.928235  89.77330  1.4027360   Positive

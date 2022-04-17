@@ -343,7 +343,7 @@ DT$setf <- as.factor(DT$set)
 DT$repf <- as.factor(DT$rep)
 DT$malef <- as.factor(DT$male)
 DT$femalef <- as.factor(DT$female)
-levelplot(yield~male*female|set, data=DT, main="NC design I")
+#levelplot(yield~male*female|set, data=DT, main="NC design I")
 ##############################
 ## Expected Mean Square method
 ##############################
@@ -384,7 +384,7 @@ DT$setf <- as.factor(DT$set)
 DT$repf <- as.factor(DT$rep)
 DT$malef <- as.factor(DT$male)
 DT$femalef <- as.factor(DT$female)
-levelplot(yield~male*female|set, data=DT, main="NC desing II")
+#levelplot(yield~male*female|set, data=DT, main="NC desing II")
 head(DT)
 
 N=with(DT,table(female, male, set))
@@ -527,7 +527,7 @@ pvalGBLUP <- dt(t.stat.from.g,df=n-k-1) # -log10(pval)
 ###########################
 #### Compare results
 ###########################
-plot(mix2$scores[,1], main="GWAS")
+# plot(mix2$scores[,1], main="GWAS")
 plot(-log(pvalRRBLUP), main="GWAS by RRBLUP/SNP-BLUP") 
 plot(-log(pvalGBLUP), main="GWAS by GBLUP")
 
