@@ -1,13 +1,13 @@
-GWAS <- function(fixed, random, rcov, data, weights, 
-                 iters=20, tolpar = 1e-03, tolparinv = 1e-06, 
+GWAS <- function(fixed, random, rcov, data, weights, W,
+                 nIters=20, tolParConvLL = 1e-03, tolParInv = 1e-06, 
                  init=NULL, constraints=NULL, method="NR", 
                  getPEV=TRUE,
-                 na.method.X="exclude",
-                 na.method.Y="exclude",
-                 return.param=FALSE, 
-                 date.warning=TRUE,
-                 verbose=FALSE,
-                 stepweight=NULL, emupdate=NULL,
+                 naMethodX="exclude",
+                 naMethodY="exclude",
+                 returnParam=FALSE, 
+                 dateWarning=TRUE,date.warning=TRUE,
+                 verbose=FALSE, 
+                 stepWeight=NULL, emWeight=NULL,
                  M=NULL, gTerm=NULL, n.PC = 0, min.MAF = 0.05, 
                  P3D = TRUE){
   
@@ -24,34 +24,38 @@ GWAS <- function(fixed, random, rcov, data, weights,
     return(as.matrix(svd.X$u[, 1:r]))
   }
   
-  
+  dwToUse <- c(dateWarning,date.warning)
+  v<-which(!dwToUse)
+  if(length(v) == 0){v<-1}
   ## return all parameters for a mixed model
-  res <- mmer(fixed=fixed, random=random, rcov=rcov, data=data, weights=weights, 
-              iters=iters, tolpar=tolpar, tolparinv=tolparinv, 
+  res <- mmer(fixed=fixed, random=random, rcov=rcov, data=data, weights=weights, W=W, 
+              nIters=nIters, tolParConvLL=tolParConvLL, tolParInv=tolParInv, 
               init=init, constraints=constraints, method=method, 
               getPEV=getPEV,
-              na.method.X=na.method.X,
-              na.method.Y=na.method.Y,
-              return.param=TRUE, 
-              date.warning=date.warning,
-              verbose=verbose)
+              naMethodX=naMethodX,
+              naMethodY=naMethodY,
+              returnParam=TRUE, 
+              dateWarning=dwToUse[v],
+              verbose=verbose,
+              stepWeight=stepWeight, emWeight=emWeight
+              )
   # print(str(res))
   
-  if(return.param){
+  if(returnParam){
     lastmodel <- res
   }else{
     ## fit initial models if P3D
     if(P3D){
       lastmodel <- .Call("_sommer_MNR",PACKAGE = "sommer",res$yvar, res$X,res$Gx,
-                         res$Z,res$K,res$R,res$GES,res$GESI,res$ws,
-                         res$iters,res$tolpar,res$tolparinv, res$selected,res$getPEV,res$verbose,
-                         TRUE, res$stepweight, res$emupdate)
+                         res$Z,res$K,res$R,res$GES,res$GESI,res$W, res$isInvW,
+                         res$nIters,res$tolParConvLL,res$tolParInv, res$selected,res$getPEV,res$verbose,
+                         TRUE, res$stepWeight, res$emWeight)
       Vinv <- lastmodel$Vi
     }else{
       lastmodel <- .Call("_sommer_MNR",PACKAGE = "sommer",res$yvar, res$X,res$Gx,
-                         res$Z,res$K,res$R,res$GES,res$GESI,res$ws,
-                         res$iters,res$tolpar,res$tolparinv, res$selected,res$getPEV,FALSE,
-                         TRUE, res$stepweight, res$emupdate)
+                         res$Z,res$K,res$R,res$GES,res$GESI,res$W, res$isInvW,
+                         res$nIters,res$tolParConvLL,res$tolParInv, res$selected,res$getPEV,FALSE,
+                         TRUE, res$stepWeight, res$emWeight)
       Vinv <- lastmodel$Vi
     }
     ## get names of random effects

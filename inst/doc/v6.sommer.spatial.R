@@ -45,7 +45,7 @@ DT$C <- as.factor(DT$col)
 # SOMMER MODEL
 m1.sommer <- mmer(Y~1+V+spl2Db(col,row, nsegments = c(14,21), degree = c(3,3), penaltyord = c(2,2), what = "base"), 
                   random = ~R+C+spl2Db(col,row, nsegments = c(14,21), degree = c(3,3), penaltyord = c(2,2), what="bits"),
-                  data=DT, tolpar = 1e-6, verbose = FALSE)
+                  data=DT, tolParConv = 1e-6, verbose = FALSE)
 summary(m1.sommer)$varcomp
 # get the fitted values for the spatial kernel and plot
 # ff <- fitted.mmer(m1.sommer)
@@ -58,7 +58,7 @@ summary(m1.sommer)$varcomp
 # SOMMER MODEL
 m2.sommer <- mmer(Y~1+V, 
                   random = ~R+C+spl2Da(col,row, nsegments = c(14,21), degree = c(3,3), penaltyord = c(2,2)),
-                  data=DT, tolpar = 1e-6, verbose = FALSE)
+                  data=DT, tolParConv = 1e-6, verbose = FALSE)
 summary(m1.sommer)$varcomp
 # get the fitted values for the spatial kernel and plot
 # ff <- fitted.mmer(m2.sommer)
@@ -74,10 +74,10 @@ DT2$trial <- c(rep("A",nrow(DT)),rep("B",nrow(DT)))
 head(DT2)
 # SOMMER MODEL
 m3.sommer <- mmer(Y~1+V, 
-                  random = ~vs(ds(trial),R)+vs(ds(trial),C)+
+                  random = ~vsr(dsr(trial),R)+vsr(dsr(trial),C)+
                     spl2Da(col,row, nsegments = c(14,21), degree = c(3,3), penaltyord = c(2,2), at.var = trial),
-                  rcov = ~vs(ds(trial),units),
-                  data=DT2, tolpar = 1e-6, verbose = FALSE)
+                  rcov = ~vsr(dsr(trial),units),
+                  data=DT2, tolParConv = 1e-6, verbose = FALSE)
 summary(m3.sommer)$varcomp
 # get the fitted values for the spatial kernel and plot
 # ff <- fitted.mmer(m3.sommer)

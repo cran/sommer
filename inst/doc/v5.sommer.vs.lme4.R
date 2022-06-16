@@ -19,8 +19,13 @@ DT <- DT_sleepstudy
 ###########
 fm2 <- mmer(Reaction ~ Days,
             random= ~ Subject, 
-            data=DT, tolparinv = 1e-6, verbose = FALSE)
+            data=DT, tolParInv = 1e-6, verbose = FALSE)
 summary(fm2)$varcomp
+
+# fm2 <- mmec(Reaction ~ Days,
+#             random= ~ Subject, 
+#             data=DT, tolParInv = 1e-6, verbose = FALSE)
+# summary(fm2)$varcomp
 
 
 
@@ -40,9 +45,14 @@ summary(fm2)$varcomp
 ## sommer
 ###########
 fm2 <- mmer(Reaction ~ Days,
-            random= ~ Subject + vs(Days, Subject), 
-            data=DT, tolparinv = 1e-6, verbose = FALSE)
+            random= ~ Subject + vsr(Days, Subject), 
+            data=DT, tolParInv = 1e-6, verbose = FALSE)
 summary(fm2)$varcomp
+
+# fm2 <- mmec(Reaction ~ Days,
+#             random= ~ Subject + vsc(dsc(Days), isc(Subject)),
+#             data=DT, tolParInv = 1e-6, verbose = FALSE)
+# summary(fm2)$varcomp
 
 
 ## -----------------------------------------------------------------------------
@@ -63,8 +73,8 @@ summary(fm2)$varcomp
 ## no equivalence in sommer to find the correlation between the 2 vc
 ## this is the most similar which is equivalent to (intercept || slope)
 fm2 <- mmer(Reaction ~ Days,
-            random= ~ Subject + vs(Days, Subject), 
-            data=DT, tolparinv = 1e-6, verbose = FALSE)
+            random= ~ Subject + vsr(Days, Subject), 
+            data=DT, tolParInv = 1e-6, verbose = FALSE)
 summary(fm2)$varcomp
 
 
@@ -83,33 +93,38 @@ summary(fm2)$varcomp
 ## sommer
 ###########
 fm2 <- mmer(Reaction ~ Days,
-            random= ~ vs(Days, Subject), 
-            data=DT, tolparinv = 1e-6, verbose = FALSE)
+            random= ~ vsr(Days, Subject), 
+            data=DT, tolParInv = 1e-6, verbose = FALSE)
 summary(fm2)$varcomp
+
+# fm2 <- mmec(Reaction ~ Days,
+#             random= ~ vsc(dsc(Days), isc(Subject)), 
+#             data=DT, tolParInv = 1e-6, verbose = FALSE)
+# summary(fm2)$varcomp
 
 
 ## -----------------------------------------------------------------------------
 library(orthopolynom)
 ## diagonal model
 fm2 <- mmer(Reaction ~ Days,
-            random= ~ vs(ds(Daysf), Subject), 
-            data=DT, tolparinv = 1e-6, verbose = FALSE)
+            random= ~ vsr(dsr(Daysf), Subject), 
+            data=DT, tolParInv = 1e-6, verbose = FALSE)
 summary(fm2)$varcomp
 ## unstructured model
 fm2 <- mmer(Reaction ~ Days,
-            random= ~ vs(us(Daysf), Subject), 
-            data=DT, tolparinv = 1e-6, verbose = FALSE)
+            random= ~ vsr(usr(Daysf), Subject), 
+            data=DT, tolParInv = 1e-6, verbose = FALSE)
 summary(fm2)$varcomp
 ## random regression (legendre polynomials)
 fm2 <- mmer(Reaction ~ Days,
-            random= ~ vs(leg(Days,1), Subject), 
-            data=DT, tolparinv = 1e-6, verbose = FALSE)
+            random= ~ vsr(leg(Days,1), Subject), 
+            data=DT, tolParInv = 1e-6, verbose = FALSE)
 summary(fm2)$varcomp
 ## unstructured random regression (legendre)
 fm2 <- mmer(Reaction ~ Days,
-            random= ~ vs(us(leg(Days,1)), Subject), 
-            data=DT, tolparinv = 1e-6, verbose = FALSE)
+            random= ~ vsr(usr(leg(Days,1)), Subject), 
+            data=DT, tolParInv = 1e-6, verbose = FALSE)
 summary(fm2)$varcomp
 
-
+# same can be done with the mmec function
 

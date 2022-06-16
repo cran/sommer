@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2022-04-16" />
+<meta name="date" content="2022-06-16" />
 
 <title>Spatial modeling using the sommer package</title>
 
@@ -29,9 +29,42 @@ document.addEventListener('DOMContentLoaded', function(e) {
   }
 });
 </script>
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+});
+</script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
 
 
-<style type="text/css">code{white-space: pre;}</style>
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
 <style type="text/css" data-origin="pandoc">
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
@@ -118,6 +151,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   }
 })();
 </script>
+
 
 
 
@@ -315,7 +349,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Spatial modeling using the sommer package</h1>
 <h4 class="author">Giovanny Covarrubias-Pazaran</h4>
-<h4 class="date">2022-04-16</h4>
+<h4 class="date">2022-06-16</h4>
 
 
 
@@ -389,7 +423,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb1-44"><a href="#cb1-44"></a><span class="co"># SOMMER MODEL</span></span>
 <span id="cb1-45"><a href="#cb1-45"></a>m1.sommer &lt;-<span class="st"> </span><span class="kw">mmer</span>(Y<span class="op">~</span><span class="dv">1</span><span class="op">+</span>V<span class="op">+</span><span class="kw">spl2Db</span>(col,row, <span class="dt">nsegments =</span> <span class="kw">c</span>(<span class="dv">14</span>,<span class="dv">21</span>), <span class="dt">degree =</span> <span class="kw">c</span>(<span class="dv">3</span>,<span class="dv">3</span>), <span class="dt">penaltyord =</span> <span class="kw">c</span>(<span class="dv">2</span>,<span class="dv">2</span>), <span class="dt">what =</span> <span class="st">&quot;base&quot;</span>), </span>
 <span id="cb1-46"><a href="#cb1-46"></a>                  <span class="dt">random =</span> <span class="op">~</span>R<span class="op">+</span>C<span class="op">+</span><span class="kw">spl2Db</span>(col,row, <span class="dt">nsegments =</span> <span class="kw">c</span>(<span class="dv">14</span>,<span class="dv">21</span>), <span class="dt">degree =</span> <span class="kw">c</span>(<span class="dv">3</span>,<span class="dv">3</span>), <span class="dt">penaltyord =</span> <span class="kw">c</span>(<span class="dv">2</span>,<span class="dv">2</span>), <span class="dt">what=</span><span class="st">&quot;bits&quot;</span>),</span>
-<span id="cb1-47"><a href="#cb1-47"></a>                  <span class="dt">data=</span>DT, <span class="dt">tolpar =</span> <span class="fl">1e-6</span>, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span></code></pre></div>
+<span id="cb1-47"><a href="#cb1-47"></a>                  <span class="dt">data=</span>DT, <span class="dt">tolParConv =</span> <span class="fl">1e-6</span>, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span></code></pre></div>
 <pre><code>## Warning: fixed-effect model matrix is rank deficient so dropping 8 columns / coefficients</code></pre>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw">summary</span>(m1.sommer)<span class="op">$</span>varcomp</span></code></pre></div>
 <pre><code>##                VarComp VarCompSE     Zratio Constraint
@@ -412,7 +446,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="co"># SOMMER MODEL</span></span>
 <span id="cb6-2"><a href="#cb6-2"></a>m2.sommer &lt;-<span class="st"> </span><span class="kw">mmer</span>(Y<span class="op">~</span><span class="dv">1</span><span class="op">+</span>V, </span>
 <span id="cb6-3"><a href="#cb6-3"></a>                  <span class="dt">random =</span> <span class="op">~</span>R<span class="op">+</span>C<span class="op">+</span><span class="kw">spl2Da</span>(col,row, <span class="dt">nsegments =</span> <span class="kw">c</span>(<span class="dv">14</span>,<span class="dv">21</span>), <span class="dt">degree =</span> <span class="kw">c</span>(<span class="dv">3</span>,<span class="dv">3</span>), <span class="dt">penaltyord =</span> <span class="kw">c</span>(<span class="dv">2</span>,<span class="dv">2</span>)),</span>
-<span id="cb6-4"><a href="#cb6-4"></a>                  <span class="dt">data=</span>DT, <span class="dt">tolpar =</span> <span class="fl">1e-6</span>, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb6-4"><a href="#cb6-4"></a>                  <span class="dt">data=</span>DT, <span class="dt">tolParConv =</span> <span class="fl">1e-6</span>, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
 <span id="cb6-5"><a href="#cb6-5"></a><span class="kw">summary</span>(m1.sommer)<span class="op">$</span>varcomp</span></code></pre></div>
 <pre><code>##                VarComp VarCompSE     Zratio Constraint
 ## R.Y-Y       125.928235  89.77330  1.4027360   Positive
@@ -444,10 +478,10 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ## 6   6   1 106.56385 0.2 GoldenRain B2 GoldenRain 6 1     A</code></pre>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="co"># SOMMER MODEL</span></span>
 <span id="cb11-2"><a href="#cb11-2"></a>m3.sommer &lt;-<span class="st"> </span><span class="kw">mmer</span>(Y<span class="op">~</span><span class="dv">1</span><span class="op">+</span>V, </span>
-<span id="cb11-3"><a href="#cb11-3"></a>                  <span class="dt">random =</span> <span class="op">~</span><span class="kw">vs</span>(<span class="kw">ds</span>(trial),R)<span class="op">+</span><span class="kw">vs</span>(<span class="kw">ds</span>(trial),C)<span class="op">+</span></span>
+<span id="cb11-3"><a href="#cb11-3"></a>                  <span class="dt">random =</span> <span class="op">~</span><span class="kw">vsr</span>(<span class="kw">dsr</span>(trial),R)<span class="op">+</span><span class="kw">vsr</span>(<span class="kw">dsr</span>(trial),C)<span class="op">+</span></span>
 <span id="cb11-4"><a href="#cb11-4"></a><span class="st">                    </span><span class="kw">spl2Da</span>(col,row, <span class="dt">nsegments =</span> <span class="kw">c</span>(<span class="dv">14</span>,<span class="dv">21</span>), <span class="dt">degree =</span> <span class="kw">c</span>(<span class="dv">3</span>,<span class="dv">3</span>), <span class="dt">penaltyord =</span> <span class="kw">c</span>(<span class="dv">2</span>,<span class="dv">2</span>), <span class="dt">at.var =</span> trial),</span>
-<span id="cb11-5"><a href="#cb11-5"></a>                  <span class="dt">rcov =</span> <span class="op">~</span><span class="kw">vs</span>(<span class="kw">ds</span>(trial),units),</span>
-<span id="cb11-6"><a href="#cb11-6"></a>                  <span class="dt">data=</span>DT2, <span class="dt">tolpar =</span> <span class="fl">1e-6</span>, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb11-5"><a href="#cb11-5"></a>                  <span class="dt">rcov =</span> <span class="op">~</span><span class="kw">vsr</span>(<span class="kw">dsr</span>(trial),units),</span>
+<span id="cb11-6"><a href="#cb11-6"></a>                  <span class="dt">data=</span>DT2, <span class="dt">tolParConv =</span> <span class="fl">1e-6</span>, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
 <span id="cb11-7"><a href="#cb11-7"></a><span class="kw">summary</span>(m3.sommer)<span class="op">$</span>varcomp</span></code></pre></div>
 <pre><code>##               VarComp VarCompSE    Zratio Constraint
 ## A:R.Y-Y     107.48007  82.12826 1.3086855   Positive
@@ -462,10 +496,6 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb13-2"><a href="#cb13-2"></a><span class="co"># ff &lt;- fitted.mmer(m3.sommer)</span></span>
 <span id="cb13-3"><a href="#cb13-3"></a><span class="co"># DT2$fit &lt;- as.matrix(Reduce(&quot;+&quot;,ff$Zu[-c(1:4)])) </span></span>
 <span id="cb13-4"><a href="#cb13-4"></a><span class="co"># lattice::levelplot(fit~row*col|trial,data=DT2)</span></span></code></pre></div>
-</div>
-<div id="final-remarks" class="section level3">
-<h3>Final remarks</h3>
-<p>Keep in mind that sommer uses a direct inversion (DI) algorithm which can be very slow for large datasets. The package is focused on problems of the type p &gt; n (more random effect levels than observations) and models with dense covariance structures. For example, for experiments with dense covariance structures with low-replication (i.e. 2000 records from 1000 individuals replicated twice with a covariance structure of 1000x1000) sommer will be faster than MME-based software. Also for genomic problems with large number of random effect levels, i.e. 300 individuals (n) with 100,000 genetic markers (p). For highly replicated trials with small covariance structures or n &gt; p (i.e. 2000 records from 200 individuals replicated 10 times with covariance structure of 200x200) asreml or other MME-based algorithms will be much faster and we recommend you to opt for those. When datasets are big, the installation of the OpenBLAS library can make sommer quite fast and sometimes faster than asreml given the capacbility of sommer to take advantage of the multi-processor architecture of some systems.</p>
 </div>
 </div>
 <div id="literature" class="section level2">

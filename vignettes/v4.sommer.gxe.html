@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2022-04-16" />
+<meta name="date" content="2022-06-16" />
 
 <title>Fitting genotype by environment models in sommer</title>
 
@@ -29,9 +29,42 @@ document.addEventListener('DOMContentLoaded', function(e) {
   }
 });
 </script>
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+});
+</script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
 
 
-<style type="text/css">code{white-space: pre;}</style>
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
 <style type="text/css" data-origin="pandoc">
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
@@ -118,6 +151,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   }
 })();
 </script>
+
 
 
 
@@ -315,7 +349,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Fitting genotype by environment models in sommer</h1>
 <h4 class="author">Giovanny Covarrubias-Pazaran</h4>
-<h4 class="date">2022-04-16</h4>
+<h4 class="date">2022-06-16</h4>
 
 
 
@@ -326,7 +360,6 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <li>Multienvironment model: Main effect model</li>
 <li>Multienvironment model: Diagonal model (DG)</li>
 <li>Multienvironment model: Compund symmetry model (CS)</li>
-<li>Multienvironment model: Compund symmetry + diagonal model (CS+DG)</li>
 <li>Multienvironment model: Unstructured model (US)</li>
 <li>Multienvironment model: Random regression model (RR)</li>
 <li>Multienvironment model: Other covariance structures for GxE</li>
@@ -341,7 +374,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb1-4"><a href="#cb1-4"></a>A &lt;-<span class="st"> </span>A_example</span>
 <span id="cb1-5"><a href="#cb1-5"></a></span>
 <span id="cb1-6"><a href="#cb1-6"></a>ansSingle &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span><span class="dv">1</span>,</span>
-<span id="cb1-7"><a href="#cb1-7"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(Name, <span class="dt">Gu=</span>A),</span>
+<span id="cb1-7"><a href="#cb1-7"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vsr</span>(Name, <span class="dt">Gu=</span>A),</span>
 <span id="cb1-8"><a href="#cb1-8"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
 <span id="cb1-9"><a href="#cb1-9"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
 <span id="cb1-10"><a href="#cb1-10"></a><span class="kw">summary</span>(ansSingle)</span></code></pre></div>
@@ -366,16 +399,40 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ## u:Name    41
 ## ============================================================
 ## Use the &#39;$&#39; sign to access results and parameters</code></pre>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="co"># or</span></span>
+<span id="cb3-2"><a href="#cb3-2"></a>Ai &lt;-<span class="st"> </span><span class="kw">as</span>(<span class="kw">solve</span>(A), <span class="dt">Class=</span><span class="st">&quot;sparseMatrix&quot;</span>)</span>
+<span id="cb3-3"><a href="#cb3-3"></a>ansSingle &lt;-<span class="st"> </span><span class="kw">mmec</span>(Yield<span class="op">~</span><span class="dv">1</span>,</span>
+<span id="cb3-4"><a href="#cb3-4"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vsc</span>(<span class="kw">isc</span>(Name), <span class="dt">Gu=</span>Ai),</span>
+<span id="cb3-5"><a href="#cb3-5"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
+<span id="cb3-6"><a href="#cb3-6"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb3-7"><a href="#cb3-7"></a><span class="kw">summary</span>(ansSingle)</span></code></pre></div>
+<pre><code>## ============================================================
+##          Multivariate Linear Mixed Model fit by REML         
+## **********************  sommer 4.1  ********************** 
+## ============================================================
+##          logLik      AIC      BIC Method Converge
+## Value -359.0037 720.0074 723.2278     AI     TRUE
+## ============================================================
+## Variance-Covariance components:
+##                 VarComp VarCompSE Zratio Constraint
+## Name:Ai:isc:isc   6.474     1.471  4.401   Positive
+## units:isc:isc    13.868     1.776  7.807   Positive
+## ============================================================
+## Fixed effects:
+##            Estimate Std.Error t.value
+## Intercept)    11.74    0.4852   24.19
+## ============================================================
+## Use the &#39;$&#39; sign to access results and parameters</code></pre>
 <p>In this model, the only term to be estimated is the one for the germplasm (here called <code>Name</code>). For the sake of example we have added a relationship matrix among the levels of the random effect <code>Name</code>. This is just a diagonal matrix with as many rows and columns as levels present in the random effect <code>Name</code>, but any other non-diagonal relationship matrix could be used.</p>
 </div>
 <div id="met-main-effect-model" class="section level2">
 <h2>2) MET: main effect model</h2>
 <p>A multi-environment model is the one that is fitted when the breeding program can afford more than one location. The main effect model assumes that GxE doesn’t exist and that the main genotype effect plus the fixed effect for environment is enough to predict the genotype effect in all locations of interest.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>ansMain &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span>Env,</span>
-<span id="cb3-2"><a href="#cb3-2"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(Name, <span class="dt">Gu=</span>A),</span>
-<span id="cb3-3"><a href="#cb3-3"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
-<span id="cb3-4"><a href="#cb3-4"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
-<span id="cb3-5"><a href="#cb3-5"></a><span class="kw">summary</span>(ansMain)</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>ansMain &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span>Env,</span>
+<span id="cb5-2"><a href="#cb5-2"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vsr</span>(Name, <span class="dt">Gu=</span>A),</span>
+<span id="cb5-3"><a href="#cb5-3"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
+<span id="cb5-4"><a href="#cb5-4"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb5-5"><a href="#cb5-5"></a><span class="kw">summary</span>(ansMain)</span></code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
 ## **********************  sommer 4.1  ********************** 
@@ -399,15 +456,42 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ## u:Name    41
 ## ============================================================
 ## Use the &#39;$&#39; sign to access results and parameters</code></pre>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="co"># or </span></span>
+<span id="cb7-2"><a href="#cb7-2"></a></span>
+<span id="cb7-3"><a href="#cb7-3"></a>Ai &lt;-<span class="st"> </span><span class="kw">as</span>(<span class="kw">solve</span>(A), <span class="dt">Class=</span><span class="st">&quot;sparseMatrix&quot;</span>)</span>
+<span id="cb7-4"><a href="#cb7-4"></a>ansMain &lt;-<span class="st"> </span><span class="kw">mmec</span>(Yield<span class="op">~</span>Env,</span>
+<span id="cb7-5"><a href="#cb7-5"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vsc</span>(<span class="kw">isc</span>(Name), <span class="dt">Gu=</span>Ai),</span>
+<span id="cb7-6"><a href="#cb7-6"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
+<span id="cb7-7"><a href="#cb7-7"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb7-8"><a href="#cb7-8"></a><span class="kw">summary</span>(ansMain)</span></code></pre></div>
+<pre><code>## ============================================================
+##          Multivariate Linear Mixed Model fit by REML         
+## **********************  sommer 4.1  ********************** 
+## ============================================================
+##          logLik      AIC      BIC Method Converge
+## Value -313.3008 632.6015 642.2626     AI     TRUE
+## ============================================================
+## Variance-Covariance components:
+##                 VarComp VarCompSE Zratio Constraint
+## Name:Ai:isc:isc   4.849     1.377  3.522   Positive
+## units:isc:isc     8.108     1.545  5.249   Positive
+## ============================================================
+## Fixed effects:
+##           Estimate Std.Error t.value
+## Intercept   16.386    0.5842  28.048
+## CA.2012     -5.689    0.5740  -9.911
+## CA.2013     -6.219    0.6106 -10.186
+## ============================================================
+## Use the &#39;$&#39; sign to access results and parameters</code></pre>
 </div>
 <div id="met-diagonal-model-dg" class="section level2">
 <h2>3) MET: diagonal model (DG)</h2>
 <p>A multi-environment model is the one that is fitted when the breeding program can afford more than one location. The diagonal model assumes that GxE exists and that the genotype variation is expressed differently at each location, therefore fitting a variance component for the genotype effect at each location. The main drawback is that this model assumes no covariance among locations, as if genotypes were independent (despite the fact that is the same genotypes). The fixed effect for environment plus the location-specific BLUP is used to predict the genotype effect in each locations of interest.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>ansDG &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span>Env,</span>
-<span id="cb5-2"><a href="#cb5-2"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(<span class="kw">ds</span>(Env),Name, <span class="dt">Gu=</span>A),</span>
-<span id="cb5-3"><a href="#cb5-3"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
-<span id="cb5-4"><a href="#cb5-4"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
-<span id="cb5-5"><a href="#cb5-5"></a><span class="kw">summary</span>(ansDG)</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>ansDG &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span>Env,</span>
+<span id="cb9-2"><a href="#cb9-2"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vsr</span>(<span class="kw">dsr</span>(Env),Name, <span class="dt">Gu=</span>A),</span>
+<span id="cb9-3"><a href="#cb9-3"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
+<span id="cb9-4"><a href="#cb9-4"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb9-5"><a href="#cb9-5"></a><span class="kw">summary</span>(ansDG)</span></code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
 ## **********************  sommer 4.1  ********************** 
@@ -435,18 +519,46 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ## CA.2013:Name    41
 ## ============================================================
 ## Use the &#39;$&#39; sign to access results and parameters</code></pre>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="co"># or</span></span>
+<span id="cb11-2"><a href="#cb11-2"></a>Ai &lt;-<span class="st"> </span><span class="kw">as</span>(<span class="kw">solve</span>(A), <span class="dt">Class=</span><span class="st">&quot;sparseMatrix&quot;</span>)</span>
+<span id="cb11-3"><a href="#cb11-3"></a>ansDG &lt;-<span class="st"> </span><span class="kw">mmec</span>(Yield<span class="op">~</span>Env,</span>
+<span id="cb11-4"><a href="#cb11-4"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vsc</span>(<span class="kw">dsc</span>(Env),<span class="kw">isc</span>(Name), <span class="dt">Gu=</span>Ai),</span>
+<span id="cb11-5"><a href="#cb11-5"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
+<span id="cb11-6"><a href="#cb11-6"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb11-7"><a href="#cb11-7"></a><span class="kw">summary</span>(ansDG)</span></code></pre></div>
+<pre><code>## =============================================================
+##           Multivariate Linear Mixed Model fit by REML          
+## **********************  sommer 4.1  ********************** 
+## =============================================================
+##          logLik      AIC     BIC Method Converge
+## Value -301.9224 609.8449 619.506     AI     TRUE
+## =============================================================
+## Variance-Covariance components:
+##                             VarComp VarCompSE Zratio Constraint
+## Env:Name:Ai:CA.2011:CA.2011  15.792     3.307  4.775   Positive
+## Env:Name:Ai:CA.2012:CA.2012   5.192     2.490  2.085   Positive
+## Env:Name:Ai:CA.2013:CA.2013   7.717     2.732  2.825   Positive
+## units:isc:isc                 4.744     1.697  2.796   Positive
+## =============================================================
+## Fixed effects:
+##           Estimate Std.Error t.value
+## Intercept   16.622     0.911  18.245
+## CA.2012     -5.962     1.012  -5.888
+## CA.2013     -6.664     1.067  -6.249
+## =============================================================
+## Use the &#39;$&#39; sign to access results and parameters</code></pre>
 </div>
 <div id="met-compund-symmetry-model-cs" class="section level2">
 <h2>4) MET: compund symmetry model (CS)</h2>
 <p>A multi-environment model is the one that is fitted when the breeding program can afford more than one location. The compound symmetry model assumes that GxE exists and that a main genotype variance-covariance component is expressed across all location. In addition, it assumes that a main genotype-by-environment variance is expressed across all locations. The main drawback is that the model assumes the same variance and covariance among locations. The fixed effect for environment plus the main effect for BLUP plus genotype-by-environment effect is used to predict the genotype effect in each location of interest.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>E &lt;-<span class="st"> </span><span class="kw">diag</span>(<span class="kw">length</span>(<span class="kw">unique</span>(DT<span class="op">$</span>Env)))</span>
-<span id="cb7-2"><a href="#cb7-2"></a><span class="kw">rownames</span>(E) &lt;-<span class="st"> </span><span class="kw">colnames</span>(E) &lt;-<span class="st"> </span><span class="kw">unique</span>(DT<span class="op">$</span>Env)</span>
-<span id="cb7-3"><a href="#cb7-3"></a>EA &lt;-<span class="st"> </span><span class="kw">kronecker</span>(E,A, <span class="dt">make.dimnames =</span> <span class="ot">TRUE</span>)</span>
-<span id="cb7-4"><a href="#cb7-4"></a>ansCS &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span>Env,</span>
-<span id="cb7-5"><a href="#cb7-5"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(Name, <span class="dt">Gu=</span>A) <span class="op">+</span><span class="st"> </span><span class="kw">vs</span>(Env<span class="op">:</span>Name, <span class="dt">Gu=</span>EA),</span>
-<span id="cb7-6"><a href="#cb7-6"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
-<span id="cb7-7"><a href="#cb7-7"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
-<span id="cb7-8"><a href="#cb7-8"></a><span class="kw">summary</span>(ansCS)</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a>E &lt;-<span class="st"> </span><span class="kw">diag</span>(<span class="kw">length</span>(<span class="kw">unique</span>(DT<span class="op">$</span>Env)))</span>
+<span id="cb13-2"><a href="#cb13-2"></a><span class="kw">rownames</span>(E) &lt;-<span class="st"> </span><span class="kw">colnames</span>(E) &lt;-<span class="st"> </span><span class="kw">unique</span>(DT<span class="op">$</span>Env)</span>
+<span id="cb13-3"><a href="#cb13-3"></a>EA &lt;-<span class="st"> </span><span class="kw">kronecker</span>(E,A, <span class="dt">make.dimnames =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb13-4"><a href="#cb13-4"></a>ansCS &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span>Env,</span>
+<span id="cb13-5"><a href="#cb13-5"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vsr</span>(Name, <span class="dt">Gu=</span>A) <span class="op">+</span><span class="st"> </span><span class="kw">vsr</span>(Env<span class="op">:</span>Name, <span class="dt">Gu=</span>EA),</span>
+<span id="cb13-6"><a href="#cb13-6"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
+<span id="cb13-7"><a href="#cb13-7"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb13-8"><a href="#cb13-8"></a><span class="kw">summary</span>(ansCS)</span></code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
 ## **********************  sommer 4.1  ********************** 
@@ -472,53 +584,48 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ## u:Env:Name   123
 ## ============================================================
 ## Use the &#39;$&#39; sign to access results and parameters</code></pre>
-</div>
-<div id="met-compund-symmetry-plus-diagonal-csdiag" class="section level2">
-<h2>5) MET: compund symmetry plus diagonal (CS+DIAG)</h2>
-<p>A multi-environment model is the one that is fitted when the breeding program can afford more than one location. The compound symmetry plus diagonal model is very similar to the CS model assuming that GxE exist and that a main genotype variance-covariance component is expressed across all location. In addition, it assumes that a location-specific genotype-by-environment variance is expressed in each location. The main drawback is that the model assumes the same covariance among locations. The fixed effect for environment plus the main effect BLUP plus environment-specific genotype-by-environment effect is used to predict the genotype effect in each location of interest.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>ansMain &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span>Env,</span>
-<span id="cb9-2"><a href="#cb9-2"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(Name, <span class="dt">Gu=</span>A) <span class="op">+</span><span class="st"> </span><span class="kw">vs</span>(<span class="kw">ds</span>(Env),Name, <span class="dt">Gu=</span>A),</span>
-<span id="cb9-3"><a href="#cb9-3"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
-<span id="cb9-4"><a href="#cb9-4"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
-<span id="cb9-5"><a href="#cb9-5"></a><span class="kw">summary</span>(ansMain)</span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a><span class="co">## or</span></span>
+<span id="cb15-2"><a href="#cb15-2"></a>E &lt;-<span class="st"> </span><span class="kw">diag</span>(<span class="kw">length</span>(<span class="kw">unique</span>(DT<span class="op">$</span>Env)));<span class="kw">rownames</span>(E) &lt;-<span class="st"> </span><span class="kw">colnames</span>(E) &lt;-<span class="st"> </span><span class="kw">unique</span>(DT<span class="op">$</span>Env)</span>
+<span id="cb15-3"><a href="#cb15-3"></a>Ei &lt;-<span class="st"> </span><span class="kw">solve</span>(E)</span>
+<span id="cb15-4"><a href="#cb15-4"></a>Ai &lt;-<span class="st"> </span><span class="kw">solve</span>(A)</span>
+<span id="cb15-5"><a href="#cb15-5"></a>EAi &lt;-<span class="st"> </span><span class="kw">kronecker</span>(Ei,Ai, <span class="dt">make.dimnames =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb15-6"><a href="#cb15-6"></a>Ei &lt;-<span class="st"> </span><span class="kw">as</span>(Ei, <span class="dt">Class=</span><span class="st">&quot;sparseMatrix&quot;</span>)</span>
+<span id="cb15-7"><a href="#cb15-7"></a>Ai &lt;-<span class="st"> </span><span class="kw">as</span>(Ai, <span class="dt">Class=</span><span class="st">&quot;sparseMatrix&quot;</span>)</span>
+<span id="cb15-8"><a href="#cb15-8"></a>EAi &lt;-<span class="st"> </span><span class="kw">as</span>(EAi, <span class="dt">Class=</span><span class="st">&quot;sparseMatrix&quot;</span>)</span>
+<span id="cb15-9"><a href="#cb15-9"></a>ansCS &lt;-<span class="st"> </span><span class="kw">mmec</span>(Yield<span class="op">~</span>Env,</span>
+<span id="cb15-10"><a href="#cb15-10"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vsc</span>(<span class="kw">isc</span>(Name), <span class="dt">Gu=</span>Ai) <span class="op">+</span><span class="st"> </span><span class="kw">vsc</span>(<span class="kw">isc</span>(Env<span class="op">:</span>Name), <span class="dt">Gu=</span>EAi),</span>
+<span id="cb15-11"><a href="#cb15-11"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units, </span>
+<span id="cb15-12"><a href="#cb15-12"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb15-13"><a href="#cb15-13"></a><span class="kw">summary</span>(ansCS)</span></code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
 ## **********************  sommer 4.1  ********************** 
 ## ============================================================
 ##          logLik      AIC      BIC Method Converge
-## Value -18.16164 42.32327 51.98434     NR     TRUE
+## Value -300.8632 607.7264 617.3875     AI     TRUE
 ## ============================================================
 ## Variance-Covariance components:
-##                          VarComp VarCompSE Zratio Constraint
-## u:Name.Yield-Yield         2.965    1.5055  1.969   Positive
-## CA.2011:Name.Yield-Yield  10.424    4.4544  2.340   Positive
-## CA.2012:Name.Yield-Yield   2.658    1.8032  1.474   Positive
-## CA.2013:Name.Yield-Yield   5.702    2.5113  2.271   Positive
-## units.Yield-Yield          4.398    0.6517  6.748   Positive
+##                      VarComp VarCompSE Zratio Constraint
+## Name:Ai:isc:isc        3.703     1.699  2.180   Positive
+## Env:Name:EAi:isc:isc   5.132     1.876  2.736   Positive
+## units:isc:isc          4.466     1.611  2.772   Positive
 ## ============================================================
 ## Fixed effects:
-##   Trait      Effect Estimate Std.Error t.value
-## 1 Yield (Intercept)   16.511    0.8269  19.967
-## 2 Yield  EnvCA.2012   -5.809    0.8593  -6.760
-## 3 Yield  EnvCA.2013   -6.423    0.9358  -6.864
-## ============================================================
-## Groups and observations:
-##              Yield
-## u:Name          41
-## CA.2011:Name    41
-## CA.2012:Name    41
-## CA.2013:Name    41
+##           Estimate Std.Error t.value
+## Intercept   16.496    0.6863  24.035
+## CA.2012     -5.777    0.7564  -7.637
+## CA.2013     -6.380    0.7967  -8.008
 ## ============================================================
 ## Use the &#39;$&#39; sign to access results and parameters</code></pre>
 </div>
 <div id="met-unstructured-model-us" class="section level2">
-<h2>6) MET: unstructured model (US)</h2>
+<h2>5) MET: unstructured model (US)</h2>
 <p>A multi-environment model is the one that is fitted when the breeding program can afford more than one location. The unstructured model is the most flexible model assuming that GxE exists and that an environment-specific variance exists in addition to as many covariances for each environment-to-environment combinations. The main drawback is that is difficult to make this models converge because of the large number of variance components, the fact that some of these variance or covariance components are zero, and the difficulty in choosing good starting values. The fixed effect for environment plus the environment specific BLUP (adjusted by covariances) is used to predict the genotype effect in each location of interest.</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a>ansUS &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span>Env,</span>
-<span id="cb11-2"><a href="#cb11-2"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(<span class="kw">us</span>(Env),Name, <span class="dt">Gu=</span>A),</span>
-<span id="cb11-3"><a href="#cb11-3"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
-<span id="cb11-4"><a href="#cb11-4"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
-<span id="cb11-5"><a href="#cb11-5"></a><span class="kw">summary</span>(ansUS)</span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a>ansUS &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span>Env,</span>
+<span id="cb17-2"><a href="#cb17-2"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vsr</span>(<span class="kw">usr</span>(Env),Name, <span class="dt">Gu=</span>A),</span>
+<span id="cb17-3"><a href="#cb17-3"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
+<span id="cb17-4"><a href="#cb17-4"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb17-5"><a href="#cb17-5"></a><span class="kw">summary</span>(ansUS)</span></code></pre></div>
 <pre><code>## ==================================================================
 ##             Multivariate Linear Mixed Model fit by REML            
 ## *************************  sommer 4.1  ************************* 
@@ -552,19 +659,52 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ## CA.2013:Name            41
 ## ==================================================================
 ## Use the &#39;$&#39; sign to access results and parameters</code></pre>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a><span class="co"># adjust variance BLUPs by adding covariances</span></span>
-<span id="cb13-2"><a href="#cb13-2"></a><span class="co"># ansUS$U[1:6] &lt;- unsBLUP(ansUS$U[1:6])</span></span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1"></a><span class="co"># adjust variance BLUPs by adding covariances</span></span>
+<span id="cb19-2"><a href="#cb19-2"></a><span class="co"># ansUS$U[1:6] &lt;- unsBLUP(ansUS$U[1:6])</span></span>
+<span id="cb19-3"><a href="#cb19-3"></a></span>
+<span id="cb19-4"><a href="#cb19-4"></a><span class="co"># or</span></span>
+<span id="cb19-5"><a href="#cb19-5"></a>Ai &lt;-<span class="st"> </span><span class="kw">solve</span>(A)</span>
+<span id="cb19-6"><a href="#cb19-6"></a>Ai &lt;-<span class="st"> </span><span class="kw">as</span>(Ai, <span class="dt">Class=</span><span class="st">&quot;sparseMatrix&quot;</span>)</span>
+<span id="cb19-7"><a href="#cb19-7"></a>ansUS &lt;-<span class="st"> </span><span class="kw">mmec</span>(Yield<span class="op">~</span>Env,</span>
+<span id="cb19-8"><a href="#cb19-8"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vsc</span>(<span class="kw">usc</span>(Env),<span class="kw">isc</span>(Name), <span class="dt">Gu=</span>Ai),</span>
+<span id="cb19-9"><a href="#cb19-9"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
+<span id="cb19-10"><a href="#cb19-10"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb19-11"><a href="#cb19-11"></a><span class="kw">summary</span>(ansUS)</span></code></pre></div>
+<pre><code>## =============================================================
+##           Multivariate Linear Mixed Model fit by REML          
+## **********************  sommer 4.1  ********************** 
+## =============================================================
+##          logLik      AIC      BIC Method Converge
+## Value -302.6944 611.3888 621.0499     AI     TRUE
+## =============================================================
+## Variance-Covariance components:
+##                             VarComp VarCompSE Zratio Constraint
+## Env:Name:Ai:CA.2011:CA.2011  14.002    3.1067 4.5071   Positive
+## Env:Name:Ai:CA.2011:CA.2012   4.951    1.7036 2.9059   Unconstr
+## Env:Name:Ai:CA.2012:CA.2012   4.394    2.0089 2.1874   Positive
+## Env:Name:Ai:CA.2011:CA.2013   6.145    2.1317 2.8828   Unconstr
+## Env:Name:Ai:CA.2012:CA.2013   0.604    0.6245 0.9672   Unconstr
+## Env:Name:Ai:CA.2013:CA.2013   7.946    2.5227 3.1497   Positive
+## units:isc:isc                 2.663    1.0926 2.4371   Positive
+## =============================================================
+## Fixed effects:
+##           Estimate Std.Error t.value
+## Intercept   16.341    0.7432  21.987
+## CA.2012     -5.685    0.6740  -8.435
+## CA.2013     -6.265    0.7418  -8.446
+## =============================================================
+## Use the &#39;$&#39; sign to access results and parameters</code></pre>
 </div>
 <div id="met-random-regression-model" class="section level2">
-<h2>7) MET: random regression model</h2>
+<h2>6) MET: random regression model</h2>
 <p>A multi-environment model is the one that is fitted when the breeding program can afford more than one location. The random regression model assumes that the environment can be seen as a continuous variable and therefore a variance component for the intercept and a variance component for the slope can be fitted. The number of variance components will depend on the order of the Legendre polynomial fitted.</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a><span class="kw">library</span>(orthopolynom)</span>
-<span id="cb14-2"><a href="#cb14-2"></a>DT<span class="op">$</span>EnvN &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(<span class="kw">as.factor</span>(DT<span class="op">$</span>Env))</span>
-<span id="cb14-3"><a href="#cb14-3"></a>ansRR &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span>Env,</span>
-<span id="cb14-4"><a href="#cb14-4"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(<span class="kw">leg</span>(EnvN,<span class="dv">1</span>),Name),</span>
-<span id="cb14-5"><a href="#cb14-5"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
-<span id="cb14-6"><a href="#cb14-6"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
-<span id="cb14-7"><a href="#cb14-7"></a><span class="kw">summary</span>(ansRR)</span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a><span class="kw">library</span>(orthopolynom)</span>
+<span id="cb21-2"><a href="#cb21-2"></a>DT<span class="op">$</span>EnvN &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(<span class="kw">as.factor</span>(DT<span class="op">$</span>Env))</span>
+<span id="cb21-3"><a href="#cb21-3"></a>ansRR &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span>Env,</span>
+<span id="cb21-4"><a href="#cb21-4"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vsr</span>(<span class="kw">leg</span>(EnvN,<span class="dv">1</span>),Name),</span>
+<span id="cb21-5"><a href="#cb21-5"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
+<span id="cb21-6"><a href="#cb21-6"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb21-7"><a href="#cb21-7"></a><span class="kw">summary</span>(ansRR)</span></code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
 ## **********************  sommer 4.1  ********************** 
@@ -590,14 +730,41 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ## leg1:Name    41
 ## ============================================================
 ## Use the &#39;$&#39; sign to access results and parameters</code></pre>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1"></a><span class="co"># or</span></span>
+<span id="cb23-2"><a href="#cb23-2"></a></span>
+<span id="cb23-3"><a href="#cb23-3"></a>ansRR &lt;-<span class="st"> </span><span class="kw">mmec</span>(Yield<span class="op">~</span>Env,</span>
+<span id="cb23-4"><a href="#cb23-4"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vsc</span>(<span class="kw">dsc</span>(<span class="kw">leg</span>(EnvN,<span class="dv">1</span>)),<span class="kw">isc</span>(Name)),</span>
+<span id="cb23-5"><a href="#cb23-5"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
+<span id="cb23-6"><a href="#cb23-6"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb23-7"><a href="#cb23-7"></a><span class="kw">summary</span>(ansRR)</span></code></pre></div>
+<pre><code>## ============================================================
+##          Multivariate Linear Mixed Model fit by REML         
+## **********************  sommer 4.1  ********************** 
+## ============================================================
+##          logLik      AIC      BIC Method Converge
+## Value -308.4122 622.8243 632.4854     AI     TRUE
+## ============================================================
+## Variance-Covariance components:
+##                     VarComp VarCompSE Zratio Constraint
+## EnvN:Name:leg0:leg0  10.276     2.278  4.511   Positive
+## EnvN:Name:leg1:leg1   2.086     1.403  1.487   Positive
+## units:isc:isc         6.430     1.709  3.762   Positive
+## ============================================================
+## Fixed effects:
+##           Estimate Std.Error t.value
+## Intercept   16.542    0.6745  24.523
+## CA.2012     -5.833    0.6405  -9.107
+## CA.2013     -6.473    0.8217  -7.877
+## ============================================================
+## Use the &#39;$&#39; sign to access results and parameters</code></pre>
 <p>In addition, an unstructured, diagonal or other variance-covariance structure can be put on top of the polynomial model:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1"></a><span class="kw">library</span>(orthopolynom)</span>
-<span id="cb16-2"><a href="#cb16-2"></a>DT<span class="op">$</span>EnvN &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(<span class="kw">as.factor</span>(DT<span class="op">$</span>Env))</span>
-<span id="cb16-3"><a href="#cb16-3"></a>ansRR &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span>Env,</span>
-<span id="cb16-4"><a href="#cb16-4"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(<span class="kw">us</span>(<span class="kw">leg</span>(EnvN,<span class="dv">1</span>)),Name),</span>
-<span id="cb16-5"><a href="#cb16-5"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
-<span id="cb16-6"><a href="#cb16-6"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
-<span id="cb16-7"><a href="#cb16-7"></a><span class="kw">summary</span>(ansRR)</span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1"></a><span class="kw">library</span>(orthopolynom)</span>
+<span id="cb25-2"><a href="#cb25-2"></a>DT<span class="op">$</span>EnvN &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(<span class="kw">as.factor</span>(DT<span class="op">$</span>Env))</span>
+<span id="cb25-3"><a href="#cb25-3"></a>ansRR &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span>Env,</span>
+<span id="cb25-4"><a href="#cb25-4"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vsr</span>(<span class="kw">usr</span>(<span class="kw">leg</span>(EnvN,<span class="dv">1</span>)),Name),</span>
+<span id="cb25-5"><a href="#cb25-5"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
+<span id="cb25-6"><a href="#cb25-6"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb25-7"><a href="#cb25-7"></a><span class="kw">summary</span>(ansRR)</span></code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
 ## **********************  sommer 4.1  ********************** 
@@ -625,18 +792,46 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ## leg1:Name         41
 ## ============================================================
 ## Use the &#39;$&#39; sign to access results and parameters</code></pre>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1"></a><span class="co"># or</span></span>
+<span id="cb27-2"><a href="#cb27-2"></a></span>
+<span id="cb27-3"><a href="#cb27-3"></a>ansRR &lt;-<span class="st"> </span><span class="kw">mmec</span>(Yield<span class="op">~</span>Env,</span>
+<span id="cb27-4"><a href="#cb27-4"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vsc</span>(<span class="kw">usc</span>(<span class="kw">leg</span>(EnvN,<span class="dv">1</span>)),<span class="kw">isc</span>(Name)),</span>
+<span id="cb27-5"><a href="#cb27-5"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
+<span id="cb27-6"><a href="#cb27-6"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb27-7"><a href="#cb27-7"></a><span class="kw">summary</span>(ansRR)</span></code></pre></div>
+<pre><code>## ============================================================
+##          Multivariate Linear Mixed Model fit by REML         
+## **********************  sommer 4.1  ********************** 
+## ============================================================
+##          logLik     AIC      BIC Method Converge
+## Value -309.2045 624.409 634.0701     AI     TRUE
+## ============================================================
+## Variance-Covariance components:
+##                     VarComp VarCompSE Zratio Constraint
+## EnvN:Name:leg0:leg0 10.5273    2.0637 5.1012   Positive
+## EnvN:Name:leg0:leg1  0.1493    0.1636 0.9126   Unconstr
+## EnvN:Name:leg1:leg1  2.0889    1.1742 1.7789   Positive
+## units:isc:isc        7.2282    1.8573 3.8917   Positive
+## ============================================================
+## Fixed effects:
+##           Estimate Std.Error t.value
+## Intercept   16.541    0.6916  23.916
+## CA.2012     -5.836    0.6707  -8.703
+## CA.2013     -6.471    0.8498  -7.614
+## ============================================================
+## Use the &#39;$&#39; sign to access results and parameters</code></pre>
 </div>
 <div id="other-gxe-covariance-structures" class="section level2">
-<h2>8) Other GxE covariance structures</h2>
+<h2>7) Other GxE covariance structures</h2>
 <p>Although not very commonly used in GxE models, the autoregressive of order 1 (AR1) and other covariance structures could be used in the GxE modeling. Here we show how to do it (not recommending it).</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1"></a>E &lt;-<span class="st"> </span><span class="kw">AR1</span>(DT<span class="op">$</span>Env) <span class="co"># can be AR1() or CS(), etc.</span></span>
-<span id="cb18-2"><a href="#cb18-2"></a><span class="kw">rownames</span>(E) &lt;-<span class="st"> </span><span class="kw">colnames</span>(E) &lt;-<span class="st"> </span><span class="kw">unique</span>(DT<span class="op">$</span>Env)</span>
-<span id="cb18-3"><a href="#cb18-3"></a>EA &lt;-<span class="st"> </span><span class="kw">kronecker</span>(E,A, <span class="dt">make.dimnames =</span> <span class="ot">TRUE</span>)</span>
-<span id="cb18-4"><a href="#cb18-4"></a>ansCS &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span>Env,</span>
-<span id="cb18-5"><a href="#cb18-5"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vs</span>(Name, <span class="dt">Gu=</span>A) <span class="op">+</span><span class="st"> </span><span class="kw">vs</span>(Env<span class="op">:</span>Name, <span class="dt">Gu=</span>EA),</span>
-<span id="cb18-6"><a href="#cb18-6"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
-<span id="cb18-7"><a href="#cb18-7"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
-<span id="cb18-8"><a href="#cb18-8"></a><span class="kw">summary</span>(ansCS)</span></code></pre></div>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1"></a>E &lt;-<span class="st"> </span><span class="kw">AR1</span>(DT<span class="op">$</span>Env) <span class="co"># can be AR1() or CS(), etc.</span></span>
+<span id="cb29-2"><a href="#cb29-2"></a><span class="kw">rownames</span>(E) &lt;-<span class="st"> </span><span class="kw">colnames</span>(E) &lt;-<span class="st"> </span><span class="kw">unique</span>(DT<span class="op">$</span>Env)</span>
+<span id="cb29-3"><a href="#cb29-3"></a>EA &lt;-<span class="st"> </span><span class="kw">kronecker</span>(E,A, <span class="dt">make.dimnames =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb29-4"><a href="#cb29-4"></a>ansCS &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span>Env,</span>
+<span id="cb29-5"><a href="#cb29-5"></a>              <span class="dt">random=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vsr</span>(Name, <span class="dt">Gu=</span>A) <span class="op">+</span><span class="st"> </span><span class="kw">vsr</span>(Env<span class="op">:</span>Name, <span class="dt">Gu=</span>EA),</span>
+<span id="cb29-6"><a href="#cb29-6"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span>units,</span>
+<span id="cb29-7"><a href="#cb29-7"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb29-8"><a href="#cb29-8"></a><span class="kw">summary</span>(ansCS)</span></code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
 ## **********************  sommer 4.1  ********************** 
@@ -662,10 +857,6 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ## u:Env:Name   123
 ## ============================================================
 ## Use the &#39;$&#39; sign to access results and parameters</code></pre>
-</div>
-<div id="final-remarks" class="section level2">
-<h2>Final remarks</h2>
-<p>Keep in mind that sommer uses the direct inversion (DI) algorithm which can be very slow for large datasets. The package is focused on problems of the type p &gt; n (more random effect levels than observations) and models with dense covariance structures. For example, for experiments with dense covariance structures with low-replication (i.e. 2000 records from 1000 individuals replicated twice with a covariance structure of 1000x1000) sommer will be faster than MME-based software. Also for genomic problems with large number of random effect levels, i.e. 300 individuals (n) with 100,000 genetic markers (p). For highly replicated trials with small number of individuals and covariance structures or n &gt; p (i.e. 2000 records from 200 individuals replicated 10 times with covariance structure of 200x200) asreml or other MME-based algorithms will be much faster and we recommend you opt for those.</p>
 </div>
 <div id="literature" class="section level2">
 <h2>Literature</h2>

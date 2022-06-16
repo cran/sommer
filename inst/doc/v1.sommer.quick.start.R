@@ -2,24 +2,18 @@
 library(sommer)
 data(DT_example)
 DT <- DT_example
-
-ans1 <- mmer(Yield~Env,
+## solving for r records
+ans1r <- mmer(Yield~Env,
               random= ~ Name + Env:Name,
               rcov= ~ units,
               data=DT, verbose = FALSE)
-summary(ans1)
-
-
-## -----------------------------------------------------------------------------
-
-data(DT_example)
-DT <- DT_example
-
-ans2 <- mmer(Yield~Env,
-              random= ~Name + vs(ds(Env),Name),
-              rcov= ~ vs(ds(Env),units),
+summary(ans1r)$varcomp
+## solving for c coefficients
+ans1c <- mmec(Yield~Env,
+              random= ~ Name + Env:Name,
+              rcov= ~ units,
               data=DT, verbose = FALSE)
-summary(ans2)
+summary(ans1c)$varcomp
 
 
 ## -----------------------------------------------------------------------------
@@ -27,11 +21,37 @@ summary(ans2)
 data(DT_example)
 DT <- DT_example
 
-ans3 <- mmer(Yield~Env,
-             random=~ vs(us(Env),Name),
-             rcov=~vs(us(Env),units), 
+ans2r <- mmer(Yield~Env,
+              random= ~Name + vsr(dsr(Env),Name),
+              rcov= ~ vsr(dsr(Env),units),
+              data=DT, verbose = FALSE)
+summary(ans2r)$varcomp
+
+DT=DT[with(DT, order(Env)), ]
+ans2c <- mmec(Yield~Env,
+              random= ~Name + vsc(dsc(Env),isc(Name)),
+              rcov= ~ vsc(dsc(Env),isc(units)),
+              data=DT, verbose = FALSE)
+summary(ans2c)$varcomp
+
+
+## -----------------------------------------------------------------------------
+
+data(DT_example)
+DT <- DT_example
+
+ans3r <- mmer(Yield~Env,
+             random=~ vsr(usr(Env),Name),
+             rcov=~vsr(dsr(Env),units), 
              data=DT, verbose = FALSE)
-summary(ans3)
+summary(ans3r)$varcomp
+
+DT=DT[with(DT, order(Env)), ]
+ans3c <- mmec(Yield~Env,
+             random=~ vsc(usc(Env),isc(Name)),
+             rcov=~vsc(dsc(Env),isc(units)), 
+             data=DT, verbose = FALSE)
+summary(ans3c)$varcomp
 
 
 ## -----------------------------------------------------------------------------
@@ -40,44 +60,28 @@ data(DT_example)
 DT <- DT_example
 DT$EnvName <- paste(DT$Env,DT$Name)
 
-ans4 <- mmer(cbind(Yield, Weight) ~ Env,
-              random= ~ vs(Name, Gtc=unsm(2)) + vs(EnvName, Gtc=unsm(2)),
-              rcov= ~ vs(units, Gtc=unsm(2)),
-              data=DT, verbose = FALSE)
-summary(ans4)
+DT$Yield <- as.vector(scale(DT$Yield))
+DT$Weight <- as.vector(scale(DT$Weight))
 
+ans4r <- mmer(cbind(Yield, Weight) ~ Env,
+             random= ~ vsr(Name, Gtc=unsm(2)),
+             rcov= ~ vsr(units, Gtc=diag(2)),
+             data=DT, verbose = FALSE)
+summary(ans4r)$varcomp
 
-## -----------------------------------------------------------------------------
+DT2 <- reshape(DT, idvar = c("Name","Env","Block"), varying = list(6:7),
+        v.names = "y", direction = "long", timevar = "trait", times = colnames(DT)[6:7])
+DT2$trait <- as.factor(DT2$trait)
 
-data(DT_example)
-DT <- DT_example
-DT$EnvName <- paste(DT$Env,DT$Name)
-
-ans5 <- mmer(cbind(Yield, Weight) ~ Env,
-              random= ~ vs(Name, Gtc=unsm(2)) + vs(ds(Env),Name, Gtc=unsm(2)),
-              rcov= ~ vs(ds(Env),units, Gtc=unsm(2)),
-              data=DT, verbose = FALSE)
-summary(ans5)
-
-
-## -----------------------------------------------------------------------------
-
-data(DT_example)
-DT <- DT_example
-DT$EnvName <- paste(DT$Env,DT$Name)
-
-ans6 <- mmer(cbind(Yield, Weight) ~ Env,
-              random= ~ vs(us(Env),Name, Gtc=unsm(2)),
-              rcov= ~ vs(ds(Env),units, Gtc=unsm(2)),
-              data=DT, verbose = FALSE)
-summary(ans6)
+# ans4c <- mmec(y ~ Env:trait,
+#              random= ~ vsc(usc(trait),isc(Name)),
+#              rcov= ~ vsc(dsc(trait),isc(units)), returnParam = T, 
+#              data=DT2, verbose = T)
+# summary(ans4c)$varcomp
 
 
 ## -----------------------------------------------------------------------------
 unsm(4)
-
-## -----------------------------------------------------------------------------
-uncm(4)
 
 ## -----------------------------------------------------------------------------
 fixm(4)
@@ -90,11 +94,17 @@ library(orthopolynom)
 data(DT_legendre)
 DT <- DT_legendre
 
-mRR2<-mmer(Y~ 1 + Xf
-           , random=~ vs(us(leg(X,1)),SUBJECT)
-           , rcov=~vs(units)
+mRR2r<-mmer(Y~ 1 + Xf
+           , random=~ vsr(usr(leg(X,1)),SUBJECT)
+           , rcov=~vsr(units)
            , data=DT, verbose = FALSE)
-summary(mRR2)$varcomp
+summary(mRR2r)$varcomp
+
+mRR2c<-mmec(Y~ 1 + Xf
+           , random=~ vsc(usc(leg(X,1)),isc(SUBJECT))
+           , rcov=~vsc(isc(units))
+           , data=DT, verbose = FALSE)
+summary(mRR2c)$varcomp
 
 
 ## -----------------------------------------------------------------------------
@@ -110,11 +120,11 @@ head(DT,3)
 head(MP,3)
 GT[1:3,1:4]
 mix1 <- GWAS(color~1,
-             random=~vs(id,Gu=A)
+             random=~vsr(id,Gu=A)
              + Rowf + Colf,
              rcov=~units,
-             data=DT, iters=3,
-             M=GT, gTerm = "u:id", 
+             data=DT, nIters=3,
+             M=GT, gTerm = "u:id",
              verbose = FALSE)
 
 ms <- as.data.frame(mix1$scores)
@@ -132,10 +142,13 @@ DT$femalef <- as.factor(DT$female)
 DT$malef <- as.factor(DT$male)
 DT$genof <- as.factor(DT$geno)
 #### model using overlay
-modh <- mmer(sugar~1, 
-             random=~vs(overlay(femalef,malef)) 
-             + genof, iters=3,
-             data=DT,verbose = FALSE)
+modhr <- mmer(sugar~1, 
+             random=~vsr(overlay(femalef,malef)) 
+             + genof, data=DT,verbose = FALSE)
+
+modhc <- mmec(sugar~1, 
+             random=~vsc(isc(overlay(femalef,malef, sparse = TRUE))) 
+             + genof,data=DT,verbose = FALSE)
 
 
 ## -----------------------------------------------------------------------------
@@ -146,11 +159,11 @@ MP <- MP_cpdata
 ### mimic two fields
 A <- A.mat(GT)
 mix <- mmer(Yield~1,
-            random=~vs(id, Gu=A) +
-              vs(Rowf) +
-              vs(Colf) +
+            random=~vsr(id, Gu=A) +
+              vsr(Rowf) +
+              vsr(Colf) +
               spl2Da(Row,Col),
-            rcov=~vs(units), iters=3,
+            rcov=~vsr(units), nIters=3,
             data=DT,verbose = FALSE)
 summary(mix)
 
@@ -163,8 +176,8 @@ MP <- MP_cpdata
 
 #### look at the data and fit the model
 mix1 <- mmer(Yield~1,
-              random=~vs(list(GT)),
-              rcov=~units, iters=3,
+              random=~vsr(list(GT)),
+              rcov=~units, nIters=3,
               data=DT,verbose = FALSE)
 
 
@@ -186,8 +199,8 @@ y.trn[vv,"X1"] <- NA
 
 ## GBLUP
 ans <- mmer(X1~1,
-            random=~vs(id,Gu=K), 
-            rcov=~units, iters=3,
+            random=~vsr(id,Gu=K), 
+            rcov=~units, nIters=3,
             data=y.trn,verbose = FALSE) # kinship based
 ans$U$`u:id`$X1 <- as.data.frame(ans$U$`u:id`$X1)
 rownames(ans$U$`u:id`$X1) <- gsub("id","",rownames(ans$U$`u:id`$X1))
@@ -195,14 +208,15 @@ cor(ans$U$`u:id`$X1[vv,],DT[vv,"X1"], use="complete")
 
 ## rrBLUP
 ans2 <- mmer(X1~1,
-             random=~vs(list(GT), buildGu = FALSE), 
-             rcov=~units, getPEV = FALSE, iters=3,
+             random=~vsr(list(GT), buildGu = FALSE), 
+             rcov=~units, getPEV = FALSE, nIters=3,
              data=y.trn,verbose = FALSE) # kinship based
 
 u <- GT %*% as.matrix(ans2$U$`u:GT`$X1) # BLUPs for individuals
 rownames(u) <- rownames(GT)
 cor(u[vv,],DT[vv,"X1"]) # same correlation
 # the same can be applied in multi-response models in GBLUP or rrBLUP
+# same can be achieved with the mmec function (see ?DT_wheat)
 
 ## -----------------------------------------------------------------------------
 data(DT_cpdata)
@@ -213,19 +227,19 @@ MP <- MP_cpdata
 A <- A.mat(GT)
 
 mix1 <- mmer(Yield~1,
-            random=~vs(id, Gu=A) +
-              vs(Rowf) +
-              vs(Colf),
-            rcov=~vs(units), iters=3,
+            random=~vsr(id, Gu=A) +
+              vsr(Rowf) +
+              vsr(Colf),
+            rcov=~vsr(units), nIters=3,
             data=DT, verbose = FALSE)
 
 ## -----------------------------------------------------------------------------
 mix2 <- mmer(Yield~1,
-            random=~vs(id, Gu=A) +
-              vs(Rowf) +
-              vs(Colf) +
+            random=~vsr(id, Gu=A) +
+              vsr(Rowf) +
+              vsr(Colf) +
               spl2Da(Row,Col),
-            rcov=~vs(units), iters=3,
+            rcov=~vsr(units), nIters=3,
             data=DT,verbose = FALSE)
 
 ## -----------------------------------------------------------------------------
@@ -238,13 +252,13 @@ DT <- DT_example
 
 DT$EnvName <- paste(DT$Env,DT$Name)
 modelBase <- mmer(cbind(Yield, Weight) ~ Env,
-              random= ~ vs(Name, Gtc=diag(2)), # here is diag()
-              rcov= ~ vs(units, Gtc=unsm(2)), iters=3,
+              random= ~ vsr(Name, Gtc=diag(2)), # here is diag()
+              rcov= ~ vsr(units, Gtc=unsm(2)), nIters=3,
               data=DT,verbose = FALSE)
 
 modelCov <- mmer(cbind(Yield, Weight) ~ Env,
-              random= ~ vs(us(Env),Name, Gtc=unsm(2)), # here is unsm()
-              rcov= ~ vs(ds(Env),units, Gtc=unsm(2)), iters=3,
+              random= ~ vsr(usr(Env),Name, Gtc=unsm(2)), # here is unsm()
+              rcov= ~ vsr(dsr(Env),units, Gtc=unsm(2)), nIters=3,
               data=DT,verbose = FALSE)
 
 lrt <- anova(modelBase, modelCov)
