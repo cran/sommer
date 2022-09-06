@@ -147,3 +147,91 @@ ansCS <- mmer(Yield~Env,
 summary(ansCS)
 
 
+## -----------------------------------------------------------------------------
+
+data(DT_h2)
+DT <- DT_h2
+
+## build the environmental index
+ei <- aggregate(y~Env, data=DT,FUN=mean)
+colnames(ei)[2] <- "envIndex"
+ei <- ei[with(ei, order(envIndex)), ]
+
+## add the environmental index to the original dataset
+DT2 <- merge(DT,ei, by="Env")
+
+# numeric by factor variables like envIndex:Name can't be used in the random part like this
+# they need to come with the vsc() structure
+DT2 <- DT2[with(DT2, order(Name)), ]
+mix2 <- mmec(y~ envIndex,
+             random=~ Name + vsc(dsc(envIndex),isc(Name)), data=DT2,
+             rcov=~vsc(dsc(Name),isc(units)),
+             tolParConvNorm = .0001,
+             nIters = 50, verbose = FALSE
+)
+# summary(mix2)$varcomp
+
+b=mix2$uList$`vsc(dsc(envIndex), isc(Name))` # adaptability (b) or genotype slopes
+mu=mix2$uList$`vsc( isc( Name ) )` # general adaptation (mu) or main effect
+e=sqrt(summary(mix2)$varcomp[-c(1:2),1]) # error variance for each individual
+
+## general adaptation (main effect) vs adaptability (response to better environments)
+plot(mu[,1]~b[,1], ylab="general adaptation", xlab="adaptability")
+text(y=mu[,1],x=b[,1], labels = rownames(mu), cex=0.5, pos = 1)
+
+## prediction across environments
+Dt <- mix2$Dtable
+Dt[1,"average"]=TRUE
+Dt[2,"include"]=TRUE
+Dt[3,"include"]=TRUE
+pp <- predict(mix2,Dtable = Dt, D="Name")
+preds <- pp$pvals
+# preds[with(preds, order(-predicted.value)), ]
+## performance vs stability (deviation from regression line)
+plot(preds[,2]~e, ylab="performance", xlab="stability")
+text(y=preds[,2],x=e, labels = rownames(mu), cex=0.5, pos = 1)
+
+
+## -----------------------------------------------------------------------------
+
+##########
+## stage 1
+## use mmer for dense field trials
+##########
+data(DT_h2)
+DT <- DT_h2
+head(DT)
+envs <- unique(DT$Env)
+BLUEL <- list()
+XtXL <- list()
+for(i in 1:length(envs)){
+  ans1 <- mmer(y~Name-1,
+                random=~Block,
+                verbose=FALSE,
+                data=droplevels(DT[which(DT$Env == envs[i]),]
+               )
+  )
+  ans1$Beta$Env <- envs[i]
+  
+  BLUEL[[i]] <- ans1$Beta
+  XtXL[[i]] <- ans1$VarBeta
+}
+
+DT2 <- do.call(rbind, BLUEL)
+OM <- do.call(adiag1,XtXL)
+
+##########
+## stage 2
+## use mmec for sparse equation
+##########
+m <- matrix(1/var(DT2$Estimate, na.rm = TRUE))
+ans2 <- mmec(Estimate~Env,
+             random=~Effect + Env:Effect, 
+             rcov=~vsc(isc(units,thetaC = matrix(3), theta = m)),
+             W=OM, 
+             verbose=FALSE,
+             data=DT2
+             )
+summary(ans2)$varcomp
+
+

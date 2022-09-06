@@ -1,9 +1,9 @@
-vsc <- function(..., Gu=NULL, buildGu=TRUE, meN=1, meTheta=NULL, meThetaC=NULL){
+vsc <- function(..., Gu=NULL, buildGu=TRUE, meN=1, meTheta=NULL, meThetaC=NULL, sp=FALSE){
   
   ## ... list of structures to define the random effect , e.g. init <- list(ds(M$data$FIELD),TP)
   ## Gu the known covariance matrix of the vs
   
-  init <- list(...) #  e.g. init <- list(us(data$Env),isc(data$Name)) | init <- list(dsc(data$YEAR),isc(data$units))
+  init <- list(...) #  e.g. init <- list(usc(data$Env),isc(data$Name)) | init <- list(dsc(data$YEAR),isc(data$units))
   
   namess <- as.character(substitute(list(...)))[-1L] # namess <- c("Env","Name") | namess <- c("YEAR","units")
   namess2 <- apply(data.frame(namess),1,function(x){ 
@@ -87,7 +87,7 @@ vsc <- function(..., Gu=NULL, buildGu=TRUE, meN=1, meTheta=NULL, meThetaC=NULL){
         provZ0iCol <- Matrix(Z0[,j]) %*% Matrix(1,1,ncol(Z1prov))
         Z1provZ0iCol <- Z1prov * provZ0iCol
         if(!is(class(Z1provZ0iCol), "dgCMatrix")){
-          Z[[counter]] <- as(Z1prov * provZ0iCol, Class = "sparseMatrix")
+          Z[[counter]] <- as(Z1prov * provZ0iCol, Class = "dgCMatrix")
         }else{
           Z[[counter]] <- Z1provZ0iCol
         }
@@ -122,7 +122,7 @@ vsc <- function(..., Gu=NULL, buildGu=TRUE, meN=1, meTheta=NULL, meThetaC=NULL){
     Gu <- sparse.model.matrix(~d-1, x)
     colnames(Gu) <- rownames(Gu) <- colnames(Z[[1]])
   }else{
-    if(class(Gu) %!in% c("dgCMatrix")){
+    if (!inherits(Gu, "dgCMatrix")){
       stop("Gu matrix is not of class dgCMatrix. Please correct \n", call. = TRUE )
     }
     cn <- colnames(Z[[1]])
@@ -135,10 +135,14 @@ vsc <- function(..., Gu=NULL, buildGu=TRUE, meN=1, meTheta=NULL, meThetaC=NULL){
   #########################################
   ## thetaF
   nn <- length(which(thetaC > 0))#unlist(lapply(thetaC, function(x){length(which(x > 0))}))
-  nn2 <- sum(nn[1:max(Zind)])
-  thetaF <- diag(nn2)
+  # nn2 <- sum(nn[1:max(Zind)])
+  thetaF <- diag(nn)
+  # print(nrow(thetaF))
+  sp0 <- ifelse(sp,1,0)
+  sp0 <- rep(sp0,nrow(thetaF))
+  if(sp){thetaF <- thetaF*0}
   
-  output <- list(Z=Z, Gu=Gu, theta=theta, thetaC=thetaC, thetaF=thetaF,partitionsR=partitionsR)
+  output <- list(Z=Z, Gu=Gu, theta=theta, thetaC=thetaC, thetaF=thetaF,partitionsR=partitionsR, sp=sp0)
   return(output)
 }
 

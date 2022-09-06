@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2022-06-16" />
+<meta name="date" content="2022-09-05" />
 
 <title>Quick start for the sommer package</title>
 
@@ -349,7 +349,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Quick start for the sommer package</h1>
 <h4 class="author">Giovanny Covarrubias-Pazaran</h4>
-<h4 class="date">2022-06-16</h4>
+<h4 class="date">2022-09-05</h4>
 
 
 
@@ -544,16 +544,16 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t&#39; + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_
 <span id="cb8-5"><a href="#cb8-5"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
 <span id="cb8-6"><a href="#cb8-6"></a><span class="kw">summary</span>(ans1c)<span class="op">$</span>varcomp</span></code></pre></div>
 <pre><code>##                   VarComp VarCompSE   Zratio Constraint
-## Name:isc:isc     3.702831  1.698858 2.179600   Positive
-## Env:Name:isc:isc 5.132119  1.875676 2.736143   Positive
-## units:isc:isc    4.465685  1.611163 2.771715   Positive</code></pre>
+## Name:isc:isc     3.702831  1.883592 1.965835   Positive
+## Env:Name:isc:isc 5.132119  2.428131 2.113609   Positive
+## units:isc:isc    4.465685  2.295313 1.945567   Positive</code></pre>
 </div>
 <div id="univariate-heterogeneous-variance-models" class="section level3">
 <h3>2) Univariate heterogeneous variance models</h3>
 <p>Very often in multi-environment trials, the assumption that the genetic variance or the residual variance is the same across locations may be too naive. Because of that, specifying a general genetic component and a location specific genetic variance is the way to go. This requires a CS+DIAG model (also called heterogeneous CS model).</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a><span class="kw">data</span>(DT_example)</span>
 <span id="cb10-2"><a href="#cb10-2"></a>DT &lt;-<span class="st"> </span>DT_example</span>
-<span id="cb10-3"><a href="#cb10-3"></a></span>
+<span id="cb10-3"><a href="#cb10-3"></a> </span>
 <span id="cb10-4"><a href="#cb10-4"></a>ans2r &lt;-<span class="st"> </span><span class="kw">mmer</span>(Yield<span class="op">~</span>Env,</span>
 <span id="cb10-5"><a href="#cb10-5"></a>              <span class="dt">random=</span> <span class="op">~</span>Name <span class="op">+</span><span class="st"> </span><span class="kw">vsr</span>(<span class="kw">dsr</span>(Env),Name),</span>
 <span id="cb10-6"><a href="#cb10-6"></a>              <span class="dt">rcov=</span> <span class="op">~</span><span class="st"> </span><span class="kw">vsr</span>(<span class="kw">dsr</span>(Env),units),</span>
@@ -574,13 +574,13 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t&#39; + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_
 <span id="cb12-5"><a href="#cb12-5"></a>              <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
 <span id="cb12-6"><a href="#cb12-6"></a><span class="kw">summary</span>(ans2c)<span class="op">$</span>varcomp</span></code></pre></div>
 <pre><code>##                             VarComp VarCompSE   Zratio Constraint
-## Name:isc:isc               2.969457 1.3199316 2.249705   Positive
-## Env:Name:CA.2011:CA.2011  10.113270 4.2317594 2.389850   Positive
-## Env:Name:CA.2012:CA.2012   1.874589 1.3918727 1.346810   Positive
-## Env:Name:CA.2013:CA.2013   6.625506 2.3850257 2.777960   Positive
-## Env:units:CA.2011:CA.2011  4.953675 1.3389505 3.699670   Positive
-## Env:units:CA.2012:CA.2012  5.725455 1.2010534 4.767027   Positive
-## Env:units:CA.2013:CA.2013  2.561167 0.5872852 4.361029   Positive</code></pre>
+## Name:isc:isc               2.961895 1.4528410 2.038692   Positive
+## Env:Name:CA.2011:CA.2011  10.148219 4.5621703 2.224428   Positive
+## Env:Name:CA.2012:CA.2012   1.878507 1.8883210 0.994803   Positive
+## Env:Name:CA.2013:CA.2013   6.629521 2.4890927 2.663429   Positive
+## Env:units:CA.2011:CA.2011  4.942517 1.5201273 3.251384   Positive
+## Env:units:CA.2012:CA.2012  5.724702 1.3326002 4.295888   Positive
+## Env:units:CA.2013:CA.2013  2.559825 0.6395342 4.002640   Positive</code></pre>
 <p>As you can see the special function <code>atr</code> or <code>diag</code> can be used to indicate that there’s a different variance for the genotypes in each environment. The same was done for the residual. The difference between <code>atr</code> and <code>diag</code> is that the <code>atr</code> function can be used to specify the levels or specific environments where the variance is different.</p>
 </div>
 <div id="unstructured-variance-models" class="section level3">
@@ -611,15 +611,15 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t&#39; + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_
 <span id="cb16-5"><a href="#cb16-5"></a>             <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
 <span id="cb16-6"><a href="#cb16-6"></a><span class="kw">summary</span>(ans3c)<span class="op">$</span>varcomp</span></code></pre></div>
 <pre><code>##                              VarComp VarCompSE    Zratio Constraint
-## Env:Name:CA.2011:CA.2011  14.1130508 3.3683933 4.1898465   Positive
-## Env:Name:CA.2011:CA.2012   5.5944492 1.8671243 2.9962918   Unconstr
-## Env:Name:CA.2012:CA.2012   4.5127684 2.1142814 2.1344218   Positive
-## Env:Name:CA.2011:CA.2013   5.3289701 1.5511329 3.4355342   Unconstr
-## Env:Name:CA.2012:CA.2013   0.4846585 0.5041710 0.9612979   Unconstr
-## Env:Name:CA.2013:CA.2013   8.0187930 2.0507668 3.9101439   Positive
-## Env:units:CA.2011:CA.2011  4.9579597 1.3321121 3.7218788   Positive
-## Env:units:CA.2012:CA.2012  5.6456207 1.2075559 4.6752459   Positive
-## Env:units:CA.2013:CA.2013  2.5572308 0.5849091 4.3720144   Positive</code></pre>
+## Env:Name:CA.2011:CA.2011  14.1130508 3.4147828 4.1329278   Positive
+## Env:Name:CA.2011:CA.2012   5.5944492 1.9635238 2.8491883   Unconstr
+## Env:Name:CA.2012:CA.2012   4.5127684 2.4324072 1.8552685   Positive
+## Env:Name:CA.2011:CA.2013   5.3289701 1.6025432 3.3253206   Unconstr
+## Env:Name:CA.2012:CA.2013   0.4846585 1.4944492 0.3243058   Unconstr
+## Env:Name:CA.2013:CA.2013   8.0187930 2.0739979 3.8663457   Positive
+## Env:units:CA.2011:CA.2011  4.9579597 1.5264964 3.2479342   Positive
+## Env:units:CA.2012:CA.2012  5.6456207 1.3068683 4.3199615   Positive
+## Env:units:CA.2013:CA.2013  2.5572308 0.6385923 4.0044812   Positive</code></pre>
 <p>As can be seen the <code>usr(Env)</code> indicates that the genotypes (Name) can have a covariance structure among environments (Env).</p>
 </div>
 <div id="multivariate-homogeneous-variance-models" class="section level3">
@@ -801,10 +801,10 @@ Z_1 K{\sigma_{g_{1,t}}} Z_t&#39; + H{\sigma_{\epsilon_{1,t}}} &amp; ... &amp; Z_
 <span id="cb29-4"><a href="#cb29-4"></a>           , <span class="dt">data=</span>DT, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
 <span id="cb29-5"><a href="#cb29-5"></a><span class="kw">summary</span>(mRR2c)<span class="op">$</span>varcomp</span></code></pre></div>
 <pre><code>##                       VarComp VarCompSE   Zratio Constraint
-## X:SUBJECT:leg0:leg0 2.4958729 0.4560914 5.472309   Positive
-## X:SUBJECT:leg0:leg1 0.4495909 0.1647736 2.728537   Unconstr
-## X:SUBJECT:leg1:leg1 0.3427729 0.1829503 1.873585   Positive
-## units:isc:isc       2.6940149 0.3945064 6.828825   Positive</code></pre>
+## X:SUBJECT:leg0:leg0 2.5615527 0.4925762 5.200317   Positive
+## X:SUBJECT:leg0:leg1 0.4675469 0.1908303 2.450067   Unconstr
+## X:SUBJECT:leg1:leg1 0.3473523 0.2828763 1.227930   Positive
+## units:isc:isc       2.6919055 0.4614647 5.833394   Positive</code></pre>
 <p>Here, a numeric covariate X is used to explain the trajectory of the SUBJECTs and combined with an unstructured covariance matrix. The details can be found in the theory.</p>
 </div>
 <div id="gwas-models" class="section level4">
@@ -1122,10 +1122,10 @@ Z^TR^{-1}X \\
 <p>Now, the model can be used together with the <code>classify</code> argument to obtain means for the <code>classify</code> argument. For example, the model includes in the fixed formula the terms “V” for variety, “N” for nitrogen treatments, and “V:N” for the interaction between variety and nitrogen. The <code>classify</code> argument can be used to specify the term for which the means are desired. In the following example the means for the nitrogen treatments are obtained as follows:</p>
 <div class="sourceCode" id="cb59"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1"></a>p0 &lt;-<span class="st"> </span><span class="kw">predict.mmer</span>(<span class="dt">object=</span>m3, <span class="dt">classify =</span> <span class="st">&quot;N&quot;</span>)</span></code></pre></div>
 <pre><code>## iteration    LogLik     wall    cpu(sec)   restrained
-##     1      -0.745921   9:7:28      0           0
-##     2      -0.745921   9:7:28      0           0
-##     3      -0.745921   9:7:28      0           0
-##     4      -0.745921   9:7:28      0           0</code></pre>
+##     1      -0.745921   22:4:1      0           0
+##     2      -0.745921   22:4:1      0           0
+##     3      -0.745921   22:4:1      0           0
+##     4      -0.745921   22:4:1      0           0</code></pre>
 <div class="sourceCode" id="cb61"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1"></a>p0<span class="op">$</span>pvals</span></code></pre></div>
 <pre><code>##   trait   N predicted.value standard.error
 ## 1     Y   0        79.38889       7.174710

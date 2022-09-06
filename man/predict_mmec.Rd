@@ -4,21 +4,23 @@
 \description{\code{predict} method for class \code{"mmec"}.
 }
 \usage{
-\method{predict}{mmec}(object, Dtable=NULL, 
-        D=NULL,
-        \dots)
+\method{predict}{mmec}(object, Dtable=NULL, D, \dots)
 }
 \arguments{
  \item{object}{a mixed model of class \code{"mmec"}}
  \item{Dtable}{a table specifying the terms to be included or averaged.
  
-  An ignored term means that the model matrix part for that fixed or random effect are not used in the BLUP and SE calculation.
+  An "ignored" term means that the model matrix part for that fixed or random effect are not used in the BLUP and SE calculation.
  
- An averaged term means that the model matrices for that fixed or random effect is filled purely with the value 1/#levels for that term.
+ An "averaged" term means that the model matrices for that fixed or random effect is filled purely with the value 1/#levels for that term.
+ 
+  An "include" term means that the model matrices for that fixed or random effect is filled with 1's for the positions where column names and row names match.
+  
+  An "include and average" term means that the model matrices for that fixed or random effect is filled with 1/#levels for the positions where column names and row names match.
  
  }
- \item{D}{an optional D matrix specifying the matrix to be used for the predictions.}
- \item{\dots}{Further arguments to be passed to the model fit (i.e. iters, etc.).}
+ \item{D}{a character string specifying the variable used to extract levels for the rows of the D matrix and its construction. Alternatively, the D matrix (of class dgCMatrix) specifying the matrix to be used for the predictions directly.}
+ \item{\dots}{Further arguments to be passed.}
 }
 \details{
   This function allows to produce predictions specifying those variables that define the margins of the hypertable to be predicted (argument classify). Predictions are obtained for each combination of values of the specified variables that is present in the data set used to fit the model. See vignettes for more details. 
@@ -80,8 +82,6 @@ m3 <- mmec(fixed=Y ~ V + N + V:N ,
 ## predict means for nitrogen
 #############################
 Dt <- m3$Dtable; Dt
-# prediction matrix D based on (equivalent to classify in asreml)
-Dt[2,"D"] = TRUE
 # first fixed effect just average
 Dt[1,"average"] = TRUE
 # second fixed effect include
@@ -91,7 +91,7 @@ Dt[3,"include"] = TRUE
 Dt[3,"average"] = TRUE
 Dt
 
-pp=predict(object=m3, Dtable=Dt)
+pp=predict(object=m3, Dtable=Dt, D="N")
 pp$pvals
 
 #############################
@@ -99,8 +99,6 @@ pp$pvals
 #############################
 
 Dt <- m3$Dtable; Dt
-# prediction matrix D based on (equivalent to classify in asreml)
-Dt[1,"D"] = TRUE
 # first fixed effect include
 Dt[1,"include"] = TRUE
 # second fixed effect just average
@@ -110,7 +108,7 @@ Dt[3,"include"] = TRUE
 Dt[3,"average"] = TRUE
 Dt
 
-pp=predict(object=m3, Dtable=Dt)
+pp=predict(object=m3, Dtable=Dt, D="V")
 pp$pvals
 
 #############################
@@ -118,7 +116,6 @@ pp$pvals
 #############################
 # prediction matrix D based on (equivalent to classify in asreml)
 Dt <- m3$Dtable; Dt
-Dt[3,"D"] = TRUE
 # first fixed effect include and average
 Dt[1,"include"] = TRUE
 Dt[1,"average"] = TRUE
@@ -130,7 +127,7 @@ Dt[3,"include"] = TRUE
 Dt[3,"average"] = TRUE
 Dt
 
-pp=predict(object=m3, Dtable=Dt)
+pp=predict(object=m3, Dtable=Dt, D="N:V")
 pp$pvals
 
 }

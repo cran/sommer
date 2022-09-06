@@ -20,7 +20,7 @@ summary(ans1c)$varcomp
 
 data(DT_example)
 DT <- DT_example
-
+ 
 ans2r <- mmer(Yield~Env,
               random= ~Name + vsr(dsr(Env),Name),
               rcov= ~ vsr(dsr(Env),units),

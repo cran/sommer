@@ -216,7 +216,7 @@ In addition, other functions can be added on top to fit models with covariance s
 #               data=DT, verbose = FALSE)
 # summary(modFD)
 ```
-
+ 
 ### 3) Using the vpredict calculator
 
 Sometimes the user needs to calculate ratios or functions of specific variance-covariance components and obtain the standard errors for such parameters. Examples of these are the genetic correlations, heritabilities, etc. Using the CPdata we will show how to estimate the heritability and the standard error using the `vpredict()` function that uses the delta method to come up with these parameters. This can be extended for any linear combination of the variance components.

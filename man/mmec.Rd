@@ -7,26 +7,16 @@
 }
 \description{
 
-Sommer is a structural multivariate-univariate linear mixed model solver for multiple random effects allowing the specification and/or estimation of variance covariance structures. The \code{mmec} function uses the MME-based Average Information algorithm coded in C++ using the Armadillo library to optimize matrix operations common in problems with sparse covariance structures such as genotype by environment models. These algorithm are \strong{intended to be used for problems of the type r > c (r records and c coefficients)}. For problems with of the type p > n, the direct inversion algorithms are faster and we recommend to shift to the use of the \code{\link{mmer}} function.
-
-\strong{For tutorials} on how to perform different analysis with sommer please look at the vignettes by typing in the terminal:
-
-\strong{vignette("v1.sommer.quick.start")} 
-
-\strong{vignette("v2.sommer.changes.and.faqs")}
-
-\strong{vignette("v3.sommer.qg")}
-
-\strong{vignette("v4.sommer.gxe")}
+The \code{mmec} function uses the Henderson mixed model equations and the Average Information algorithm coded in C++ using the Armadillo library to optimize matrix operations common in problems with sparse data (e.g., genotype by environment models). This algorithm is \strong{intended to be used for problems of the type r > c (more records in the data than coefficients to estimate)}. For problems with of the type c > r (more coefficients to estimate than records available), the direct inversion algorithms are faster and we recommend to shift to the use of the \code{\link{mmer}} function.
 
 }
 
 \usage{
 
-mmec(fixed, random, rcov, data, W, nIters=20, tolParConvLL = 1e-03, tolParConvNorm = 0.05,
-     tolParInv = 1e-06, naMethodX="exclude", naMethodY="exclude",
-     returnParam=FALSE, dateWarning=TRUE,verbose=TRUE, 
-     addScaleParam=NULL, stepWeight=NULL, emWeight=NULL)
+mmec(fixed, random, rcov, data, W, nIters=20, tolParConvLL = 1e-03, 
+     tolParConvNorm = 1e-04, tolParInv = 1e-06, naMethodX="exclude", 
+     naMethodY="exclude", returnParam=FALSE, dateWarning=TRUE,
+     verbose=TRUE,addScaleParam=NULL, stepWeight=NULL, emWeight=NULL)
 }
 \arguments{
   \item{fixed}{A formula specifying the \strong{response variable(s)} \strong{and fixed effects}, i.e:
@@ -51,6 +41,8 @@ mmec(fixed, random, rcov, data, W, nIters=20, tolParConvLL = 1e-03, tolParConvNo
   \item{rcov}{A formula specifying the name of the \strong{error term}, i.e. \emph{rcov= ~ units}.
   
   Special heterogeneous and special variance models and constraints for the residual part are the same used on the random term but the name of the random effect is always "units" which can be thought as a column with as many levels as rows in the data, i.e. \emph{rcov=~vsc(dsc(covariate),isc(units))}
+  
+  When fitting structures at the level of residuals please make sure that your data is sorted based on the factors defining the structure. For example, for \emph{rcov= ~ vsc(dsc(xx), isc(units))} sort the datatset by the variable xx.
   
   }
   \item{data}{A data frame containing the variables specified in the formulas for response, fixed, and random effects.}
@@ -79,6 +71,16 @@ mmec(fixed, random, rcov, data, W, nIters=20, tolParConvLL = 1e-03, tolParConvNo
 \details{
 
 The use of this function requires a good understanding of mixed models. Please review the 'sommer.quick.start' vignette and pay attention to details like format of your random and fixed variables (e.g. character and factor variables have different properties when returning BLUEs or BLUPs, please see the 'sommer.changes.and.faqs' vignette). 
+
+\strong{For tutorials} on how to perform different analysis with sommer please look at the vignettes by typing in the terminal:
+
+vignette("v1.sommer.quick.start")
+
+vignette("v2.sommer.changes.and.faqs")
+
+vignette("v3.sommer.qg")
+
+vignette("v4.sommer.gxe")
 
 \strong{Citation}
 
@@ -190,7 +192,7 @@ Gilmour et al. 1995. Average Information REML: An efficient algorithm for varian
 
 }
 \author{
-Giovanny Covarrubias-Pazaran
+Giovanny Covarrubias-Pazaran with contributions of Christelle Fernandez Camacho
 }
 \examples{
 

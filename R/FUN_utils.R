@@ -183,7 +183,7 @@ vcsExtract <- function(object){
   coef$t.value <- coef$Estimate/coef$Std.Error
   
   mys2 <- object$monitor[,which(object$llik[1,] == max(object$llik[1,]))] 
-  varcomp <- as.data.frame(cbind(mys2,sqrt(diag(solve(object$avInf/2)))))
+  varcomp <- as.data.frame(cbind(mys2,sqrt(diag(ginv(object$avInf/2)))))
   varcomp[,3] <- varcomp[,1]/varcomp[,2]
   colnames(varcomp) <- c("VarComp","VarCompSE","Zratio")
   
@@ -724,7 +724,7 @@ plot.mmec <- function(x, stnd=TRUE, ...) {
     stop("This package requires R 2.1 or later")
   assign(".sommer.home", file.path(library, pkg),
          pos=match("package:sommer", search()))
-  sommer.version = "4.1.7 (2022-07-01)" # usually 2 months before it expires
+  sommer.version = "4.1.8 (2022-09-01)" # usually 2 months before it expires
   
   assign(".sommer.version", sommer.version, pos=match("package:sommer", search()))
   if(interactive())

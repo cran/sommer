@@ -1,6 +1,6 @@
 mmec <- function(fixed, random, rcov, data, W,
                  nIters=20, tolParConvLL = 1e-03, 
-                 tolParConvNorm = 0.05, tolParInv = 1e-06,
+                 tolParConvNorm = 1e-04, tolParInv = 1e-06,
                  naMethodX="exclude",
                  naMethodY="exclude",
                  returnParam=FALSE,
@@ -9,7 +9,7 @@ mmec <- function(fixed, random, rcov, data, W,
                  stepWeight=NULL, emWeight=NULL){
   
   my.year <- 2022
-  my.month <- 9 #month when the user will start to get notifications the 1st day of next month
+  my.month <- 12 #month when the user will start to get notifications the 1st day of next month
   ### if my month = 5, user will start to get notification in June 1st (next month)
   datee <- Sys.Date()
   year.mo.day <- as.numeric(strsplit(as.character(datee),"-")[[1]])# <- as.numeric(strsplit(gsub("....-","",datee),"-")[[1]])
@@ -61,7 +61,7 @@ mmec <- function(fixed, random, rcov, data, W,
   #################
   ## get Zs and Ks
   
-  Z <- Ai <- theta <- thetaC <- thetaF <- list()
+  Z <- Ai <- theta <- thetaC <- thetaF <- sp <- list()
   Zind <- numeric()
   rTermsNames <- list()
   counter <- 1
@@ -84,6 +84,7 @@ mmec <- function(fixed, random, rcov, data, W,
       theta[[u]] <- ff$theta
       thetaC[[u]] <- ff$thetaC
       thetaF[[u]] <- ff$thetaF
+      sp[[u]] <- ff$sp # rep(ff$sp,length(which(ff$thetaC > 0)))
       Zind <- c(Zind, rep(u,length(ff$Z)))
       checkvs <- numeric() # restart the check
       ## names for monitor
@@ -116,9 +117,15 @@ mmec <- function(fixed, random, rcov, data, W,
     ff <- eval(parse(text = rcovtermss[u]),data,parent.frame()) # evalaute the variance structure
     S <- c(S, ff$Z)
     Spartitions <- c(Spartitions, ff$partitionsR)
-    theta[[counter]] <- ff$theta*5
+    ## constraint
+    residualsNonFixed <- which(ff$thetaC != 3, arr.ind = TRUE)
+    if(nrow(residualsNonFixed) > 0){
+      ff$theta[residualsNonFixed] <- ff$theta[residualsNonFixed] * 5
+    }
+    theta[[counter]] <- ff$theta
     thetaC[[counter]] <- ff$thetaC
     thetaF[[counter]] <- ff$thetaF
+    sp[[counter]] <- ff$sp#rep(ff$sp,length(ff$Z))
     
     baseNames <- which( ff$thetaC > 0, arr.ind = TRUE)
     s1 <- paste(rownames(ff$thetaC)[baseNames[,"row"]], colnames(ff$thetaC)[baseNames[,"col"]],sep = ":")
@@ -131,11 +138,11 @@ mmec <- function(fixed, random, rcov, data, W,
   #################
   #################
   ## get Xs
+  data$`1` <-1
   newfixed=fixed
-  fixedTerms <- strsplit(as.character(fixed[3]), split = "[+]")[[1]]
+  fixedTerms <- gsub(" ", "", strsplit(as.character(fixed[3]), split = "[+-]")[[1]])
   mf <- try(model.frame(newfixed, data = data, na.action = na.pass), silent = TRUE)
   mf <- eval(mf, parent.frame())
-  # print(newfixed)
   X <-  Matrix::sparse.model.matrix(newfixed, mf)
   
   
@@ -146,13 +153,18 @@ mmec <- function(fixed, random, rcov, data, W,
     partitionsX[[ix]] <- matrix(which(colnames(X) %in% c(effs,effs2)),nrow=1)
   }
   names(partitionsX) <- fixedTerms
+  classColumns <- lapply(data,class)
+  
   for(ix in 1:length(fixedTerms)){
     colnamesBase <- colnames(X)[partitionsX[[ix]]]
     colnamesBaseList <- strsplit(colnamesBase,":")
     toRemoveList <- strsplit(fixedTerms[ix],":")[[1]] # words to remove
+    toRemoveList
     for(j in 1:length(toRemoveList)){
-      nc <- nchar(gsub(" ", "", toRemoveList[[j]], fixed = TRUE))
-      colnamesBaseList <- lapply(colnamesBaseList, function(h){h[j] <- substr(h[j],1+nc,nchar(h[j])); return(h)})
+      if( classColumns[[toRemoveList[[j]]]] != "numeric"){ # only remove the name from the level if is structure between factors, not for random regressions
+        nc <- nchar(gsub(" ", "", toRemoveList[[j]], fixed = TRUE))
+        colnamesBaseList <- lapply(colnamesBaseList, function(h){h[j] <- substr(h[j],1+nc,nchar(h[j])); return(h)})
+      }
     }
     colnames(X)[partitionsX[[ix]]] <- unlist(lapply(lapply(colnamesBaseList,na.omit), function(x){paste(x, collapse=":")}))
   }
@@ -170,7 +182,7 @@ mmec <- function(fixed, random, rcov, data, W,
     W <- sparse.model.matrix(~d-1, x)
     useH=FALSE
   }else{
-    W <- as(W, Class = "sparseMatrix")
+    W <- as(W, Class = "dgCMatrix")
     useH=TRUE
   }
   
@@ -212,7 +224,8 @@ mmec <- function(fixed, random, rcov, data, W,
     
     thetaFinput <- do.call(adiag1,thetaF)
     if(is.null(addScaleParam)){addScaleParam=0}
-    thetaFinput <- cbind(thetaFinput,matrix(0,nrow(thetaFinput),length(addScaleParam)))
+    thetaFinputSP <- unlist(sp)
+    thetaFinput <- cbind(thetaFinput,thetaFinputSP)
     thetaFinput
     
     res <- list(yvar=yvar, X=X,Z=Z,Zind=Zind,Ai=Ai,S=S,Spartitions=Spartitions, W=W, useH=useH,
@@ -226,7 +239,9 @@ mmec <- function(fixed, random, rcov, data, W,
     
     thetaFinput <- do.call(adiag1,thetaF)
     if(is.null(addScaleParam)){addScaleParam=0}
-    thetaFinput <- cbind(thetaFinput,matrix(0,nrow(thetaFinput),length(addScaleParam)))
+    thetaFinputSP <- unlist(sp)
+   
+    thetaFinput <- cbind(thetaFinput,thetaFinputSP)
     thetaFinput
     
     res <- .Call("_sommer_ai_mme_sp",PACKAGE = "sommer",
@@ -276,7 +291,11 @@ mmec <- function(fixed, random, rcov, data, W,
       }; blupTable=NULL; pevTable=NULL; names(uList) <- names(uPevList) <- rtermss
     }
     res$uList <- uList; res$uPevList <- uPevList
-    res$Dtable <- data.frame(type=c(rep("fixed",length(res$partitionsX)),rep("random",length(res$partitions))),term=c(names(res$partitionsX),names(res$partitions)),include=FALSE,average=FALSE,D=FALSE)
+    if(!missing(random)){
+      res$Dtable <- data.frame(type=c(rep("fixed",length(res$partitionsX)),rep("random",length(res$partitions))),term=c(names(res$partitionsX),names(res$partitions)),include=FALSE,average=FALSE)
+    }else{
+      res$Dtable <- data.frame(type=c(rep("fixed",length(res$partitionsX))),term=c(names(res$partitionsX),names(res$partitions)),include=FALSE,average=FALSE)
+    }
     class(res)<-c("mmec")
   }
   return(res)
