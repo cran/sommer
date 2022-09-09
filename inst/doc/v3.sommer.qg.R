@@ -47,7 +47,7 @@ vpredict(ans.ADE, h2 ~ (V1+V2) / ( V1+V2+V3) ) # broad-sense
 # data(DT_cornhybrids)
 # DT <- DT_cornhybrids
 # DTi <- DTi_cornhybrids
-# GT <- as(GT_cornhybrids, Class = "sparseMatrix")
+# GT <- as(GT_cornhybrids, Class = "dgCMatrix")
 # GT[1:4,1:4]
 # DT=DT[with(DT, order(Location)), ]
 # ### fit the model
@@ -208,8 +208,8 @@ Md <- (Md_technow*2) - 1
 Mf <- (Mf_technow*2) - 1
 Ad <- A.mat(Md)
 Af <- A.mat(Mf)
-Adi <- as(solve(Ad + diag(1e-4,ncol(Ad),ncol(Ad))), Class="sparseMatrix")
-Afi <- as(solve(Af + diag(1e-4,ncol(Af),ncol(Af))), Class="sparseMatrix")
+Adi <- as(solve(Ad + diag(1e-4,ncol(Ad),ncol(Ad))), Class="dgCMatrix")
+Afi <- as(solve(Af + diag(1e-4,ncol(Af),ncol(Af))), Class="dgCMatrix")
 # RUN THE PREDICTION MODEL
 y.trn <- DT
 vv1 <- which(!is.na(DT$GY))
