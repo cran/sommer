@@ -85,7 +85,7 @@ mix <- mmec(Yield~Env,
 ## using covariance among levels in the
 ## random effect Name
 ## ============================ ##
-Ai <- as(solve(A + diag(1e-4,ncol(A),ncol(A))), Class="sparseMatrix")
+Ai <- as(solve(A + diag(1e-4,ncol(A),ncol(A))), Class="dgCMatrix")
 mix <- mmec(Yield~Env, 
             random= ~ vsc(isc(Name), Gu=Ai),
             rcov=~ units,
