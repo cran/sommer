@@ -130,6 +130,19 @@ summary(mix1)$varcomp
 summary(mix3)$varcomp
 
 ## -----------------------------------------------------------------------------
+
+mm <- matrix(3,1,1) ## matrix to fix the var comp
+vei <- var(DT$Yield, na.rm = TRUE) # we want to fix the vc to be half of the previous uinvariate model
+
+mix3 <- mmec(Yield~1,
+              random=~Rowf, # unconstrained
+              rcov= ~ vsc(isc(units, thetaC=mm,theta=matrix(1/vei,1,1))), # constrained
+              data=DT, verbose = FALSE)
+
+# analyze variance components
+summary(mix3)$varcomp
+
+## -----------------------------------------------------------------------------
 library("MASS")  ## needed for mvrnorm
 n <- 100
 mu <- c(1,2)
