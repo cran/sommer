@@ -722,25 +722,24 @@ plot.mmec <- function(x, stnd=TRUE, ...) {
   Rv = R.Version()
   if(!exists("getRversion", baseenv()) || (getRversion() < "2.1"))
     stop("This package requires R 2.1 or later")
-  assign(".sommer.home", file.path(library, pkg),
-         pos=match("package:sommer", search()))
-  sommer.version = "4.2.0 (2023-01-01)" # usually 4 months after it expires
-
-  assign(".sommer.version", sommer.version, pos=match("package:sommer", search()))
-  if(interactive())
-  {
+  # assign(".sommer.home", file.path(library, pkg),
+  #        pos=match("package:sommer", search()))
+  # value = "4.2.1 (2023-04-01)" # usually 4 months after it expires
+  #
+  # assign(".sommer.version", value, pos=match("package:sommer", search()))
+  if(interactive()) {
     packageStartupMessage(blue(paste("[]==================================================================[]")),appendLF=TRUE)
-    packageStartupMessage(blue(paste("[]   Solving Mixed Model Equations in R (sommer) ", sommer.version, " []",sep="")),appendLF=TRUE)
+    packageStartupMessage(blue(paste("[]   Solving Mixed Model Equations in R (sommer) 4.2.1 (2023-04-01) []",sep="")),appendLF=TRUE)
     packageStartupMessage(blue(paste("[]   ------------- Multivariate Linear Mixed Models --------------  []")),appendLF=TRUE)
-    packageStartupMessage(blue("[]   Author: Giovanny Covarrubias-Pazaran                           []"),appendLF=TRUE)
+    packageStartupMessage(paste0(blue("[]   Author: Giovanny Covarrubias-Pazaran",paste0(bgGreen(white(" ")), bgWhite(magenta("*")), bgRed(white(" "))),"                      []")),appendLF=TRUE)
     packageStartupMessage(blue("[]   Published: PLoS ONE 2016, 11(6):1-15                           []"),appendLF=TRUE)
     packageStartupMessage(blue("[]   Dedicated to the University of Chapingo and UW-Madison         []"),appendLF=TRUE)
     packageStartupMessage(blue("[]   Type 'vignette('v1.sommer.quick.start')' for a short tutorial  []"),appendLF=TRUE)
     packageStartupMessage(blue("[]   Type 'citation('sommer')' to know how to cite sommer           []"),appendLF=TRUE)
     packageStartupMessage(blue(paste("[]==================================================================[]")),appendLF=TRUE)
     packageStartupMessage(blue("sommer is updated on CRAN every 4-months due to CRAN policies"),appendLF=TRUE)
-    packageStartupMessage(blue("Newest source is available at https://github.com/covaruber/sommer"),appendLF=TRUE)
-    packageStartupMessage(blue("To install type: library(devtools); install_github('covaruber/sommer')"),appendLF=TRUE)
+    packageStartupMessage(blue("Current source is available at https://github.com/covaruber/sommer"),appendLF=TRUE)
+    packageStartupMessage(blue("If needed install as: devtools::install_github('covaruber/sommer')"),appendLF=TRUE)
 
   }
   invisible()

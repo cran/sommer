@@ -274,6 +274,16 @@ m3 <- mmer(fixed=Y ~ V + N + V:N,
 summary(m3)$varcomp
 
 ## -----------------------------------------------------------------------------
-p0 <- predict.mmer(object=m3, classify = "N")
-p0$pvals
+Dt <- m3$Dtable; Dt
+# first fixed effect just average
+Dt[1,"average"] = TRUE
+# second fixed effect include
+Dt[2,"include"] = TRUE
+# third fixed effect include and average
+Dt[3,"include"] = TRUE
+Dt[3,"average"] = TRUE
+Dt
+
+pp=predict(object=m3, Dtable=Dt, D="N")
+pp$pvals
 

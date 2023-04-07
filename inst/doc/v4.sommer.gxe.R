@@ -155,6 +155,7 @@ DT <- DT_h2
 ## build the environmental index
 ei <- aggregate(y~Env, data=DT,FUN=mean)
 colnames(ei)[2] <- "envIndex"
+ei$envIndex <- ei$envIndex - mean(ei$envIndex,na.rm=TRUE) # center the envIndex to have clean VCs
 ei <- ei[with(ei, order(envIndex)), ]
 
 ## add the environmental index to the original dataset
@@ -194,6 +195,29 @@ text(y=preds[,2],x=e, labels = rownames(mu), cex=0.5, pos = 1)
 
 ## -----------------------------------------------------------------------------
 
+data(DT_h2)
+DT <- DT_h2
+DT=DT[with(DT, order(Env)), ]
+
+ans1b <- mmec(y~Env,
+              random=~vsc( usc( rrc(Env, Name, y, nPC = 2) ) , isc(Name)),
+              rcov=~units, 
+              # we recommend giving more iterations to these models
+              nIters = 50, 
+              # we recommend giving more EM iterations at the beggining for usc models
+              emWeight = c(rep(1,10),logspace(10,1,.05), rep(.05,80)),
+              verbose=FALSE,
+              data=DT)
+
+summary(ans1b)$varcomp
+
+Lam=with(DT, rrc(Env, Name, y, returnLam = TRUE, nPC = 2))$Lam # extract loadings
+score.mat <- ans1b$uList[[1]]; # extract factor scores
+BLUP = score.mat %*% t(Lam) # BLUPs for all environments
+
+
+## -----------------------------------------------------------------------------
+
 ##########
 ## stage 1
 ## use mmer for dense field trials
@@ -214,7 +238,8 @@ for(i in 1:length(envs)){
   ans1$Beta$Env <- envs[i]
   
   BLUEL[[i]] <- ans1$Beta
-  XtXL[[i]] <- ans1$VarBeta
+  # to be comparable to 1/(se^2) = 1/PEV = 1/Ci = 1/[(X'X)inv]
+  XtXL[[i]] <- solve(ans1$VarBeta) 
 }
 
 DT2 <- do.call(rbind, BLUEL)

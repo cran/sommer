@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2023-01-08" />
+<meta name="date" content="2023-04-07" />
 
 <title>Changes and FAQs for the sommer package</title>
 
@@ -341,7 +341,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Changes and FAQs for the sommer
 package</h1>
 <h4 class="author">Giovanny Covarrubias-Pazaran</h4>
-<h4 class="date">2023-01-08</h4>
+<h4 class="date">2023-04-07</h4>
 
 
 
@@ -385,6 +385,8 @@ relationship matrix.</li>
 <li>How can I constrain two variance components to be equal?</li>
 <li>I get an error when installing directly from github</li>
 <li>I get and error when specifying an interaction of the form X:Z</li>
+<li>I get the error “contrasts&lt;-<code>(</code><em>tmp</em>`, value =
+contr.funs[1 + isOF[nn]])”</li>
 </ol>
 <div id="section-1-the-new-syntax-of-sommer" class="section level2">
 <h2>SECTION 1: The new syntax of sommer</h2>
@@ -961,7 +963,7 @@ For example to fix the residuals equal to 1:</p>
 <span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a><span class="co"># analyze variance components</span></span>
 <span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(mix3)<span class="sc">$</span>varcomp</span></code></pre></div>
 <pre><code>##                VarComp    VarCompSE       Zratio Constraint
-## Rowf:isc:isc  976.2789 8.911832e-16 1.095486e+18   Positive
+## Rowf:isc:isc  976.0743 8.916212e-16 1.094719e+18   Positive
 ## units:mm:vei:   1.0000 1.227629e-03 8.145785e+02      Fixed</code></pre>
 </div>
 <div id="how-can-i-constrain-two-variance-components-to-be-equal" class="section level3">
@@ -1000,19 +1002,19 @@ exact same result as using the built-in capabilities:</p>
 <span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>sig2 <span class="ot">&lt;-</span> <span class="fu">kronecker</span>(<span class="fu">diag</span>(<span class="dv">1</span>,n),V2) <span class="co"># variance component 2</span></span>
 <span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a>gam <span class="ot">&lt;-</span> <span class="fu">kronecker</span>(<span class="fu">diag</span>(<span class="dv">1</span>,n),V3) <span class="co"># covariance component</span></span>
 <span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a><span class="co"># now fit the model</span></span>
-<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a>mix2 <span class="ot">&lt;-</span> <span class="fu">mmer</span>(y<span class="sc">~</span>X<span class="dv">-1</span>, <span class="at">rcov =</span> <span class="sc">~</span><span class="fu">vsr</span>(sig1)<span class="sc">+</span><span class="fu">vsr</span>(sig2)<span class="sc">+</span><span class="fu">vsr</span>(gam), <span class="at">data=</span>df2, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
-<pre><code>## System is singular (V). Stopping the job. Try a bigger number of tolparinv.</code></pre>
-<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>mix2<span class="sc">$</span>sigmaVector</span></code></pre></div>
-<pre><code>## NULL</code></pre>
+<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a>mix2 <span class="ot">&lt;-</span> <span class="fu">mmer</span>(y<span class="sc">~</span>X<span class="dv">-1</span>, <span class="at">rcov =</span> <span class="sc">~</span><span class="fu">vsr</span>(sig1)<span class="sc">+</span><span class="fu">vsr</span>(sig2)<span class="sc">+</span><span class="fu">vsr</span>(gam,<span class="at">Gti =</span> <span class="fu">matrix</span>(.<span class="dv">15</span>)), <span class="at">data=</span>df2, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a>mix2<span class="sc">$</span>sigmaVector</span></code></pre></div>
+<pre><code>## u:sig1.y-y u:sig2.y-y  u:gam.y-y 
+##   9.902350  10.125683   5.543179</code></pre>
 <p>Notice that we fitted a univariate model but we built the kernels and
 fitted those kernels one by one.</p>
 <p>Now we will constrain the two variance components to be equal. This
 is done the following way:</p>
-<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>sig <span class="ot">&lt;-</span> sig1<span class="sc">+</span>sig2</span>
-<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>mix3 <span class="ot">&lt;-</span> <span class="fu">mmer</span>(y<span class="sc">~</span>X<span class="dv">-1</span>, <span class="at">rcov =</span> <span class="sc">~</span><span class="fu">vsr</span>(sig)<span class="sc">+</span><span class="fu">vsr</span>(gam), <span class="at">data=</span>df2, <span class="at">nIters=</span><span class="dv">30</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
-<pre><code>## System is singular (V). Stopping the job. Try a bigger number of tolparinv.</code></pre>
-<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>mix3<span class="sc">$</span>sigmaVector</span></code></pre></div>
-<pre><code>## NULL</code></pre>
+<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>sig <span class="ot">&lt;-</span> sig1<span class="sc">+</span>sig2</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>mix3 <span class="ot">&lt;-</span> <span class="fu">mmer</span>(y<span class="sc">~</span>X<span class="dv">-1</span>, <span class="at">rcov =</span> <span class="sc">~</span><span class="fu">vsr</span>(sig)<span class="sc">+</span><span class="fu">vsr</span>(gam,<span class="at">Gti =</span> <span class="fu">matrix</span>(.<span class="dv">15</span>)), <span class="at">data=</span>df2, <span class="at">nIters=</span><span class="dv">30</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>mix3<span class="sc">$</span>sigmaVector</span></code></pre></div>
+<pre><code>## u:sig.y-y u:gam.y-y 
+## 10.014017  5.543179</code></pre>
 </div>
 <div id="i-get-an-error-when-installing-directly-from-github" class="section level3">
 <h3>9) I get an error when installing directly from github</h3>
@@ -1026,8 +1028,8 @@ issue, the information of the following website may solve your
 instalation problem:</p>
 <p><a href="https://www.cynkra.com/blog/2021-03-16-gfortran-macos/" class="uri">https://www.cynkra.com/blog/2021-03-16-gfortran-macos/</a></p>
 </div>
-<div id="i-get-and-error-when-specifying-an-interaction-of-the-form-xz" class="section level3">
-<h3>10) I get and error when specifying an interaction of the form
+<div id="i-get-an-error-when-specifying-an-interaction-of-the-form-xz" class="section level3">
+<h3>10) I get an error when specifying an interaction of the form
 X:Z</h3>
 <p>If you get an error message similar to the following when specifying
 an interaction in your model:</p>
@@ -1039,6 +1041,20 @@ by coercion</p>
 <p>Please check that your variables in the interaction are all of class
 factor. Making all factors using the as.factor() function should fix
 your error.</p>
+</div>
+<div id="i-get-the-error-contrasts-tmp-value-contr.funs1-isofnn" class="section level3">
+<h3>11) I get the error: contrasts&lt;-(<code>*tmp*</code>, value =
+contr.funs[1 + isOF[nn]])</h3>
+<p>If you get an error message similar to the following when fitting
+your model:</p>
+<p>Error in contrasts&lt;-(<code>*tmp*</code>, value = contr.funs[1 +
+isOF[nn]]) : contrasts can be applied only to factors with 2 or more
+levels</p>
+<p>Please check that your dataset is a regular dataframe. If your
+dataset used as input is of class tibtable or any other you may get this
+error message. Please use the following command to fix the issue:</p>
+<p>dataset &lt;- as.data.frame(dataset)</p>
+<p>This should put the dataset in the expected format.</p>
 </div>
 </div>
 <div id="literature" class="section level2">
