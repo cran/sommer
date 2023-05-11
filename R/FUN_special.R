@@ -1,3 +1,24 @@
+stackTrait <- function(data, traits){
+  idvars <- setdiff(colnames(data), traits)
+  dataScaled <- data
+  for(iTrait in traits){
+    dataScaled[,iTrait] <- scale(dataScaled[,iTrait])
+  }
+  data2 <- reshape(data, idvar = idvars, varying = traits,
+                   timevar = "trait",
+                   times = traits,v.names = "value", direction = "long")
+  data2Scaled <- reshape(dataScaled, idvar = idvars, varying = traits,
+                         timevar = "trait",
+                         times = traits,v.names = "value", direction = "long")
+  data2 <- as.data.frame(data2)
+  data2$valueS <- as.vector(unlist(data2Scaled$value))
+  rownames(data2) <- NULL
+  varG <- cov(data[,traits], use="pairwise.complete.obs")
+  # varG <- apply(data[,traits],2,var, na.rm=TRUE) 
+  mu <- apply(data[,traits],2,mean, na.rm=TRUE) 
+  return(list(long=data2, varG=varG, mu=mu))
+}
+
 add.diallel.vars <- function(df, par1="Par1", par2="Par2",sep.cross="-"){
   # Dummy variables for selfs, crosses, combinations
   df[,"is.cross"] <- ifelse(df[,par1] == df[,par2], 0, 1)
@@ -445,7 +466,75 @@ usr <- function(x){
 
 ###############
 ## VS structures for mmec
-
+redmm <- function (x, M = NULL, Lam=NULL, nPC=50, cholD=FALSE, returnLam=FALSE) {
+  
+  if(is.null(M)){
+    stop("M cannot be NULL. We need a matrix of features that defines the levels of x")
+  }else{
+    
+    if (inherits(x, "dgCMatrix") | inherits(x, "matrix")) {
+      notPresentInM <- setdiff(colnames(Z),rownames(M))
+      notPresentInZ <- setdiff(rownames(M),colnames(x))
+    }else{
+      notPresentInM <- setdiff(unique(x),rownames(M))
+      notPresentInZ <- setdiff(rownames(M),unique(x))
+    }
+    
+    # if(length(notPresentInM) > 0 ){
+    #   stop("All levels in x need to be present in M")
+    # }
+    # 
+    # if(length(notPresentInZ) > 0 ){
+    #   stop("All levels in M need to be present in x")
+    # }
+    if(is.null(Lam)){
+      nPC <- min(c(nPC, ncol(M)))
+      if(cholD){
+        smd <- try(chol(M) , silent = TRUE)
+        if(inherits(smd, "try-error")){smd <- try(chol((M+diag(1e-5,nrow(M),nrow(M))) ) , silent = TRUE)}
+        Lam0 = t(smd)
+      }else{
+        smd <- svd(M) 
+        Lam0 = smd$u
+      }
+      Lam = Lam0[,1:min(c(nPC,ncol(M))), drop=FALSE]
+      rownames(Lam) <- rownames(M)
+      colnames(Lam) <- paste0("nPC",1:nPC)
+    }else{
+      Lam0=Lam
+      Lam = Lam0[,1:min(c(nPC,ncol(M))), drop=FALSE]
+      rownames(Lam) <- rownames(M)
+      colnames(Lam) <- paste0("nPC",1:nPC)
+    }
+  }
+  if (inherits(x, "dgCMatrix") | inherits(x, "matrix")) {
+    Z <- x
+  }else{
+    if (!is.character(x) & !is.factor(x)) {
+      namess <- as.character(substitute(list(x)))[-1L]
+      Z <- Matrix(x, ncol = 1)
+      colnames(Z) <- namess
+    }else {
+      dummy <- x
+      levs <- na.omit(unique(dummy))
+      if (length(levs) > 1) {
+        Z <- Matrix::sparse.model.matrix(~dummy - 1, na.action = na.pass)
+        colnames(Z) <- gsub("dummy", "", colnames(Z))
+      } else {
+        vv <- which(!is.na(dummy))
+        Z <- Matrix(0, nrow = length(dummy))
+        Z[vv, ] <- 1
+        colnames(Z) <- levs
+      }
+    }
+  }
+  
+  Zstar <- as.matrix(Z %*% Lam[colnames(Z),])
+  if(returnLam){
+    return(list(Z = Zstar, Lam=Lam, Lam0=Lam0)) 
+  }else{return(Zstar)}
+  
+}
 rrc <- function(timevar=NULL, idvar=NULL, response=NULL, Gu=NULL, nPC=2, returnLam=FALSE, cholD=TRUE){
   if(is.null(timevar)){stop("Please provide the timevar argument.", call. = FALSE)}
   if(is.null(idvar)){stop("Please provide the idvar argument.", call. = FALSE)}
@@ -456,9 +545,28 @@ rrc <- function(timevar=NULL, idvar=NULL, response=NULL, Gu=NULL, nPC=2, returnL
   dtx2 <- aggregate(v.names~timevar+idvar, data=dtx, FUN=mean, na.rm=TRUE)
   wide <- reshape(dtx2, direction = "wide", idvar = "idvar",
                   timevar = "timevar", v.names = "v.names", sep= "_")
-  Y <- apply(wide[,-1],2, sommer::imputev)
-  rownames(Y) <- wide[,1]
-  if(!is.null(Gu)){Y=Gu%*%Y} # adjust if covariance matrix exist
+  rowNamesWide <-  wide[,1]
+  rownames(wide) <- rowNamesWide
+  wide <- wide[,-1]
+  # if user doesn't provide the a Gu we impute simply and use the correlation matrix as a Gu
+  if(is.null(Gu)){ 
+    X <- apply(wide, 2, sommer::imputev)
+    Gu <- cor(t(X))
+  }else{
+    Gu = cov2cor(Gu)
+  } 
+  # impute missing data using a relationship matrix 
+  if(is.null(rownames(Gu))){stop("Gu needs to have row names.", call. = FALSE)}
+  if(is.null(colnames(Gu))){stop("Gu needs to have column names.", call. = FALSE)}
+  for(iEnv in 1:ncol(wide)){ # iEnv=1
+    withData <- which(!is.na(wide[,iEnv]))
+    withoutData <- which(is.na(wide[,iEnv]))
+    imputationVector <- as.numeric(Gu[as.character(rowNamesWide),as.character(rowNamesWide[withData])] %*% as.matrix(wide[withData,iEnv]))
+    wide[,iEnv] <- imputationVector  # wide[withoutData,iEnv] <- imputationVector[withoutData]
+    # scaleFactor=imputationVector[withData[1]] / wide[withData[1],iEnv]
+  }
+  ##
+  Y <- apply(wide,2, sommer::imputev)
   GE <- cov(scale(Y, scale = TRUE, center = TRUE)) # surrogate of unstructured matrix to start with
   GE <- as.matrix(nearPD(GE)$mat)
   # GE <- as.data.frame(t(scale( t(scale(Y, center=T,scale=F)), center=T, scale=F)))  # sum(GE^2)
@@ -471,13 +579,14 @@ rrc <- function(timevar=NULL, idvar=NULL, response=NULL, Gu=NULL, nPC=2, returnL
     D <- diag(svd(GE)$d)
     Lam <- U %*% sqrt(D); # LOADINGS 
   }
-  # pick required PCs
   colnamesLam <- colnames(Lam)
-  Lam <- as.matrix(Lam[,1:nPC]); colnames(Lam) <- colnamesLam[1:nPC]  # Se <- Se[,1:nPC]
+  rownamesLam <- rownames(Lam)
+  Lam <- as.matrix(Lam[,1:nPC]); 
+  colnames(Lam) <- colnamesLam[1:nPC]
+  rownames(Lam) <- rownamesLam
   ##
-  rownames(Lam) <- rownames(GE)#levels(dataset$Genotype);  # rownames(Se) <- colnames(GE)#levels(dataset$Environment)
-  colnames(Lam) <- paste("PC", 1:ncol(Lam), sep =""); # colnames(Se) <- paste("PC", 1:ncol(Se), sep ="")
-  rownames(Lam) <- gsub("v.names_","", rownames(Lam))
+  rownames(Lam) <- gsub("v.names_","",rownames(Lam))#rownames(GE)#levels(dataset$Genotype);  # rownames(Se) <- colnames(GE)#levels(dataset$Environment)
+  colnames(Lam) <- paste("PC", 1:ncol(Lam), sep =""); # 
   ######### GEreduced = Sg %*% t(Se) 
   # if we want to merge with PCs for environments
   dtx$index <- 1:nrow(dtx)
@@ -488,7 +597,7 @@ rrc <- function(timevar=NULL, idvar=NULL, response=NULL, Gu=NULL, nPC=2, returnL
   Z <- as.matrix(Z)
   rownames(Z) <- NULL
   if(returnLam){
-    return(list(Lam=Lam))
+    return(list(Lam=Lam, wide=wide))
   }else{
     return(Z)
   }

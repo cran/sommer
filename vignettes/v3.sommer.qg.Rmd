@@ -466,13 +466,13 @@ vv2 <- sample(vv1, 100)
 y.trn[vv2,"GY"] <- NA
 anss2 <- mmec(GY~1, 
               random=~vsc(isc(dent),Gu=Adi) + vsc(isc(flint),Gu=Afi), 
-              rcov=~units, nIters=3,
+              rcov=~units, nIters=15,
               data=y.trn, verbose = FALSE) 
 summary(anss2)$varcomp
 
-# zu1 <- model.matrix(~dent-1,y.trn) %*% anss2$U$`u:dent`$GY
-# zu2 <- model.matrix(~flint-1,y.trn) %*% anss2$U$`u:flint`$GY
-# u <- zu1+zu2+anss2$Beta[1,"Estimate"]
+# zu1 <- model.matrix(~dent-1,y.trn) %*% anss2$uList$`vsc(isc(dent), Gu = Adi)`
+# zu2 <- model.matrix(~flint-1,y.trn) %*% anss2$uList$`vsc(isc(flint), Gu = Afi)`
+# u <- zu1+zu2+as.vector(anss2$b)
 # cor(u[vv2,], DT$GY[vv2])
 ```
 
@@ -506,7 +506,7 @@ summary(mix)
 # make a plot to observe the spatial effects found by the spl2D()
 W <- with(DT,spl2Da(Row,Col)) # 2D spline incidence matrix
 DT$spatial <- W$Z$`A:all`%*%mix$U$`A:all`$Yield # 2D spline BLUPs
-lattice::levelplot(spatial~Row*Col, data=DT) # plot the spatial effect by row and column
+# lattice::levelplot(spatial~Row*Col, data=DT) # plot the spatial effect by row and column
 ```
 
 Notice that the job is done by the `spl2Da()` function that takes the `Row` and `Col` information to fit a spatial kernel. 

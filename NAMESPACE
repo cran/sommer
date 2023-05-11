@@ -17,7 +17,9 @@ export(atr,csr,dsr,usr,vsr, gvsr, vs, ## mmer
        atc,csc,dsc,usc,vsc, isc, rrc, ## mmec
        unsm,fixm,fcm,
        list2usmat, transformConstraints,
-       overlay, add.diallel.vars,
+       # special functions to create model matrices
+       overlay, redmm, 
+       add.diallel.vars, stackTrait,
        bivariateRun, vpredict)
 
 ## FUN_spatial
@@ -28,7 +30,7 @@ export(atcg1234,build.HMM)
 
 ## FUN_stats
 export(adiag1, imputev, logspace,
-       leg, wald.test,
+       leg, wald.test, corImputation,
        r2
        )
 
@@ -86,9 +88,9 @@ S3method(print, wald.test)
   import("methods")
   import("Matrix")
   import("MASS")
-  import("lattice")
   import("crayon")
  # import("data.table")
+  # import("lattice")
 ############
 # IMPORTS
 ############
@@ -110,6 +112,7 @@ S3method(print, wald.test)
              "nobs", "ppoints", "sd", "model.frame", "model.response", "na.pass",
              "cor", "optim", "rchisq","quantile","deriv","terms.formula",
              "aggregate","pf","terms", "reshape")
-  importFrom("lattice", "wireframe")
+#  importFrom("RcppArmadillo", "fastLm")
+#  importFrom("lattice", "wireframe")
 #  importFrom("data.table", "setkeyv","data.table")
 
