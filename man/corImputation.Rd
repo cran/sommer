@@ -30,7 +30,38 @@
 }
 
 \examples{
-### TBD
+
+####################################
+### imputing genotype data example
+####################################
+# data(DT_cpdata)
+# X <- GT_cpdata
+# # add missing data
+# v <- sample(1:length(X), 500)
+# Xna <- X
+# Xna[v]<- NA
+# ## impute (can take some time)
+# Y <- corImputation(wide=Xna, Gu=NULL, nearest=20, roundR=TRUE) 
+# cm <- table(Y$imputed[v],X[v])
+# ## calculate accuracy
+# sum(diag(cm))/length(v)
+####################################
+### imputing phenotypic data example
+####################################
+# data(DT_h2)
+# X <- reshape(DT_h2[,c("Name","Env","y")], direction = "wide", idvar = "Name",
+#                 timevar = "Env", v.names = "y", sep= "_")
+# rownames(X) <- X$Name
+# X <- as.matrix(X[,-1])
+# head(X)
+# # add missing data
+# v <- sample(1:length(X), 50)
+# Xna <- X
+# Xna[v]<- NA
+# ## impute
+# Y <- corImputation(wide=Xna, Gu=NULL, nearest=20, roundR=TRUE)
+# plot(y=Y$imputed[v],x=X[v], xlab="true",ylab="predicted")
+# cor(Y$imputed[v],X[v], use = "complete.obs")
 
 
 }

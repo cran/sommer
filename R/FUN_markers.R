@@ -1,3 +1,31 @@
+neMarker <- function(M, maxNe=100, maxMarker=1000, nSamples=5){
+  # maxMarker argument: only used a limited number of markers to avoid this to be too time consuming
+  v <- sample(1:ncol(M), min(c(maxMarker, ncol(M))))
+  M <- M[,v]
+  # calculate the total number of alleles in the population
+  nAllelesPop <- apply(M,2,function(x){ifelse(length(table(x)) > 1, 2, 1)})
+  nAllelesPopTotal <- sum(nAllelesPop)
+  # maxNe argument: define the range to test
+  maxNe <- min(c(maxNe, nrow(M)))
+  # do the sampling algorithm
+  allelesCovered <- allelesCoveredSe <- vector(mode="numeric", length = maxNe)
+  for(i in 2:maxNe){ # for a possible Ne
+    print(i)
+    allelesCoveredSample <- vector(mode="numeric", length = nSamples)
+    # nSamples argument: take a couple of samples 
+    for(j in 1:nSamples){
+      ii <- sample(1:nrow(M),i) # sample i individuals
+      nAllelesPopI <- apply(M[ii,],2,function(x){ifelse(length(table(x)) > 1, 2, 1)}) # how many alleles we collect in the sample
+      allelesCoveredSample[j] <- sum(nAllelesPopI) # sum them up
+    }
+    allelesCovered[i] <- mean(allelesCoveredSample)/nAllelesPopTotal # mean across samples
+    allelesCoveredSe[i] <- ( sd(allelesCoveredSample/nAllelesPopTotal) ) # SE across samples 
+  }
+  # save results
+  result <- data.frame(allelesCovered=allelesCovered, allelesCoveredSe=allelesCoveredSe, Ne=1:maxNe)
+  return(result)
+}
+
 atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FALSE, by.allele=FALSE, imp=TRUE, ref.alleles=NULL){
   
   impute.mode <- function(x) {
@@ -362,7 +390,7 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FA
   return(list(M=M,ref.alleles=tmp))
 }
 
-build.HMM <- function(M1,M2, custom.hyb=NULL, return.combos.only=FALSE){
+build.HMM <- function(M1,M2, custom.hyb=NULL, return.combos.only=FALSE, separator=":"){
   # build hybrid marker matrix
   
   if(!is.null(custom.hyb)){
@@ -377,7 +405,7 @@ build.HMM <- function(M1,M2, custom.hyb=NULL, return.combos.only=FALSE){
     b <- rownames(M2)
     pheno <- expand.grid(a,b)
     pheno <- pheno[!duplicated(t(apply(pheno, 1, sort))),]
-    pheno$hybrid <- paste(pheno$Var1, pheno$Var2, sep=":")
+    pheno$hybrid <- paste(pheno$Var1, pheno$Var2, sep=separator)
   }
   
   if(!return.combos.only){
@@ -395,14 +423,12 @@ build.HMM <- function(M1,M2, custom.hyb=NULL, return.combos.only=FALSE){
       cat("Either -1 or 1 alleles not detected in M1, we assume you have coded homozygotes \n       as 0 and 2 instead of -1 and 1. We'll fix it.\n")
     }
     
-    if(all(checkM1 == c(1,1,0))){ # homo markers were coded correctly as -1,1
-    }else if(all(checkM1 == c(0,1,0)) | all(checkM1 == c(1,0,0))){ # homo markers were coded as 0 1
+    if(all(checkM2 == c(1,1,0))){ # homo markers were coded correctly as -1,1
+    }else if(all(checkM2 == c(0,1,0)) | all(checkM2 == c(1,0,0))){ # homo markers were coded as 0 1
       cat("Either -1 or 1 alleles not detected in M2, we assume you have coded homozygotes \n       as 0 and 1 instead of -1 and 1. We'll fix it.\n")
-    }else if(all(checkM1 == c(0,0,1))){ # homo markers were coded as 0 2
+    }else if(all(checkM2 == c(0,0,1))){ # homo markers were coded as 0 2
       cat("Either -1 or 1 alleles not detected in M2, we assume you have coded homozygotes \n       as 0 and 2 instead of -1 and 1. We'll fix it.\n")
     }
-    
-    
     
     ## add markers coming from parents M1
     Z1 <- model.matrix(~Var1-1,pheno);dim(Z1); 

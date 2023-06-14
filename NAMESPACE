@@ -26,7 +26,7 @@ export(atr,csr,dsr,usr,vsr, gvsr, vs, ## mmer
 export( spl2Da,spl2Db, spl2Dc,spl2Dmats,bbasis,tpsmmbwrapper)
 
 ## FUN_markers
-export(atcg1234,build.HMM)
+export(atcg1234,build.HMM, neMarker)
 
 ## FUN_stats
 export(adiag1, imputev, logspace,

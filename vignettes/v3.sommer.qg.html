@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2023-05-11" />
+<meta name="date" content="2023-06-14" />
 
 <title>Quantitative genetics using the sommer package</title>
 
@@ -341,7 +341,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Quantitative genetics using the sommer
 package</h1>
 <h4 class="author">Giovanny Covarrubias-Pazaran</h4>
-<h4 class="date">2023-05-11</h4>
+<h4 class="date">2023-06-14</h4>
 
 
 
@@ -939,10 +939,10 @@ to show how to do prediction of single crosses.</p>
 <span id="cb42-16"><a href="#cb42-16" tabindex="-1"></a>              <span class="at">rcov=</span><span class="sc">~</span>units, <span class="at">nIters=</span><span class="dv">15</span>,</span>
 <span id="cb42-17"><a href="#cb42-17" tabindex="-1"></a>              <span class="at">data=</span>y.trn, <span class="at">verbose =</span> <span class="cn">FALSE</span>) </span>
 <span id="cb42-18"><a href="#cb42-18" tabindex="-1"></a><span class="fu">summary</span>(anss2)<span class="sc">$</span>varcomp</span></code></pre></div>
-<pre><code>##                    VarComp VarCompSE    Zratio Constraint
-## dent:Adi:isc:isc  63.69939  4.333762 14.698407   Positive
-## flint:Afi:isc:isc 35.09621  3.974697  8.829909   Positive
-## units:isc:isc     21.16916  3.171060  6.675736   Positive</code></pre>
+<pre><code>##                    VarComp VarCompSE   Zratio Constraint
+## dent:Adi:isc:isc  15.86817  2.992973 5.301809   Positive
+## flint:Afi:isc:isc 11.29153  3.280194 3.442337   Positive
+## units:isc:isc     15.97828  2.831564 5.642916   Positive</code></pre>
 <div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" tabindex="-1"></a><span class="co"># zu1 &lt;- model.matrix(~dent-1,y.trn) %*% anss2$uList$`vsc(isc(dent), Gu = Adi)`</span></span>
 <span id="cb44-2"><a href="#cb44-2" tabindex="-1"></a><span class="co"># zu2 &lt;- model.matrix(~flint-1,y.trn) %*% anss2$uList$`vsc(isc(flint), Gu = Afi)`</span></span>
 <span id="cb44-3"><a href="#cb44-3" tabindex="-1"></a><span class="co"># u &lt;- zu1+zu2+as.vector(anss2$b)</span></span>

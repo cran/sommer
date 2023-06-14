@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2023-05-11" />
+<meta name="date" content="2023-06-14" />
 
 <title>Fitting genotype by environment models in sommer</title>
 
@@ -341,7 +341,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Fitting genotype by environment models in
 sommer</h1>
 <h4 class="author">Giovanny Covarrubias-Pazaran</h4>
-<h4 class="date">2023-05-11</h4>
+<h4 class="date">2023-06-14</h4>
 
 
 
@@ -1000,9 +1000,9 @@ function. Here we show an example of how to fit the model:</p>
 ## Env:Name:y:PC1:PC2  0.5079456  4.7705288 0.1064757   Unconstr
 ## Env:Name:y:PC2:PC2 96.6636158 48.3041640 2.0011446   Positive
 ## units:isc:isc       6.8753251  0.8183467 8.4014822   Positive</code></pre>
-<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" tabindex="-1"></a>Lam<span class="ot">=</span><span class="fu">with</span>(DT, <span class="fu">rrc</span>(Env, Name, y, <span class="at">returnLam =</span> <span class="cn">TRUE</span>, <span class="at">nPC =</span> <span class="dv">2</span>))<span class="sc">$</span>Lam <span class="co"># extract loadings</span></span>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" tabindex="-1"></a>Gamma<span class="ot">=</span><span class="fu">with</span>(DT, <span class="fu">rrc</span>(Env, Name, y, <span class="at">returnGamma =</span> <span class="cn">TRUE</span>, <span class="at">nPC =</span> <span class="dv">2</span>))<span class="sc">$</span>Gamma <span class="co"># extract loadings</span></span>
 <span id="cb37-2"><a href="#cb37-2" tabindex="-1"></a>score.mat <span class="ot">&lt;-</span> ans1b<span class="sc">$</span>uList[[<span class="dv">1</span>]]; <span class="co"># extract factor scores</span></span>
-<span id="cb37-3"><a href="#cb37-3" tabindex="-1"></a>BLUP <span class="ot">=</span> score.mat <span class="sc">%*%</span> <span class="fu">t</span>(Lam) <span class="co"># BLUPs for all environments</span></span></code></pre></div>
+<span id="cb37-3"><a href="#cb37-3" tabindex="-1"></a>BLUP <span class="ot">=</span> score.mat <span class="sc">%*%</span> <span class="fu">t</span>(Gamma) <span class="co"># BLUPs for all environments</span></span></code></pre></div>
 <p>As can be seen BLUPs for all environments can be recovered by
 multiplying the loadings (Lam) by the factor scores (score.mat). This is
 a parsomonious way to model an unstructured covariance.</p>
