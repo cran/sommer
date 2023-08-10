@@ -1,4 +1,4 @@
-vsc <- function(..., Gu=NULL, buildGu=TRUE, meN=1, meTheta=NULL, meThetaC=NULL, sp=FALSE){
+vsc <- function(..., Gu=NULL, buildGu=TRUE, meN=1, meTheta=NULL, meThetaC=NULL, sp=FALSE, isFixed=FALSE){
 
   ## ... list of structures to define the random effect , e.g. init <- list(ds(M$data$FIELD),TP)
   ## Gu the known covariance matrix of the vs
@@ -164,8 +164,12 @@ vsc <- function(..., Gu=NULL, buildGu=TRUE, meN=1, meTheta=NULL, meThetaC=NULL, 
   if(sp){thetaF <- thetaF*0}
   # we make sure that the A matrix is properly ordered
   cn <- colnames(Z[[length(Z)]])
-  Gu <- Gu[cn,cn]
+  Gu <- Gu[cn,cn, drop=FALSE]
   output <- list(Z=Z, Gu=Gu, theta=theta, thetaC=thetaC, thetaF=thetaF,partitionsR=partitionsR, sp=sp0)
-  return(output)
+  if(isFixed){
+    return(as.matrix(do.call(cbind,Z)))
+  }else{
+    return(output)
+  }
 }
 

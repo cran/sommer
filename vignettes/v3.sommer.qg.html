@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2023-06-14" />
+<meta name="date" content="2023-08-09" />
 
 <title>Quantitative genetics using the sommer package</title>
 
@@ -341,7 +341,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Quantitative genetics using the sommer
 package</h1>
 <h4 class="author">Giovanny Covarrubias-Pazaran</h4>
-<h4 class="date">2023-06-14</h4>
+<h4 class="date">2023-08-09</h4>
 
 
 
@@ -863,8 +863,8 @@ effects.</p>
 <span id="cb38-2"><a href="#cb38-2" tabindex="-1"></a><span class="co"># DT &lt;- DT_ige</span></span>
 <span id="cb38-3"><a href="#cb38-3" tabindex="-1"></a><span class="co"># Af &lt;- A_ige</span></span>
 <span id="cb38-4"><a href="#cb38-4" tabindex="-1"></a><span class="co"># An &lt;- A_ige</span></span>
-<span id="cb38-5"><a href="#cb38-5" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb38-6"><a href="#cb38-6" tabindex="-1"></a><span class="co"># ## Direct genetic effects model</span></span>
+<span id="cb38-5"><a href="#cb38-5" tabindex="-1"></a></span>
+<span id="cb38-6"><a href="#cb38-6" tabindex="-1"></a><span class="do">## Direct genetic effects model</span></span>
 <span id="cb38-7"><a href="#cb38-7" tabindex="-1"></a><span class="co"># modDGE &lt;- mmec(trait ~ block,</span></span>
 <span id="cb38-8"><a href="#cb38-8" tabindex="-1"></a><span class="co">#                random = ~ focal,</span></span>
 <span id="cb38-9"><a href="#cb38-9" tabindex="-1"></a><span class="co">#                rcov = ~ units, nIters=3,</span></span>
@@ -877,27 +877,29 @@ between DGE and IGE:</p>
 <span id="cb39-3"><a href="#cb39-3" tabindex="-1"></a><span class="co"># A &lt;- A_ige</span></span>
 <span id="cb39-4"><a href="#cb39-4" tabindex="-1"></a><span class="co"># </span></span>
 <span id="cb39-5"><a href="#cb39-5" tabindex="-1"></a><span class="co"># ## Indirect genetic effects model</span></span>
-<span id="cb39-6"><a href="#cb39-6" tabindex="-1"></a><span class="co"># modDGE &lt;- mmec(trait ~ block,</span></span>
-<span id="cb39-7"><a href="#cb39-7" tabindex="-1"></a><span class="co">#                random = ~ focal + neighbour,</span></span>
-<span id="cb39-8"><a href="#cb39-8" tabindex="-1"></a><span class="co">#                rcov = ~ units, nIters=3,</span></span>
-<span id="cb39-9"><a href="#cb39-9" tabindex="-1"></a><span class="co">#                data = DT, verbose=FALSE)</span></span>
-<span id="cb39-10"><a href="#cb39-10" tabindex="-1"></a><span class="co"># summary(modDGE)$varcomp</span></span></code></pre></div>
+<span id="cb39-6"><a href="#cb39-6" tabindex="-1"></a><span class="co"># modIGE &lt;- mmec(trait ~ block, dateWarning = FALSE,</span></span>
+<span id="cb39-7"><a href="#cb39-7" tabindex="-1"></a><span class="co">#                random = ~ focal + neighbour, verbose = FALSE,</span></span>
+<span id="cb39-8"><a href="#cb39-8" tabindex="-1"></a><span class="co">#                rcov = ~ units, nIters=100,</span></span>
+<span id="cb39-9"><a href="#cb39-9" tabindex="-1"></a><span class="co">#               data = DT)</span></span>
+<span id="cb39-10"><a href="#cb39-10" tabindex="-1"></a><span class="co"># summary(modIGE)$varcomp</span></span></code></pre></div>
 <p>We now fit the indirect genetic effects model with covariance between
 DGE and IGE for which we will use the <code>gvsr()</code> function:</p>
-<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" tabindex="-1"></a><span class="do">### Indirect genetic effects model</span></span>
-<span id="cb40-2"><a href="#cb40-2" tabindex="-1"></a><span class="co"># modIGE &lt;- mmer(trait ~ block,</span></span>
-<span id="cb40-3"><a href="#cb40-3" tabindex="-1"></a><span class="co">#                random = ~ gvsr(focal, neighbour),</span></span>
-<span id="cb40-4"><a href="#cb40-4" tabindex="-1"></a><span class="co">#                rcov = ~ units, nIters=3,</span></span>
-<span id="cb40-5"><a href="#cb40-5" tabindex="-1"></a><span class="co">#                data = DT, verbose=FALSE)</span></span>
+<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" tabindex="-1"></a><span class="co"># </span><span class="al">###</span><span class="co"> Indirect genetic effects model</span></span>
+<span id="cb40-2"><a href="#cb40-2" tabindex="-1"></a><span class="co"># modIGE &lt;- mmec(trait ~ block, dateWarning = FALSE,</span></span>
+<span id="cb40-3"><a href="#cb40-3" tabindex="-1"></a><span class="co">#                random = ~ covc( vsc(isc(focal)), vsc(isc(neighbour)) ),</span></span>
+<span id="cb40-4"><a href="#cb40-4" tabindex="-1"></a><span class="co">#                rcov = ~ units, nIters=100, verbose = FALSE,</span></span>
+<span id="cb40-5"><a href="#cb40-5" tabindex="-1"></a><span class="co">#               data = DT)</span></span>
 <span id="cb40-6"><a href="#cb40-6" tabindex="-1"></a><span class="co"># summary(modIGE)$varcomp</span></span></code></pre></div>
 <p>On top of that we can include a relationship matrix for the two
 random effects that are being forced to co-vary</p>
 <div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" tabindex="-1"></a><span class="do">### Indirect genetic effects model</span></span>
-<span id="cb41-2"><a href="#cb41-2" tabindex="-1"></a><span class="co"># modIGE &lt;- mmer(trait ~ block,</span></span>
-<span id="cb41-3"><a href="#cb41-3" tabindex="-1"></a><span class="co">#                random = ~ gvsr(focal, neighbour, Gu=list(Af,An)),</span></span>
-<span id="cb41-4"><a href="#cb41-4" tabindex="-1"></a><span class="co">#                rcov = ~ units, nIters=3,</span></span>
-<span id="cb41-5"><a href="#cb41-5" tabindex="-1"></a><span class="co">#                data = DT, verbose=FALSE)</span></span>
-<span id="cb41-6"><a href="#cb41-6" tabindex="-1"></a><span class="co"># summary(modIGE)$varcomp</span></span></code></pre></div>
+<span id="cb41-2"><a href="#cb41-2" tabindex="-1"></a><span class="co"># Ai &lt;- as( solve(A_ige + diag(1e-5, nrow(A_ige),nrow(A_ige) )), Class=&quot;dgCMatrix&quot;)</span></span>
+<span id="cb41-3"><a href="#cb41-3" tabindex="-1"></a><span class="co"># # Indirect genetic effects model with covariance between DGE and IGE using relationship matrices</span></span>
+<span id="cb41-4"><a href="#cb41-4" tabindex="-1"></a><span class="co"># modIGE &lt;- mmec(trait ~ block, dateWarning = FALSE,</span></span>
+<span id="cb41-5"><a href="#cb41-5" tabindex="-1"></a><span class="co">#                random = ~ covc( vsc(isc(focal), Gu=Ai), vsc(isc(neighbour), Gu=Ai) ),</span></span>
+<span id="cb41-6"><a href="#cb41-6" tabindex="-1"></a><span class="co">#                rcov = ~ units, nIters=100, verbose = FALSE,</span></span>
+<span id="cb41-7"><a href="#cb41-7" tabindex="-1"></a><span class="co">#               data = DT)</span></span>
+<span id="cb41-8"><a href="#cb41-8" tabindex="-1"></a><span class="co"># summary(modIGE)$varcomp</span></span></code></pre></div>
 </div>
 <div id="genomic-selection-single-cross-prediction" class="section level3">
 <h3>7) Genomic selection: single cross prediction</h3>
@@ -995,7 +997,7 @@ spline model.</p>
 <span id="cb45-14"><a href="#cb45-14" tabindex="-1"></a><span class="fu">summary</span>(mix)</span></code></pre></div>
 <pre><code>## ============================================================
 ##          Multivariate Linear Mixed Model fit by REML         
-## **********************  sommer 4.2  ********************** 
+## **********************  sommer 4.3  ********************** 
 ## ============================================================
 ##          logLik      AIC     BIC Method Converge
 ## Value -151.2647 304.5293 308.421     NR    FALSE

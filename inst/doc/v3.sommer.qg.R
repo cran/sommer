@@ -159,8 +159,8 @@ cor(u[vv,],DT[vv,"X1"]) # same correlation
 # DT <- DT_ige
 # Af <- A_ige
 # An <- A_ige
-# 
-# ## Direct genetic effects model
+
+## Direct genetic effects model
 # modDGE <- mmec(trait ~ block,
 #                random = ~ focal,
 #                rcov = ~ units, nIters=3,
@@ -174,30 +174,32 @@ cor(u[vv,],DT[vv,"X1"]) # same correlation
 # A <- A_ige
 # 
 # ## Indirect genetic effects model
-# modDGE <- mmec(trait ~ block,
-#                random = ~ focal + neighbour,
-#                rcov = ~ units, nIters=3,
-#                data = DT, verbose=FALSE)
-# summary(modDGE)$varcomp
+# modIGE <- mmec(trait ~ block, dateWarning = FALSE,
+#                random = ~ focal + neighbour, verbose = FALSE,
+#                rcov = ~ units, nIters=100,
+#               data = DT)
+# summary(modIGE)$varcomp
 
 
 ## -----------------------------------------------------------------------------
 
-### Indirect genetic effects model
-# modIGE <- mmer(trait ~ block,
-#                random = ~ gvsr(focal, neighbour),
-#                rcov = ~ units, nIters=3,
-#                data = DT, verbose=FALSE)
+# ### Indirect genetic effects model
+# modIGE <- mmec(trait ~ block, dateWarning = FALSE,
+#                random = ~ covc( vsc(isc(focal)), vsc(isc(neighbour)) ),
+#                rcov = ~ units, nIters=100, verbose = FALSE,
+#               data = DT)
 # summary(modIGE)$varcomp
 
 
 ## -----------------------------------------------------------------------------
 
 ### Indirect genetic effects model
-# modIGE <- mmer(trait ~ block,
-#                random = ~ gvsr(focal, neighbour, Gu=list(Af,An)),
-#                rcov = ~ units, nIters=3,
-#                data = DT, verbose=FALSE)
+# Ai <- as( solve(A_ige + diag(1e-5, nrow(A_ige),nrow(A_ige) )), Class="dgCMatrix")
+# # Indirect genetic effects model with covariance between DGE and IGE using relationship matrices
+# modIGE <- mmec(trait ~ block, dateWarning = FALSE,
+#                random = ~ covc( vsc(isc(focal), Gu=Ai), vsc(isc(neighbour), Gu=Ai) ),
+#                rcov = ~ units, nIters=100, verbose = FALSE,
+#               data = DT)
 # summary(modIGE)$varcomp
 
 
