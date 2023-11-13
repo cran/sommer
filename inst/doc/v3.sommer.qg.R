@@ -30,7 +30,7 @@ ans.ADE <- mmer(color~1,
 vpredict(ans.ADE, h2 ~ (V1) / ( V1+V3) ) # narrow sense
 vpredict(ans.ADE, h2 ~ (V1+V2) / ( V1+V2+V3) ) # broad-sense
 
-## ---- fig.show='hold'---------------------------------------------------------
+## ----fig.show='hold'----------------------------------------------------------
 # data(DT_cornhybrids)
 # DT <- DT_cornhybrids
 # DTi <- DTi_cornhybrids

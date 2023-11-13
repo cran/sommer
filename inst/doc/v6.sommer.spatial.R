@@ -57,7 +57,7 @@ summary(m1.sommer)$varcomp
 # lattice::levelplot(fit~row*col,data=DT)
 
 
-## ---- fig.show='hold'---------------------------------------------------------
+## ----fig.show='hold'----------------------------------------------------------
 
 # SOMMER MODEL
 m2.sommer <- mmer(Y~1+V, 
@@ -70,7 +70,7 @@ summary(m1.sommer)$varcomp
 # lattice::levelplot(fit~row*col,data=DT)
 
 
-## ---- fig.show='hold'---------------------------------------------------------
+## ----fig.show='hold'----------------------------------------------------------
 
 DT2 <- rbind(DT,DT)
 DT2$Y <- DT2$Y + rnorm(length(DT2$Y))

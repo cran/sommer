@@ -26,7 +26,8 @@ neMarker <- function(M, maxNe=100, maxMarker=1000, nSamples=5){
   return(result)
 }
 
-atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FALSE, by.allele=FALSE, imp=TRUE, ref.alleles=NULL){
+atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FALSE, 
+                     by.allele=FALSE, imp=TRUE, ref.alleles=NULL){
   
   impute.mode <- function(x) {
     ix <- which(is.na(x))
@@ -143,11 +144,6 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FA
     
     fin.mat <- do.call(cbind,mat.list)
     rownames(fin.mat) <- rownames(da)
-    
-    # make full rank
-    #q <- qr(fin.mat)
-    #chas <- q$pivot[seq(q$rank)]
-    #fin.mat <- as.matrix(fin.mat[,chas])
     #############
     return(fin.mat)
   }
@@ -163,9 +159,9 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FA
     #############################
     if(by.allele){ ####&&&&&&&&&&&&&&&&&&&&&& use zero.one function
       ncolsData <- dim(data)[2]
-      ncolsData <- max(2,round(ncolsData/20))
+      ncolsData <- max(ncolsData,round(ncolsData/20))
       # print(ncolsData)
-      user.code <- apply(data[,c(1:ncolsData)], 2, function(x){q <- which(!is.na(x))[1];ss1 <- substr(x[q], start=1,stop=1);ss2 <- substr(x[q], start=2,stop=2);vv1 <-which(c(ss1,ss2)=="");if(length(vv1)>0){y <-1}else{y <- 0}; return(y)})
+      user.code <- apply(data[,c(1:ncolsData),drop=FALSE], 2, function(x){q <- which(!is.na(x))[1];ss1 <- substr(x[q], start=1,stop=1);ss2 <- substr(x[q], start=2,stop=2);vv1 <-which(c(ss1,ss2)=="");if(length(vv1)>0){y <-1}else{y <- 0}; return(y)})
       print(user.code)
       AA <- sum(user.code, na.rm = TRUE)/length(user.code)
       if(AA > .9){ # means user is using single letter
@@ -186,9 +182,9 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FA
       # 1: has only one letter
       # 0: has two letters
       ncolsData <- dim(data)[2]
-      ncolsData <- max(2,round(ncolsData/20))
+      ncolsData <- max(ncolsData,round(ncolsData/20))
       # print(ncolsData)
-      user.code <- apply(data[,c(1:ncolsData)], 2, function(x){q <- which(!is.na(x))[1];ss1 <- substr(x[q], start=1,stop=1);ss2 <- substr(x[q], start=2,stop=2);vv1 <-which(c(ss1,ss2)=="");if(length(vv1)>0){y <-1}else{y <- 0}; return(y)})
+      user.code <- apply(data[,c(1:ncolsData), drop=FALSE], 2, function(x){q <- which(!is.na(x))[1];ss1 <- substr(x[q], start=1,stop=1);ss2 <- substr(x[q], start=2,stop=2);vv1 <-which(c(ss1,ss2)=="");if(length(vv1)>0){y <-1}else{y <- 0}; return(y)})
       AA <- sum(user.code, na.rm = TRUE)/length(user.code)
       if(AA > .9){
         rrn <- rownames(data)
@@ -284,8 +280,8 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FA
         }
         ###&&&&&&&&&&&& HERE WE MUST INSERT THE NEW FUNCTIONALITY, WHERE WE DETECTED MULTIPLE ALLELES
         multi.allelic <- which(!tmpo) # good markers
-        markers <- markers[multi.allelic,]
-        tmp <- tmp[, multi.allelic]
+        markers <- markers[multi.allelic,,drop=FALSE]
+        tmp <- tmp[, multi.allelic,drop=FALSE]
       }
       
       Ref <- tmp[1, ]
@@ -295,6 +291,7 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FA
       # reference/alternate allele found
       ####################################
       cat("Converting to numeric format\n")
+      # print(str(markers))
       if(silent){
         M <- apply(cbind(Ref, markers), 1, function(x) {
           y <- gregexpr(pattern = x[1], text = x[-1], fixed = T)
@@ -312,7 +309,7 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FA
           return(ans)
         })
       }
-      
+      # print(str(M))
       gid.geno <- s1 #colnames(geno)
       rownames(M) <- gid.geno
       ####################################
@@ -330,8 +327,8 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FA
   }else{# user provides reference alleles and just want a conversion
     
     common.mark <- intersect(colnames(data), colnames(ref.alleles))
-    data <- data[,common.mark]
-    tmp <- ref.alleles[,common.mark]; #rownames(refa) <- c("Alt","Ref")
+    data <- data[,common.mark, drop=FALSE]
+    tmp <- ref.alleles[,common.mark, drop=FALSE]; #rownames(refa) <- c("Alt","Ref")
     cat("Converting to numeric format\n")
     M <- apply_pb(data.frame(1:ncol(data)),1,function(k){
       x <- as.character(data[,k])
@@ -363,7 +360,7 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FA
   # which markers have MAF > 0, JUST GET THOSE
   ####################################
   polymorphic <- which(MAF > maf)
-  M <- M[, polymorphic]
+  M <- M[, polymorphic, drop=FALSE]
   ####################################
   # function to impute markers with the mode
   ####################################

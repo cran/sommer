@@ -1,11 +1,17 @@
-covc <- function(ran1,ran2){
+covc <- function(ran1,ran2, thetaC=NULL, theta=NULL){
   if( ncol(ran1$Z[[1]]) != ncol(ran2$Z[[1]]) ){stop("Matrices of the two random effects should have the same dimensions",call. = FALSE)}
   ran1$Z[[2]] <- ran2$Z[[1]]
-  ran1$thetaC <- unsm(2); ran1$thetaC[lower.tri(ran1$thetaC)] = 0 # lower.tri must be 0
+  if(is.null(thetaC)){
+    ran1$thetaC <- unsm(2); 
+  }else{ran1$thetaC <- thetaC}
+  ran1$thetaC[lower.tri(ran1$thetaC)] = 0 # lower.tri must be 0
   colnames(ran1$thetaC) <- rownames(ran1$thetaC) <- c("ran1","ran2")
-  ran1$theta <- diag(2) * 0.05 + matrix(0.1, 2, 2)
-  ran1$thetaF <- diag(3) # n x n, where n is number of vc to estimate
-  ran1$sp <- rep(0,3) # rep 0 n times, where n is number of vc to estimate
+  if(is.null(theta)){
+    ran1$theta <- diag(2) * 0.05 + matrix(0.1, 2, 2)
+  }else{ran1$theta <- theta}
+  nvc <- length(which(thetaC > 0))
+  ran1$thetaF <- diag(nvc) # n x n, where n is number of vc to estimate
+  ran1$sp <- rep(0,nvc) # rep 0 n times, where n is number of vc to estimate
   return(ran1)
 }
 
@@ -496,35 +502,24 @@ redmm <- function (x, M = NULL, Lam=NULL, nPC=50, cholD=FALSE, returnLam=FALSE) 
       notPresentInM <- setdiff(unique(x),rownames(M))
       notPresentInZ <- setdiff(rownames(M),unique(x))
     }
-    
-    # if(length(notPresentInM) > 0 ){
-    #   stop("All levels in x need to be present in M")
-    # }
-    # 
-    # if(length(notPresentInZ) > 0 ){
-    #   stop("All levels in M need to be present in x")
-    # }
-    if(is.null(Lam)){
-      nPC <- min(c(nPC, ncol(M)))
-      if(cholD){
-        smd <- try(chol(M) , silent = TRUE)
-        if(inherits(smd, "try-error")){smd <- try(chol((M+diag(1e-5,nrow(M),nrow(M))) ) , silent = TRUE)}
-        Lam0 = t(smd)
-      }else{
-        # if(nrow(M) == ncol(M)){ # symmetric matrix
-        #   smd <- RSpectra::svds(M, k=nPC, which = "LM") # eigs_sym(M, k=nPC, which = "LM")
-        #   Lam0 <- smd$u # smd$vectors
-        # }else{
-        smd <- RSpectra::svds(M, k=nPC, which = "LM")
-        Lam0 <- smd$u
-        # }
-        # smd <- svd(M) 
-        # Lam0 = smd$u
+    if(is.null(Lam)){ # user didn't provide a Lambda matrix
+      if(nPC == 0){ # user wants to use the full marker matrix
+        Lam <- Lam0 <- M
+      }else{ # user wants to use the PCA method
+        nPC <- min(c(nPC, ncol(M)))
+        if(cholD){
+          smd <- try(chol(M) , silent = TRUE)
+          if(inherits(smd, "try-error")){smd <- try(chol((M+diag(1e-5,nrow(M),nrow(M))) ) , silent = TRUE)}
+          Lam0 = t(smd)
+        }else{
+          smd <- RSpectra::svds(M, k=nPC, which = "LM")
+          Lam0 <- smd$u
+        }
+        Lam = Lam0[,1:min(c(nPC,ncol(M))), drop=FALSE]
+        rownames(Lam) <- rownames(M)
+        colnames(Lam) <- paste0("nPC",1:nPC)
       }
-      Lam = Lam0[,1:min(c(nPC,ncol(M))), drop=FALSE]
-      rownames(Lam) <- rownames(M)
-      colnames(Lam) <- paste0("nPC",1:nPC)
-    }else{
+    }else{ # user provided it's own Lambda matrix
       Lam0=Lam
       Lam = Lam0[,1:min(c(nPC,ncol(M))), drop=FALSE]
       rownames(Lam) <- rownames(M)

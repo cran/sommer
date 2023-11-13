@@ -70,12 +70,15 @@ summary(fm2)$varcomp
 ###########
 ## sommer
 ###########
-## no equivalence in sommer to find the correlation between the 2 vc
-## this is the most similar which is equivalent to (intercept || slope)
-fm2 <- mmer(Reaction ~ Days,
-            random= ~ Subject + vsr(Days, Subject), 
-            data=DT, tolParInv = 1e-6, verbose = FALSE)
-summary(fm2)$varcomp
+## no equivalence using mmer() to find the correlation between the 2 vc
+## using mmec() the model would be
+# mm <- diag(2)+matrix(.02,2,2)
+# fm3 <- mmec(Reaction ~ Days,
+#             random=~ covc( vsc(isc(Subject)), vsc(isc(Days), isc(Subject)), theta = mm ), 
+#             nIters = 100,
+#             data=DT)
+# summary(fm3)$varcomp # or # 
+# cov2cor(fm3$theta[[1]])
 
 
 ## -----------------------------------------------------------------------------

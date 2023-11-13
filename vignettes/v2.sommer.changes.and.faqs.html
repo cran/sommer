@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2023-08-09" />
+<meta name="date" content="2023-11-13" />
 
 <title>Changes and FAQs for the sommer package</title>
 
@@ -341,18 +341,20 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Changes and FAQs for the sommer
 package</h1>
 <h4 class="author">Giovanny Covarrubias-Pazaran</h4>
-<h4 class="date">2023-08-09</h4>
+<h4 class="date">2023-11-13</h4>
 
 
 
 <p>The sommer package was developed to provide R users with a powerful
 and reliable multivariate mixed model solver. The package is focused on
-problems of the type p &gt; n (more effects to estimate than
-observations) and its core algorithm is coded in C++ using the Armadillo
-library. This package allows the user to specify the variance-covariance
-structure for the random effects, to specify heterogeneous variances,
-and to obtain other parameters such as BLUPs, BLUEs, residuals, fitted
-values, variances for fixed and random effects, etc.</p>
+two approaches: 1) p &gt; n (more effects to estimate than observations)
+using the mmer() function, and 2) n &gt; p (more observations than
+effects to estimate) using the mmec() function. The core algorithms are
+coded in C++ using the Armadillo library. This package allows the user
+to specify the variance-covariance structure for the random effects, to
+specify heterogeneous variances, and to obtain other parameters such as
+BLUPs, BLUEs, residuals, fitted values, variances for fixed and random
+effects, etc.</p>
 <p>Recently, I decided to code the main algorithm (Newton-Raphson &amp;
 Average-Information) in C++ which encouraged me to refactor all the
 machinery including special functions and specification of the models.
