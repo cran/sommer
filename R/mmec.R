@@ -8,7 +8,7 @@ mmec <- function(fixed, random, rcov, data, W,
                  verbose=TRUE, addScaleParam=NULL,
                  stepWeight=NULL, emWeight=NULL){
 
-  my.date <- "2024-03-01"
+  my.date <- "2024-07-01"
   your.date <- Sys.Date()
   ## if your month is greater than my month you are outdated
   if(dateWarning){

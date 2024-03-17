@@ -380,9 +380,9 @@ atcg1234 <- function(data, ploidy=2, format="ATCG", maf=0, multi=TRUE, silent=FA
     cat("Imputation not required. Be careful using non-imputed matrices in mixed model solvers\n")
   }
   ## ploidy 2 needs to be adjusted to -1,0,1
-  if(ploidy == 2){
-    M <- M - 1
-  }
+  # if(ploidy == 2){
+  #   M <- M - 1
+  # }
   
   return(list(M=M,ref.alleles=tmp))
 }
@@ -611,4 +611,27 @@ LD.decay <- function(markers,map,silent=FALSE,unlinked=FALSE,gamma=.95){
     resp <- list(by.LG=dat.list, all.LG=mean(dat.list))
   }
   return(resp)
+}
+
+atcg1234BackTransform <- function(marks, refs){
+  marks2 <- matrix(NA, nrow=nrow(marks), ncol = ncol(marks))
+  ploidy <- diff(range(marks, na.rm = TRUE))
+  # center <- ploidy #/ 2
+  for(iMark in 1:ncol(marks)){ # iMark=1
+    
+    marks2[,iMark] <- apply(as.data.frame(marks[,iMark]),1,function(x){
+      if(is.na(x)){
+        NA
+      }else{
+        gsub(pattern=" ",replacement="",
+             paste(c( rep(refs["Alt",colnames(marks)[iMark]], abs(x-ploidy) ),
+                   rep(refs["Ref",colnames(marks)[iMark]], x) ), collapse = ""
+             )
+        )
+      }
+    })
+  }
+  rownames(marks2) <- rownames(marks)
+  colnames(marks2) <- colnames(marks)
+  return(marks2)
 }

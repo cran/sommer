@@ -554,37 +554,40 @@ redmm <- function (x, M = NULL, Lam=NULL, nPC=50, cholD=FALSE, returnLam=FALSE) 
   }else{return(Zstar)}
   
 }
+
 rrc <- function(timevar=NULL, idvar=NULL, response=NULL, 
-                Gu=NULL, nPC=2, returnGamma=FALSE, cholD=TRUE){
-  if(is.null(timevar)){stop("Please provide the timevar argument.", call. = FALSE)}
-  if(is.null(idvar)){stop("Please provide the idvar argument.", call. = FALSE)}
-  if(is.null(response)){stop("Please provide the response argument.", call. = FALSE)}
+                Gu=NULL, nPC=2, returnGamma=FALSE, cholD=TRUE, Z=NULL){
+  if(is.null(timevar) & is.null(Z)){stop("Please provide the timevar argument.", call. = FALSE)}
+  if(is.null(idvar) & is.null(Z)){stop("Please provide the idvar argument.", call. = FALSE)}
+  if(is.null(response) & is.null(Z)){stop("Please provide the response argument.", call. = FALSE)}
   # these are called PC models by Meyer 2009, GSE. This is a reduced rank implementation
   # we produce loadings, the Z*L so we can use it to estimate factor scores in mmec()
-  dtx <- data.frame(timevar=timevar, idvar=idvar, v.names=response)
-  dtx2 <- aggregate(v.names~timevar+idvar, data=dtx, FUN=mean, na.rm=TRUE)
-  wide <- reshape(dtx2, direction = "wide", idvar = "idvar",
-                  timevar = "timevar", v.names = "v.names", sep= "_")
-  rowNamesWide <-  wide[,1]
-  rownames(wide) <- rowNamesWide
-  wide <- wide[,-1]
-  # if user doesn't provide the a Gu we impute simply and use the correlation matrix as a Gu
-  if(is.null(Gu)){ 
-    X <- apply(wide, 2, sommer::imputev)
-    Gu <- cor(t(X))
-  }else{
-    Gu = cov2cor(Gu)
-  } 
-  # impute missing data using a relationship matrix 
-  if(is.null(rownames(Gu))){stop("Gu needs to have row names.", call. = FALSE)}
-  if(is.null(colnames(Gu))){stop("Gu needs to have column names.", call. = FALSE)}
-  for(iEnv in 1:ncol(wide)){ # iEnv=1
-    withData <- which(!is.na(wide[,iEnv]))
-    withoutData <- which(is.na(wide[,iEnv]))
-    imputationVector <- as.numeric(Gu[as.character(rowNamesWide),as.character(rowNamesWide[withData])] %*% as.matrix(wide[withData,iEnv]))
-    wide[,iEnv] <- imputationVector  # wide[withoutData,iEnv] <- imputationVector[withoutData]
-    # scaleFactor=imputationVector[withData[1]] / wide[withData[1],iEnv]
-  }
+  if(is.null(Z)){
+    dtx <- data.frame(timevar=timevar, idvar=idvar, v.names=response)
+    dtx2 <- aggregate(v.names~timevar+idvar, data=dtx, FUN=mean, na.rm=TRUE)
+    wide <- reshape(dtx2, direction = "wide", idvar = "idvar",
+                    timevar = "timevar", v.names = "v.names", sep= "_")
+    rowNamesWide <-  wide[,1]
+    rownames(wide) <- rowNamesWide
+    wide <- wide[,-1]
+    # if user doesn't provide the a Gu we impute simply and use the correlation matrix as a Gu
+    if(is.null(Gu)){ 
+      X <- apply(wide, 2, sommer::imputev)
+      Gu <- cor(t(X))
+    }else{
+      Gu = cov2cor(Gu)
+    } 
+    # impute missing data using a relationship matrix 
+    if(is.null(rownames(Gu))){stop("Gu needs to have row names.", call. = FALSE)}
+    if(is.null(colnames(Gu))){stop("Gu needs to have column names.", call. = FALSE)}
+    for(iEnv in 1:ncol(wide)){ # iEnv=1
+      withData <- which(!is.na(wide[,iEnv]))
+      withoutData <- which(is.na(wide[,iEnv]))
+      imputationVector <- as.numeric(Gu[as.character(rowNamesWide),as.character(rowNamesWide[withData])] %*% as.matrix(wide[withData,iEnv]))
+      wide[,iEnv] <- imputationVector  # wide[withoutData,iEnv] <- imputationVector[withoutData]
+      # scaleFactor=imputationVector[withData[1]] / wide[withData[1],iEnv]
+    }
+  }else{wide <- Z}
   ##
   Y <- apply(wide,2, sommer::imputev)
   Sigma <- cov(scale(Y, scale = TRUE, center = TRUE)) # surrogate of unstructured matrix to start with
@@ -602,7 +605,7 @@ rrc <- function(timevar=NULL, idvar=NULL, response=NULL,
   }
   colnamesGamma <- colnames(Gamma)
   rownamesGamma <- rownames(Gamma)
-  Gamma <- as.matrix(Gamma[,1:nPC]); 
+  Gamma <- Gamma[,1:nPC, drop=FALSE]; 
   colnames(Gamma) <- colnamesGamma[1:nPC]
   rownames(Gamma) <- rownamesGamma
   ##
@@ -610,17 +613,23 @@ rrc <- function(timevar=NULL, idvar=NULL, response=NULL,
   colnames(Gamma) <- paste("PC", 1:ncol(Gamma), sep =""); # 
   ######### GEreduced = Sg %*% t(Se) 
   # if we want to merge with PCs for environments
-  dtx$index <- 1:nrow(dtx)
-  dtx2 <- dtx[which(!is.na(dtx$v.names)),]
-  Z <- Matrix::sparse.model.matrix(~timevar -1, na.action = na.pass, data=dtx2)
-  colnames(Z) <- gsub("timevar","",colnames(Z))
-  Z <- Z%*%Gamma[colnames(Z),] # we multiple original Z by the LOADINGS
-  Z <- as.matrix(Z)
-  rownames(Z) <- NULL
+  if(is.null(Z)){
+    dtx$index <- 1:nrow(dtx)
+    dtx2 <- dtx[which(!is.na(dtx$v.names)),]
+    Z <- Matrix::sparse.model.matrix(~timevar -1, na.action = na.pass, data=dtx2)
+    colnames(Z) <- gsub("timevar","",colnames(Z))
+    Zstar <- Z%*%Gamma[colnames(Z),] # we multiple original Z by the LOADINGS
+    Zstar <- as.matrix(Zstar)
+    rownames(Z) <- NULL
+  }else{
+    Zstar <- Z %*% Gamma[colnames(Z),]
+    wide=NA
+  }
+  
   if(returnGamma){
     return(list(Gamma=Gamma, wide=wide))
   }else{
-    return(Z)
+    return(Zstar)
   }
 }
 atc <- function(x, levs, thetaC=NULL, theta=NULL){
@@ -663,9 +672,11 @@ atc <- function(x, levs, thetaC=NULL, theta=NULL){
   }
   if(!is.null(thetaC)){
     mm <- thetaC
+    colnames(mm) <- rownames(mm) <- colnames(dummy)
   }
   if(!is.null(theta)){
     bnmm <- theta
+    colnames(bnmm) <- rownames(bnmm) <- colnames(dummy)
   }
   mm[lower.tri(mm)]=0
   return(list(Z=dummy,thetaC=mm, theta=bnmm))
@@ -699,9 +710,11 @@ csc <- function(x,mm, thetaC=NULL, theta=NULL){
   }
   if(!is.null(thetaC)){
     mm <- thetaC
+    colnames(mm) <- rownames(mm) <- colnames(dummy)
   }
   if(!is.null(theta)){
     bnmm <- theta
+    colnames(bnmm) <- rownames(bnmm) <- colnames(dummy)
   }
   mm[lower.tri(mm)]=0
   return(list(Z=dummy,thetaC=mm,theta=bnmm))
@@ -736,9 +749,11 @@ dsc <- function(x, thetaC=NULL, theta=NULL){
   }
   if(!is.null(thetaC)){
     mm <- thetaC
+    colnames(mm) <- rownames(mm) <- colnames(dummy)
   }
   if(!is.null(theta)){
     bnmm <- theta
+    colnames(bnmm) <- rownames(bnmm) <- colnames(dummy)
   }
   mm[lower.tri(mm)]=0
   return(list(Z=dummy,thetaC=mm, theta=bnmm))
@@ -770,9 +785,11 @@ usc <- function(x, thetaC=NULL, theta=NULL){
   bnmm <- diag(ncol(mm))*.05 + matrix(.1,ncol(mm),ncol(mm))
   if(!is.null(thetaC)){
     mm <- thetaC
+    colnames(mm) <- rownames(mm) <- colnames(dummy)
   }
   if(!is.null(theta)){
     bnmm <- theta
+    colnames(bnmm) <- rownames(bnmm) <- colnames(dummy)
   }
   mm[lower.tri(mm)]=0
   return(list(Z=dummy,thetaC=mm,theta=bnmm))

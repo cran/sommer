@@ -6,7 +6,7 @@
 }
 \usage{
   vsc(..., Gu=NULL, buildGu=TRUE, meN=1, meTheta=NULL, meThetaC=NULL, 
-      sp=FALSE, isFixed=FALSE)
+      sp=FALSE, isFixed=FALSE, verbose=TRUE)
 }
 
 \arguments{
@@ -41,6 +41,8 @@
    \item{sp}{a TRUE/FALSE statement to indicate if the VC from this structure should be multiplied by the scale parameter added in the mmec function through the addScaleParam argument in the \code{mmec} function .}
    
    \item{isFixed}{a TRUE/FALSE statement to indicate if the vsc function is being used in the fixed part of the model. When TRUE, the function only returns the model matrix to avoid any error messages associated to returning all elements for a random effect. FALSE is the default since it is assumed to be used for a variance structure in a random effect.}
+   
+   \item{verbose}{a TRUE/FALSE statement to indicate if messages should be printed when special situations accur. For example, adding unphenotyped individuals to the incidence matrices when present in the relationship  matrices.}
 
 }
 \details{
