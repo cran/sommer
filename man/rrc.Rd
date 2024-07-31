@@ -2,22 +2,18 @@
 \alias{rrc}
 \title{reduced rank covariance structure}
 \description{
-  \code{rrc} creates a reduced rank factor analytic covariance structure selecting the n vectors of the L matrix of the Cholesky decomposition or the U vectors of the SVD decomposition to create a new incidence matrix that can be used with the \code{\link{mmec}} solver.
+  \code{rrc} creates a reduced rank factor analytic covariance structure by selecting the n vectors of the L matrix of the Cholesky decomposition or the U vectors of the SVD decomposition (loadings or latent covariates) to create a new incidence matrix of latent covariates that can be used with the \code{\link{mmec}} solver to fit random regressions on the latent covariates.
 }
 \usage{
-  rrc(timevar=NULL, idvar=NULL, response=NULL, 
-      Gu=NULL, nPC=2, returnGamma=FALSE, cholD=TRUE, Z=NULL)
+  rrc(x=NULL, H=NULL, nPC=2, returnGamma=FALSE, cholD=TRUE)
 }
 
 \arguments{
-  \item{timevar}{vector of the dataset containing the variable to be used to form columns in the wide table.}
-  \item{idvar}{vector of the dataset containing the variable to be used to form rows in the wide table.}
-  \item{response}{vector of the dataset containing the response variable to be used to fill the cells of the wide table.}
-  \item{Gu}{an optional covariance matrix (\strong{NOT THE INVERSE}) between levels of the idvar in case a sparse (unbalanced) design between timevar and idvar exist.}
-  \item{nPC}{number of principal components to keep.}
-  \item{returnGamma}{a TRUE/FALSE argument specifying if the function should return the matrix of loadings of the incidence matrix for the model. The default is FALSE so it returns the incidence matrix.}
+  \item{x}{vector of the dataset containing the variable to be used to form the incidence matrix.}
+  \item{H}{two-way table of identifiers (rows; e.g., genotypes) by features (columns; e.g., environments) effects. Row names and column names are required. No missing data is allowed.}
+  \item{nPC}{number of principal components to keep from the loadings matrix.}
+  \item{returnGamma}{a TRUE/FALSE argument specifying if the function should return the matrix of loadings used to build the incidence matrix for the model. The default is FALSE so it returns only the incidence matrix.}
   \item{cholD}{a TRUE/FALSE argument specifying if the Cholesky decomposition should be calculated or the singular value decomposition should be used instead.}
-  \item{Z}{an optional incidence matrix to perform a decomposition on, already built instead of using the timevar, idvar and response argument to create an incidence matrix Z. Is either one option or the other.}
   
 }
 \details{
@@ -41,25 +37,25 @@ y = Xb + Z(I Gamma)c + e = Xb + Z*c + e
 
 which is equal to the one above but assumes specific effects = 0. 
 
-\strong{The algorithm is the following:}
+\strong{The algorithm in rrc the following:}
 
-1) creates a wide-format table of timevar (m columns) by idvar (q rows)  named H that is used to form the initial covariance matrix Sigma = H'H of dimensions m x m. 
+1) uses a wide-format table of timevar (m columns) by idvar (q rows) named H to form the initial variance-covariance matrix (Sigma) which is calculated as Sigma = H'H of dimensions m x m (column dimensions, e.g., environments x environments). 
 
 2) The Sigma matrix is then center and scaled. 
 
 3) A Cholesky (L matrix) or SVD decomposition (U D V') is performed in the Sigma matrix.
 
-4) n vectors from L (when Cholesky is used) or U sqrt(D) (when SVD is used) are kept to form Gamma.
+4) n vectors from L (when Cholesky is used) or U sqrt(D) (when SVD is used) are kept to form Gamma. Gamma = L[,1:nPc] or Gamma = U[,1:nPC]. These are the so-called loadings (L for all loadings, Gamma for the subset of loadings).
 
 4) Gamma is used to form a new incidence matrix as Z* = Z Gamma
 
-5) This matrix is later used for the REML machinery to be used with the usc (unstructured) or dsc (diagonal) structures to estimate variance components and factor scores. The resulting BLUPs from the mixed model are the optimized factor scores.
+5) This matrix is later used for the REML machinery to be used with the usc (unstructured) or dsc (diagonal) structures to estimate variance components and factor scores. The resulting BLUPs from the mixed model are the optimized factor scores. Pretty much as a random regression over latent covariates.
 
-This implementation does not update the loadings during the REML process, only estimates the REML factor scores for fixed loadings. This is different to other software (e.g., asreml) where the loadings are updated as well. 
+This implementation does not update the loadings (latent covariates) during the REML process, only estimates the REML factor scores for fixed loadings. This is different to other software (e.g., asreml) where the loadings are updated during the REML process as well. 
 
 BLUPs for genotypes in all locations can be recovered as:
 
-u = Gamma u_scores
+u = Gamma * u_scores
 
 The resulting loadings (Gamma) and factor scores can be thought as an equivalent to the classical factor analysis.
 
@@ -68,6 +64,11 @@ The resulting loadings (Gamma) and factor scores can be thought as an equivalent
   \describe{
     
     \item{$Z}{ a incidence matrix Z* = Z Gamma which is the original incidence matrix for the timevar multiplied by the loadings.}
+    
+    \item{$Gamma}{ a matrix of loadings or latent covariates.}
+        
+    \item{$Sigma}{ the covariance matrix used to calculate Gamma.}
+    
   }
 }
 \references{
@@ -84,32 +85,52 @@ The resulting loadings (Gamma) and factor scores can be thought as an equivalent
 \examples{
 
 data(DT_h2)
-# DT <- DT_h2
-# DT=DT[with(DT, order(Env)), ]
-# 
-# ans1b <- mmec(y~Env,
-#               random=~vsc( usc(rrc(Env, Name, y, nPC = 3)) , isc(Name)),
-#               rcov=~units, 
-#               # we recommend giving more iterations to these models
-#               nIters = 50, 
-#               # we recommend giving more EM iterations at the beggining 
-#               emWeight = c(rep(1,10),logspace(10,1,.05), rep(.05,80)),
-#               data=DT)
-# 
-# summary(ans1b)$varcomp
-# vcd <- diag(ans1b$theta[[1]])
-# vcd/sum(vcd) # the 3rd PC still explains more than the 2nd
-# ## Extract BLUPs
-# ## extract loadings
-# loadings=with(DT, rrc(Env, Name, y, returnGamma = TRUE, nPC = 3))$Gamma
-# ## extract factor scores
-# scores <- ans1b$uList[[1]]; 
-# ## BLUPs for all environments
-# E= scores  t(loadings)  # change space for matrix product
-# ## Extract the covariance matrix
-# vc <- ans1b$theta[[1]];vc
-# G = loadings  vc  t(loadings) # change space for matrix product
-# lattice::levelplot(cov2cor(G))
+DT <- DT_h2
+DT=DT[with(DT, order(Env)), ]
+head(DT)
+indNames <- na.omit(unique(DT$Name))
+A <- diag(length(indNames))
+rownames(A) <- colnames(A) <- indNames
+
+\donttest{
+  
+# fit diagonal model first to produce H matrix
+ansDG <- mmec(y~Env,
+              random=~ vsc(dsc(Env), isc(Name)),
+              rcov=~units, nIters = 100,
+              # we recommend giving more EM iterations at the beggining
+              emWeight = c(rep(1,10),logspace(10,1,.05), rep(.05,80)),
+              data=DT)
+
+H0 <- ansDG$uList$`vsc(dsc(Env), isc(Name))` # GxE table
+
+# reduced rank model
+ansFA <- mmec(y~Env,
+              random=~vsc( usc(rrc(Env, H = H0, nPC = 3)) , isc(Name)) + # rr
+                vsc(dsc(Env), isc(Name)), # diag
+              rcov=~units,
+              # we recommend giving more iterations to these models
+              nIters = 100,
+              # we recommend giving more EM iterations at the beggining
+              emWeight = c(rep(1,10),logspace(10,1,.05), rep(.05,80)),
+              data=DT)
+
+vcFA <- ansFA$theta[[1]]
+vcDG <- ansFA$theta[[2]]
+
+loadings=with(DT, rrc(Env, nPC = 3, H = H0, returnGamma = TRUE) )$Gamma
+scores <- ansFA$uList[[1]]
+
+vcUS <- loadings \%*\% vcFA \%*\% t(loadings)
+G <- vcUS + vcDG
+# colfunc <- colorRampPalette(c("steelblue4","springgreen","yellow"))
+# hv <- heatmap(cov2cor(G), col = colfunc(100), symm = TRUE)
+
+uFA <- scores \%*\% t(loadings)
+uDG <- ansFA$uList[[2]]
+u <- uFA + uDG
+  
+}
 
 
 }

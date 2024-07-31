@@ -198,22 +198,46 @@ text(y=preds[,2],x=e, labels = rownames(mu), cex=0.5, pos = 1)
 data(DT_h2)
 DT <- DT_h2
 DT=DT[with(DT, order(Env)), ]
+head(DT)
+indNames <- na.omit(unique(DT$Name))
+A <- diag(length(indNames))
+rownames(A) <- colnames(A) <- indNames
 
-ans1b <- mmec(y~Env,
-              random=~vsc( usc( rrc(Env, Name, y, nPC = 2) ) , isc(Name)),
-              rcov=~units, 
-              # we recommend giving more iterations to these models
-              nIters = 50, 
-              # we recommend giving more EM iterations at the beggining for usc models
+# fit diagonal model first to produce H matrix
+ansDG <- mmec(y~Env,
+              random=~ vsc(dsc(Env), isc(Name)),
+              rcov=~units, nIters = 100,
+              # we recommend giving more EM iterations at the beggining
               emWeight = c(rep(1,10),logspace(10,1,.05), rep(.05,80)),
-              verbose=FALSE,
+              data=DT, verbose = FALSE)
+
+H0 <- ansDG$uList$`vsc(dsc(Env), isc(Name))` # GxE table
+
+# reduced rank model
+ansFA <- mmec(y~Env,
+              random=~vsc( usc(rrc(Env, H = H0, nPC = 3)) , isc(Name)) + # rr
+                vsc(dsc(Env), isc(Name)), # diag
+              rcov=~units,
+              # we recommend giving more iterations to these models
+              nIters = 100, verbose = FALSE,
+              # we recommend giving more EM iterations at the beggining
+              emWeight = c(rep(1,10),logspace(10,1,.05), rep(.05,80)),
               data=DT)
 
-summary(ans1b)$varcomp
+vcFA <- ansFA$theta[[1]]
+vcDG <- ansFA$theta[[2]]
 
-Gamma=with(DT, rrc(Env, Name, y, returnGamma = TRUE, nPC = 2))$Gamma # extract loadings
-score.mat <- ans1b$uList[[1]]; # extract factor scores
-BLUP = score.mat %*% t(Gamma) # BLUPs for all environments
+loadings=with(DT, rrc(Env, nPC = 3, H = H0, returnGamma = TRUE) )$Gamma
+scores <- ansFA$uList[[1]]
+
+vcUS <- loadings %*% vcFA %*% t(loadings)
+G <- vcUS + vcDG
+# colfunc <- colorRampPalette(c("steelblue4","springgreen","yellow"))
+# hv <- heatmap(cov2cor(G), col = colfunc(100), symm = TRUE)
+
+uFA <- scores %*% t(loadings)
+uDG <- ansFA$uList[[2]]
+u <- uFA + uDG
 
 
 ## -----------------------------------------------------------------------------

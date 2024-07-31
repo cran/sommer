@@ -7,7 +7,7 @@ covc <- function(ran1,ran2, thetaC=NULL, theta=NULL){
   ran1$thetaC[lower.tri(ran1$thetaC)] = 0 # lower.tri must be 0
   colnames(ran1$thetaC) <- rownames(ran1$thetaC) <- c("ran1","ran2")
   if(is.null(theta)){
-    ran1$theta <- diag(2) * 0.05 + matrix(0.1, 2, 2)
+    ran1$theta <- diag(2) * 0.15 + matrix(0.015, 2, 2)
   }else{ran1$theta <- theta}
   nvc <- length(which(thetaC > 0))
   ran1$thetaF <- diag(nvc) # n x n, where n is number of vc to estimate
@@ -16,11 +16,16 @@ covc <- function(ran1,ran2, thetaC=NULL, theta=NULL){
 }
 
 stackTrait <- function(data, traits){
-  idvars <- setdiff(colnames(data), traits)
+  
   dataScaled <- data
+  traits <- intersect(traits, colnames(data) )
+  idvars <- setdiff(colnames(data), traits)
   for(iTrait in traits){
     dataScaled[,iTrait] <- scale(dataScaled[,iTrait])
   }
+  columnTypes <- unlist(lapply(data[idvars],class)) 
+  columnTypes <- columnTypes[which(columnTypes %in% c("factor","character","integer"))]
+  idvars <- intersect(idvars,names(columnTypes))
   data2 <- reshape(data, idvar = idvars, varying = traits,
                    timevar = "trait",
                    times = traits,v.names = "value", direction = "long")
@@ -492,7 +497,20 @@ redmm <- function (x, M = NULL, Lam=NULL, nPC=50, cholD=FALSE, returnLam=FALSE) 
   }
   
   if(is.null(M)){
-    stop("M cannot be NULL. We need a matrix of features that defines the levels of x")
+    # stop("M cannot be NULL. We need a matrix of features that defines the levels of x")
+    smd <- RSpectra::svds(x, k=nPC, which = "LM")
+    if(is.null(Lam)){
+      Lam0 <- smd$u
+      Lam = Lam0[,1:min(c(nPC,ncol(x))), drop=FALSE]
+      rownames(Lam) <- rownames(x)
+      colnames(Lam) <- paste0("nPC",1:nPC)
+    }else{
+      Lam0=Lam
+      Lam = Lam0[,1:min(c(nPC,ncol(M))), drop=FALSE]
+      rownames(Lam) <- rownames(M)
+      colnames(Lam) <- paste0("nPC",1:nPC)
+    }
+    Zstar <- Lam
   }else{
     
     if (inherits(x, "dgCMatrix") | inherits(x, "matrix")) {
@@ -548,90 +566,176 @@ redmm <- function (x, M = NULL, Lam=NULL, nPC=50, cholD=FALSE, returnLam=FALSE) 
     }
   }
   
-  Zstar <- as.matrix(Z %*% Lam[colnames(Z),])
+  if(is.null(M)){
+    Zstar <- Lam
+  }else{
+    Zstar <- as.matrix(Z %*% Lam[colnames(Z),])
+  }
+  
   if(returnLam){
     return(list(Z = Zstar, Lam=Lam, Lam0=Lam0)) 
   }else{return(Zstar)}
   
 }
 
-rrc <- function(timevar=NULL, idvar=NULL, response=NULL, 
-                Gu=NULL, nPC=2, returnGamma=FALSE, cholD=TRUE, Z=NULL){
-  if(is.null(timevar) & is.null(Z)){stop("Please provide the timevar argument.", call. = FALSE)}
-  if(is.null(idvar) & is.null(Z)){stop("Please provide the idvar argument.", call. = FALSE)}
-  if(is.null(response) & is.null(Z)){stop("Please provide the response argument.", call. = FALSE)}
-  # these are called PC models by Meyer 2009, GSE. This is a reduced rank implementation
-  # we produce loadings, the Z*L so we can use it to estimate factor scores in mmec()
-  if(is.null(Z)){
-    dtx <- data.frame(timevar=timevar, idvar=idvar, v.names=response)
-    dtx2 <- aggregate(v.names~timevar+idvar, data=dtx, FUN=mean, na.rm=TRUE)
-    wide <- reshape(dtx2, direction = "wide", idvar = "idvar",
-                    timevar = "timevar", v.names = "v.names", sep= "_")
-    rowNamesWide <-  wide[,1]
-    rownames(wide) <- rowNamesWide
-    wide <- wide[,-1]
-    # if user doesn't provide the a Gu we impute simply and use the correlation matrix as a Gu
-    if(is.null(Gu)){ 
-      X <- apply(wide, 2, sommer::imputev)
-      Gu <- cor(t(X))
-    }else{
-      Gu = cov2cor(Gu)
-    } 
-    # impute missing data using a relationship matrix 
-    if(is.null(rownames(Gu))){stop("Gu needs to have row names.", call. = FALSE)}
-    if(is.null(colnames(Gu))){stop("Gu needs to have column names.", call. = FALSE)}
-    for(iEnv in 1:ncol(wide)){ # iEnv=1
-      withData <- which(!is.na(wide[,iEnv]))
-      withoutData <- which(is.na(wide[,iEnv]))
-      imputationVector <- as.numeric(Gu[as.character(rowNamesWide),as.character(rowNamesWide[withData])] %*% as.matrix(wide[withData,iEnv]))
-      wide[,iEnv] <- imputationVector  # wide[withoutData,iEnv] <- imputationVector[withoutData]
-      # scaleFactor=imputationVector[withData[1]] / wide[withData[1],iEnv]
-    }
-  }else{wide <- Z}
-  ##
-  Y <- apply(wide,2, sommer::imputev)
-  Sigma <- cov(scale(Y, scale = TRUE, center = TRUE)) # surrogate of unstructured matrix to start with
+# rrc <- function(timevar=NULL, idvar=NULL, response=NULL, 
+#                 Gu=NULL, nPC=2, returnGamma=FALSE, cholD=TRUE, Z=NULL, wide0=NULL){
+#   if(is.null(timevar) & is.null(Z)){stop("Please provide the timevar argument.", call. = FALSE)}
+#   if(is.null(idvar) & is.null(Z)){stop("Please provide the idvar argument.", call. = FALSE)}
+#   if(is.null(response) & is.null(Z)){stop("Please provide the response argument.", call. = FALSE)}
+#   # these are called PC models by Meyer 2009, GSE. This is a reduced rank implementation
+#   # we produce loadings, the Z*L so we can use it to estimate factor scores in mmec()
+#   if(is.null(Z)){
+#     dtx <- data.frame(timevar=timevar, idvar=idvar, v.names=response)
+#     dtx2 <- aggregate(v.names~timevar+idvar, data=dtx, FUN=mean, na.rm=TRUE)
+#     wide <- reshape(dtx2, direction = "wide", idvar = "idvar",
+#                     timevar = "timevar", v.names = "v.names", sep= "_")
+#     rowNamesWide <-  wide[,1]
+#     rownames(wide) <- rowNamesWide
+#     wide <- wide[,-1]
+#     # if user doesn't provide the a Gu we impute simply and use the correlation matrix as a Gu
+#     if(is.null(Gu)){ 
+#       X <- apply(wide, 2, sommer::imputev)
+#       Gu <- cor(t(X))
+#     }else{
+#       Gu = cov2cor(Gu)
+#     } 
+#     # impute missing data using a relationship matrix 
+#     if(is.null(rownames(Gu))){stop("Gu needs to have row names.", call. = FALSE)}
+#     if(is.null(colnames(Gu))){stop("Gu needs to have column names.", call. = FALSE)}
+#     for(iEnv in 1:ncol(wide)){ # iEnv=1
+#       withData <- which(!is.na(wide[,iEnv]))
+#       withoutData <- which(is.na(wide[,iEnv]))
+#       imputationVector <- as.numeric(Gu[as.character(rowNamesWide),as.character(rowNamesWide[withData])] %*% as.matrix(wide[withData,iEnv]))
+#       wide[,iEnv] <- imputationVector  # wide[withoutData,iEnv] <- imputationVector[withoutData]
+#       # scaleFactor=imputationVector[withData[1]] / wide[withData[1],iEnv]
+#     }
+#   }else{wide <- Z}
+#   ##
+#   if(is.null(wide0)){
+#     Y <- apply(wide,2, sommer::imputev)
+#   }else{
+#     Y <- wide0
+#   }
+#   Sigma <- cov(scale(Y, scale = TRUE, center = TRUE)) # surrogate of unstructured matrix to start with
+#   Sigma <- as.matrix(nearPD(Sigma)$mat)
+#   # GE <- as.data.frame(t(scale( t(scale(Y, center=T,scale=F)), center=T, scale=F)))  # sum(GE^2)
+#   if(cholD){
+#     ## OPTION 2. USING CHOLESKY
+#     Gamma <- t(chol(Sigma)); # LOADINGS  # same GE=LL' from cholesky  plot(unlist(Gamma%*%t(Gamma)), unlist(GE))
+#   }else{
+#     ## OPTION 1. USING SVD
+#     U <- svd(Sigma)$u;  # V <- svd(GE)$v
+#     D <- diag(svd(Sigma)$d)
+#     Gamma <- U %*% sqrt(D); # LOADINGS
+#     rownames(Gamma) <- colnames(Gamma) <- rownames(Sigma)
+#   }
+#   colnamesGamma <- colnames(Gamma)
+#   rownamesGamma <- rownames(Gamma)
+#   Gamma <- Gamma[,1:nPC, drop=FALSE]; 
+#   colnames(Gamma) <- colnamesGamma[1:nPC]
+#   rownames(Gamma) <- rownamesGamma
+#   ##
+#   rownames(Gamma) <- gsub("v.names_","",rownames(Gamma))#rownames(GE)#levels(dataset$Genotype);  # rownames(Se) <- colnames(GE)#levels(dataset$Environment)
+#   colnames(Gamma) <- paste("PC", 1:ncol(Gamma), sep =""); # 
+#   ######### GEreduced = Sg %*% t(Se) 
+#   # if we want to merge with PCs for environments
+#   if(is.null(Z)){
+#     dtx$index <- 1:nrow(dtx)
+#     dtx2 <- dtx[which(!is.na(dtx$v.names)),]
+#     Z <- Matrix::sparse.model.matrix(~timevar -1, na.action = na.pass, data=dtx2)
+#     colnames(Z) <- gsub("timevar","",colnames(Z))
+#     Zstar <- Z%*%Gamma[colnames(Z),] # we multiple original Z by the LOADINGS
+#     Zstar <- as.matrix(Zstar)
+#     rownames(Z) <- NULL
+#   }else{
+#     Zstar <- Z %*% Gamma[colnames(Z),]
+#     wide=NA
+#   }
+#   
+#   if(returnGamma){
+#     return(list(Gamma=Gamma, wide=wide, Sigma=Sigma))
+#   }else{
+#     return(Zstar)
+#   }
+# }
+
+rrc <- function (x = NULL, H = NULL, nPC = 2, returnGamma = FALSE, cholD = TRUE) 
+{
+  if (is.null(x)) {
+    stop("Please provide the x argument.", call. = FALSE)
+  }
+  if (is.null(H)) {
+    stop("Please provide the x argument.", call. = FALSE)
+  }
+  Y <- apply(H, 2, imputev)
+  Sigma <- cov(scale(Y, scale = TRUE, center = TRUE))
   Sigma <- as.matrix(nearPD(Sigma)$mat)
-  # GE <- as.data.frame(t(scale( t(scale(Y, center=T,scale=F)), center=T, scale=F)))  # sum(GE^2)
-  if(cholD){
-    ## OPTION 2. USING CHOLESKY
-    Gamma <- t(chol(Sigma)); # LOADINGS  # same GE=LL' from cholesky  plot(unlist(Gamma%*%t(Gamma)), unlist(GE))
-  }else{
-    ## OPTION 1. USING SVD
-    U <- svd(Sigma)$u;  # V <- svd(GE)$v
+  if (cholD) {
+    Gamma <- t(chol(Sigma))
+  }
+  else {
+    U <- svd(Sigma)$u
     D <- diag(svd(Sigma)$d)
-    Gamma <- U %*% sqrt(D); # LOADINGS
+    Gamma <- U %*% sqrt(D)
     rownames(Gamma) <- colnames(Gamma) <- rownames(Sigma)
   }
   colnamesGamma <- colnames(Gamma)
   rownamesGamma <- rownames(Gamma)
-  Gamma <- Gamma[,1:nPC, drop=FALSE]; 
+  Gamma <- Gamma[, 1:nPC, drop = FALSE]
   colnames(Gamma) <- colnamesGamma[1:nPC]
   rownames(Gamma) <- rownamesGamma
-  ##
-  rownames(Gamma) <- gsub("v.names_","",rownames(Gamma))#rownames(GE)#levels(dataset$Genotype);  # rownames(Se) <- colnames(GE)#levels(dataset$Environment)
-  colnames(Gamma) <- paste("PC", 1:ncol(Gamma), sep =""); # 
-  ######### GEreduced = Sg %*% t(Se) 
-  # if we want to merge with PCs for environments
-  if(is.null(Z)){
-    dtx$index <- 1:nrow(dtx)
-    dtx2 <- dtx[which(!is.na(dtx$v.names)),]
-    Z <- Matrix::sparse.model.matrix(~timevar -1, na.action = na.pass, data=dtx2)
-    colnames(Z) <- gsub("timevar","",colnames(Z))
-    Zstar <- Z%*%Gamma[colnames(Z),] # we multiple original Z by the LOADINGS
-    Zstar <- as.matrix(Zstar)
-    rownames(Z) <- NULL
-  }else{
-    Zstar <- Z %*% Gamma[colnames(Z),]
-    wide=NA
+  rownames(Gamma) <- gsub("v.names_", "", rownames(Gamma))
+  colnames(Gamma) <- paste("PC", 1:ncol(Gamma), sep = "")
+  dtx <- data.frame(timevar = x)
+  dtx$index <- 1:nrow(dtx)
+  Z <- Matrix::sparse.model.matrix(~timevar - 1, na.action = na.pass, 
+                                   data = dtx)
+  colnames(Z) <- gsub("timevar", "", colnames(Z))
+  Zstar <- Z %*% Gamma[colnames(Z), ]
+  Zstar <- as.matrix(Zstar)
+  rownames(Z) <- NULL
+  if (returnGamma) {
+    return(list(Gamma = Gamma, H = H, Sigma = Sigma, Zstar = Zstar))
   }
-  
-  if(returnGamma){
-    return(list(Gamma=Gamma, wide=wide))
-  }else{
+  else {
     return(Zstar)
   }
 }
+
+H <- function(timevar=NULL, idvar=NULL, response=NULL, Gu=NULL){
+  if(is.null(timevar) ){stop("Please provide the timevar argument.", call. = FALSE)}
+  if(is.null(idvar) ){stop("Please provide the idvar argument.", call. = FALSE)}
+  if(is.null(response) ){stop("Please provide the response argument.", call. = FALSE)}
+  
+  dtx <- data.frame(timevar=timevar, idvar=idvar, v.names=response)
+  dtx2 <- aggregate(v.names~timevar+idvar, data=dtx, FUN=mean, na.rm=TRUE)
+  wide <- reshape(dtx2, direction = "wide", idvar = "idvar",
+                  timevar = "timevar", v.names = "v.names", sep= "_")
+  rowNamesWide <-  wide[,1]
+  rownames(wide) <- rowNamesWide
+  wide <- wide[,-1]
+  # if user doesn't provide the a Gu we impute simply and use the correlation matrix as a Gu
+  if(is.null(Gu)){ 
+    X <- apply(wide, 2, sommer::imputev)
+    Gu <- cor(t(X))
+  }else{
+    Gu = cov2cor(Gu)
+  } 
+  # impute missing data using a relationship matrix 
+  if(is.null(rownames(Gu))){stop("Gu needs to have row names.", call. = FALSE)}
+  if(is.null(colnames(Gu))){stop("Gu needs to have column names.", call. = FALSE)}
+  for(iEnv in 1:ncol(wide)){ # iEnv=1
+    withData <- which(!is.na(wide[,iEnv]))
+    withoutData <- which(is.na(wide[,iEnv]))
+    imputationVector <- as.numeric(Gu[as.character(rowNamesWide),as.character(rowNamesWide[withData])] %*% as.matrix(wide[withData,iEnv]))
+    wide[,iEnv] <- imputationVector  # wide[withoutData,iEnv] <- imputationVector[withoutData]
+    # scaleFactor=imputationVector[withData[1]] / wide[withData[1],iEnv]
+  }
+  colnames(wide) <- gsub("v.names_","", colnames(wide))
+  return(wide)
+}
+
 atc <- function(x, levs, thetaC=NULL, theta=NULL){
   if(is.matrix(x)){
     dummy <- x

@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2024-03-17" />
+<meta name="date" content="2024-07-31" />
 
 <title>Fitting genotype by environment models in sommer</title>
 
@@ -341,7 +341,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Fitting genotype by environment models in
 sommer</h1>
 <h4 class="author">Giovanny Covarrubias-Pazaran</h4>
-<h4 class="date">2024-03-17</h4>
+<h4 class="date">2024-07-31</h4>
 
 
 
@@ -985,29 +985,56 @@ function. Here we show an example of how to fit the model:</p>
 <div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" tabindex="-1"></a><span class="fu">data</span>(DT_h2)</span>
 <span id="cb35-2"><a href="#cb35-2" tabindex="-1"></a>DT <span class="ot">&lt;-</span> DT_h2</span>
 <span id="cb35-3"><a href="#cb35-3" tabindex="-1"></a>DT<span class="ot">=</span>DT[<span class="fu">with</span>(DT, <span class="fu">order</span>(Env)), ]</span>
-<span id="cb35-4"><a href="#cb35-4" tabindex="-1"></a></span>
-<span id="cb35-5"><a href="#cb35-5" tabindex="-1"></a>ans1b <span class="ot">&lt;-</span> <span class="fu">mmec</span>(y<span class="sc">~</span>Env,</span>
-<span id="cb35-6"><a href="#cb35-6" tabindex="-1"></a>              <span class="at">random=</span><span class="sc">~</span><span class="fu">vsc</span>( <span class="fu">usc</span>( <span class="fu">rrc</span>(Env, Name, y, <span class="at">nPC =</span> <span class="dv">2</span>) ) , <span class="fu">isc</span>(Name)),</span>
-<span id="cb35-7"><a href="#cb35-7" tabindex="-1"></a>              <span class="at">rcov=</span><span class="sc">~</span>units, </span>
-<span id="cb35-8"><a href="#cb35-8" tabindex="-1"></a>              <span class="co"># we recommend giving more iterations to these models</span></span>
-<span id="cb35-9"><a href="#cb35-9" tabindex="-1"></a>              <span class="at">nIters =</span> <span class="dv">50</span>, </span>
-<span id="cb35-10"><a href="#cb35-10" tabindex="-1"></a>              <span class="co"># we recommend giving more EM iterations at the beggining for usc models</span></span>
-<span id="cb35-11"><a href="#cb35-11" tabindex="-1"></a>              <span class="at">emWeight =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="dv">1</span>,<span class="dv">10</span>),<span class="fu">logspace</span>(<span class="dv">10</span>,<span class="dv">1</span>,.<span class="dv">05</span>), <span class="fu">rep</span>(.<span class="dv">05</span>,<span class="dv">80</span>)),</span>
-<span id="cb35-12"><a href="#cb35-12" tabindex="-1"></a>              <span class="at">verbose=</span><span class="cn">FALSE</span>,</span>
-<span id="cb35-13"><a href="#cb35-13" tabindex="-1"></a>              <span class="at">data=</span>DT)</span>
-<span id="cb35-14"><a href="#cb35-14" tabindex="-1"></a></span>
-<span id="cb35-15"><a href="#cb35-15" tabindex="-1"></a><span class="fu">summary</span>(ans1b)<span class="sc">$</span>varcomp</span></code></pre></div>
-<pre><code>##                       VarComp  VarCompSE    Zratio Constraint
-## Env:Name:y:PC1:PC1  2.6367833  0.9599250 2.7468639   Positive
-## Env:Name:y:PC1:PC2  0.5079456  4.7705288 0.1064757   Unconstr
-## Env:Name:y:PC2:PC2 96.6636158 48.3041640 2.0011446   Positive
-## units:isc:isc       6.8753251  0.8183467 8.4014822   Positive</code></pre>
-<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" tabindex="-1"></a>Gamma<span class="ot">=</span><span class="fu">with</span>(DT, <span class="fu">rrc</span>(Env, Name, y, <span class="at">returnGamma =</span> <span class="cn">TRUE</span>, <span class="at">nPC =</span> <span class="dv">2</span>))<span class="sc">$</span>Gamma <span class="co"># extract loadings</span></span>
-<span id="cb37-2"><a href="#cb37-2" tabindex="-1"></a>score.mat <span class="ot">&lt;-</span> ans1b<span class="sc">$</span>uList[[<span class="dv">1</span>]]; <span class="co"># extract factor scores</span></span>
-<span id="cb37-3"><a href="#cb37-3" tabindex="-1"></a>BLUP <span class="ot">=</span> score.mat <span class="sc">%*%</span> <span class="fu">t</span>(Gamma) <span class="co"># BLUPs for all environments</span></span></code></pre></div>
-<p>As can be seen BLUPs for all environments can be recovered by
-multiplying the loadings (Lam) by the factor scores (score.mat). This is
-a parsomonious way to model an unstructured covariance.</p>
+<span id="cb35-4"><a href="#cb35-4" tabindex="-1"></a><span class="fu">head</span>(DT)</span></code></pre></div>
+<pre><code>##          Name     Env Loc Year     Block  y
+## 67   MSL007-B CA.2011  CA 2011 CA.2011.2  5
+## 105  MSL007-B CA.2011  CA 2011 CA.2011.1  6
+## 308  MSK061-4 CA.2011  CA 2011 CA.2011.2  9
+## 393  MSK061-4 CA.2011  CA 2011 CA.2011.1 10
+## 469 MSR169-8Y CA.2011  CA 2011 CA.2011.1 11
+## 471     NY148 CA.2011  CA 2011 CA.2011.1 11</code></pre>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" tabindex="-1"></a>indNames <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(<span class="fu">unique</span>(DT<span class="sc">$</span>Name))</span>
+<span id="cb37-2"><a href="#cb37-2" tabindex="-1"></a>A <span class="ot">&lt;-</span> <span class="fu">diag</span>(<span class="fu">length</span>(indNames))</span>
+<span id="cb37-3"><a href="#cb37-3" tabindex="-1"></a><span class="fu">rownames</span>(A) <span class="ot">&lt;-</span> <span class="fu">colnames</span>(A) <span class="ot">&lt;-</span> indNames</span>
+<span id="cb37-4"><a href="#cb37-4" tabindex="-1"></a></span>
+<span id="cb37-5"><a href="#cb37-5" tabindex="-1"></a><span class="co"># fit diagonal model first to produce H matrix</span></span>
+<span id="cb37-6"><a href="#cb37-6" tabindex="-1"></a>ansDG <span class="ot">&lt;-</span> <span class="fu">mmec</span>(y<span class="sc">~</span>Env,</span>
+<span id="cb37-7"><a href="#cb37-7" tabindex="-1"></a>              <span class="at">random=</span><span class="sc">~</span> <span class="fu">vsc</span>(<span class="fu">dsc</span>(Env), <span class="fu">isc</span>(Name)),</span>
+<span id="cb37-8"><a href="#cb37-8" tabindex="-1"></a>              <span class="at">rcov=</span><span class="sc">~</span>units, <span class="at">nIters =</span> <span class="dv">100</span>,</span>
+<span id="cb37-9"><a href="#cb37-9" tabindex="-1"></a>              <span class="co"># we recommend giving more EM iterations at the beggining</span></span>
+<span id="cb37-10"><a href="#cb37-10" tabindex="-1"></a>              <span class="at">emWeight =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="dv">1</span>,<span class="dv">10</span>),<span class="fu">logspace</span>(<span class="dv">10</span>,<span class="dv">1</span>,.<span class="dv">05</span>), <span class="fu">rep</span>(.<span class="dv">05</span>,<span class="dv">80</span>)),</span>
+<span id="cb37-11"><a href="#cb37-11" tabindex="-1"></a>              <span class="at">data=</span>DT, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb37-12"><a href="#cb37-12" tabindex="-1"></a></span>
+<span id="cb37-13"><a href="#cb37-13" tabindex="-1"></a>H0 <span class="ot">&lt;-</span> ansDG<span class="sc">$</span>uList<span class="sc">$</span><span class="st">`</span><span class="at">vsc(dsc(Env), isc(Name))</span><span class="st">`</span> <span class="co"># GxE table</span></span>
+<span id="cb37-14"><a href="#cb37-14" tabindex="-1"></a></span>
+<span id="cb37-15"><a href="#cb37-15" tabindex="-1"></a><span class="co"># reduced rank model</span></span>
+<span id="cb37-16"><a href="#cb37-16" tabindex="-1"></a>ansFA <span class="ot">&lt;-</span> <span class="fu">mmec</span>(y<span class="sc">~</span>Env,</span>
+<span id="cb37-17"><a href="#cb37-17" tabindex="-1"></a>              <span class="at">random=</span><span class="sc">~</span><span class="fu">vsc</span>( <span class="fu">usc</span>(<span class="fu">rrc</span>(Env, <span class="at">H =</span> H0, <span class="at">nPC =</span> <span class="dv">3</span>)) , <span class="fu">isc</span>(Name)) <span class="sc">+</span> <span class="co"># rr</span></span>
+<span id="cb37-18"><a href="#cb37-18" tabindex="-1"></a>                <span class="fu">vsc</span>(<span class="fu">dsc</span>(Env), <span class="fu">isc</span>(Name)), <span class="co"># diag</span></span>
+<span id="cb37-19"><a href="#cb37-19" tabindex="-1"></a>              <span class="at">rcov=</span><span class="sc">~</span>units,</span>
+<span id="cb37-20"><a href="#cb37-20" tabindex="-1"></a>              <span class="co"># we recommend giving more iterations to these models</span></span>
+<span id="cb37-21"><a href="#cb37-21" tabindex="-1"></a>              <span class="at">nIters =</span> <span class="dv">100</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb37-22"><a href="#cb37-22" tabindex="-1"></a>              <span class="co"># we recommend giving more EM iterations at the beggining</span></span>
+<span id="cb37-23"><a href="#cb37-23" tabindex="-1"></a>              <span class="at">emWeight =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="dv">1</span>,<span class="dv">10</span>),<span class="fu">logspace</span>(<span class="dv">10</span>,<span class="dv">1</span>,.<span class="dv">05</span>), <span class="fu">rep</span>(.<span class="dv">05</span>,<span class="dv">80</span>)),</span>
+<span id="cb37-24"><a href="#cb37-24" tabindex="-1"></a>              <span class="at">data=</span>DT)</span>
+<span id="cb37-25"><a href="#cb37-25" tabindex="-1"></a></span>
+<span id="cb37-26"><a href="#cb37-26" tabindex="-1"></a>vcFA <span class="ot">&lt;-</span> ansFA<span class="sc">$</span>theta[[<span class="dv">1</span>]]</span>
+<span id="cb37-27"><a href="#cb37-27" tabindex="-1"></a>vcDG <span class="ot">&lt;-</span> ansFA<span class="sc">$</span>theta[[<span class="dv">2</span>]]</span>
+<span id="cb37-28"><a href="#cb37-28" tabindex="-1"></a></span>
+<span id="cb37-29"><a href="#cb37-29" tabindex="-1"></a>loadings<span class="ot">=</span><span class="fu">with</span>(DT, <span class="fu">rrc</span>(Env, <span class="at">nPC =</span> <span class="dv">3</span>, <span class="at">H =</span> H0, <span class="at">returnGamma =</span> <span class="cn">TRUE</span>) )<span class="sc">$</span>Gamma</span>
+<span id="cb37-30"><a href="#cb37-30" tabindex="-1"></a>scores <span class="ot">&lt;-</span> ansFA<span class="sc">$</span>uList[[<span class="dv">1</span>]]</span>
+<span id="cb37-31"><a href="#cb37-31" tabindex="-1"></a></span>
+<span id="cb37-32"><a href="#cb37-32" tabindex="-1"></a>vcUS <span class="ot">&lt;-</span> loadings <span class="sc">%*%</span> vcFA <span class="sc">%*%</span> <span class="fu">t</span>(loadings)</span>
+<span id="cb37-33"><a href="#cb37-33" tabindex="-1"></a>G <span class="ot">&lt;-</span> vcUS <span class="sc">+</span> vcDG</span>
+<span id="cb37-34"><a href="#cb37-34" tabindex="-1"></a><span class="co"># colfunc &lt;- colorRampPalette(c(&quot;steelblue4&quot;,&quot;springgreen&quot;,&quot;yellow&quot;))</span></span>
+<span id="cb37-35"><a href="#cb37-35" tabindex="-1"></a><span class="co"># hv &lt;- heatmap(cov2cor(G), col = colfunc(100), symm = TRUE)</span></span>
+<span id="cb37-36"><a href="#cb37-36" tabindex="-1"></a></span>
+<span id="cb37-37"><a href="#cb37-37" tabindex="-1"></a>uFA <span class="ot">&lt;-</span> scores <span class="sc">%*%</span> <span class="fu">t</span>(loadings)</span>
+<span id="cb37-38"><a href="#cb37-38" tabindex="-1"></a>uDG <span class="ot">&lt;-</span> ansFA<span class="sc">$</span>uList[[<span class="dv">2</span>]]</span>
+<span id="cb37-39"><a href="#cb37-39" tabindex="-1"></a>u <span class="ot">&lt;-</span> uFA <span class="sc">+</span> uDG</span></code></pre></div>
+<p>As can be seen genotype BLUPs for all environments can be recovered
+by multiplying the loadings (Gamma) by the factor scores. This is a
+parsomonious way to model an unstructured covariance.</p>
 </div>
 <div id="two-stage-analysis" class="section level2">
 <h2>10) Two stage analysis</h2>
