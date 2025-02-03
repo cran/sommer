@@ -1,8 +1,8 @@
 Package: sommer
 Type: Package
 Title: Solving Mixed Model Equations in R
-Version: 4.3.6
-Date: 2024-10-20
+Version: 4.3.7
+Date: 2025-02-01
 Authors@R: c(
     person("Giovanny","Covarrubias-Pazaran", email="cova_ruber@live.com.mx", role=c("aut","cre"),
 	comment=c(ORCID="0000-0002-7194-3837"))
@@ -20,8 +20,8 @@ Suggests: rmarkdown, knitr, plyr, parallel, orthopolynom, RSpectra,
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 NeedsCompilation: yes
-Packaged: 2024-10-20 03:56:11 UTC; giovannycovarrubias
+Packaged: 2025-02-03 18:36:10 UTC; giovannycovarrubias
 Author: Giovanny Covarrubias-Pazaran [aut, cre]
     (<https://orcid.org/0000-0002-7194-3837>)
 Repository: CRAN
-Date/Publication: 2024-10-20 05:30:02 UTC
+Date/Publication: 2025-02-03 17:20:02 UTC
