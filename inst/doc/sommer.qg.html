@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>Quantitative genetics using the sommer package</title>
+<style type="text/css">
+/**
+ * Prism.s theme ported from highlight.js's xcode style
+ */
+pre code {
+  padding: 1em;
+}
+.token.comment {
+  color: #007400;
+}
+.token.punctuation {
+  color: #999;
+}
+.token.tag,
+.token.selector {
+  color: #aa0d91;
+}
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol {
+  color: #1c00cf;
+}
+.token.property,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin {
+  color: #c41a16;
+}
+.token.inserted {
+  background-color: #ccffd8;
+}
+.token.deleted {
+  background-color: #ffebe9;
+}
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #9a6e3a;
+}
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: #836c28;
+}
+.token.function,
+.token.class-name {
+  color: #DD4A68;
+}
+.token.regex,
+.token.important,
+.token.variable {
+  color: #5c2699;
+}
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+.token.italic {
+  font-style: italic;
+}
+</style>
+<style type="text/css">
+body {
+  font-family: sans-serif;
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+body, .footnotes, code { font-size: .9em; }
+li li { font-size: .95em; }
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+pre, img { max-width: 100%; }
+pre, pre:hover {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+pre code {
+  display: block;
+  overflow-x: auto;
+}
+code { font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace; }
+:not(pre) > code, code[class] { background-color: #F8F8F8; }
+code.language-undefined, pre > code:not([class]) {
+  background-color: inherit;
+  border: 1px solid #eee;
+}
+table {
+  margin: auto;
+  border-top: 1px solid #666;
+}
+table thead th { border-bottom: 1px solid #ddd; }
+th, td { padding: 5px; }
+thead, tfoot, tr:nth-child(even) { background: #eee; }
+blockquote {
+  color: #666;
+  margin: 0;
+  padding-left: 1em;
+  border-left: 0.5em solid #eee;
+}
+hr, .footnotes::before { border: 1px dashed #ddd; }
+.frontmatter { text-align: center; }
+#TOC .numbered li { list-style: none; }
+#TOC .numbered { padding-left: 0; }
+#TOC .numbered ul { padding-left: 1em; }
+table, .body h2 { border-bottom: 1px solid #666; }
+.body .appendix, .appendix ~ h2 { border-bottom-style: dashed; }
+.footnote-ref a::before { content: "["; }
+.footnote-ref a::after { content: "]"; }
+section.footnotes::before {
+  content: "";
+  display: block;
+  max-width: 20em;
+}
+
+@media print {
+  body {
+    font-size: 12pt;
+    max-width: 100%;
+  }
+  tr, img { page-break-inside: avoid; }
+}
+@media only screen and (min-width: 992px) {
+  pre { white-space: pre; }
+}
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
+</head>
+<body>
+<div class="frontmatter">
+<div class="title"><h1>Quantitative genetics using the sommer package</h1></div>
+<div class="author"><h2>Giovanny Covarrubias-Pazaran</h2></div>
+<div class="date"><h3>2025-04-04</h3></div>
+</div>
+<div class="body">
+<p>The sommer package was developed to provide R users with a powerful and reliable multivariate mixed model solver for different genetic and non-genetic analyses in diploid and polyploid organisms. This package allows the user to estimate variance components for a mixed model with the advantages of specifying the variance-covariance structure of the random effects, specifying heterogeneous variances, and obtaining other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc. The core algorithms of the package are coded in C++ using the Armadillo library to optimize dense matrix operations common in the derect-inversion algorithms. Although the vignette shows examples using the mmes function with the default direct inversion algorithm (henderson=FALSE) the Henderson’s approach can be faster when the number of records surpasses the number of coefficients to estimate and setting the henderson argument to TRUE can bring significant speed ups.</p>
+<p>The package is focused on problems of the type p &gt; n related to genomic prediction (hybrid prediction &amp; genomic selection) and GWAS analysis, although any general mixed model can be fitted as well. The package provides kernels to estimate additive (<code>A.mat</code>), dominance (<code>D.mat</code>), and epistatic (<code>E.mat</code>) relationship matrices that have been shown to increase prediction accuracy under certain scenarios or simply to estimate the variance components of such. The package provides flexibility to fit other genetic models such as full and half diallel models as well.</p>
+<p>The vignettes aim to provide several examples in how to use the sommer package under different scenarios. We will spend the rest of the space providing examples for:</p>
+<p>**SECTION 1: Introduction **</p>
+<ol>
+<li>Background in linear algebra</li>
+</ol>
+<p>**SECTION 2: Topics in quantitative genetics **</p>
+<ol>
+<li>Heritability (\(h^2\)) calculation</li>
+<li>Specifying heterogeneous variances in mixed models</li>
+<li>Using the <code>vpredict()</code> calculator</li>
+<li>Half and full diallel designs (using the overlay)</li>
+<li>Genomic selection (predicting mendelian sampling)
+<ul>
+<li>GBLUP</li>
+<li>rrBLUP</li>
+</ul>
+</li>
+<li>Indirect genetic effects</li>
+<li>Single cross prediction (hybrid prediction)</li>
+<li>Multivariate genetic models and genetic correlations</li>
+</ol>
+<p><strong>SECTION 3: Special topics in quantitative genetics</strong></p>
+<ol>
+<li>Partitioned model</li>
+<li>UDU’ decomposition</li>
+<li>Mating designs</li>
+<li>GWAS by GBLUP</li>
+<li>Reduced models</li>
+</ol>
+<h2 id="section-1-introduction">SECTION 1: Introduction</h2>
+<h3 id="backgrounds-in-linear-algebra">Backgrounds in linear algebra</h3>
+<p>The core of the package is the <code>mmes()</code> function which solve the mixed model equations. The functions are an interface to call the <code>NR</code> Direct-Inversion Newton-Raphson or Average Information or henderson-based Average Information (Tunnicliffe 1989; Gilmour et al. 1995; Lee et al. 2016). Since version 2.0, sommer can handle multivariate models. Following Maier et al. (2015), the multivariate (and by extension the univariate) mixed model implemented has the form:</p>
+<br>
+<p>\(y_1 = X_1\beta_1 + Z_1u_1 + \epsilon_1\)</p>
+<p>\(y_2 = X_2\beta_2 + Z_2u_2 + \epsilon_2\)</p>
+<p>…</p>
+<p>\(y_i = X_i\beta_i + Z_iu_i + \epsilon_i\)</p>
+<br>
+<p>where \(y_i\) is a vector of trait phenotypes, \(\beta_i\) is a vector of fixed effects, \(u_i\) is a vector of random effects for individuals and \(e_i\) are residuals for trait <code>i</code> (i = 1, …, t). The random effects (\(u_1\) … \(u_i\) and \(e_i\)) are assumed to be normally distributed with mean zero. X and Z are incidence matrices for fixed and random effects respectively. The distributions of the multivariate response and the phenotypic variance covariance (V) are:</p>
+<br> 
+<p>\(Y = X\beta + ZU + \epsilon_i\)</p>
+<br>
+<p>Y ~ MVN(\(X\beta\), V)</p>
+<br>
+<p>`M5$$\mathbf{Y} = \left[\begin{array}
+{r}
+y_1 \
+y_2 \
+… \
+y_t \
+\end{array}\right]
+$$</p>
+<br>
+<p>`M5$$\mathbf{X} = \left[\begin{array}
+{rrr}
+X_1 &amp; … &amp; … \
+\vdots &amp; \ddots &amp; \vdots\
+… &amp; … &amp; X_t \
+\end{array}\right]
+$$</p>
+<br>
+<p>`M5$$\mathbf{V} = \left[\begin{array}
+{rrr}
+Z_1 K{\sigma^2_{g_{1}}} Z_1’ + H{\sigma^2_{\epsilon_{1}}} &amp; … &amp; Z_1 K{\sigma_{g_{1,t}}} Z_t’ + H{\sigma_{\epsilon_{1,t}}}\
+\vdots &amp; \ddots &amp; \vdots\
+Z_1 K{\sigma_{g_{1,t}}} Z_t’ + H{\sigma_{\epsilon_{1,t}}} &amp; … &amp; Z_t K{\sigma^2_{g_{t}}} Z_t’ + H{\sigma^2_{\epsilon_{t}}} \
+\end{array}\right]
+$$</p>
+<br>
+<p>where K is the relationship or covariance matrix for the kth random effect (u=1,…,k), and R=I is an identity matrix for the residual term. The terms \(\sigma^2_{g_{i}}\) and \(\sigma^2_{\epsilon_{i}}\) denote the genetic (or any of the kth random terms) and residual variance of trait <code>i</code>, respectively and \(\sigma_{g_{_{ij}}}\) and \(\sigma_{\epsilon_{_{ij}}}\) the genetic (or any of the kth random terms) and residual covariance between traits <code>i</code> and <code>j</code> (i=1,…,t, and j=1,…,t). The algorithm implemented optimizes the log likelihood:</p>
+<br>
+<p>\(logL = &amp;frac12; * ln(|V|) + ln(X'|V|X) + Y'PY\)</p>
+<br>
+<p>where || is the determinant of a matrix. The REML estimates are updated using a Newton optimization algorithm of the form:</p>
+<br>
+<p>\(\theta^{k+1} = \theta^{k} + (H^{k})^{-1}*\frac{dL}{d\sigma^2_i}|\theta^k\)</p>
+<br>
+<p>Where \(\theta\) is the vector of variance components for random effects and covariance components among traits, \(H^{-1}\) is the inverse of the Hessian matrix of second derivatives for the kth cycle, \(\frac{dL}{d\sigma^2_i}\) is the vector of first derivatives of the likelihood with respect to the variance-covariance components. The Eigen decomposition of the relationship matrix proposed by Lee and Van Der Werf (2016) was included in the Newton-Raphson algorithm to improve time efficiency. Additionally, the popular <code>vpredict()</code> function to estimate standard errors for linear combinations of variance components (i.e. heritabilities and genetic correlations) was added to the package as well.</p>
+<p>Please refer to the canonical papers listed in the Literature section to check how the algorithms work. We have tested widely the methods to make sure they provide the same solution when the likelihood behaves well, but for complex problems they might lead to slightly different answers. If you have any concern please contact me at <a href="mailto:cova_ruber@live.com.mx">cova_ruber@live.com.mx</a>.</p>
+<p>In the following section we will go in detail over several examples on how to use mixed models in univariate and multivariate case and their use in quantitative genetics.</p>
+<br>
+<h2 id="section-2-topics-in-quantitative-genetics">SECTION 2: Topics in quantitative genetics</h2>
+<h3 id="1-marker-and-non-marker-based-heritability-calculation">1) Marker and non-marker based heritability calculation</h3>
+<p>Heritability is one of the most popular parameters among the breeding and genetics communities because of the insight it provides in the inheritance of the trait and potential selection response. Heritability is usually estimated as narrow sense (\(h^2\); only additive variance in the numerator \(\sigma^2_A\)), and broad sense (\(H^2\); all genetic variance in the numerator \(\sigma^2_G\)).</p>
+<p>In a classical breeding experiment with no molecular markers, special designs are performed to estimate and dissect the additive (\(\sigma^2_A\)) and non-additive (e.g., dominance \(\sigma^2_D\), and epistatic \(\sigma^2_E\)) variance along with environmental variability. Designs such as generation analysis, North Carolina designs are used to dissect \(\sigma^2_A\) and \(\sigma^2_D\) to estimate the narrow sense heritability (\(h^2\)) using only \(\sigma^2_A\) in the numerator. When no special design is available we can still disect the genetic variance (\(\sigma^2_G\)) and estimate the broad sense heritability. In this first example we will show the broad sense estimation which doesn’t use covariance matrices for the genotypic effect (e.g., genomic-additive relationship matrices). For big models with no relationship matrices, sommer’s direct inversion is a bad idea to use but we will still show how to do it, but keep in mind that for very sparse models with no relationship matrices or other special covariance structures we recommend using the <code>lmer()</code> function from the lme4 package or any other package using MME-based algorithms (e.g., asreml-R).</p>
+<p>The following dataset has 41 potato lines evaluated in 5 locations across 3 years in an RCBD design. We show how to fit the model and extract the variance components to calculate the \(h^2\).</p>
+<pre><code class="language-r">library(sommer)
+data(DT_example)
+DT &lt;- DT_example
+A &lt;- A_example
+
+ans1 &lt;- mmes(Yield~1,
+             random= ~ Name + Env + Env:Name + Env:Block,
+             rcov= ~ units, nIters=10,
+             data=DT, verbose = FALSE)
+summary(ans1)$varcomp
+</code></pre>
+<pre><code>##                   VarComp  VarCompSE    Zratio Constraint
+## Name:mu:mu       3.718326  1.6962251 2.1921185   Positive
+## Env:mu:mu       12.008785 12.2802490 0.9778943   Positive
+## Env:Name:mu:mu   5.152831  1.4926126 3.4522225   Positive
+## Env:Block:mu:mu  0.000000  0.1156493 0.0000000   Positive
+## units:mu:mu      4.366107  0.6572043 6.6434544   Positive
+</code></pre>
+<pre><code class="language-r">(n.env &lt;- length(levels(DT$Env)))
+</code></pre>
+<pre><code>## [1] 3
+</code></pre>
+<pre><code class="language-r">vpredict(ans1, h2 ~ V1 / ( V1 + (V3/n.env) + (V5/(2*n.env)) ) )
+</code></pre>
+<pre><code>##     Estimate        SE
+## h2 0.6032698 0.1344766
+</code></pre>
+<p>That is an estimate of broad-sense heritability.</p>
+<p>Recently with markers becoming cheaper, thousand of markers can be run in the breeding materials. When markers are available, a special design is not neccesary to dissect the additive genetic variance. The availability of the additive, dominance and epistatic relationship matrices allow us to estimate \(\sigma^2_A\), \(\sigma^2_D\) and \(\sigma^2_I\), although given that A, D and E are not orthogonal the interpretation of models that fit more than the A matrix at the same time becomes cumbersome.</p>
+<p>Assume you have a population (even unreplicated) in the field but in addition we have genetic markers. Now we can fit the model and estimate the genomic heritability that explains a portion of the additive genetic variance (with high marker density \(\sigma^2_A\) = \(\sigma^2_{markers}\))</p>
+<pre><code class="language-r">data(DT_cpdata)
+DT &lt;- DT_cpdata
+GT &lt;- GT_cpdata
+MP &lt;- MP_cpdata
+DT$idd &lt;-DT$id; DT$ide &lt;-DT$id
+### look at the data
+A &lt;- A.mat(GT) # additive relationship matrix
+D &lt;- D.mat(GT) # dominance relationship matrix
+E &lt;- E.mat(GT) # epistatic relationship matrix
+ans.ADE &lt;- mmes(color~1, 
+                 random=~vsm(ism(id),Gu=A) + vsm(ism(idd),Gu=D), 
+                 rcov=~units, nIters=10,
+                 data=DT,verbose = FALSE)
+(summary(ans.ADE)$varcomp)
+</code></pre>
+<pre><code>##                 VarComp    VarCompSE   Zratio Constraint
+## id:A:mu:mu  0.003663741 0.0012202747 3.002390   Positive
+## idd:D:mu:mu 0.001295002 0.0005269558 2.457515   Positive
+## units:mu:mu 0.002106604 0.0002864009 7.355439   Positive
+</code></pre>
+<pre><code class="language-r">vpredict(ans.ADE, h2 ~ (V1) / ( V1+V3) ) # narrow sense
+</code></pre>
+<pre><code>##     Estimate         SE
+## h2 0.6349258 0.08841872
+</code></pre>
+<pre><code class="language-r">vpredict(ans.ADE, h2 ~ (V1+V2) / ( V1+V2+V3) ) # broad-sense
+</code></pre>
+<pre><code>##    Estimate         SE
+## h2  0.70184 0.06059124
+</code></pre>
+<p>In this example we showed how to estimate the additive (\(\sigma^2_A\)) and dominance (\(\sigma^2_D\)) variance components based on markers and estimate broad (\(H^2\)) and narrow-sense heritability (\(h^2\)). Notice that we used the <code>vsm()</code> function which indicates that the random effect inside the parenthesis (i.e. <code>id</code>, <code>idd</code> or <code>ide</code>) has a covariance matrix (A, D, or E), that will be specified in the <code>Gu</code> argument of the <code>vsm()</code> function. Please DO NOT provide the inverse, but rather the original covariance matrix when using henderson=FALSE.</p>
+<h3 id="2-specifying-heterogeneous-variances-in-univariate-models">2) Specifying heterogeneous variances in univariate models</h3>
+<p>Very often in multi-environment trials, the assumption that genetic variance is the same across locations may be too naive. Because of that, specifying a general genetic component and a location-specific genetic variance is the way to go.</p>
+<p>We estimate variance components for \(GCA_2\) and \(SCA\) specifying the variance structure.</p>
+<pre><code class="language-r"># data(DT_cornhybrids)
+# DT &lt;- DT_cornhybrids
+# DTi &lt;- DTi_cornhybrids
+# GT &lt;- GT_cornhybrids
+# ### fit the model
+# modFD &lt;- mmes(Yield~1, 
+#               random=~ vsm(atr(Location,c(&quot;3&quot;,&quot;4&quot;)),ism(GCA2)), 
+#               rcov= ~ vsm(dsm(Location),ism(units)), nIters=10,
+#               returnParam = F,
+#               data=DT, verbose = FALSE)
+# summary(modFD)
+</code></pre>
+<p>In the previous example we showed how the <code>atr()</code> function is used in the <code>mmes()</code> solver. By using the <code>atr()</code> function you can specify that i.e. the GCA2 has a different variance in different Locations, in this case locations 3 and 4, but also a main GCA variance. This is considered a CS + DIAG (compound symmetry + diagonal) model.</p>
+<p>In addition, other functions can be added on top to fit models with covariance structures, i.e. the <code>Gu</code> argument from the <code>vsm()</code> function to indicate a covariance matrix (A, pedigree or genomic relationship matrix)</p>
+<pre><code class="language-r"># data(DT_cornhybrids)
+# DT &lt;- DT_cornhybrids
+# DTi &lt;- DTi_cornhybrids
+# GT &lt;- as(as(as( GT_cornhybrids,  &quot;dMatrix&quot;), &quot;generalMatrix&quot;), &quot;CsparseMatrix&quot;) 
+# GT[1:4,1:4]
+# DT=DT[with(DT, order(Location)), ]
+# ### fit the model
+# modFD &lt;- mmes(Yield~1, 
+#               random=~ vsm(atr(Location,c(&quot;3&quot;,&quot;4&quot;)),ism(GCA2),Gu=GT), 
+#               rcov= ~ vsm(dsm(Location),ism(units)), nIters=10,
+#               data=DT, verbose = FALSE)
+# summary(modFD)
+</code></pre>
+<h3 id="3-using-the-vpredict-calculator">3) Using the vpredict calculator</h3>
+<p>Sometimes the user needs to calculate ratios or functions of specific variance-covariance components and obtain the standard errors for such parameters. Examples of these are the genetic correlations, heritabilities, etc. Using the CPdata we will show how to estimate the heritability and the standard error using the <code>vpredict()</code> function that uses the delta method to come up with these parameters. This can be extended for any linear combination of the variance components.</p>
+<h4 id="3-1-standar-error-for-heritability">3.1) Standar error for heritability</h4>
+<pre><code class="language-r">data(DT_cpdata)
+DT &lt;- DT_cpdata
+GT &lt;- GT_cpdata
+MP &lt;- MP_cpdata
+### look at the data
+A &lt;- A.mat(GT) # additive relationship matrix
+ans &lt;- mmes(color~1, 
+                random=~vsm(ism(id),Gu=A), 
+                rcov=~units, nIters=10,
+                data=DT, verbose = FALSE)
+(summary(ans.ADE)$varcomp)
+</code></pre>
+<pre><code>##                 VarComp    VarCompSE   Zratio Constraint
+## id:A:mu:mu  0.003663741 0.0012202747 3.002390   Positive
+## idd:D:mu:mu 0.001295002 0.0005269558 2.457515   Positive
+## units:mu:mu 0.002106604 0.0002864009 7.355439   Positive
+</code></pre>
+<pre><code class="language-r">vpredict(ans, h2 ~ (V1) / ( V1+V2) )
+</code></pre>
+<pre><code>##     Estimate        SE
+## h2 0.6512605 0.0610886
+</code></pre>
+<p>The same can be used for multivariate models. Please check the documentation of the <code>vpredict</code> function to see more examples.</p>
+<h3 id="4-half-and-full-diallel-designs-use-of-the-overlay">4) Half and full diallel designs (use of the overlay)</h3>
+<p>When breeders are looking for the best single-cross combinations, diallel designs have been by far the most used design in crops like maize. There are 4 types of diallel designs depending on whether reciprocal and self-crosses (omission of parents) are performed (full diallel with parents n^2; full diallel without parents n(n-1); half diallel with parents ½ * n(n+1); half diallel without parents ½ * n(n-1) ). In this example we will show a full diallel design (reciprocal crosses are performed) and half diallel designs (only one of the directions is performed).</p>
+<p>In the first data set we show a full diallel among 40 lines from 2 heterotic groups, 20 in each. Therefore 400 possible hybrids are possible. We have pehnotypic data for 100 of them across 4 locations. We use the data available to fit a model of the form:</p>
+<br>
+<p>\(y = X\beta + Zu_1 + Zu_2 + Zu_S + \epsilon\)</p>
+<br>
+<p>We estimate variance components for \(GCA_1\), \(GCA_2\) and \(SCA\) and use them to estimate heritability. Additionally BLUPs for GCA and SCA effects can be used to predict crosses.</p>
+<pre><code class="language-r"># data(DT_cornhybrids)
+# DT &lt;- DT_cornhybrids
+# DTi &lt;- DTi_cornhybrids
+# GT &lt;- GT_cornhybrids
+# 
+# modFD &lt;- mmes(Yield~Location, 
+#               random=~GCA1+GCA2+SCA, 
+#               rcov=~units, nIters=10,
+#               data=DT, verbose = FALSE)
+# (suma &lt;- summary(modFD)$varcomp)
+# Vgca &lt;- sum(suma[1:2,1])
+# Vsca &lt;- suma[3,1]
+# Ve &lt;- suma[4,1]
+# Va = 4*Vgca
+# Vd = 4*Vsca
+# Vg &lt;- Va + Vd
+# (H2 &lt;- Vg / (Vg + (Ve)) )
+# (h2 &lt;- Va / (Vg + (Ve)) )
+</code></pre>
+<p>Don’t worry too much about the <code>h2</code> value, the data was simulated to be mainly dominance variance, therefore the <code>Va</code> was simulated extremely small leading to such value of narrow sense <code>h2</code>.</p>
+<p>In the second data set we show a small half diallel with 7 parents crossed in one direction. There are n(n-1)/2 possible crosses; 7(6)/2 = 21 unique crosses. Parents appear as males or females indistictly. Each with two replications in a CRD. For a half diallel design a single GCA variance component for both males and females can be estimated and an SCA as well (\(\sigma^2_GCA\) and \(\sigma^2_SCA\) respectively), and BLUPs for GCA and SCA of the parents can be extracted. We will show first how to do so with the <code>mmes()</code> function using the <code>overlay()</code> function. The specific model here is:</p>
+<p>\(y = X\beta + Zu_g + Zu_s + \epsilon\)</p>
+<pre><code class="language-r">data(&quot;DT_halfdiallel&quot;)
+DT &lt;- DT_halfdiallel
+head(DT)
+</code></pre>
+<pre><code>##   rep geno male female     sugar
+## 1   1   12    1      2 13.950509
+## 2   2   12    1      2  9.756918
+## 3   1   13    1      3 13.906355
+## 4   2   13    1      3  9.119455
+## 5   1   14    1      4  5.174483
+## 6   2   14    1      4  8.452221
+</code></pre>
+<pre><code class="language-r">DT$femalef &lt;- as.factor(DT$female)
+DT$malef &lt;- as.factor(DT$male)
+DT$genof &lt;- as.factor(DT$geno)
+#### model using overlay
+modh &lt;- mmes(sugar~1, 
+             random=~vsm(ism(overlay(femalef,malef)) )
+             + genof, nIters=10,
+             data=DT, verbose = FALSE)
+summary(modh)$varcomp
+</code></pre>
+<pre><code>##                      VarComp VarCompSE   Zratio Constraint
+## femalef:malef:mu:mu 5.508686 3.5787494 1.539277   Positive
+## genof:mu:mu         1.815951 1.3631606 1.332162   Positive
+## units:mu:mu         3.117370 0.9620929 3.240197   Positive
+</code></pre>
+<p>Notice how the <code>overlay()</code> argument makes the overlap of incidence matrices possible making sure that male and female are joint into a single random effect.</p>
+<h3 id="5-genomic-selection-predicting-mendelian-sampling">5) Genomic selection: predicting mendelian sampling</h3>
+<p>In this section we will use wheat data from CIMMYT to show how genomic selection is performed. This is the case of prediction of specific individuals within a population. It basically uses a similar model of the form:</p>
+<br>
+<p>\(y = X\beta + Zu + \epsilon\)</p>
+<br>
+<p>and takes advantage of the variance covariance matrix for the genotype effect known as the additive relationship matrix (A) and calculated using the <code>A.mat</code> function to establish connections among all individuals and predict the BLUPs for individuals that were not measured. The prediction accuracy depends on several factors such as the heritability (\(h^2\)), training population used (TP), size of TP, etc.</p>
+<pre><code class="language-r">data(DT_wheat)
+DT &lt;- DT_wheat
+GT &lt;- GT_wheat[,1:200]
+colnames(DT) &lt;- paste0(&quot;X&quot;,1:ncol(DT))
+DT &lt;- as.data.frame(DT);DT$id &lt;- as.factor(rownames(DT))
+# select environment 1
+rownames(GT) &lt;- rownames(DT)
+K &lt;- A.mat(GT) # additive relationship matrix
+colnames(K) &lt;- rownames(K) &lt;- rownames(DT)
+# GBLUP pedigree-based approach
+set.seed(12345)
+y.trn &lt;- DT
+vv &lt;- sample(rownames(DT),round(nrow(DT)/5))
+y.trn[vv,&quot;X1&quot;] &lt;- NA
+head(y.trn)
+</code></pre>
+<pre><code>##              X1          X2          X3         X4   id
+## 775   1.6716295 -1.72746986 -1.89028479  0.0509159  775
+## 2166 -0.2527028  0.40952243  0.30938553 -1.7387588 2166
+## 2167         NA -0.64862633 -0.79955921 -1.0535691 2167
+## 2465  0.7854395  0.09394919  0.57046773  0.5517574 2465
+## 3881  0.9983176 -0.28248062  1.61868192 -0.1142848 3881
+## 3889  2.3360969  0.62647587  0.07353311  0.7195856 3889
+</code></pre>
+<pre><code class="language-r">## GBLUP
+ans &lt;- mmes(X1~1,
+            random=~vsm(ism(id),Gu=K), 
+            rcov=~units,nIters=10,
+            data=y.trn, verbose = FALSE) # kinship based
+cor(ans$u[vv,] ,DT[vv,&quot;X1&quot;], use=&quot;complete&quot;)
+</code></pre>
+<pre><code>## [1] 0.4310543
+</code></pre>
+<pre><code class="language-r">## rrBLUP
+ans2 &lt;- mmes(X1~1,
+             random=~vsm(ism(GT), buildGu = FALSE), 
+             rcov=~units, getPEV = TRUE, nIters=10, # you do more iterations
+             data=y.trn, verbose = FALSE) # kinship based
+
+u &lt;- GT %*% as.matrix(ans2$uList$`vsm(ism(GT), buildGu = FALSE`) # BLUPs for individuals
+rownames(u) &lt;- rownames(GT)
+cor(u[vv,],DT[vv,&quot;X1&quot;]) # same correlation
+</code></pre>
+<pre><code>## [1] 0.431055
+</code></pre>
+<pre><code class="language-r"># the same can be applied in multi-response models in GBLUP or rrBLUP
+</code></pre>
+<p>Please notice that when specifying the marker matrix as a random effect we used the argument ‘buildGu=FALSE’ to inform the ‘mmes’ function that a covariance matrix for the levels of the random effect shouldn’t be built. Imagine a model with 100,000 markers, that would imply a relationship matrix of 100,000 x 100,000. If that matrix is a diagonal it would only compromise the speed and memory of the function. By setting  ‘buildGu=FALSE’ the mmes solver will avoid the matrix multiplications using that huge diagonal matrix. If you want to specify a relationship matrix for the marker matrix then you cannot use that ‘buildGu’ argument.</p>
+<h3 id="6-indirect-genetic-effects">6) Indirect genetic effects</h3>
+<p>General variance structures can be used to fit indirect genetic effects. Here, we use an example dataset to show how we can fit the variance and covariance components between two or more different random effects.</p>
+<p>We first fit a direct genetic effects model:</p>
+<pre><code class="language-r"># data(DT_ige)
+# DT &lt;- DT_ige
+# Af &lt;- A_ige
+# An &lt;- A_ige
+
+## Direct genetic effects model
+# modDGE &lt;- mmes(trait ~ block,
+#                random = ~ focal,
+#                rcov = ~ units, nIters=30,
+#                data = DT, verbose=FALSE)
+# summary(modDGE)$varcomp
+</code></pre>
+<p>We now fit the indirect genetic effects model without covariance between DGE and IGE:</p>
+<pre><code class="language-r"># data(DT_ige)
+# DT &lt;- DT_ige
+# A &lt;- A_ige
+# 
+# ## Indirect genetic effects model
+# modIGE &lt;- mmes(trait ~ block, dateWarning = FALSE,
+#                random = ~ focal + neighbour, verbose = FALSE,
+#                rcov = ~ units, nIters=100,
+#               data = DT)
+# summary(modIGE)$varcomp
+</code></pre>
+<p>We now fit the indirect genetic effects model with covariance between DGE and IGE for which we will use the <code>gvsr()</code> function:</p>
+<pre><code class="language-r"># ### Indirect genetic effects model
+# modIGE &lt;- mmes(trait ~ block, dateWarning = FALSE,
+#                random = ~ covm( vsm(ism(focal)), vsm(ism(neighbour)) ),
+#                rcov = ~ units, nIters=100, verbose = FALSE,
+#               data = DT)
+# summary(modIGE)$varcomp
+</code></pre>
+<p>On top of that we can include a relationship matrix for the two random effects that are being forced to co-vary</p>
+<pre><code class="language-r">### Indirect genetic effects model
+# Ai &lt;- solve(A_ige + diag(1e-5, nrow(A_ige),nrow(A_ige) ))
+# Ai &lt;- as(as(as( Ai,  &quot;dMatrix&quot;), &quot;generalMatrix&quot;), &quot;CsparseMatrix&quot;)
+# # Indirect genetic effects model with covariance between DGE and IGE using relationship matrices
+# modIGE &lt;- mmes(trait ~ block, dateWarning = FALSE,
+#                random = ~ covm( vsm(ism(focal), Gu=Ai), vsm(ism(neighbour), Gu=Ai) ),
+#                rcov = ~ units, nIters=100, verbose = FALSE,
+#               data = DT)
+# summary(modIGE)$varcomp
+</code></pre>
+<h3 id="7-genomic-selection-single-cross-prediction">7) Genomic selection: single cross prediction</h3>
+<p>When doing prediction of single cross performance the phenotype can be dissected in three main components, the general combining abilities (GCA) and specific combining abilities (SCA). This can be expressed with the same model analyzed in the diallel experiment mentioned before:</p>
+<br>
+<p>\(y = X\beta + Zu_1 + Zu_2 + Zu_S + \epsilon\)</p>
+<br>
+<p>with:</p>
+<br>
+<p>\(u_1\) ~ N(0, $K_1$$\sigma^2_u1$)</p>
+<p>\(u_2\) ~ N(0, $K_2$$\sigma^2_u2$)</p>
+<p>\(u_s\) ~ N(0, $K_3$$\sigma^2_us$)</p>
+<br>
+<p>And we can specify the K matrices. The main difference between this model and the full and half diallel designs is the fact that this model will include variance covariance structures in each of the three random effects (GCA1, GCA2 and SCA) to be able to predict the crosses that have not ocurred yet. We will use the data published by Technow et al. (2015) to show how to do prediction of single crosses.</p>
+<pre><code class="language-r">data(DT_technow)
+DT &lt;- DT_technow
+Md &lt;- (Md_technow*2) - 1
+Mf &lt;- (Mf_technow*2) - 1
+Ad &lt;- A.mat(Md)
+Af &lt;- A.mat(Mf)
+Adi &lt;- solve(Ad + diag(1e-4,ncol(Ad),ncol(Ad)))
+Adi &lt;- as(as(as( Adi,  &quot;dMatrix&quot;), &quot;generalMatrix&quot;), &quot;CsparseMatrix&quot;)
+attr(Adi, 'inverse')=TRUE
+Afi &lt;- solve(Af + diag(1e-4,ncol(Af),ncol(Af)))
+Afi &lt;- as(as(as( Afi,  &quot;dMatrix&quot;), &quot;generalMatrix&quot;), &quot;CsparseMatrix&quot;)
+attr(Afi, 'inverse')=TRUE
+# RUN THE PREDICTION MODEL
+y.trn &lt;- DT
+vv1 &lt;- which(!is.na(DT$GY))
+vv2 &lt;- sample(vv1, 100)
+y.trn[vv2,&quot;GY&quot;] &lt;- NA
+anss2 &lt;- mmes(GY~1,  henderson=TRUE,
+              random=~vsm(ism(dent),Gu=Adi) + vsm(ism(flint),Gu=Afi), 
+              rcov=~units, nIters=15,
+              data=y.trn, verbose = FALSE) 
+summary(anss2)$varcomp
+</code></pre>
+<pre><code>##                  VarComp VarCompSE    Zratio Constraint
+## dent:Adi:mu:mu  15.86817 1.9138581  8.291196   Positive
+## flint:Afi:mu:mu 11.29153 1.9068842  5.921458   Positive
+## units:mu:mu     15.97828 0.9895555 16.146927   Positive
+</code></pre>
+<pre><code class="language-r"># zu1 &lt;- model.matrix(~dent-1,y.trn) %*% anss2$uList$`vsm(ism(dent), Gu = Adi)`
+# zu2 &lt;- model.matrix(~flint-1,y.trn) %*% anss2$uList$`vsm(ism(flint), Gu = Afi)`
+# u &lt;- zu1+zu2+as.vector(anss2$b)
+# cor(u[vv2,], DT$GY[vv2])
+</code></pre>
+<p>In the previous model we only used the GCA effects (GCA1 and GCA2) for practicity, altough it’s been shown that the SCA effect doesn’t actually help that much in increasing prediction accuracy, but does increase a lot the computation intensity required since the variance covariance matrix for SCA is the kronecker product of the variance covariance matrices for the GCA effects, resulting in a 10578 x 10578 matrix that increases in a very intensive manner the computation required.</p>
+<p>A model without covariance structures would show that the SCA variance component is insignificant compared to the GCA effects. This is why including the third random effect doesn’t increase the prediction accuracy.</p>
+<h3 id="8-multivariate-genetic-models-and-genetic-correlations">8) Multivariate genetic models and genetic correlations</h3>
+<p>Sometimes is important to estimate genetic variance-covariance among traits–multi-reponse models are very useful for such a task. Let see an example with 3 traits (<code>color</code>, <code>Yield</code>, and <code>Firmness</code>) and a single random effect (genotype; <code>id</code>) although multiple effects can be modeled as well. We need to use a variance covariance structure for the random effect to be able to obtain the genetic covariance among traits.</p>
+<pre><code class="language-r"># data(DT_cpdata)
+# DT &lt;- DT_cpdata
+# GT &lt;- GT_cpdata
+# MP &lt;- MP_cpdata
+# A &lt;- A.mat(GT)
+# DT2 &lt;- stackTrait(DT, traits = c(&quot;color&quot;,&quot;Yield&quot;))
+# head(DT2$long)
+# A &lt;- A.mat(GT) # additive relationship matrix
+# # if using henderson=TRUE you need to provide the inverse
+# Ai &lt;- solve(A + diag(1e-4,ncol(A),ncol(A)))
+# Ai &lt;- as(as(as( Ai,  &quot;dMatrix&quot;), &quot;generalMatrix&quot;), &quot;CsparseMatrix&quot;)
+# #### be patient take some time
+# ansm &lt;- mmes( valueS ~ trait, # henderson=TRUE,
+#                random=~ vsm(usm(trait), ism(id), Gu=A),
+#                rcov=~ vsm(dsm(trait), ism(units)),
+#                data=DT2$long)
+# cov2cor(ansm$theta[[1]])
+</code></pre>
+<p>Now you can extract the BLUPs using <code>randef(ans.m)</code> or simply <code>ans.m$u</code>. Also, genetic correlations and heritabilities can be calculated easily.</p>
+<h2 id="section-3-special-topics-in-quantitative-genetics">SECTION 3: Special topics in Quantitative genetics</h2>
+<h3 id="1-partitioned-model">1) Partitioned model</h3>
+<p>The partitioned model was popularized by () to show that marker effects can be obtained by fitting a GBLUP model to reduce the computational burden and then recover them by creating some special matrices MM’ for GBLUP and  M’(M’M)- to recover marker effects. Here we show a very easy example using the DT_cpdata:</p>
+<pre><code class="language-r">library(sommer)
+data(&quot;DT_cpdata&quot;)
+DT &lt;- DT_cpdata
+M &lt;- GT_cpdata
+
+################
+# MARKER MODEL
+################
+mix.marker &lt;- mmes(color~1,
+                   random=~Rowf+vsm(ism(M)),
+                   rcov=~units,data=DT, 
+                   verbose = FALSE)
+
+
+me.marker &lt;- mix.marker$uList$`vsm(ism(M`
+
+################
+# PARTITIONED GBLUP MODEL
+################
+
+MMT &lt;-tcrossprod(M) ## MM' = additive relationship matrix 
+MMTinv&lt;-solve(MMT) ## inverse
+MTMMTinv&lt;-t(M)%*%MMTinv # M' %*% (M'M)-
+
+mix.part &lt;- mmes(color~1,
+                 random=~Rowf+vsm(ism(id), Gu=MMT),
+                 rcov=~units,data=DT,
+                 verbose = FALSE)
+
+#convert BLUPs to marker effects me=M'(M'M)- u
+me.part&lt;-MTMMTinv%*%matrix(mix.part$uList$`vsm(ism(id), Gu = MMT`,ncol=1)
+
+# compare marker effects between both models
+plot(me.marker,me.part)
+</code></pre>
+<p><img src="data:image/png;base64,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" alt="plot of chunk unnamed-chunk-15" /></p>
+<p>As can be seen, these two models are equivalent with the exception that the partitioned model is more computationally efficient.</p>
+<h3 id="2-udu-decomposition">2) UDU’ decomposition</h3>
+<p>Lee and Van der Warf (2015) proposed a decomposition of the relationship matrix A=UDU’ together with a transformation of the response and fixed effects Uy = Ux + UZ + e, to fit a model where the phenotypic variance matrix V is a diagonal because the relationship matrix is the diagonal matrix D from the decomposition that can be inverted easily and make multitrait models more feasible.</p>
+<pre><code class="language-r"># data(&quot;DT_wheat&quot;)
+# rownames(GT_wheat) &lt;- rownames(DT_wheat)
+# G &lt;- A.mat(GT_wheat)
+# Y &lt;- data.frame(DT_wheat)
+# 
+# # make the decomposition
+# UD&lt;-eigen(G) # get the decomposition: G = UDU'
+# U&lt;-UD$vectors
+# D&lt;-diag(UD$values)# This will be our new 'relationship-matrix'
+# rownames(D) &lt;- colnames(D) &lt;- rownames(G)
+# X&lt;-model.matrix(~1, data=Y) # here: only one fixed effect (intercept)
+# UX&lt;-t(U)%*%X # premultiply X and y by U' 
+# UY &lt;- t(U) %*% as.matrix(Y) # multivariate
+# 
+# # dataset for decomposed model
+# DTd&lt;-data.frame(id = rownames(G) ,UY, UX =UX[,1])
+# DTd$id&lt;-as.character(DTd$id)
+# 
+# modeld &lt;- mmes(cbind(X1,X2) ~ UX - 1, 
+#               random = ~vsm(id,Gu=D), 
+#               rcov = ~vsm(units),
+#               data=DTd, verbose = FALSE)
+# 
+# # dataset for normal model
+# DTn&lt;-data.frame(id = rownames(G) , DT_wheat)
+# DTn$id&lt;-as.character(DTn$id)
+# 
+# modeln &lt;- mmes(cbind(X1,X2) ~ 1, 
+#               random = ~vsm(id,Gu=G), 
+#               rcov = ~vsm(units),
+#               data=DTn, verbose = FALSE)
+# 
+# ## compare regular and transformed blups
+# plot(x=(solve(t(U)))%*%modeld$U$`u:id`$X2[colnames(D)], 
+#      y=modeln$U$`u:id`$X2[colnames(D)], xlab=&quot;UDU blup&quot;,
+#      ylab=&quot;blup&quot;)
+</code></pre>
+<p>As can be seen, the two models are equivalent. Despite the fact that sommer doesn’t take a great advantage of this trick because it was built for dense matrices using the Armadillo library. Other software may be better using this trick.</p>
+<h3 id="3-mating-designs">3) Mating designs</h3>
+<p>Estimating variance components has been a topic of interest for the breeding community for a long time. Here we show how to calculate additive and dominance variance using the North Carolina Design I (Nested design) and North Carolina Design II (Factorial design) using the classical Expected Mean Squares method and the REML methods from sommer and how these two are equivalent.</p>
+<h4 id="north-carolina-design-i-nested-design">North Carolina Design I (Nested design)</h4>
+<pre><code class="language-r">data(DT_expdesigns)
+DT &lt;- DT_expdesigns$car1
+DT &lt;- aggregate(yield~set+male+female+rep, data=DT, FUN = mean)
+DT$setf &lt;- as.factor(DT$set)
+DT$repf &lt;- as.factor(DT$rep)
+DT$malef &lt;- as.factor(DT$male)
+DT$femalef &lt;- as.factor(DT$female)
+#levelplot(yield~male*female|set, data=DT, main=&quot;NC design I&quot;)
+##############################
+## Expected Mean Square method
+##############################
+mix1 &lt;- lm(yield~ setf + setf:repf + femalef:malef:setf + malef:setf, data=DT)
+MS &lt;- anova(mix1); MS
+</code></pre>
+<pre><code>## Analysis of Variance Table
+## 
+## Response: yield
+##                    Df Sum Sq Mean Sq F value   Pr(&gt;F)    
+## setf                1 0.1780 0.17796  1.6646 0.226012    
+## setf:repf           2 0.9965 0.49824  4.6605 0.037141 *  
+## setf:malef          4 7.3904 1.84759 17.2822 0.000173 ***
+## setf:femalef:malef  6 1.6083 0.26806  2.5074 0.095575 .  
+## Residuals          10 1.0691 0.10691                     
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+</code></pre>
+<pre><code class="language-r">ms1 &lt;- MS[&quot;setf:malef&quot;,&quot;Mean Sq&quot;]
+ms2 &lt;- MS[&quot;setf:femalef:malef&quot;,&quot;Mean Sq&quot;]
+mse &lt;- MS[&quot;Residuals&quot;,&quot;Mean Sq&quot;]
+nrep=2
+nfem=2
+Vfm &lt;- (ms2-mse)/nrep
+Vm &lt;- (ms1-ms2)/(nrep*nfem)
+
+## Calculate Va and Vd
+Va=4*Vm # assuming no inbreeding (4/(1+F))
+Vd=4*(Vfm-Vm) # assuming no inbreeding(4/(1+F)^2)
+Vg=c(Va,Vd); names(Vg) &lt;- c(&quot;Va&quot;,&quot;Vd&quot;); Vg
+</code></pre>
+<pre><code>##        Va        Vd 
+##  1.579537 -1.257241
+</code></pre>
+<pre><code class="language-r">##############################
+## REML method
+##############################
+mix2 &lt;- mmes(yield~ setf + setf:repf,
+            random=~femalef:malef:setf + malef:setf, nIters=10,
+            data=DT, verbose = FALSE)
+vc &lt;- summary(mix2)$varcomp; vc
+</code></pre>
+<pre><code>##                            VarComp  VarCompSE   Zratio Constraint
+## femalef:malef:setf:mu:mu 0.0805730 0.08098693 0.994889   Positive
+## malef:setf:mu:mu         0.3948764 0.32883779 1.200824   Positive
+## units:mu:mu              0.1069084 0.04781501 2.235876   Positive
+</code></pre>
+<pre><code class="language-r">Vfm &lt;- vc[1,&quot;VarComp&quot;]
+Vm &lt;- vc[2,&quot;VarComp&quot;]
+
+## Calculate Va and Vd
+Va=4*Vm # assuming no inbreeding (4/(1+F))
+Vd=4*(Vfm-Vm) # assuming no inbreeding(4/(1+F)^2)
+Vg=c(Va,Vd); names(Vg) &lt;- c(&quot;Va&quot;,&quot;Vd&quot;); Vg
+</code></pre>
+<pre><code>##        Va        Vd 
+##  1.579506 -1.257214
+</code></pre>
+<p>As can be seen the REML method is easier than manipulating the MS and we arrive to the same results.</p>
+<h4 id="north-carolina-design-ii-factorial-design">North Carolina Design II (Factorial design)</h4>
+<pre><code class="language-r">DT &lt;- DT_expdesigns$car2
+DT &lt;- aggregate(yield~set+male+female+rep, data=DT, FUN = mean)
+DT$setf &lt;- as.factor(DT$set)
+DT$repf &lt;- as.factor(DT$rep)
+DT$malef &lt;- as.factor(DT$male)
+DT$femalef &lt;- as.factor(DT$female)
+#levelplot(yield~male*female|set, data=DT, main=&quot;NC desing II&quot;)
+head(DT)
+</code></pre>
+<pre><code>##   set male female rep   yield setf repf malef femalef
+## 1   1    1      1   1  831.03    1    1     1       1
+## 2   1    2      1   1 1046.55    1    1     2       1
+## 3   1    3      1   1  853.33    1    1     3       1
+## 4   1    4      1   1  940.00    1    1     4       1
+## 5   1    5      1   1  802.00    1    1     5       1
+## 6   1    1      2   1  625.93    1    1     1       2
+</code></pre>
+<pre><code class="language-r">N=with(DT,table(female, male, set))
+nmale=length(which(N[1,,1] &gt; 0))
+nfemale=length(which(N[,1,1] &gt; 0))
+nrep=table(N[,,1])
+nrep=as.numeric(names(nrep[which(names(nrep) !=0)]))
+
+##############################
+## Expected Mean Square method
+##############################
+
+mix1 &lt;- lm(yield~ setf + setf:repf + 
+             femalef:malef:setf + malef:setf + femalef:setf, data=DT)
+MS &lt;- anova(mix1); MS
+</code></pre>
+<pre><code>## Analysis of Variance Table
+## 
+## Response: yield
+##                    Df  Sum Sq Mean Sq F value    Pr(&gt;F)    
+## setf                1  847836  847836 45.6296 1.097e-09 ***
+## setf:repf           4  144345   36086  1.9421  0.109652    
+## setf:malef          8  861053  107632  5.7926 5.032e-06 ***
+## setf:femalef        8  527023   65878  3.5455  0.001227 ** 
+## setf:femalef:malef 32  807267   25227  1.3577  0.129527    
+## Residuals          96 1783762   18581                      
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+</code></pre>
+<pre><code class="language-r">ms1 &lt;- MS[&quot;setf:malef&quot;,&quot;Mean Sq&quot;]
+ms2 &lt;- MS[&quot;setf:femalef&quot;,&quot;Mean Sq&quot;]
+ms3 &lt;- MS[&quot;setf:femalef:malef&quot;,&quot;Mean Sq&quot;]
+mse &lt;- MS[&quot;Residuals&quot;,&quot;Mean Sq&quot;]
+nrep=length(unique(DT$rep))
+nfem=length(unique(DT$female))
+nmal=length(unique(DT$male))
+Vfm &lt;- (ms3-mse)/nrep; 
+Vf &lt;- (ms2-ms3)/(nrep*nmale); 
+Vm &lt;- (ms1-ms3)/(nrep*nfemale); 
+
+Va=4*Vm; # assuming no inbreeding (4/(1+F))
+Va=4*Vf; # assuming no inbreeding (4/(1+F))
+Vd=4*(Vfm); # assuming no inbreeding(4/(1+F)^2)
+Vg=c(Va,Vd); names(Vg) &lt;- c(&quot;Va&quot;,&quot;Vd&quot;); Vg
+</code></pre>
+<pre><code>##        Va        Vd 
+## 10840.192  8861.659
+</code></pre>
+<pre><code class="language-r">##############################
+## REML method
+##############################
+
+mix2 &lt;- mmes(yield~ setf + setf:repf ,
+            random=~femalef:malef:setf + malef:setf + femalef:setf, 
+            nIters=10,
+            data=DT, verbose = FALSE)
+vc &lt;- summary(mix2)$varcomp; vc
+</code></pre>
+<pre><code>##                            VarComp VarCompSE    Zratio Constraint
+## femalef:malef:setf:mu:mu  2215.618  2284.794 0.9697231   Positive
+## malef:setf:mu:mu          5493.338  3610.989 1.5212836   Positive
+## femalef:setf:mu:mu        2710.176  2236.621 1.2117280   Positive
+## units:mu:mu              18580.739  2681.742 6.9286068   Positive
+</code></pre>
+<pre><code class="language-r">Vfm &lt;- vc[1,&quot;VarComp&quot;]
+Vm &lt;- vc[2,&quot;VarComp&quot;]
+Vf &lt;- vc[3,&quot;VarComp&quot;]
+
+Va=4*Vm; # assuming no inbreeding (4/(1+F))
+Va=4*Vf; # assuming no inbreeding (4/(1+F))
+Vd=4*(Vfm); # assuming no inbreeding(4/(1+F)^2)
+Vg=c(Va,Vd); names(Vg) &lt;- c(&quot;Va&quot;,&quot;Vd&quot;); Vg
+</code></pre>
+<pre><code>##        Va        Vd 
+## 10840.704  8862.471
+</code></pre>
+<p>As can be seen, the REML method is easier than manipulating the MS and we arrive to the same results.</p>
+<h3 id="4-gwas-by-gblup">4) GWAS by GBLUP</h3>
+<p>Gualdron-Duarte et al. (2014) and Bernal-Rubio et al. (2016) proved that in (SingleStep)GBLUP or RRBLUP/SNP-BLUP, dividing the estimate of the marker effect by its standard error is mathematically equivalent to fixed regression EMMAX GWAS, even if markers are estimated as random effects in GBLUP and as fixed effects in EMMAX. That way fitting a GBLUP model is enough to perform GWAS for additive and on-additive effects.</p>
+<p>Let us use the DT_cpdata dataset to explore the GWAS by GBLUP method</p>
+<pre><code class="language-r">data(DT_cpdata)
+DT &lt;- DT_cpdata
+GT &lt;- GT_cpdata[,1:200]
+MP &lt;- MP_cpdata
+#### create the variance-covariance matrix
+A &lt;- A.mat(GT) # additive relationship matrix
+n &lt;- nrow(DT) # to be used for degrees of freedom
+k &lt;- 1 # to be used for degrees of freedom (number of levels in fixed effects)
+</code></pre>
+<p>First we fit a regular GWAS/EMMAX using the GWAS function available in sommer that first calculates variance components and then fits a regression marker by marker as a fixed effect.</p>
+<pre><code class="language-r">###########################
+#### Regular GWAS/EMMAX approach
+###########################
+# mix2 &lt;- GWAS(color~1,
+#              random=~vsm(ism(id), Gu=A) + Rowf + Colf,
+#              rcov=~units, M=GT, gTerm = &quot;u:id&quot;,
+#              verbose = FALSE, nIters=10,
+#              data=DT)
+</code></pre>
+<p>To compare EMMAX to the approach proposed by Gualdron-Duarte et al. (2014) and Bernal-Rubio et al. (2016) we will start fitting an RRBLUP/SNP-BLUP model to show that the estimate of the marker effect by its standard error is mathematically equivalent to fixed regression EMMAX GWAS.</p>
+<pre><code class="language-r">###########################
+#### GWAS by RRBLUP approach
+###########################
+# Z &lt;- GT[as.character(DT$id),]
+# mixRRBLUP &lt;- mmes(color~1,
+#               random=~vsm(ism(Z)) + Rowf + Colf,
+#               rcov=~units, nIters=10,
+#               verbose = FALSE,
+#               data=DT)
+# 
+# a &lt;- mixRRBLUP$uList$`vsm(ism(Z`# marker effects
+# start=mixRRBLUP$partitions[[1]][1]
+# end=mixRRBLUP$partitions[[1]][2]
+# se.a &lt;- sqrt( diag(kronecker(diag(ncol(Z)),mixRRBLUP$theta[[1]]) - mixRRBLUP$Ci[start:end,start:end] ) ) # SE of marker effects
+# t.stat &lt;- a/se.a # t-statistic
+# pvalRRBLUP &lt;- dt(t.stat[,1],df=n-k-1) # -log10(pval)
+</code></pre>
+<p>Instead of fitting the RRBLUP/SNP-BLUP model we can fit a GBLUP model which is less computationally demanding and recover marker effects and their standard errors from the genotype effects.</p>
+<pre><code class="language-r"># ###########################
+# #### GWAS by GBLUP approach
+# ###########################
+# M&lt;- GT
+# MMT &lt;-tcrossprod(M) ## MM' = additive relationship matrix
+# MMTinv&lt;-solve(MMT + diag(1e-6, ncol(MMT), ncol(MMT))) ## inverse of MM'
+# MTMMTinv&lt;-t(M)%*%MMTinv # M' %*% (M'M)-
+# mixGBLUP &lt;- mmes(color~1,
+#              random=~vsm(ism(id), Gu=MMT) + Rowf + Colf,
+#              rcov=~units, nIters=10,
+#              verbose = FALSE,
+#              data=DT)
+# a.from.g &lt;-MTMMTinv%*%matrix(mixGBLUP$uList$`vsm(ism(id), Gu = MMT`,ncol=1)
+# start=mixGBLUP$partitions[[1]][1]
+# end=mixGBLUP$partitions[[1]][2]
+# var.g &lt;- kronecker(MMT,mixGBLUP$theta[[1]]) - mixGBLUP$Ci[start:end,start:end]
+# var.a.from.g &lt;- t(M)%*%MMTinv%*% (var.g) %*% t(MMTinv)%*%M
+# se.a.from.g &lt;- sqrt(diag(var.a.from.g))
+# t.stat.from.g &lt;- a.from.g/se.a.from.g # t-statistic
+# pvalGBLUP &lt;- dt(t.stat.from.g,df=n-k-1) # -log10(pval)
+</code></pre>
+<p>Now we can look at the p-values coming from the 3 approaches to indeed show that results are equivalent.</p>
+<pre><code class="language-r">###########################
+#### Compare results
+###########################
+# plot(mix2$scores[,1], main=&quot;GWAS&quot;)
+# plot(-log(pvalRRBLUP), main=&quot;GWAS by RRBLUP/SNP-BLUP&quot;) 
+# plot(-log(pvalGBLUP), main=&quot;GWAS by GBLUP&quot;)
+</code></pre>
+<h3 id="final-remarks">Final remarks</h3>
+<p>Keep in mind that mmes uses a direct inversion (DI) algorithm which can be very slow for large datasets with many records. When datasets have more records than coefficients to be estimated please shift to the use of the mmes function.</p>
+<h2 id="literature">Literature</h2>
+<p>Covarrubias-Pazaran G. 2016. Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6):1-15.</p>
+<p>Covarrubias-Pazaran G. 2018. Software update: Moving the R package sommer to multivariate mixed models for genome-assisted prediction. doi: <a href="https://doi.org/10.1101/354639">https://doi.org/10.1101/354639</a></p>
+<p>Bernardo Rex. 2010. Breeding for quantitative traits in plants. Second edition. Stemma Press. 390 pp.</p>
+<p>Gilmour et al. 1995. Average Information REML: An efficient algorithm for variance parameter estimation in linear mixed models. Biometrics 51(4):1440-1450.</p>
+<p>Henderson C.R. 1975. Best Linear Unbiased Estimation and Prediction under a Selection Model. Biometrics vol. 31(2):423-447.</p>
+<p>Kang et al. 2008. Efficient control of population structure in model organism association mapping. Genetics 178:1709-1723.</p>
+<p>Lee, D.-J., Durban, M., and Eilers, P.H.C. (2013). Efficient two-dimensional smoothing with P-spline ANOVA mixed models and nested bases. Computational Statistics and Data Analysis, 61, 22 - 37.</p>
+<p>Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: <a href="http://dx.doi.org/10.1101/027201">http://dx.doi.org/10.1101/027201</a>.</p>
+<p>Maier et al. 2015. Joint analysis of psychiatric disorders increases accuracy of risk prediction for schizophrenia, bipolar disorder, and major depressive disorder. Am J Hum Genet; 96(2):283-294.</p>
+<p>Rodriguez-Alvarez, Maria Xose, et al. Correcting for spatial heterogeneity in plant breeding experiments with P-splines. Spatial Statistics 23 (2018): 52-71.</p>
+<p>Searle. 1993. Applying the EM algorithm to calculating ML and REML estimates of variance components. Paper invited for the 1993 American Statistical Association Meeting, San Francisco.</p>
+<p>Yu et al. 2006. A unified mixed-model method for association mapping that accounts for multiple levels of relatedness. Genetics 38:203-208.</p>
+<p>Tunnicliffe W. 1989. On the use of marginal likelihood in time series model estimation. JRSS 51(1):15-27.</p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/combine/npm/katex/dist/katex.min.js,npm/katex/dist/contrib/auto-render.min.js,npm/@xiee/utils/js/render-katex.js" defer></script>
+</body>
+</html>

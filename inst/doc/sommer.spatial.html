@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>Spatial modeling using the sommer package</title>
+<style type="text/css">
+/**
+ * Prism.s theme ported from highlight.js's xcode style
+ */
+pre code {
+  padding: 1em;
+}
+.token.comment {
+  color: #007400;
+}
+.token.punctuation {
+  color: #999;
+}
+.token.tag,
+.token.selector {
+  color: #aa0d91;
+}
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol {
+  color: #1c00cf;
+}
+.token.property,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin {
+  color: #c41a16;
+}
+.token.inserted {
+  background-color: #ccffd8;
+}
+.token.deleted {
+  background-color: #ffebe9;
+}
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #9a6e3a;
+}
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: #836c28;
+}
+.token.function,
+.token.class-name {
+  color: #DD4A68;
+}
+.token.regex,
+.token.important,
+.token.variable {
+  color: #5c2699;
+}
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+.token.italic {
+  font-style: italic;
+}
+</style>
+<style type="text/css">
+body {
+  font-family: sans-serif;
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+body, .footnotes, code { font-size: .9em; }
+li li { font-size: .95em; }
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+pre, img { max-width: 100%; }
+pre, pre:hover {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+pre code {
+  display: block;
+  overflow-x: auto;
+}
+code { font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace; }
+:not(pre) > code, code[class] { background-color: #F8F8F8; }
+code.language-undefined, pre > code:not([class]) {
+  background-color: inherit;
+  border: 1px solid #eee;
+}
+table {
+  margin: auto;
+  border-top: 1px solid #666;
+}
+table thead th { border-bottom: 1px solid #ddd; }
+th, td { padding: 5px; }
+thead, tfoot, tr:nth-child(even) { background: #eee; }
+blockquote {
+  color: #666;
+  margin: 0;
+  padding-left: 1em;
+  border-left: 0.5em solid #eee;
+}
+hr, .footnotes::before { border: 1px dashed #ddd; }
+.frontmatter { text-align: center; }
+#TOC .numbered li { list-style: none; }
+#TOC .numbered { padding-left: 0; }
+#TOC .numbered ul { padding-left: 1em; }
+table, .body h2 { border-bottom: 1px solid #666; }
+.body .appendix, .appendix ~ h2 { border-bottom-style: dashed; }
+.footnote-ref a::before { content: "["; }
+.footnote-ref a::after { content: "]"; }
+section.footnotes::before {
+  content: "";
+  display: block;
+  max-width: 20em;
+}
+
+@media print {
+  body {
+    font-size: 12pt;
+    max-width: 100%;
+  }
+  tr, img { page-break-inside: avoid; }
+}
+@media only screen and (min-width: 992px) {
+  pre { white-space: pre; }
+}
+</style>
+</head>
+<body>
+<div class="frontmatter">
+<div class="title"><h1>Spatial modeling using the sommer package</h1></div>
+<div class="author"><h2>Giovanny Covarrubias-Pazaran</h2></div>
+<div class="date"><h3>2025-04-04</h3></div>
+</div>
+<div class="body">
+<p>The sommer package was developed to provide R users with a powerful and reliable multivariate mixed model solver for different genetic (in diploid and polyploid organisms) and non-genetic analyses. This package allows the user to estimate variance components in a mixed model with the advantages of specifying the variance-covariance structure of the random effects, specifying heterogeneous variances, and obtaining other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc. The core algorithms of the package are coded in C++ using the Armadillo library to optimize dense matrix operations common in the derect-inversion algorithms.</p>
+<p>This vignette is focused on showing the capabilities of sommer to fit spatial models using the two dimensional splines models.</p>
+<p>**SECTION 1: Introduction **</p>
+<ol>
+<li>Background in tensor products</li>
+</ol>
+<p><strong>SECTION 2: Spatial models</strong></p>
+<ol>
+<li>Two dimensional splines (multiple spatial components)</li>
+<li>Two dimensional splines (single spatial component)</li>
+<li>Spatial models in multiple trials at once</li>
+</ol>
+<h2 id="section-1-introduction">SECTION 1: Introduction</h2>
+<h3 id="backgrounds-in-tensor-products">Backgrounds in tensor products</h3>
+<p>TBD</p>
+<h2 id="section-2-spatial-models">SECTION 2: Spatial models</h2>
+<h3 id="1-two-dimensional-splines-multiple-spatial-components">1) Two dimensional splines (multiple spatial components)</h3>
+<p>In this example we show how to obtain the same results than using the SpATS package. This is achieved by using the <code>spl2Db</code> function which is a wrapper of the <code>tpsmmb</code> function.</p>
+<pre><code class="language-r">library(sommer)
+data(DT_yatesoats)
+DT &lt;- DT_yatesoats
+DT$row &lt;- as.numeric(as.character(DT$row))
+DT$col &lt;- as.numeric(as.character(DT$col))
+DT$R &lt;- as.factor(DT$row)
+DT$C &lt;- as.factor(DT$col)
+
+# SPATS MODEL
+# m1.SpATS &lt;- SpATS(response = &quot;Y&quot;,
+#                   spatial = ~ PSANOVA(col, row, nseg = c(14,21), degree = 3, pord = 2),
+#                   genotype = &quot;V&quot;, fixed = ~ 1,
+#                   random = ~ R + C, data = DT,
+#                   control = list(tolerance = 1e-04))
+# 
+# summary(m1.SpATS, which = &quot;variances&quot;)
+# 
+# Spatial analysis of trials with splines 
+# 
+# Response:                   Y         
+# Genotypes (as fixed):       V         
+# Spatial:                    ~PSANOVA(col, row, nseg = c(14, 21), degree = 3, pord = 2)
+# Fixed:                      ~1        
+# Random:                     ~R + C    
+# 
+# 
+# Number of observations:        72
+# Number of missing data:        0
+# Effective dimension:           17.09
+# Deviance:                      483.405
+# 
+# Variance components:
+#                   Variance            SD     log10(lambda)
+# R                 1.277e+02     1.130e+01           0.49450
+# C                 2.673e-05     5.170e-03           7.17366
+# f(col)            4.018e-15     6.339e-08          16.99668
+# f(row)            2.291e-10     1.514e-05          12.24059
+# f(col):row        1.025e-04     1.012e-02           6.59013
+# col:f(row)        8.789e+01     9.375e+00           0.65674
+# f(col):f(row)     8.036e-04     2.835e-02           5.69565
+# 
+# Residual          3.987e+02     1.997e+01 
+
+# SOMMER MODEL
+M &lt;- spl2Dmats(x.coord.name = &quot;col&quot;, y.coord.name = &quot;row&quot;, data=DT, 
+               nseg =c(14,21), degree = c(3,3), penaltyord = c(2,2) 
+               )
+mix &lt;- mmes(Y~V, henderson = TRUE,
+            random=~ R + C + vsm(ism(M$fC)) + vsm(ism(M$fR)) + 
+              vsm(ism(M$fC.R)) + vsm(ism(M$C.fR)) +
+              vsm(ism(M$fC.fR)),
+            rcov=~units, verbose=FALSE,
+            data=M$data)
+summary(mix)$varcomp
+</code></pre>
+<pre><code>##                   VarComp  VarCompSE    Zratio Constraint
+## R:mu:mu       106.7372504 68.0312885 1.5689435   Positive
+## C:mu:mu       177.6246506 85.9690310 2.0661469   Positive
+## M:fC:mu:mu      1.5372882  4.6559585 0.3301765   Positive
+## M:fR:mu:mu      0.2247536  0.5629912 0.3992134   Positive
+## M:fC.R:mu:mu    0.4967322  1.5044611 0.3301729   Positive
+## M:C.fR:mu:mu    0.1566605  0.3953450 0.3962628   Positive
+## M:fC.fR:mu:mu   8.0964758  5.2934001 1.5295416   Positive
+## units:mu:mu   490.8149644 86.6773655 5.6625506   Positive
+</code></pre>
+<h3 id="2-two-dimensional-splines-in-single-field-single-spatial-component">2) Two dimensional splines in single field (single spatial component)</h3>
+<p>To reduce the computational burden of fitting multiple spatial kernels <code>sommer</code> provides a single spatial kernel method through the <code>spl2Da</code> function. This as will be shown, can produce similar results to the more flexible model. Use the one that fits better your needs.</p>
+<pre><code class="language-r"># SOMMER MODEL
+mix &lt;- mmes(Y~V,
+            random=~ R + C +
+              spl2Dc(row,col),
+            rcov=~units, verbose=FALSE,
+            data=DT)
+summary(mix)$varcomp
+</code></pre>
+<pre><code>##                      VarComp VarCompSE    Zratio Constraint
+## R:mu:mu             112.0476  84.81928 1.3210157   Positive
+## C:mu:mu             157.5950 162.05252 0.9724933   Positive
+## row:col:A:all:A:all 406.6870 450.21170 0.9033239   Positive
+## units:mu:mu         405.3580 107.65889 3.7652071   Positive
+</code></pre>
+<h3 id="3-spatial-models-in-multiple-trials-at-once">3) Spatial models in multiple trials at once</h3>
+<p>Sometimes we want to fit heterogeneous variance components when e.g., have multiple trials or different locations. The spatial models can also be fitted that way using the <code>at.var</code> and <code>at.levels</code> arguments. The first argument expects a variable that will define the levels at which the variance components will be fitted. The second argument is a way for the user to specify the levels at which the spatial kernels should be fitted if the user doesn’t want to fit it for all levels (e.g., trials or fields).</p>
+<pre><code class="language-r">DT2 &lt;- rbind(DT,DT)
+DT2$Y &lt;- DT2$Y + rnorm(length(DT2$Y))
+DT2$trial &lt;- c(rep(&quot;A&quot;,nrow(DT)),rep(&quot;B&quot;,nrow(DT)))
+head(DT2)
+</code></pre>
+<pre><code>##   row col         Y   N          V  B         MP R C trial
+## 1   1   1  90.15611 0.2    Victory B2    Victory 1 1     A
+## 2   2   1  60.69612   0    Victory B2    Victory 2 1     A
+## 3   3   1 119.85452 0.4 Marvellous B2 Marvellous 3 1     A
+## 4   4   1 143.93575 0.6 Marvellous B2 Marvellous 4 1     A
+## 5   5   1 148.26361 0.6 GoldenRain B2 GoldenRain 5 1     A
+## 6   6   1 107.00112 0.2 GoldenRain B2 GoldenRain 6 1     A
+</code></pre>
+<pre><code class="language-r"># SOMMER MODEL
+mix &lt;- mmes(Y~V,
+            random=~ R + C +
+              spl2Dc(row,col, at.var = trial),
+            rcov=~units, verbose=FALSE,
+            data=DT2)
+summary(mix)$varcomp
+</code></pre>
+<pre><code>##                            VarComp VarCompSE    Zratio Constraint
+## R:mu:mu                   188.0076  82.90759 2.2676763   Positive
+## C:mu:mu                   179.6440 158.99523 1.1298702   Positive
+## row:col:trial:A:all:A:all 246.4509 304.32889 0.8098176   Positive
+## row:col:trial:B:all:B:all 265.0399 309.25820 0.8570181   Positive
+## units:mu:mu               344.3400  59.26901 5.8097827   Positive
+</code></pre>
+<h2 id="literature">Literature</h2>
+<p>Covarrubias-Pazaran G. 2016. Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6):1-15.</p>
+<p>Covarrubias-Pazaran G. 2018. Software update: Moving the R package sommer to multivariate mixed models for genome-assisted prediction. doi: <a href="https://doi.org/10.1101/354639">https://doi.org/10.1101/354639</a></p>
+<p>Bernardo Rex. 2010. Breeding for quantitative traits in plants. Second edition. Stemma Press. 390 pp.</p>
+<p>Gilmour et al. 1995. Average Information REML: An efficient algorithm for variance parameter estimation in linear mixed models. Biometrics 51(4):1440-1450.</p>
+<p>Henderson C.R. 1975. Best Linear Unbiased Estimation and Prediction under a Selection Model. Biometrics vol. 31(2):423-447.</p>
+<p>Kang et al. 2008. Efficient control of population structure in model organism association mapping. Genetics 178:1709-1723.</p>
+<p>Lee, D.-J., Durban, M., and Eilers, P.H.C. (2013). Efficient two-dimensional smoothing with P-spline ANOVA mixed models and nested bases. Computational Statistics and Data Analysis, 61, 22 - 37.</p>
+<p>Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: <a href="http://dx.doi.org/10.1101/027201">http://dx.doi.org/10.1101/027201</a>.</p>
+<p>Maier et al. 2015. Joint analysis of psychiatric disorders increases accuracy of risk prediction for schizophrenia, bipolar disorder, and major depressive disorder. Am J Hum Genet; 96(2):283-294.</p>
+<p>Rodriguez-Alvarez, Maria Xose, et al. Correcting for spatial heterogeneity in plant breeding experiments with P-splines. Spatial Statistics 23 (2018): 52-71.</p>
+<p>Searle. 1993. Applying the EM algorithm to calculating ML and REML estimates of variance components. Paper invited for the 1993 American Statistical Association Meeting, San Francisco.</p>
+<p>Yu et al. 2006. A unified mixed-model method for association mapping that accounts for multiple levels of relatedness. Genetics 38:203-208.</p>
+<p>Tunnicliffe W. 1989. On the use of marginal likelihood in time series model estimation. JRSS 51(1):15-27.</p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js" defer></script>
+</body>
+</html>

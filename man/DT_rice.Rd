@@ -45,18 +45,14 @@ data(DT_rice)
 # head(DT)
 # M <- atcg1234(GT)
 # A <- A.mat(M$M)
-# mix <- mmer(Protein.content~1,
-#             random = ~vsr(geno, Gu=A) + geno,
+# mix <- mmes(Protein.content~1,
+#             random = ~vsm(ism(geno), Gu=A) + geno,
 #             rcov=~units,
 #             data=DT)
 # summary(mix)$varcomp
-# 
-# Ai <- as(solve(A + diag(1e-6,ncol(A),ncol(A))), Class="dgCMatrix")
-# mixb <- mmec(Protein.content~1,
-#             random = ~vsc(isc(geno), Gu=Ai) + geno,
-#             rcov=~units,
-#             data=DT)
-# summary(mixb)$varcomp
+# # if using henderson=TRUE provide Gu as inverse
+# Ai <- solve(A + diag(1e-6,ncol(A),ncol(A)))
+# Ai <- as(as(as( Ai,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
 }
 \keyword{datasets}
-\seealso{The core functions of the package \code{\link{mmer}} }
+\seealso{The core functions of the package \code{\link{mmes}} }

@@ -69,25 +69,20 @@ A platform for meta-analysis of rice crop data. \emph{Plant Physiology} \bold{13
 # K[1:4,1:4]
 # ###=========================================####
 # ###=========================================####
-# ### using formula based 'mmer'
+# ### using formula based 'mmes'
 # ###=========================================####
 # ###=========================================####
 # head(DT)
 # #### univariate
-# mix0 <- mmer(x1~1,
-#              random = ~vsr(line,Gu=K),
+# mix0 <- mmes(x1~1,
+#              random = ~vsm(ism(line),Gu=K),
 #              rcov=~units,
 #              data=DT)
 # summary(mix0)$varcomp
-# 
-# Ki <- as(solve(K + diag(1e-4,ncol(K),ncol(K))), Class="dgCMatrix")
-# mix0b <- mmec(x1~1,
-#              random = ~vsc(isc(line),Gu=Ki),
-#              rcov=~units,
-#              data=DT)
-# summary(mix0b)$varcomp
-
+# # if using mmes=TRUE provide Gu as inverse
+# Ki <- solve(K + diag(1e-4,ncol(K),ncol(K)))
+# Ki <- as(as(as( Ki,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
 
 }
 \keyword{datasets}
-\seealso{The core functions of the package \code{\link{mmer}} }
+\seealso{The core functions of the package \code{\link{mmes}} }

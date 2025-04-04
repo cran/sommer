@@ -38,20 +38,16 @@ DT$genof <- as.factor(DT$geno)
 
 A <- diag(7); colnames(A) <- rownames(A) <- 1:7;A # if you want to provide a covariance matrix
 #### model using overlay
-modh <- mmer(sugar~1, 
-             random=~vsr(overlay(femalef,malef, sparse = FALSE), Gu=A) 
+modh <- mmes(sugar~1, 
+             random=~vsm(ism(overlay(femalef,malef, sparse = FALSE)), Gu=A) 
              + genof,
              data=DT)
 summary(modh)$varcomp
 
-Ai <- as(solve(A + diag(1e-4,ncol(A),ncol(A))), Class="dgCMatrix")
-modhb <- mmec(sugar~1, 
-             random=~vsc(isc(overlay(femalef,malef, sparse = TRUE)), Gu=Ai) 
-             + genof,
-             data=DT)
-summary(modhb)$varcomp
-
+# if ussing mmes=TRUE provide Gu with inverses
+# Ai <- solve(A + diag(1e-4,ncol(A),ncol(A)))
+# Ai <- as(as(as( Ai,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
 
 }
 \keyword{datasets}
-\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmec}} }
+\seealso{The core functions of the package \code{\link{mmes}} }

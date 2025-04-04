@@ -71,22 +71,24 @@
 
 
 \examples{
-  data(DT_yatesoats)
+
+data(DT_yatesoats)
 DT <- DT_yatesoats
 
-m3 <- mmer(fixed=Y ~ V + N + V:N-1,
+m3 <- mmes(fixed=Y ~ V + N + V:N-1,
            random = ~ B + B:MP,
            rcov=~units,
            data = DT)
 
-wald.test(b = m3$Beta$Estimate, Sigma = m3$VarBeta, Terms = 2)
+wald.test(b = m3$b, Sigma = m3$Ci[1:nrow(m3$b),1:nrow(m3$b)], Terms = 2)
 
 LL <- matrix(0,nrow=1, ncol=12)
 LL[1,2] <- 1
 LL[1,3] <- -1
 LL
 
-wald.test(b = m3$Beta$Estimate, Sigma = m3$VarBeta, L=LL)
+wald.test(b = m3$b, Sigma = m3$Ci[1:nrow(m3$b),1:nrow(m3$b)], L=LL)
+
 
   }
 

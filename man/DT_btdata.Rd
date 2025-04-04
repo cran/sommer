@@ -35,36 +35,30 @@ Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits u
 # data(DT_btdata)
 # DT <- DT_btdata
 # head(DT)
-# mix4 <- mmer(tarsus ~ sex,
+# mix4 <- mmes(tarsus ~ sex,
 #              random = ~ dam + fosternest,
 #              rcov=~units,
 #              data = DT)
 # summary(mix4)$varcomp
+
+# MULTI-TRAIT EXAMPLE
+# head(DT)
+# DT2 <- stackTrait(DT, traits = c("tarsus","back"))
+# head(DT2$long)
+# DT2$long=DT2$long[with(DT2$long, order(trait)), ]
 # 
-# mix5 <- mmec(tarsus ~ sex,
-#              random = ~ dam + fosternest,
-#              rcov=~units,
-#              data = DT)
-# summary(mix5)$varcomp
+# mix3 <- mmes(valueS ~ trait:sex - 1, henderson=TRUE,
+#                 random = ~ vsm(usm(trait),ism(dam)) +  
+#                            vsm(usm(trait), ism(fosternest)),
+#                 rcov= ~ vsm(dsm(trait),ism(units)),
+#                 data = DT2$long)
 # 
-# ####=========================================####
-# ####=========================================####
-# ####=========================================####
-# #### EXAMPLE 2
-# #### more complex multivariate model
-# ####=========================================####
-# ####=========================================####
-# data(DT_btdata)
-# DT <- DT_btdata
-# mix3 <- mmer(cbind(tarsus, back) ~ sex,
-#                 random = ~ vsr(dam) + vsr(fosternest),
-#                 rcov= ~ vsr(units, Gtc=diag(2)),
-#                 data = DT)
-# summary(mix3)
+# 
+# summary(mix3)$varcomp
 # #### calculate the genetic correlation
-# cov2cor(mix3$sigma$`u:dam`)
-# cov2cor(mix3$sigma$`u:fosternest`)
+# cov2cor(mix3$theta[[1]])
+# cov2cor(mix3$theta[[2]])
 
 }
 \keyword{datasets}
-\seealso{The core functions of the package \code{\link{mmer}}, \code{\link{mmec}}}
+\seealso{The core functions of the package \code{\link{mmes}}  }

@@ -5,7 +5,14 @@ Two-dimensional penalised tensor-product of marginal B-Spline basis.
 }
 \description{
 
-Auxiliary function used for modelling the spatial or environmental effect as a two-dimensional penalised tensor-product (isotropic approach) based on Lee et al. (2013) and Rodriguez-Alvarez et al. (2018). This is a modified wrapper of some portions of the SpATS package to build a single incidence matrix containing all the columns from tensor products of the x and y coordinates and it fits such matrix as a single random effect. Then the heterogeneous covariances structure capabilities of sommec can be used to enhance the model fit. You may be interested in reading and citing not only sommec but also Wageningen publications if using this 2D spline methodology.
+Auxiliary function used for modelling the spatial or environmental effect as a 
+two-dimensional penalised tensor-product (isotropic approach) based on Lee et al. 
+(2013) and Rodriguez-Alvarez et al. (2018). This is a modified wrapper of some 
+portions of the SpATS package to build a single incidence matrix containing all
+the columns from tensor products of the x and y coordinates and it fits such matrix 
+as a single random effect. Then the heterogeneous covariances structure capabilities
+of sommer can be used to enhance the model fit. You may be interested in reading and 
+citing not only sommec but also Wageningen publications if using this 2D spline methodology.
 
 }
 \usage{
@@ -25,7 +32,7 @@ spl2Dc(x.coord,y.coord,at.var=NULL,at.levels=NULL, type="PSANOVA",
   \item{nestorder}{numerical vector of length 2 containing the divisor of the number of segments (\code{nsegments}) to be used for the construction of the nested B-spline basis for the smooth-by-smooth interaction component. In this case, the nested B-spline basis will be constructed assuming a total of \code{nsegments}/\code{nestorder} segments. Default set to 1, which implies that nested basis are not used. See \code{SAP} for more details.}
   \item{thetaC}{an optional matrix for constraints in the variance components.}
   \item{theta}{an optional matrix for initial values of the variance components.}
-  \item{sp}{a TRUE/FALSE statement to indicate if the VC from this structure should be multiplied by the scale parameter added in the mmec function through the addScaleParam argument in the \code{mmec} function .}
+  \item{sp}{a TRUE/FALSE statement to indicate if the VC from this structure should be multiplied by the scale parameter added in the mmes function through the addScaleParam argument in the \code{mmes} function .}
      
 }
 \details{
@@ -57,7 +64,7 @@ Gilmour, A.R., Cullis, B.R., and Verbyla, A.P. (1997). Accounting for Natural an
 
 }
 \seealso{
-\code{\link{mmec}}, \code{\link{spl2Db}}
+\code{\link{mmes}}
 }
 \examples{
 ## ============================ ##
@@ -68,14 +75,6 @@ data(DT_cpdata)
 # GT <- GT_cpdata
 # MP <- MP_cpdata
 # A <- A.mat(GT)
-# Ai <- as(solve(A + diag(1e-4,ncol(A),ncol(A))), Class="dgCMatrix")
-# mix <- mmec(Yield~1,
-#             random=~vsc(isc(id), Gu=Ai) +
-#               Rowf + Colf +
-#               spl2Dc(Row,Col),
-#             rcov=~units,
-#             data=DT)
-# summary(mix)$varcomp
 ## ============================ ##
 ## mimic 2 fields
 ## ============================ ## 
@@ -85,12 +84,12 @@ data(DT_cpdata)
 # aa$Yield <- aa$Yield + rnorm(length(aa$Yield),0,4)
 # DT2 <- rbind(aa,bb)
 # head(DT2)
-# mix <- mmec(Yield~1,
-#             random=~vsc(dsc(FIELD),isc(id), Gu=Ai) +
-#               vsc(dsc(FIELD),isc(Rowf)) +
-#               vsc(dsc(FIELD),isc(Colf)) +
+# mix <- mmes(Yield~1,
+#             random=~vsm(dsm(FIELD),ism(id), Gu=Ai) +
+#               vsm(dsm(FIELD),ism(Rowf)) +
+#               vsm(dsm(FIELD),ism(Colf)) +
 #                 spl2Dc(Row,Col,at.var=FIELD),
-#             rcov=~vsc(dsc(FIELD),isc(units)),
+#             rcov=~vsm(dsm(FIELD),ism(units)),
 #             data=DT2)
 
 }

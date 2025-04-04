@@ -45,31 +45,36 @@ Mf <- Mf_technow
 # Af <- A.mat(Mf)
 # ###=========================================####
 # ###=========================================####
-# ans2 <- mmer(GY~1,
-#              random=~vsr(dent,Gu=Ad) + vsr(flint,Gu=Af),
+# ans2 <- mmes(GY~1,
+#              random=~vsm(ism(dent),Gu=Ad) + vsm(ism(flint),Gu=Af),
 #              rcov=~units,
 #              data=DT)
 # summary(ans2)$varcomp
 # 
-# Adi <- as(solve(Ad + diag(1e-4,ncol(Ad),ncol(Ad))), Class="dgCMatrix")
-# Afi <- as(solve(Af + diag(1e-4,ncol(Af),ncol(Af))), Class="dgCMatrix")
-# ans2b <- mmec(GY~1,
-#              random=~vsc(isc(dent),Gu=Adi) + vsc(isc(flint),Gu=Afi),
-#              rcov=~units,
-#              data=DT)
-# summary(ans2b)$varcomp
-# ####=========================================####
-# #### multivariate overlayed model
-# ####=========================================####
+# Adi <- solve(Ad + diag(1e-4,ncol(Ad),ncol(Ad)))
+# Adi <- as(as(as( Adi,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
+# Afi <- solve(Af + diag(1e-4,ncol(Af),ncol(Af)))
+# Afi <- as(as(as( Afi,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
+# ####====================####
+# #### multivariate model ####
+# ####     2 traits       ####
+# ####====================####
+# head(DT)
+# DT2 <- stackTrait(DT, traits = c("GY","GM"))
+# head(DT2$long)
+# 
 # M <- rbind(Md,Mf)
 # A <- A.mat(M)
-# ans3 <- mmer(cbind(GY,GM)~1,
-#              random=~vsr(overlay(dent,flint),Gu=A),
-#              rcov=~vsr(units,Gtc=diag(2)),
-#              data=DT)
-# summary(ans2)
-# cov2cor(ans3$sigma[[1]])
-
+# Ai <- solve(A + diag(1e-4,ncol(A),ncol(A)))
+# Ai <- as(as(as( Ai,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
+# DT2$long=DT2$long[with(DT2$long, order(trait)), ]
+# 
+# ans3 <- mmes(valueS~trait, henderson=TRUE,
+#              random=~vsm(usm(trait),ism(overlay(dent,flint)),Gu=Ai),
+#              rcov=~ vsm(dsm(trait), ism(units)),
+#              data=DT2$long)
+# summary(ans3)
+# cov2cor(ans3$theta[[1]])
 }
 \keyword{datasets}
-\seealso{The core functions of the package \code{\link{mmer}} }
+\seealso{The core functions of the package \code{\link{mmes}} }

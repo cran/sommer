@@ -48,30 +48,31 @@ Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits u
 # #### look at the data
 # head(DT)
 # #### fit the model with no fixed effects (intercept only)
-# mix1 <- mmer(BWT~1,
-#              random=~vsr(ANIMAL,Gu=A),
+# mix1 <- mmes(BWT~1,
+#              random=~vsm(ism(ANIMAL),Gu=A),
 #              rcov=~units,
 #              data=DT)
 # summary(mix1)$varcomp
 # 
-# ## mmec uses the inverse of the relationship matrix
-# Ai <- as(solve(A + diag(1e-4,ncol(A),ncol(A))), Class="dgCMatrix")
-# mix1b <- mmec(BWT~1,
-#              random=~vsc(isc(ANIMAL),Gu=Ai),
-#              rcov=~units, tolParConv = 1e-5,
-#              data=DT)
-# summary(mix1b)$varcomp
+# ## mmes algorithm uses the inverse of the relationship matrix
+# Ai <- solve(A + diag(1e-4,ncol(A),ncol(A)))
+# Ai <- as(as(as( Ai,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
+# ####====================####
+# #### multivariate model ####
+# ####     2 traits       ####
+# ####====================####
+# head(DT)
+# DT2 <- stackTrait(DT, traits = c("BWT","TARSUS"))
+# head(DT2$long)
 # 
-# #### fit the multivariate model with no fixed effects (intercept only)
-# mix2 <- mmer(cbind(BWT,TARSUS)~1,
-#              random=~vsr(ANIMAL,Gu=A),
-#              rcov=~vsr(units),
-#              na.method.Y = "include2",
-#              data=DT)
-# summary(mix2)
-# cov2cor(mix2$sigma$`u:ANIMAL`)
-# cov2cor(mix2$sigma$`u:units`)
+# # #### fit the multivariate model with no fixed effects (intercept only)
+# mix2 <- mmes(valueS~trait, henderson=FALSE, # using direct inversion
+#              random=~vsm(usm(trait),ism(ANIMAL),Gu=A),
+#              rcov=~vsm(dsm(trait),ism(units)),
+#              data=DT2$long)
+# summary(mix2)$varcomp
+# cov2cor(mix2$theta[[1]])
 
 }
 \keyword{datasets}
-\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmec}} }
+\seealso{The core functions of the package \code{\link{mmes}} }

@@ -14,23 +14,50 @@ Giovanny Covarrubias-Pazaran
 }
 \description{
 
-Sommer is a structural multivariate-univariate linear mixed model solver for multiple random effects allowing the specification and/or estimation of variance covariance structures. REML estimates can be obtained using two major methods
+Sommer is a structural multivariate-univariate linear mixed model solver for multiple
+random effects allowing the specification and/or estimation of variance covariance 
+structures. REML estimates can be obtained using two major methods
 
-Direct-Inversion (Newton-Raphson and Average Information) >> \code{\link{mmer}} function
+Direct-Inversion (Newton-Raphson and Average Information) 
 
-Henderson's mixed model equations (Average Information) >> \code{\link{mmec}} function
+Henderson's mixed model equations (Average Information) 
 
-The algorithms are coded in C++ using the Armadillo library to optimize dense matrix operations common in genomic models. Sommer was designed to include complex covariance structures, e.g., unstructured, reduced-rank, diagonal. And also to model relationships between levels of a random effect, e.g., additive, dominance and epistatic relationship structures.  
+The algorithms are coded in C++ using the Armadillo library to optimize dense 
+matrix operations common in genomic models. Sommer was designed to include complex 
+covariance structures, e.g., unstructured, reduced-rank, diagonal. And also to 
+model relationships between levels of a random effect, e.g., additive, dominance 
+and epistatic relationship structures.  
 
-The \code{\link{mmer}} function can deal well with small and medium-size data sets (< 10,000 observations/records for average computers given the computational burden carried by the direct-inversion algorithms) since it works in the c > r problem and inverts an r x r matrix (being r the number of records and c the number of coefficients). On the other hand, the \code{\link{mmec}} function can deal with greater number of records (r>250K) as long as the number of coefficients to estimate is < 10,000 coefficients (c) since it works in the r > c problem and inverts a c x c matrix (being c the number of coefficients). The \code{\link{predict.mmer}} and \code{\link{predict.mmec}} functions can be used to obtain adjusted means. This package returns variance-covariance components, BLUPs, BLUEs, residuals, fitted values, variances-covariances for fixed and random effects, etc.
+The direct inversion algorithm available in the \code{\link{mmes}} function
+(argument \code{henderson=FALSE}) can
+deal well with small and medium-size data sets (< 10,000 observations/records for 
+average computers given the computational burden carried by the direct-inversion 
+algorithms) since it works in the c > r problem and inverts an r x r matrix 
+(being r the number of records and c the number of coefficients). On the other hand,
+the Henderson algorithm in the \code{\link{mmes}} function (argument \code{henderson=TRUE})
+can deal with greater number of records (r>250K) as long as the 
+number of coefficients to estimate is < 10,000 coefficients (c) since it works in
+the r > c problem and inverts a c x c matrix (being c the number of coefficients).
+The \code{\link{predict.mmes}} function can be used to obtain adjusted means. 
+This package returns variance-covariance components, BLUPs, BLUEs, residuals, 
+fitted values, variances-covariances for fixed and random effects, etc.
 
 }
 
 \section{Functions for genetic analysis}{
 
-The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance (\code{\link{D.mat}}), epistatic (\code{\link{E.mat}}), single-step (\code{\link{H.mat}}) relationship matrices for diploid and polyploid organisms. It also provides flexibility to fit other genetic models such as full and half diallel models and random regression models.
+The package provides kernels to estimate additive (\code{\link{A.mat}}), dominance
+(\code{\link{D.mat}}), epistatic (\code{\link{E.mat}}), single-step (\code{\link{H.mat}}) 
+relationship matrices for diploid and polyploid organisms. It also provides flexibility 
+to fit other genetic models such as full and half diallel models and random regression models.
 
-A good converter from letter code to numeric format is implemented in the function \code{\link{atcg1234}}, which supports higher ploidy levels than diploid. Additional functions for genetic analysis have been included such as build a genotypic hybrid marker matrix (\code{\link{build.HMM}}), plot of genetic maps (\code{\link{map.plot}}), creation of manhattan plots (\code{\link{manhattan}}). If you need to use pedigree you need to convert your pedigree into a relationship matrix (use the `getA` function from the pedigreemm package).
+A good converter from letter code to numeric format is implemented in the function 
+\code{\link{atcg1234}}, which supports higher ploidy levels than diploid. 
+Additional functions for genetic analysis have been included such as build a 
+genotypic hybrid marker matrix (\code{\link{build.HMM}}), plot of genetic maps
+(\code{\link{map.plot}}), creation of manhattan plots (\code{\link{manhattan}}).
+If you need to use pedigree you need to convert your pedigree into a relationship 
+matrix (use the `getA` function from the pedigreemm package).
 
 }
 
@@ -38,34 +65,35 @@ A good converter from letter code to numeric format is implemented in the functi
 
 The \code{\link{vpredict}} function can be used to estimate standard errors for linear combinations of variance components (e.g. ratios like h2). The \code{\link{r2}} function calculates reliability. S3 methods are available for some parameter extraction such as:
 
-+ \code{\link{predict.mmer}}, \code{\link{predict.mmec}},
++ \code{\link{predict.mmes}}
 
-+ \code{\link{fitted.mmer}}, \code{\link{fitted.mmec}}, 
++ \code{\link{fitted.mmes}}
 
-+ \code{\link{residuals.mmer}},  \code{\link{residuals.mmec}}, 
++ \code{\link{residuals.mmes}}
 
-+ \code{\link{summary.mmer}},  \code{\link{summary.mmec}}, 
++ \code{\link{summary.mmes}}
 
-+ \code{\link{coef.mmer}}, \code{\link{coef.mmec}}, 
++ \code{\link{coef.mmes}}
 
-+ \code{\link{anova.mmer}}, \code{\link{anova.mmec}}, 
++ \code{\link{anova.mmes}}
 
-+ \code{\link{plot.mmer}}, \code{\link{plot.mmec}}.
++ \code{\link{plot.mmes}}
 
 }
 
 \section{Functions for trial analysis}{
 
-Recently, spatial modeling has been added added to sommer using the two-dimensional spline (\code{\link{spl2Da}} and \code{\link{spl2Db}} for \code{\link{mmer}} and \code{\link{spl2Dc}} for \code{\link{mmec}} ) functions.
+Recently, spatial modeling has been added added to sommer using the two-dimensional 
+spline (\code{\link{spl2Dc}}).
 
 }
 
 \section{Keeping sommer updated}{
 The sommer package is updated on CRAN every 4-months due to CRAN policies but you can find the latest source at https://github.com/covaruber/sommer. This can be easily installed typing the following in the R console:
 
-library(devtools)
+\code{library(devtools)}
 
-install_github("covaruber/sommer")
+\code{install_github("covaruber/sommer")}
 
 This is recommended if you reported a bug, was fixed and was immediately pushed to GitHub but not in CRAN until the next update.
 }
@@ -74,15 +102,13 @@ This is recommended if you reported a bug, was fixed and was immediately pushed 
 
  \strong{For tutorials} on how to perform different analysis with sommer please look at the vignettes by typing in the terminal:
 
-\strong{vignette("v1.sommer.quick.start")} 
+\code{vignette("sommer.qg")}
 
-\strong{vignette("v2.sommer.changes.and.faqs")}
+\code{vignette("sommer.gxe")}
 
-\strong{vignette("v3.sommer.qg")}
+\code{vignette("sommer.vs.lme4")} 
 
-\strong{vignette("v4.sommer.gxe")}
-
-or visit \strong{https://covaruber.github.io}
+\code{vignette("sommer.spatial")}
 
 }
 
@@ -111,22 +137,33 @@ The package has been equiped with several datasets to learn how to use the somme
 
 }
 
+\section{Differences of sommer >= 4.4.1 with previous versions}{
+
+Since version 4.4.1, I have unified the use of the two different solving algorithms
+into the mmes function by just using the new argument \code{henderson} which by default 
+is set to FALSE. Other than that the rest is the same with the addition that now
+the identity terms needs to be encapsulated in the \code{\link{ism}} function. In 
+addition, now the multi-trait models need to be fitted in the long format. This are 
+few but major changes to the way sommer models are fitted.
+
+}
+
 \section{Differences of sommer >= 4.1.7 with previous versions}{
 
-Since version 4.1.7 I have introduced the mme-based average information function `mmec` which is much faster when dealing with the r > c problem (more records than coefficients to estimate). This introduces its own covariance structure functons such as vsc(), usc(), dsc(), atc(), csc(). Please give it a try, although is in early phase of development.
+Since version 4.1.7 I have introduced the mmes-based average information function `mmec` which is much faster when dealing with the r > c problem (more records than coefficients to estimate). This introduces its own covariance structure functons such as vsc(), usc(), dsc(), atc(), csc(). Please give it a try, although is in early phase of development.
 
 }
 
 \section{Differences of sommer >= 3.7.0 with previous versions}{
 
-Since version 3.7 I have completly redefined the specification of the variance-covariance structures to provide more flexibility to the user. This has particularly helped the residual covariance structures and the easier combination of custom random effects and overlay models. I think that although this will bring some uncomfortable situations at the beggining, in the long term this will help users to fit better models. In esence, I have abandoned the asreml formulation (not the structures available) given it's limitations to combine some of the sommer structures but all covariance structures can now be fitted using the `vsr` functions. 
+Since version 3.7 I have completly redefined the specification of the variance-covariance structures to provide more flexibility to the user. This has particularly helped the residual covariance structures and the easier combination of custom random effects and overlay models. I think that although this will bring some uncomfortable situations at the beggining, in the long term this will help users to fit better models. In esence, I have abandoned the asreml formulation (not the structures available) given it's limitations to combine some of the sommer structures but all covariance structures can now be fitted using the `vsm` functions. 
 
 }
 \section{Differences of sommer >= 3.0.0 with previous versions}{
 
-Since version 3.0 I have decided to focus in developing the multivariate solver and for doing this I have decided to remove the M argument (for GWAS analysis) from the mmer function and move it to it's own function \code{\link{GWAS}}.
+Since version 3.0 I have decided to focus in developing the multivariate solver and for doing this I have decided to remove the M argument (for GWAS analysis) from the mmes function and move it to it's own function GWAS.
 
-Before the mmer solver had implemented the usr(trait), diag(trait), at(trait) asreml formulation for multivariate models that allow to specify the structure of the trait in multivariate models. Therefore the MVM argument was no longer needed. After version 3.7 now the multi-trait structures can be specified in the \code{Gt} and \code{Gtc} arguments of the \code{\link{vsr}} function.
+Before the mmes solver had implemented the usm(trait), diag(trait), at(trait) asreml formulation for multivariate models that allow to specify the structure of the trait in multivariate models. Therefore the MVM argument was no longer needed. After version 3.7 now the multi-trait structures can be specified in the \code{Gt} and \code{Gtc} arguments of the \code{\link{vsm}} function.
 
 The Average Information algorithm had been removed in the past from the package because of its instability to deal with very complex models without good initial values. Now after 3.7 I have brought it back after I noticed that starting with NR the first three iterations gives enough flexibility to the AI algorithm.
 
@@ -137,7 +174,13 @@ Keep in mind that sommer uses direct inversion (DI) algorithm which can be very 
 \section{Models Enabled}{
 
 
-The core of the package are the \code{\link{mmer}} and \code{\link{mmec}} (formula-based) functions which solve the mixed model equations. The functions are an interface to call the `NR` Direct-Inversion Newton-Raphson, `AI` Direct-Inversion Average Information or the mme-based Average Information (Tunnicliffe 1989; Gilmour et al. 1995; Lee et al. 2016). Since version 2.0 sommer can handle multivariate models. Following Maier et al. (2015), the multivariate (and by extension the univariate) mixed model implemented has the form:
+The core of the package are the \code{\link{mmes}} (formula-based) function which 
+solve the mixed model equations. The functions are an interface to call the `NR`
+Direct-Inversion Newton-Raphson, `AI` Direct-Inversion Average Information or 
+the mmes-based Average Information (Tunnicliffe 1989; Gilmour et al. 1995; 
+Lee et al. 2016). Since version 2.0 sommer can handle multivariate models. 
+Following Maier et al. (2015), the multivariate (and by extension the univariate)
+mixed model implemented has the form:
 
 
 
@@ -178,28 +221,6 @@ where || is the determinant of a matrix. And the REML estimates are updated usin
 
 Where, theta is the vector of variance components for random effects and covariance components among traits, H^-1 is the inverse of the Hessian matrix of second derivatives for the kth cycle, dL/dsigma^2_i is the vector of first derivatives of the likelihood with respect to the variance-covariance components. The Eigen decomposition of the relationship matrix proposed by Lee and Van Der Werf (2016) was included in the Newton-Raphson algorithm to improve time efficiency. Additionally, the popular vpredict function to estimate standard errors for linear combinations of variance components (i.e. heritabilities and genetic correlations) was added to the package as well.
 
-
-}
-
-\section{GWAS Models}{
-
-The GWAS models in the sommer package are enabled by using the M argument in the functions \code{\link{GWAS}}, which is expected to be a numeric marker matrix. Markers are treated as fixed effects according to the model proposed by Yu et al. (2006) for diploids, and Rosyara et al. (2016) (for polyploids). The matrices X and M are both fixed effects, but they are separated by 2 different arguments to distinguish factors such as environmental and design factors for the argument "X" and markers with "M".
-  
-  The genome-wide association analysis is based on the mixed model:
-
-\deqn{y = X \beta + Z g + M \tau + e}
-
-where \eqn{\beta} is a vector of fixed effects that can model both environmental factors and population structure.  
-The variable \eqn{g} models the genetic background of each line as a random effect with \eqn{Var[g] = K \sigma^2}.  
-The variable \eqn{\tau} models the additive SNP effect as a fixed effect.  The residual variance is \eqn{Var[\varepsilon] = I \sigma_e^2}
-  
-  When principal components are included (P+K model), the loadings are determined from an eigenvalue decomposition of the K matrix and are used in the fixed effect part.
-
-The argument "P3D" introduced by Zhang et al. (2010) can be used with the P3D argument.  When P3D=FALSE, this function is equivalent to AI/NR with REML where the variance components are estimated for each SNP or marker tested (Kang et al. 2008).  When P3D=TRUE, it is equivalent to NR (Kang et al. 2010) where the assumption is that variance components for all SNP/markers are the same and therefore the variance components are estimated only once (and markers are tested in a WLS framework being the the weight matrix (M) the inverse of the phenotypic variance matrix (V)).  Therefore, P3D=TRUE option is faster but can underestimate significance compared to P3D=FALSE.
-
-Multivariate GWAS are based in Covarrubias-Pazaran et al. (2018, In preparation), which adjusts betas for all response variables and then does the regular GWAS with such adjusted betas or marker effects.
-
-For extra details about the methods please read the canonical papers listed in the References section.
 
 }
 
@@ -261,32 +282,20 @@ data(DT_example)
 # ####=========================================####
 # 
 # ## Compound simmetry (CS) model
-# ans1 <- mmer(Yield~Env,
+# ans1 <- mmes(Yield~Env,
 #              random= ~ Name + Env:Name,
 #              rcov= ~ units,
 #              data=DT)
 # summary(ans1)
 # 
-# ans2 <- mmec(Yield~Env,
-#              random= ~ Name + Env:Name,
-#              rcov= ~ units,
-#              data=DT)
-# summary(ans2)
-# 
 # ####===========================================####
 # #### Univariate heterogeneous variance models  ####
 # ####===========================================####
 # ## Compound simmetry (CS) + Diagonal (DIAG) model
-# ans3 <- mmer(Yield~Env,
-#              random= ~Name + vsr(dsr(Env),Name),
-#              rcov= ~ vsr(dsr(Env),units),
+# ans3 <- mmes(Yield~Env,
+#              random= ~Name + vsm(dsm(Env),ism(Name)),
+#              rcov= ~ vsm(dsm(Env),ism(units)),
 #              data=DT)
 # summary(ans3)
-# 
-# ans4 <- mmec(Yield~Env,
-#              random= ~Name + vsc(dsc(Env),isc(Name)),
-#              rcov= ~ vsc(dsc(Env),isc(units)),
-#              data=DT)
-# summary(ans4)
 
 }

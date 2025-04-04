@@ -2,7 +2,7 @@ vpredict <- function(object, transform) {
   UseMethod("vpredict")
 }
 
-vpredict.mmer <- function (object, transform){
+vpredict.mmes <- function (object, transform){
   
   pframe <- as.list(summary(object)$varcomp[,1])
   names(pframe) <- paste("V", seq(1, length(pframe)), sep = "")
@@ -17,14 +17,14 @@ vpredict.mmer <- function (object, transform){
   tvalue <- eval(deriv(transform[[length(transform)]], names(pframe)), 
                  pframe)
   X <- as.vector(attr(tvalue, "gradient")) # just make it a sinpe vector of derivatives
-  tname <- if (length(transform) == 3) 
+  tname <- if(length(transform) == 3){
     transform[[2]]
-  else ""
+  } else {""}
   n <- length(pframe) ## number of parameters available, i.e. V1,V2,V3,V4
   i <- rep(1:n, 1:n) ## repeat each parameter by its own
   j <- sequence(1:n) ## makes a sequence from 1 to the number provided, i.e. if sequence(1:2) = 1 1 2, because it makes the sequence for 1:1 and then 1:2
   k <- 1 + (i > j) # all where i <= j get a 1, all i > j get a 2
-  Vmat <- object$sigmaSE
+  Vmat <- object$theta_se
   toext <- upper.tri(Vmat)
   diag(toext) <- TRUE
   Vmat <- Vmat[which(toext,arr.ind = TRUE)] ## extract the upper triangular
@@ -38,11 +38,11 @@ vpredict.mmer <- function (object, transform){
   ## d''(x) * d'(x) * d'
   ## those var(vc.i) and covar(covar.ij) from the variance comp. come from the inverse if the second derivatives (Fisher's)
   # toreturn2 <- data.frame(row.names = tname, Estimate = tvalue, SE = se)
-  # class(toreturn2) <- "vpredict.mmer"
+  # class(toreturn2) <- "vpredict.mmes"
   
   toreturn2 <- data.frame(Estimate = tvalue, SE = se)
   rownames(toreturn2 ) <- tname # seemed not to be evaluated correctly before in all cases
-  class(toreturn2) <- c("vpredict.mmer","data.frame") # allows data.frame inheritance
-  # attr(toreturn2, "class")<-c("vpredict.mmer", "data.frame")
+  class(toreturn2) <- c("vpredict.mmes","data.frame") # allows data.frame inheritance
+  # attr(toreturn2, "class")<-c("vpredict.mmes", "data.frame")
   return(toreturn2)
 }

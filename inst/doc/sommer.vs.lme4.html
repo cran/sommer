@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>Translating lme4 models to sommer</title>
+<style type="text/css">
+/**
+ * Prism.s theme ported from highlight.js's xcode style
+ */
+pre code {
+  padding: 1em;
+}
+.token.comment {
+  color: #007400;
+}
+.token.punctuation {
+  color: #999;
+}
+.token.tag,
+.token.selector {
+  color: #aa0d91;
+}
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol {
+  color: #1c00cf;
+}
+.token.property,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin {
+  color: #c41a16;
+}
+.token.inserted {
+  background-color: #ccffd8;
+}
+.token.deleted {
+  background-color: #ffebe9;
+}
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #9a6e3a;
+}
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: #836c28;
+}
+.token.function,
+.token.class-name {
+  color: #DD4A68;
+}
+.token.regex,
+.token.important,
+.token.variable {
+  color: #5c2699;
+}
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+.token.italic {
+  font-style: italic;
+}
+</style>
+<style type="text/css">
+body {
+  font-family: sans-serif;
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+body, .footnotes, code { font-size: .9em; }
+li li { font-size: .95em; }
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+pre, img { max-width: 100%; }
+pre, pre:hover {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+pre code {
+  display: block;
+  overflow-x: auto;
+}
+code { font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace; }
+:not(pre) > code, code[class] { background-color: #F8F8F8; }
+code.language-undefined, pre > code:not([class]) {
+  background-color: inherit;
+  border: 1px solid #eee;
+}
+table {
+  margin: auto;
+  border-top: 1px solid #666;
+}
+table thead th { border-bottom: 1px solid #ddd; }
+th, td { padding: 5px; }
+thead, tfoot, tr:nth-child(even) { background: #eee; }
+blockquote {
+  color: #666;
+  margin: 0;
+  padding-left: 1em;
+  border-left: 0.5em solid #eee;
+}
+hr, .footnotes::before { border: 1px dashed #ddd; }
+.frontmatter { text-align: center; }
+#TOC .numbered li { list-style: none; }
+#TOC .numbered { padding-left: 0; }
+#TOC .numbered ul { padding-left: 1em; }
+table, .body h2 { border-bottom: 1px solid #666; }
+.body .appendix, .appendix ~ h2 { border-bottom-style: dashed; }
+.footnote-ref a::before { content: "["; }
+.footnote-ref a::after { content: "]"; }
+section.footnotes::before {
+  content: "";
+  display: block;
+  max-width: 20em;
+}
+
+@media print {
+  body {
+    font-size: 12pt;
+    max-width: 100%;
+  }
+  tr, img { page-break-inside: avoid; }
+}
+@media only screen and (min-width: 992px) {
+  pre { white-space: pre; }
+}
+</style>
+</head>
+<body>
+<div class="frontmatter">
+<div class="title"><h1>Translating lme4 models to sommer</h1></div>
+<div class="author"><h2>Giovanny Covarrubias-Pazaran</h2></div>
+<div class="date"><h3>2025-04-04</h3></div>
+</div>
+<div class="body">
+<p>The sommer package was developed to provide R users with a powerful and reliable multivariate mixed model solver for different genetic and non-genetic analyses in diploid and polyploid organisms. This package allows the user to estimate variance components for a mixed model with the advantages of specifying the variance-covariance structure of the random effects, specifying heterogeneous variances, and obtaining other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc. The core algorithms of the package are coded in C++ using the Armadillo library to optimize dense matrix operations common in the derect-inversion algorithms. Although the vignette shows examples using the mmes function with the default direct inversion algorithm (henderson=FALSE) the Henderson’s approach can be faster when the number of records surpasses the number of coefficients to estimate and setting the henderson argument to TRUE can bring significant speed ups.</p>
+<p>The purpose of this vignette is to show how to translate the syntax formula from <code>lme4</code> models to <code>sommer</code> models. Feel free to remove the comment marks from the lme4 code so you can compare the results.</p>
+<ol>
+<li>Random slopes with same intercept</li>
+<li>Random slopes and random intercepts (without correlation)</li>
+<li>Random slopes and random intercepts (with correlation)</li>
+<li>Random slopes with a different intercept</li>
+<li>Other models not available in lme4</li>
+</ol>
+<h2 id="1-random-slopes">1) Random slopes</h2>
+<p>This is the simplest model people use when a random effect is desired and the levels of the random effect are considered to have the same intercept.</p>
+<pre><code class="language-r"># install.packages(&quot;lme4&quot;)
+# library(lme4)
+library(sommer)
+data(DT_sleepstudy)
+DT &lt;- DT_sleepstudy
+###########
+## lme4
+###########
+# fm1 &lt;- lmer(Reaction ~ Days + (1 | Subject), data=DT)
+# summary(fm1) # or vc &lt;- VarCorr(fm1); print(vc,comp=c(&quot;Variance&quot;))
+# Random effects:
+#  Groups   Name        Variance Std.Dev.
+#  Subject  (Intercept) 1378.2   37.12   
+#  Residual              960.5   30.99   
+# Number of obs: 180, groups:  Subject, 18
+###########
+## sommer
+###########
+fm2 &lt;- mmes(Reaction ~ Days,
+            random= ~ Subject, 
+            data=DT, tolParInv = 1e-6, verbose = FALSE)
+summary(fm2)$varcomp
+</code></pre>
+<pre><code>##                VarComp VarCompSE   Zratio Constraint
+## Subject:mu:mu 1378.158  505.6990 2.725254   Positive
+## units:mu:mu    960.458  107.0498 8.972063   Positive
+</code></pre>
+<h2 id="2-random-slopes-and-random-intercepts-without-correlation">2) Random slopes and random intercepts (without correlation)</h2>
+<p>This is the a model where you assume that the random effect has different intercepts based on the levels of another variable. In addition the <code>||</code> in <code>lme4</code> assumes that slopes and intercepts have no correlation.</p>
+<pre><code class="language-r">###########
+## lme4
+###########
+# fm1 &lt;- lmer(Reaction ~ Days + (Days || Subject), data=DT)
+# summary(fm1) # or vc &lt;- VarCorr(fm1); print(vc,comp=c(&quot;Variance&quot;))
+# Random effects:
+#  Groups    Name        Variance Std.Dev.
+#  Subject   (Intercept) 627.57   25.051  
+#  Subject.1 Days         35.86    5.988  
+#  Residual              653.58   25.565  
+# Number of obs: 180, groups:  Subject, 18
+###########
+## sommer
+###########
+fm2 &lt;- mmes(Reaction ~ Days,
+            random= ~ Subject + vsm(ism(Days), ism(Subject)), 
+            data=DT, tolParInv = 1e-6, verbose = FALSE)
+summary(fm2)$varcomp
+</code></pre>
+<pre><code>##                      VarComp VarCompSE   Zratio Constraint
+## Subject:mu:mu      627.54087 283.52939 2.213319   Positive
+## Days:Subject:mu:mu  35.86008  14.53187 2.467686   Positive
+## units:mu:mu        653.58305  76.72711 8.518281   Positive
+</code></pre>
+<p>Notice that Days is a numerical (not factor) variable.</p>
+<h2 id="3-random-slopes-and-random-intercepts-with-correlation">3) Random slopes and random intercepts (with correlation)</h2>
+<p>This is the a model where you assume that the random effect has different intercepts based on the levels of another variable. In addition a single <code>|</code> in <code>lme4</code> assumes that slopes and intercepts have a correlation to be estimated.</p>
+<pre><code class="language-r">###########
+## lme4
+###########
+# fm1 &lt;- lmer(Reaction ~ Days + (Days | Subject), data=DT)
+# summary(fm1) # or # vc &lt;- VarCorr(fm1); print(vc,comp=c(&quot;Variance&quot;))
+# Random effects:
+#  Groups   Name        Variance Std.Dev. Corr
+#  Subject  (Intercept) 612.10   24.741       
+#           Days         35.07    5.922   0.07
+#  Residual             654.94   25.592       
+# Number of obs: 180, groups:  Subject, 18
+###########
+## sommer
+###########
+fm2 &lt;- mmes(Reaction ~ Days, # henderson=TRUE,
+            random= ~ covm( vsm(ism(Subject)) , vsm(ism(Days), ism(Subject)) ), 
+            nIters = 200, data=DT, tolParInv = 1e-6, verbose = FALSE)
+summary(fm2)$varcomp
+</code></pre>
+<pre><code>##                           VarComp VarCompSE    Zratio Constraint
+## Subject:Days:ran1:ran1 612.081194 288.75050 2.1197581   Positive
+## Subject:Days:ran1:ran2   9.604358  46.68381 0.2057321   Unconstr
+## Subject:Days:ran2:ran2  35.073186  14.78720 2.3718604   Positive
+## units:mu:mu            654.939143  77.18332 8.4855011   Positive
+</code></pre>
+<pre><code class="language-r">cov2cor(fm2$theta[[1]])
+</code></pre>
+<pre><code>##            [,1]       [,2]
+## [1,] 1.00000000 0.06555053
+## [2,] 0.06555053 1.00000000
+</code></pre>
+<p>Notice that this last model require a new function called covm() which creates the two random effects as before but now they have to be encapsulated in covm() instead of just added.</p>
+<h2 id="4-random-slopes-with-a-different-intercept">4) Random slopes with a different intercept</h2>
+<p>This is the a model where you assume that the random effect has different intercepts based on the levels of another variable but there’s not a main effect. The 0 in the intercept in lme4 assumes that random slopes interact with an intercept but without a main effect.</p>
+<pre><code class="language-r">###########
+## lme4
+###########
+# fm1 &lt;- lmer(Reaction ~ Days + (0 + Days | Subject), data=DT)
+# summary(fm1) # or vc &lt;- VarCorr(fm1); print(vc,comp=c(&quot;Variance&quot;))
+# Random effects:
+#  Groups   Name Variance Std.Dev.
+#  Subject  Days  52.71    7.26   
+#  Residual      842.03   29.02   
+# Number of obs: 180, groups:  Subject, 18
+###########
+## sommer
+###########
+fm2 &lt;- mmes(Reaction ~ Days,
+            random= ~ vsm(ism(Days), ism(Subject)), 
+            data=DT, tolParInv = 1e-6, verbose = FALSE)
+summary(fm2)$varcomp
+</code></pre>
+<pre><code>##                      VarComp VarCompSE   Zratio Constraint
+## Days:Subject:mu:mu  52.70946  19.09984 2.759681   Positive
+## units:mu:mu        842.02736  93.84640 8.972399   Positive
+</code></pre>
+<h2 id="4-other-models-available-in-sommer-but-not-in-lme4">4) Other models available in sommer but not in lme4</h2>
+<p>One of the strengths of sommer is the availability of other variance covariance structures. In this section we show 4 models available in sommer that are not available in lme4 and might be useful.</p>
+<pre><code class="language-r">library(orthopolynom)
+## diagonal model
+fm2 &lt;- mmes(Reaction ~ Days,
+            random= ~ vsm(dsm(Daysf), ism(Subject)), 
+            data=DT, tolParInv = 1e-6, verbose = FALSE)
+summary(fm2)$varcomp
+</code></pre>
+<pre><code>##                     VarComp VarCompSE    Zratio Constraint
+## Daysf:Subject:0:0  139.5473  399.5095 0.3492967   Positive
+## Daysf:Subject:1:1  196.8544  411.8262 0.4780037   Positive
+## Daysf:Subject:2:2    0.0000  365.3178 0.0000000   Positive
+## Daysf:Subject:3:3  556.0773  501.2665 1.1093445   Positive
+## Daysf:Subject:4:4  855.2104  581.8190 1.4698910   Positive
+## Daysf:Subject:5:5 1699.4269  820.4561 2.0713197   Positive
+## Daysf:Subject:6:6 2910.8975 1175.7872 2.4757011   Positive
+## Daysf:Subject:7:7 1539.6201  779.1437 1.9760413   Positive
+## Daysf:Subject:8:8 2597.5337 1089.4522 2.3842568   Positive
+## Daysf:Subject:9:9 3472.7108 1351.5702 2.5693899   Positive
+## units:mu:mu        879.6958  247.4680 3.5547862   Positive
+</code></pre>
+<pre><code class="language-r">## unstructured model
+fm2 &lt;- mmes(Reaction ~ Days,
+            random= ~ vsm(usm(Daysf), ism(Subject)), 
+            data=DT, tolParInv = 1e-6, verbose = FALSE)
+summary(fm2)$varcomp
+</code></pre>
+<pre><code>##                     VarComp VarCompSE    Zratio Constraint
+## Daysf:Subject:0:0  404.2274  572.9406 0.7055311   Positive
+## Daysf:Subject:0:1 1024.8277  395.1858 2.5932810   Unconstr
+## Daysf:Subject:1:1  542.0553  288.1527 1.8811393   Positive
+## Daysf:Subject:0:2  800.6213  398.5048 2.0090631   Unconstr
+## Daysf:Subject:1:2  759.8438  412.4896 1.8420920   Unconstr
+## Daysf:Subject:2:2  935.2038  518.4224 1.8039418   Positive
+## Daysf:Subject:0:3  668.3500  567.2558 1.1782162   Unconstr
+## Daysf:Subject:1:3  934.8337  491.8231 1.9007520   Unconstr
+## Daysf:Subject:2:3  922.9089  578.5524 1.5952038   Unconstr
+## Daysf:Subject:3:3 1443.6078  692.1520 2.0856804   Positive
+## Daysf:Subject:0:4  418.9669  522.0343 0.8025657   Unconstr
+## Daysf:Subject:1:4  830.0421  326.7026 2.5406655   Unconstr
+## Daysf:Subject:2:4 1139.4846  445.2663 2.5591079   Unconstr
+## Daysf:Subject:3:4 1041.4806  448.6967 2.3211237   Unconstr
+## Daysf:Subject:4:4 1182.0541  549.5803 2.1508308   Positive
+## Daysf:Subject:0:5  853.0252  585.0229 1.4581056   Unconstr
+## Daysf:Subject:1:5  929.1933  494.0087 1.8809251   Unconstr
+## Daysf:Subject:2:5 1047.3727  594.1198 1.7628981   Unconstr
+## Daysf:Subject:3:5 1517.7329  705.2855 2.1519411   Unconstr
+## Daysf:Subject:4:5    0.0000  510.5543 0.0000000   Unconstr
+## Daysf:Subject:5:5 1058.4964  386.7921 2.7366031   Positive
+## Daysf:Subject:0:6  912.2462  378.6722 2.4090653   Unconstr
+## Daysf:Subject:1:6  861.0084  441.5719 1.9498714   Unconstr
+## Daysf:Subject:2:6  917.6183  504.8746 1.8175175   Unconstr
+## Daysf:Subject:3:6  925.8402  426.9689 2.1684018   Unconstr
+## Daysf:Subject:4:6  833.2198  487.9486 1.7075975   Unconstr
+## Daysf:Subject:5:6  969.8886  551.2976 1.7592831   Unconstr
+## Daysf:Subject:6:6  761.4044  437.2096 1.7415089   Positive
+## Daysf:Subject:0:7 1592.3784  567.6481 2.8052209   Unconstr
+## Daysf:Subject:1:7 1675.4551  665.6637 2.5169694   Unconstr
+## Daysf:Subject:2:7 1787.8367  752.0828 2.3771806   Unconstr
+## Daysf:Subject:3:7 1284.6133  584.4937 2.1978223   Unconstr
+## Daysf:Subject:4:7 1609.3713  719.2232 2.2376519   Unconstr
+## Daysf:Subject:5:7 1745.3735  799.3245 2.1835607   Unconstr
+## Daysf:Subject:6:7  957.7023  364.2914 2.6289455   Unconstr
+## Daysf:Subject:7:7 2005.1568  739.9904 2.7097065   Positive
+## Daysf:Subject:0:8 2079.1716  823.1582 2.5258470   Unconstr
+## Daysf:Subject:1:8 1551.3176  644.6257 2.4065402   Unconstr
+## Daysf:Subject:2:8 2031.1247  806.9536 2.5170278   Unconstr
+## Daysf:Subject:3:8 2200.7039  894.2295 2.4610057   Unconstr
+## Daysf:Subject:4:8 2069.9991  554.0902 3.7358524   Unconstr
+## Daysf:Subject:5:8 2605.7361 1036.7583 2.5133496   Unconstr
+## Daysf:Subject:6:8 1943.7604  812.7286 2.3916475   Unconstr
+## Daysf:Subject:7:8 3061.0333 1095.3333 2.7946137   Unconstr
+## Daysf:Subject:8:8 3240.0574 1198.3224 2.7038277   Positive
+## Daysf:Subject:0:9 3124.3139 1049.7042 2.9763756   Unconstr
+## Daysf:Subject:1:9 2307.7377  952.6090 2.4225446   Unconstr
+## Daysf:Subject:2:9 2929.9489 1179.0801 2.4849448   Unconstr
+## Daysf:Subject:3:9 2213.3201 1186.7845 1.8649722   Unconstr
+## Daysf:Subject:4:9 1670.4190  612.3551 2.7278602   Unconstr
+## Daysf:Subject:5:9 2435.3269  959.0399 2.5393385   Unconstr
+## Daysf:Subject:6:9 2401.9426 1029.3177 2.3335288   Unconstr
+## Daysf:Subject:7:9 2949.0476  845.6411 3.4873514   Unconstr
+## Daysf:Subject:8:9 3850.1122 1393.5787 2.7627519   Unconstr
+## Daysf:Subject:9:9 3948.8494 1229.9178 3.2106611   Positive
+## units:mu:mu        884.1034  579.1145 1.5266470   Positive
+</code></pre>
+<pre><code class="language-r">## random regression (legendre polynomials)
+fm2 &lt;- mmes(Reaction ~ Days,
+            random= ~ vsm(dsm(leg(Days,1)), ism(Subject)), 
+            data=DT, tolParInv = 1e-6, verbose = FALSE)
+summary(fm2)$varcomp
+</code></pre>
+<pre><code>##                          VarComp  VarCompSE   Zratio Constraint
+## Days:Subject:leg0:leg0 2817.4048 1011.23903 2.786092   Positive
+## Days:Subject:leg1:leg1  473.4608  199.53635 2.372805   Positive
+## units:mu:mu             654.9433   77.18822 8.485016   Positive
+</code></pre>
+<pre><code class="language-r">## unstructured random regression (legendre)
+fm2 &lt;- mmes(Reaction ~ Days,
+            random= ~ vsm(usm(leg(Days,1)), ism(Subject)), 
+            data=DT, tolParInv = 1e-6, verbose = FALSE)
+summary(fm2)$varcomp
+</code></pre>
+<pre><code>##                          VarComp  VarCompSE   Zratio Constraint
+## Days:Subject:leg0:leg0 2817.4056 1011.24151 2.786086   Positive
+## Days:Subject:leg0:leg1  869.9595  381.02552 2.283205   Unconstr
+## Days:Subject:leg1:leg1  473.4608  199.53619 2.372807   Positive
+## units:mu:mu             654.9429   77.18771 8.485067   Positive
+</code></pre>
+<h2 id="literature">Literature</h2>
+<p>Covarrubias-Pazaran G. 2016. Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6):1-15.</p>
+<p>Covarrubias-Pazaran G. 2018. Software update: Moving the R package sommer to multivariate mixed models for genome-assisted prediction. doi: <a href="https://doi.org/10.1101/354639">https://doi.org/10.1101/354639</a></p>
+<p>Bernardo Rex. 2010. Breeding for quantitative traits in plants. Second edition. Stemma Press. 390 pp.</p>
+<p>Gilmour et al. 1995. Average Information REML: An efficient algorithm for variance parameter estimation in linear mixed models. Biometrics 51(4):1440-1450.</p>
+<p>Henderson C.R. 1975. Best Linear Unbiased Estimation and Prediction under a Selection Model. Biometrics vol. 31(2):423-447.</p>
+<p>Kang et al. 2008. Efficient control of population structure in model organism association mapping. Genetics 178:1709-1723.</p>
+<p>Lee, D.-J., Durban, M., and Eilers, P.H.C. (2013). Efficient two-dimensional smoothing with P-spline ANOVA mixed models and nested bases. Computational Statistics and Data Analysis, 61, 22 - 37.</p>
+<p>Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: <a href="http://dx.doi.org/10.1101/027201">http://dx.doi.org/10.1101/027201</a>.</p>
+<p>Maier et al. 2015. Joint analysis of psychiatric disorders increases accuracy of risk prediction for schizophrenia, bipolar disorder, and major depressive disorder. Am J Hum Genet; 96(2):283-294.</p>
+<p>Rodriguez-Alvarez, Maria Xose, et al. Correcting for spatial heterogeneity in plant breeding experiments with P-splines. Spatial Statistics 23 (2018): 52-71.</p>
+<p>Searle. 1993. Applying the EM algorithm to calculating ML and REML estimates of variance components. Paper invited for the 1993 American Statistical Association Meeting, San Francisco.</p>
+<p>Yu et al. 2006. A unified mixed-model method for association mapping that accounts for multiple levels of relatedness. Genetics 38:203-208.</p>
+<p>Tunnicliffe W. 1989. On the use of marginal likelihood in time series model estimation. JRSS 51(1):15-27.</p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js" defer></script>
+</body>
+</html>

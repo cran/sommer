@@ -41,16 +41,11 @@ Covarrubias-Pazaran G (2016) Genome assisted prediction of quantitative traits u
 # ####=========================================####
 # #### fit the mixed model and check summary
 # ####=========================================####
-# mix1 <- mmer(TSW ~ Check.Gen,
+# mix1 <- mmes(TSW ~ Check.Gen,
 #              random = ~ Block + Genotype:Check,
 #              data=DT)
 # summary(mix1)$varcomp
-# 
-# mix2 <- mmec(TSW ~ Check.Gen,
-#              random = ~ Block + Genotype:Check,
-#              data=DT)
-# summary(mix2)$varcomp
 
 }
 \keyword{datasets}
-\seealso{The core functions of the package \code{\link{mmer}} and \code{\link{mmec}} }
+\seealso{The core functions of the package \code{\link{mmes}} }
