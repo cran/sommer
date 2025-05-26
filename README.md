@@ -9,14 +9,6 @@ You can install the development version of `sommer` from GitHub:
 ``` r
 devtools::install_github('covaruber/sommer')
 ```
-
-## Vignettes
-
- - [Quick start for the sommer package](https://cran.r-project.org/package=sommer/vignettes/v1.sommer.quick.start.pdf)
- - [Moving to newer versions of sommer](https://cran.r-project.org/package=sommer/vignettes/v2.sommer.changes.and.faqs.pdf)
- - [Quantitative genetics using the sommer package](https://cran.r-project.org/package=sommer/vignettes/v3.sommer.qg.pdf)
- - [GxE models in sommer](https://cran.r-project.org/package=sommer/vignettes/v4.sommer.gxe.pdf)
- - [lme4 vs sommer](https://cran.r-project.org/package=sommer/vignettes/v5.sommer.vs.lme4.pdf)
  
 ## Development
 
@@ -24,7 +16,7 @@ The sommer package is under active development. If you are an expert in mixed mo
 
 + the minimum degree ordering algorithm 
 + the symbolic cholesky factorization
-+ factor analytic structure
++ automatic differentiation
 + generalized linear models
 
 please help us to take sommer to the next level. Drop me an email or push some changes through github :)  

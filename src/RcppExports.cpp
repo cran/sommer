@@ -235,12 +235,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // newton_di_sp
-Rcpp::List newton_di_sp(const arma::mat& Y, const Rcpp::List& X, const Rcpp::List& Gx, const Rcpp::List& Z, const Rcpp::List& K, const Rcpp::List& R, const Rcpp::List& Ge, const Rcpp::List& GeI, const arma::mat& W, const bool& isInvW, int iters, double tolpar, double tolparinv, const bool& ai, const bool& pev, const bool& verbose, const bool& retscaled, const arma::vec& stepweight, const arma::vec& emweight, const Rcpp::List& thetaConstOri, const arma::vec& thetaIndex);
+Rcpp::List newton_di_sp(const arma::sp_mat& Y, const Rcpp::List& X, const Rcpp::List& Gx, const Rcpp::List& Z, const Rcpp::List& K, const Rcpp::List& R, const Rcpp::List& Ge, const Rcpp::List& GeI, const arma::sp_mat& W, const bool& isInvW, int iters, double tolpar, double tolparinv, const bool& ai, const bool& pev, const bool& verbose, const bool& retscaled, const arma::vec& stepweight, const arma::vec& emweight, const Rcpp::List& thetaConstOri, const arma::vec& thetaIndex);
 RcppExport SEXP _sommer_newton_di_sp(SEXP YSEXP, SEXP XSEXP, SEXP GxSEXP, SEXP ZSEXP, SEXP KSEXP, SEXP RSEXP, SEXP GeSEXP, SEXP GeISEXP, SEXP WSEXP, SEXP isInvWSEXP, SEXP itersSEXP, SEXP tolparSEXP, SEXP tolparinvSEXP, SEXP aiSEXP, SEXP pevSEXP, SEXP verboseSEXP, SEXP retscaledSEXP, SEXP stepweightSEXP, SEXP emweightSEXP, SEXP thetaConstOriSEXP, SEXP thetaIndexSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< const arma::sp_mat& >::type Y(YSEXP);
     Rcpp::traits::input_parameter< const Rcpp::List& >::type X(XSEXP);
     Rcpp::traits::input_parameter< const Rcpp::List& >::type Gx(GxSEXP);
     Rcpp::traits::input_parameter< const Rcpp::List& >::type Z(ZSEXP);
@@ -248,7 +248,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const Rcpp::List& >::type R(RSEXP);
     Rcpp::traits::input_parameter< const Rcpp::List& >::type Ge(GeSEXP);
     Rcpp::traits::input_parameter< const Rcpp::List& >::type GeI(GeISEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type W(WSEXP);
+    Rcpp::traits::input_parameter< const arma::sp_mat& >::type W(WSEXP);
     Rcpp::traits::input_parameter< const bool& >::type isInvW(isInvWSEXP);
     Rcpp::traits::input_parameter< int >::type iters(itersSEXP);
     Rcpp::traits::input_parameter< double >::type tolpar(tolparSEXP);
@@ -303,8 +303,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // ai_mme_sp
-Rcpp::List ai_mme_sp(const arma::sp_mat& X, const Rcpp::List& ZI, const arma::vec& Zind, const Rcpp::List& AiI, const arma::sp_mat& y, const Rcpp::List& SI, const Rcpp::List& partitionsS, const arma::sp_mat& H, const bool& useH, int nIters, double tolParConvLL, double tolParConvNorm, double tolParInv, const Rcpp::List& thetaI, const Rcpp::List& thetaCI, const arma::mat& thetaF, const arma::vec& addScaleParam, const arma::vec& weightEmInf, const arma::vec& weightInf, const bool& verbose);
-RcppExport SEXP _sommer_ai_mme_sp(SEXP XSEXP, SEXP ZISEXP, SEXP ZindSEXP, SEXP AiISEXP, SEXP ySEXP, SEXP SISEXP, SEXP partitionsSSEXP, SEXP HSEXP, SEXP useHSEXP, SEXP nItersSEXP, SEXP tolParConvLLSEXP, SEXP tolParConvNormSEXP, SEXP tolParInvSEXP, SEXP thetaISEXP, SEXP thetaCISEXP, SEXP thetaFSEXP, SEXP addScaleParamSEXP, SEXP weightEmInfSEXP, SEXP weightInfSEXP, SEXP verboseSEXP) {
+Rcpp::List ai_mme_sp(const arma::sp_mat& X, const Rcpp::List& ZI, const arma::vec& Zind, const Rcpp::List& AiI, const arma::sp_mat& y0, const Rcpp::List& SI, const Rcpp::List& partitionsS, const arma::sp_mat& H, const bool& useH, int nIters, double tolParConvLL, double tolParConvNorm, double tolParInv, const Rcpp::List& thetaI, const Rcpp::List& thetaCI, const arma::mat& thetaF, const arma::vec& addScaleParam, const arma::vec& weightEmInf, const arma::vec& weightInf, const bool& verbose);
+RcppExport SEXP _sommer_ai_mme_sp(SEXP XSEXP, SEXP ZISEXP, SEXP ZindSEXP, SEXP AiISEXP, SEXP y0SEXP, SEXP SISEXP, SEXP partitionsSSEXP, SEXP HSEXP, SEXP useHSEXP, SEXP nItersSEXP, SEXP tolParConvLLSEXP, SEXP tolParConvNormSEXP, SEXP tolParInvSEXP, SEXP thetaISEXP, SEXP thetaCISEXP, SEXP thetaFSEXP, SEXP addScaleParamSEXP, SEXP weightEmInfSEXP, SEXP weightInfSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -312,7 +312,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const Rcpp::List& >::type ZI(ZISEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type Zind(ZindSEXP);
     Rcpp::traits::input_parameter< const Rcpp::List& >::type AiI(AiISEXP);
-    Rcpp::traits::input_parameter< const arma::sp_mat& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const arma::sp_mat& >::type y0(y0SEXP);
     Rcpp::traits::input_parameter< const Rcpp::List& >::type SI(SISEXP);
     Rcpp::traits::input_parameter< const Rcpp::List& >::type partitionsS(partitionsSSEXP);
     Rcpp::traits::input_parameter< const arma::sp_mat& >::type H(HSEXP);
@@ -328,7 +328,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec& >::type weightEmInf(weightEmInfSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type weightInf(weightInfSEXP);
     Rcpp::traits::input_parameter< const bool& >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(ai_mme_sp(X, ZI, Zind, AiI, y, SI, partitionsS, H, useH, nIters, tolParConvLL, tolParConvNorm, tolParInv, thetaI, thetaCI, thetaF, addScaleParam, weightEmInf, weightInf, verbose));
+    rcpp_result_gen = Rcpp::wrap(ai_mme_sp(X, ZI, Zind, AiI, y0, SI, partitionsS, H, useH, nIters, tolParConvLL, tolParConvNorm, tolParInv, thetaI, thetaCI, thetaF, addScaleParam, weightEmInf, weightInf, verbose));
     return rcpp_result_gen;
 END_RCPP
 }

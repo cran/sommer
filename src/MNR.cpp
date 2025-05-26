@@ -519,12 +519,12 @@ arma::cube gwasForLoop(const arma::mat & M, // marker matrix
 }
 
 // [[Rcpp::export]]
-Rcpp::List newton_di_sp(const arma::mat & Y, const Rcpp::List & X,
+Rcpp::List newton_di_sp(const arma::sp_mat & Y, const Rcpp::List & X,
                         const Rcpp::List & Gx,
                         const Rcpp::List & Z, const Rcpp::List & K,
                         const Rcpp::List & R, 
                         const Rcpp::List & Ge, const Rcpp::List & GeI, // theta and thetaC
-                        const arma::mat & W, const bool & isInvW,
+                        const arma::sp_mat & W, const bool & isInvW,
                         int iters, double tolpar, double tolparinv,
                         const bool & ai, const bool & pev,
                         const bool & verbose,const bool & retscaled,
@@ -556,12 +556,12 @@ Rcpp::List newton_di_sp(const arma::mat & Y, const Rcpp::List & X,
       arma::sp_mat zp = Rcpp::as<arma::sp_mat>(Z[i]); // transform as sparse
       n_levels(i) = zp.n_cols; // store the number of columns or levels for this random effect
       
-      bool dcheck = isIdentity_mat(Rcpp::as<arma::mat>(K[i]));
+      bool dcheck = isIdentity_mat(arma::mat(Rcpp::as<arma::sp_mat>(K[i])));
       if(dcheck == true){ // if K[i] is diagonal
         if(zp.n_rows == zp.n_cols){//is a square matrix
           bool dcheck2 = isIdentity_spmat(zp);
           if(dcheck2 == true){ // if Z[i] is diagonal
-            ZKZtR.slice(i) = Rcpp::as<arma::mat>(K[i]);
+            ZKZtR.slice(i) = arma::mat(Rcpp::as<arma::sp_mat>(K[i]));
           }else{ZKZtR.slice(i) = zp * zp.t(); }
         }else{ // is a rectangular matrix
           ZKZtR.slice(i) = zp * zp.t();
@@ -570,10 +570,10 @@ Rcpp::List newton_di_sp(const arma::mat & Y, const Rcpp::List & X,
         if(zp.n_rows == zp.n_cols){//is a square matrix
           bool dcheck2 = isIdentity_spmat(zp);
           if(dcheck2 == true){ // if Z[i] is diagonal
-            ZKZtR.slice(i) = Rcpp::as<arma::mat>(K[i]);
-          }else{ZKZtR.slice(i) = zp * Rcpp::as<arma::mat>(K[i]) * zp.t(); }
+            ZKZtR.slice(i) = arma::mat(Rcpp::as<arma::sp_mat>(K[i]));
+          }else{ZKZtR.slice(i) = zp * arma::mat(Rcpp::as<arma::sp_mat>(K[i])) * zp.t(); }
         }else{
-          ZKZtR.slice(i) = zp * Rcpp::as<arma::mat>(K[i]) * zp.t();
+          ZKZtR.slice(i) = zp * arma::mat(Rcpp::as<arma::sp_mat>(K[i])) * zp.t();
         }
       }
       
@@ -587,7 +587,7 @@ Rcpp::List newton_di_sp(const arma::mat & Y, const Rcpp::List & X,
         if(isInvW == true){ // user has provided a squared and inverted W already
           ZKZtR.slice(i) = W * Rcpp::as<arma::sp_mat>(R[irw]) * W;
         }else{ // user has provided only W
-          arma::mat Wis = inv(chol(W));
+          arma::mat Wis = inv(chol(arma::mat(W)));
           ZKZtR.slice(i) = Wis * Rcpp::as<arma::sp_mat>(R[irw]) * Wis.t();
         }
         // arma::vec ws2 = 1/sqrt(ws);// arma::mat Wis = diagmat(ws2); // W inverse squared  // ZKZtR.slice(i) = Wis * Rcpp::as<arma::sp_mat>(R[irw]) * Wis;
@@ -598,23 +598,23 @@ Rcpp::List newton_di_sp(const arma::mat & Y, const Rcpp::List & X,
   // ****************************************************
   // build multivariate versions of X and Y
   // ****************************************************
-  arma::vec Ym = vectorise(Y); // multivariate Y in original scale
+  arma::vec Ym = vectorise(arma::mat(Y)); // multivariate Y in original scale
   int nom = Ym.n_rows; // number of observations on the vector-form of multivariate Y
   
   arma::mat Xm;
   for (int i = 0; i < n_fixed; ++i) { // for each fixed effect
     if(i==0){ // build multivariate X for 1st fixed effect
-      Xm = kron(Rcpp::as<arma::mat>(Gx[i]), Rcpp::as<arma::mat>(X[i]));
+      Xm = kron(Rcpp::as<arma::mat>(Gx[i]), arma::mat(Rcpp::as<arma::sp_mat>(X[i])) );
     }else{ // build multivariate X for 2nd to nth fixed effect and column bind them
-      Xm = arma::join_horiz( Xm , kron(Rcpp::as<arma::mat>(Gx[i]), Rcpp::as<arma::mat>(X[i])) );
+      Xm = arma::join_horiz( Xm , kron(Rcpp::as<arma::mat>(Gx[i]), arma::mat(Rcpp::as<arma::sp_mat>(X[i])) ) );
     }
   }
-  arma::mat Ys = scaleCpp(Y); // scale Y using the scaleCpp function made
+  arma::mat Ys = scaleCpp(arma::mat(Y)); // scale Y using the scaleCpp function made
   arma::vec Ysm = vectorise(Ys); // multivariate Y in scaled form
   // ****************************************************
   // initial VC
   // ****************************************************
-  arma::mat base_var = cov(Y); // matrix of original variance-covariance in responses
+  arma::mat base_var = cov(arma::mat(Y)); // matrix of original variance-covariance in responses
   arma::mat sc_var = cov(Ys); // matrix of scaled variance-covariance in responses
   int rankX = Xm.n_rows - rank(Xm); // n - p.x
   // VC matrix with dimensions n_traits x n_traits (sigma)
@@ -782,9 +782,9 @@ Rcpp::List newton_di_sp(const arma::mat & Y, const Rcpp::List & X,
     if(last_iteration == true){
       for (int i = 0; i < n_fixed; ++i) {
         if(i==0){
-          Xm = kron(Rcpp::as<arma::mat>(X[i]), Rcpp::as<arma::mat>(Gx[i]) );
+          Xm = kron(arma::mat(Rcpp::as<arma::sp_mat>(X[i])), Rcpp::as<arma::mat>(Gx[i]) );
         }else{
-          Xm = arma::join_horiz( Xm , arma::kron( Rcpp::as<arma::mat>(X[i]), Rcpp::as<arma::mat>(Gx[i]) ) );
+          Xm = arma::join_horiz( Xm , arma::kron( arma::mat(Rcpp::as<arma::sp_mat>(X[i])), Rcpp::as<arma::mat>(Gx[i]) ) );
         }
       }
       Ym = vectorise(Y.t());
@@ -1059,7 +1059,7 @@ Rcpp::List newton_di_sp(const arma::mat & Y, const Rcpp::List & X,
           arma::mat Zprov = arma::mat(Rcpp::as<arma::sp_mat>(Z[i]));
           
           // arma::mat Zprov2 = Rcpp::as<arma::mat>(Z[i]);
-          arma::mat Ki = Rcpp::as<arma::mat>(K[i]);
+          arma::mat Ki = arma::mat(Rcpp::as<arma::sp_mat>(K[i]));
           // arma::mat Ki2 = (Zprov.t() * Zprov) * 0; //
           // Ki2.diag() = arma::ones<arma::vec>(Ki2.n_cols);
           // arma::mat Ki2 = arma::mat(arma::speye( Zprov.n_cols, Zprov.n_cols ));
@@ -1071,7 +1071,7 @@ Rcpp::List newton_di_sp(const arma::mat & Y, const Rcpp::List & X,
           // for rrBLUP models we had to allow a K matrix to be a 1 x 1 matrix so dimensions do not match with Z
           if(Ki.n_cols == Zprov.n_cols){ // if a regular random effect
             // Rcpp::Rcout << "regular" << arma::endl;
-            VarK = arma::kron(Rcpp::as<arma::mat>(K[i]),sigma.slice(i)); // Gu * var.u
+            VarK = arma::kron(arma::mat(Rcpp::as<arma::sp_mat>(K[i])),sigma.slice(i)); // Gu * var.u
             ZKfv = VarK * arma::kron(Zprov.t(),dD); // G Z'
           }else{ // if huge matrix from models like rrBLUP we need to create a diagonal to calculate VarK and BLUPs
             // Rcpp::Rcout << "rrBLUP" << arma::endl;
@@ -1134,14 +1134,13 @@ Rcpp::List newton_di_sp(const arma::mat & Y, const Rcpp::List & X,
   arma::field<arma::mat> partitions(thetaConstOri.size()-1); // store indices for each random effect
   arma::vec end, start;
   int counter4 = 0;
-  int nEffs;
-  for (int i = 0; i < thetaConstOri.size(); ++i) {
+  int value = 0;
+  for (int i = 0; i < thetaConstOri.size(); ++i) { // for each random effect
     arma::uvec effsToUse = find(thetaIndex == (i+1) ); // which thetas we should use
     arma::mat thetaConstOriIth = thetaConstOri(i); // get effect i
     arma::mat newThetaIth(thetaConstOriIth.n_rows,thetaConstOriIth.n_rows); // to store new thetas
     arma::mat newThetaIthProv; // to store the sigma ith slice provisionally
     arma::mat blupTable, pevTable, partitionsTable, pevFull; // 
-    // Rcpp::Rcout << "filling effect." << i << arma::endl;
     for (int j = 0; j < thetaConstOriIth.n_cols; ++j) { // for each row in theta
       for (int k = 0; k < thetaConstOriIth.n_rows; ++k) { // for each col in theta
         if(thetaConstOriIth(j,k) != 0){ // if was estimated fill the matrix objects
@@ -1150,15 +1149,22 @@ Rcpp::List newton_di_sp(const arma::mat & Y, const Rcpp::List & X,
             newThetaIth(j,k) = newThetaIthProv(0,0);
             if( i < (thetaConstOri.size()-1) ){ // if ~random not residual
               // Rcpp::Rcout << (thetaConstOri.size()-1) << arma::endl;
-              arma::mat provPev = arma::mat(PevU(counter4));
-              arma::mat zerosMatFill(pevFull.n_rows,provPev.n_cols,arma::fill::zeros);
-              pevFull = arma::join_cols( arma::join_rows(pevFull, zerosMatFill),arma::join_rows(zerosMatFill.t(),provPev) );
+              arma::mat provPev;
+              if(pev==true){
+                provPev = arma::mat(PevU(counter4));
+                arma::mat zerosMatFill(pevFull.n_rows,provPev.n_cols,arma::fill::zeros);
+                pevFull = arma::join_cols( arma::join_rows(pevFull, zerosMatFill),arma::join_rows(zerosMatFill.t(),provPev) );
+              }
               if( blupTable.n_cols <= j){ // not yet populated
                 blupTable = arma::join_rows(blupTable, arma::mat(U[counter4]) );
-                pevTable = arma::join_rows(pevTable, provPev.diag());
+                if(pev==true){
+                  pevTable = arma::join_rows(pevTable, provPev.diag());
+                }
               }else{ // the column is already populated
                 blupTable.col(j) = blupTable.col(j) + arma::mat(U[counter4]);
-                pevTable.col(j) = pevTable.col(j) + provPev.diag();
+                if(pev==true){
+                  pevTable.col(j) = pevTable.col(j) + provPev.diag();
+                }
               }
               
             }
@@ -1175,22 +1181,33 @@ Rcpp::List newton_di_sp(const arma::mat & Y, const Rcpp::List & X,
               arma::uvec isJ = arma::find(indexCovJK == j);
               arma::uvec isK = arma::find(indexCovJK == k);
               arma::mat provBlup = arma::mat(U[counter4]);
-              arma::mat provPev = arma::mat(PevU(counter4));
-              provPev = provPev.diag();
+              arma::mat provPev;
+              if(pev==true){
+                provPev = arma::mat(PevU(counter4));
+                provPev = provPev.diag();
+              }
               // add cov blup and cov pev 
               if(blupTable.n_cols <= j){ // not yet populated
                 blupTable = arma::join_rows(blupTable, provBlup.rows(isJ) );
-                pevTable = arma::join_rows(pevTable, provPev(isJ) );
+                if(pev==true){
+                  pevTable = arma::join_rows(pevTable, provPev(isJ) );
+                }
               }else{ // the column is already populated
                 blupTable.col(j) = blupTable.col(j) + provBlup.rows(isJ);
-                pevTable.col(j) = pevTable.col(j) + provPev(isJ);
+                if(pev==true){
+                  pevTable.col(j) = pevTable.col(j) + provPev(isJ);
+                }
               }
               if( blupTable.n_cols <= k){ // not yet populated
                 blupTable = arma::join_rows(blupTable, provBlup.rows(isK) );
-                pevTable = arma::join_rows(pevTable, provPev(isK) );
+                if(pev==true){
+                  pevTable = arma::join_rows(pevTable, provPev(isK) );
+                }
               }else{
                 blupTable.col(k) = blupTable.col(k) + provBlup.rows(isK);
-                pevTable.col(k) = pevTable.col(k) + provPev(isK);
+                if(pev==true){
+                  pevTable.col(k) = pevTable.col(k) + provPev(isK);
+                }
               }
             }
           }
@@ -1201,23 +1218,35 @@ Rcpp::List newton_di_sp(const arma::mat & Y, const Rcpp::List & X,
     newTheta(i) = newThetaIth;
     if( i < (thetaConstOri.size()-1) ){
       uList(i) = blupTable;
-      uPevList(i) = pevTable;
-      PEVs(i) = pevFull;
+      if(pev==true){
+        uPevList(i) = pevTable;
+        PEVs(i) = pevFull;
+      }
       int nrbt= blupTable.n_rows;
       for (int l = 0; l < blupTable.n_cols; ++l) {
-        start = beta.n_rows + (l*nrbt) + 1; // index of where the random effect starts
-        end = beta.n_rows + (nrbt * (l+1)) ; // index of where the random effect ends
+        if( (i==0) & (l==0) ){
+          start = Xm.n_cols + (l*nrbt) + 1; // index of where the random effect starts
+          end = Xm.n_cols + (nrbt * (l+1)) ; // index of where the random effect ends
+        }else{
+          start = value + 1;
+          end= start + nrbt - 1;
+        }
         partitionsTable = arma::join_cols(partitionsTable, arma::join_rows(start,end));
+        value = partitionsTable.max();
       }
       u = join_cols(u, arma::vectorise(blupTable) ); // join blups in a single matrix
       partitions(i) = partitionsTable;
+      
     }
   }
   arma::mat bu = join_cols(beta, u );
   arma::mat Ci(bu.n_rows,bu.n_rows, arma::fill::zeros);
   Ci.submat(0, 0, beta.n_rows-1, beta.n_rows-1 ) = tXVXi;
-  for (int i = 0; i < partitions.size(); ++i) {//for each major random effect
-    Ci.submat(partitions(i).min()-1, partitions(i).min()-1, partitions(i).max()-1, partitions(i).max()-1 ) = PEVs(i);
+  // Rcpp::Rcout << "good2" << arma::endl;
+  if(pev==true){
+    for (int i = 0; i < partitions.size(); ++i) {//for each major random effect
+      Ci.submat(partitions(i).min()-1, partitions(i).min()-1, partitions(i).max()-1, partitions(i).max()-1 ) = PEVs(i);
+    }
   }
   
   // ****************************************************
@@ -1245,9 +1274,9 @@ Rcpp::List newton_di_sp(const arma::mat & Y, const Rcpp::List & X,
     Rcpp::Named("residuals") = residuals,
     Rcpp::Named("dL") = score, // dL
     Rcpp::Named("percChange") = sigma_perc_change2
-    // Rcpp::Named("Vi") = Vi,
-    // Rcpp::Named("P") = P,
-    // Rcpp::Named("u_var") = VarU,
+  // Rcpp::Named("Vi") = Vi,
+  // Rcpp::Named("P") = P,
+  // Rcpp::Named("u_var") = VarU,
   
   );
 }
@@ -1296,7 +1325,7 @@ arma::vec mat_to_vecCpp2(const arma::mat & x,
 }
 
 // [[Rcpp::export]]
-arma::mat nearPDcpp(const arma::mat X0, // Rcpp::List
+arma::mat nearPDcpp(const arma::mat X0, 
                     const int & maxit,
                     const double & eig_tol,
                     const double & conv_tol){
@@ -1331,15 +1360,12 @@ arma::mat nearPDcpp(const arma::mat X0, // Rcpp::List
       converged = true;
     }
   }
-  // return Rcpp::List::create(
-  //   Rcpp::Named("X") = X
-  // );
   return X;
 }
 
 // [[Rcpp::export]]
 Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma::vec & Zind,
-                     const Rcpp::List & AiI, const arma::sp_mat & y,
+                     const Rcpp::List & AiI, const arma::sp_mat & y0,
                      const Rcpp::List & SI, const Rcpp::List & partitionsS,
                      const arma::sp_mat & H, const bool & useH,
                      int nIters, double tolParConvLL, double tolParConvNorm,
@@ -1352,7 +1378,7 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
   time_t before = time(0);
   localtime(&before);
   // define element sizes
-  int nSs = SI.size(); // number of residual matrices
+  int nSs = SI.size(); // number of residual inverse matrices
   int nZs = ZI.size(); // number of random effects
   int nRe;
   if(nZs > 0){
@@ -1362,11 +1388,22 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
   int nReFake = 1; // a fake value in case there's no random effects we avoid a bad allocation error
   int nRRe = thetaI.size(); // number of random + residual effects
   int nX = X.n_cols;// number of fixed effects
-  int nR = y.n_rows; // number of records
+  int nR = y0.n_rows; // number of records
+  // find variance and mean for the response
+  double vary2 = arma::mean(arma::var(arma::square(y0)));
+  double vary = arma::mean(arma::var(y0));
+  double stdy = arma::mean(arma::stddev(y0));
+  double muy = arma::mean(arma::mean(y0));
+  arma::sp_mat y = arma::sp_mat(scaleCpp(arma::mat(y0)));
+  bool intercept = false;
+  // Rcpp::Rcout << intercept << arma::endl;
+  if(arma::accu(X.col(0)) == X.n_rows){ // there's an intercept
+    intercept = true;
+  }
   // create a list to store the symmetric version of thetaC
   arma::field<arma::mat> theta(nRRe), thetaC(nRRe);
   for (int i = 0; i < nRRe; ++i) { // create a copy of thetas
-    theta[i]=Rcpp::as<arma::mat>(thetaI[i]) ; //
+    theta[i]=Rcpp::as<arma::mat>(thetaI[i])/vary ; //
     thetaC[i]=Rcpp::as<arma::mat>(thetaCI[i]) ; //
   }
   // move Z to sparse arma objects
@@ -1383,10 +1420,10 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
     }
   }
   // delete ZI;
-  // move S to sparse arma objects
-  arma::field<arma::sp_mat> S(nSs); // allocate size of S
+  // move S inverse to sparse arma objects
+  arma::field<arma::sp_mat> Si(nSs); // allocate size of Si
   for (int i = 0; i < nSs; ++i) {
-    S(i)=convertSparse(SI(i)); // convert the matrix to sparse and store in the field
+    Si(i)=convertSparse(SI(i)); // convert the matrix to sparse and store in the field
   }
   // move Ai to sparse arma objects
   int nReAl;
@@ -1408,7 +1445,7 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
     for (int i = 0; i < nRe; ++i) { // for each random effect
       double val;
       double sign;
-      bool ok3 = log_det(val, sign, arma::mat(Ai[i])); // calculate the logDet of the covariance matrix
+      bool ok3 = log_det(val, sign, arma::mat(Ai[i])); // calculate the logDet of the i.th covariance matrix
       if(ok3 == false){ Rcpp::Rcout << "log determinant of Ai failed " << arma::endl;};
       logDetA(i) =val*sign*(-1);
     }
@@ -1482,7 +1519,11 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
   
   int nEffects = Nu+nX;
   int nEffectsPlusY = nEffects + 1;
-  arma::mat Mchol(nEffectsPlusY,nEffectsPlusY);
+  arma::mat Mchol; // (nEffectsPlusY,nEffectsPlusY)
+  arma::umat PM_mat;
+  arma::mat MWuchol;
+  arma::umat PMWu_mat;
+  
   arma::sp_mat M0(nEffectsPlusY,nEffectsPlusY), M(nEffectsPlusY,nEffectsPlusY), W(nR,nEffects), Wy(nR,nEffectsPlusY), C(nEffects,nEffects), Ci(nEffects,nEffects);
   arma::vec u(Nu), b(nX), bu(nEffects);
   arma::mat buWu(nEffects,nVcTotal);
@@ -1494,24 +1535,33 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
   double seconds;
   arma::sp_mat XWjxZWj(nEffects,nVcTotal), WiXxWiZ(nVcTotal,nEffects), WiWj(nVcTotal,nVcTotal);
   arma::sp_mat XWjxZWj0(nEffects,nVcTotal), WiXxWiZ0(nVcTotal,nEffects), WiWj0(nVcTotal,nVcTotal);
-  arma::sp_mat A;//, Wu2;
+  arma::mat Mchol_XZ;//, Wu2;
   arma::sp_mat I = arma::speye<arma::sp_mat>(nEffectsPlusY,nEffectsPlusY);
+  arma::mat I2 = arma::eye(nEffects+nVcTotal,nEffects+nVcTotal);
   arma::vec delta(nVcTotal), delta_minus1(nVcTotal);
   // objects for constraints
   arma::mat percDelta(nVcTotal,nIters,arma::fill::zeros); // store % change of the delta with respect to the previous iteration
   arma::mat normMonitor(3,nIters); // store in each iteration the 3 stopping criteria of Madsen and Jensen
   arma::mat toBoundary(nIters,nVcTotal, arma::fill::zeros ); // store which values have been set to the boundary value
   arma::vec sumToBoundary(nVcTotal, arma::fill::zeros ); // to apply sum across iterations and if a VC goes to the boundary 3 times it is fixed to the boundary
+  arma::sp_mat Ri(nR,nR); // matrix to store R inverse
+  arma::sp_mat Hs(H.n_cols,H.n_cols); // square of H matrix
+  if(useH == true){ // do cholesky decomposition of H if user wants to use weights
+    Rcpp::Rcout << "Using the weights matrix " << arma::endl;
+    Hs = arma::sp_mat(chol(arma::mat(H)));
+  }
+  arma::vec dLuOut;//(nVcTotal); // we will join cols
   ////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////
   // START ITERATIVE ALGORITHM
   ////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////
   
+  
   for (int iIter = 0; iIter < nIters; ++iIter) {
     
     // ###########################
-    // # 1) absorption of m onto y to obtain y'Py and logDetC
+    // # 1) absorption of M into y to obtain y'Py and logDetC
     // # PAPER FORMULA from Jensen and Madsen 1997, Gilmour et al., 1995
     // # expand coefficient matrix (C) to have the response variable
     // # M = W' Ri W # with W = [X Z y]
@@ -1527,44 +1577,24 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
     // # yPy = MChol[n,n] # where n is the last element of the matrix
     // # logDetC = 2 * E log(diag(MChol))
     // ###########################
-    arma::sp_mat Hs(H.n_cols,H.n_cols);
-    // do cholesky decomposition of H if user wants to use weights
-    if(useH == true){
-      if(iIter == 0){
-        Rcpp::Rcout << "Using the weights matrix " << arma::endl;
-      }
-      Hs = arma::sp_mat(chol(arma::mat(H)));
-    }
-    arma::sp_mat Ri(nR,nR); // matrix to store R inverse
     arma::field<arma::sp_mat> Rij(nSs); // field to store sub R matrices
-    arma::field<arma::sp_mat> RijInv(nSs); // field to store sub R inverse matrices
     arma::vec thetaResidualsVec = mat_to_vecCpp2(theta(nRRe-1),thetaC[(nRRe-1)]);
     for (int i = 0; i < nSs; ++i) { // for each residual structure
-      
       arma::mat pSi = Rcpp::as<arma::mat>(partitionsS[i]);
       int s1 = pSi(0,0)-1;
       int s2 = pSi(0,1)-1;
-      Rij(i) =  S(i) * arma::as_scalar(thetaResidualsVec(i)) ; // sub R = Si * theta.i
-      if(S(i).is_diagmat()==true){ // sub R
-        RijInv(i) =  S(i) * (1/arma::as_scalar(thetaResidualsVec(i))) ;
-      }else{
-        if(iIter == 0){
-          Rcpp::Rcout << "R matrices are not diagonal, using actual inversion " << arma::endl;
-        }
-        RijInv(i) = arma::sp_mat( arma::inv(arma::mat(Rij(i))) );
-      }
-      Ri.submat(s1,s1,s2,s2) = Ri.submat(s1,s1,s2,s2) + RijInv(i);
-      
+      // get ith Rinverse by multiplying Sinverse * 1/theta
+      arma::sp_mat RijInv =  Si(i) * (1/arma::as_scalar(thetaResidualsVec(i))) ;
+      Ri.submat(s1,s1,s2,s2) = RijInv;
     }
     // adjust R inverse if user provides weights
     if(useH == true){
       Ri = Hs *  Ri * Hs.t();
     }
-    Ri = arma::sp_mat(Ri);
     // Rcpp::Rcout << ltm->tm_hour << ":" << ltm->tm_min << ":" << ltm->tm_sec << "      " << seconds << "           " << arma::endl;
     /////////////////////////////////
     // form the mixed model equations
-    if(iIter == 0){ // only form W and Wy once
+    if(iIter == 0){ // only form W and Wy once in the first iteration
       W = X;
       // if random effects exist
       if(nZs > 0){
@@ -1589,11 +1619,14 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
       }
     }
     
-    arma::field<arma::sp_mat> lambda(nReAl);
-    arma::field<arma::sp_mat> GI(nReAl);
+    arma::field<arma::sp_mat> lambda(nReAl); // to store theta inverses
+    arma::field<arma::sp_mat> GI(nReAl); // to store kron(thetainv,Ainv) 
     if(nZs > 0){
       for (int i = 0; i < nRe; ++i) {
-        lambda(i) = arma::sp_mat( inv(theta(i)) );
+        arma::mat bend = nearPDcpp(arma::symmatu(theta(i)), 100, 1e-06, 1e-07);
+        // lambda(i) = arma::sp_mat( dddd );
+        // arma::mat bend = arma::eye(theta(i).n_rows,theta(i).n_rows) * 1e-6;
+        lambda(i) = arma::sp_mat( arma::pinv( bend ) );
         GI(i) = kron(lambda(i), Ai(i) );
         arma::mat partitionsP = partitions(i);
         int ff = partitionsP(0,0) - 1;
@@ -1602,21 +1635,27 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
       }
     }
     
+    // Rcpp::Rcout << "all good" << arma::endl;
+    // arma::chol(Mchol, PM_mat, arma::mat(M), "upper", "matrix");
+    // Rcpp::Rcout <<  Mchol.n_cols << arma::endl;
+    // Rcpp::Rcout <<  Mchol.n_rows << arma::endl;
+    
     bool okChol = arma::chol(Mchol, arma::mat(M));
     if(okChol == false){
       if(verbose == true){
-        Rcpp::Rcout << "Adding a small value to the diagonal of M " << arma::endl;
+        Rcpp::Rcout << "Making M positive definite " << arma::endl;
       }
-      M = M + (I*(tolParInv));
-      Mchol = arma::chol(arma::mat(M)) ;
+      arma::mat Mp = arma::symmatu(arma::mat(M));
+      Mp = nearPDcpp(Mp, 100, 1e-06, 1e-07);
+      Mchol = arma::chol(Mp) ;
       if(verbose == true){
         Rcpp::Rcout << "Cholesky of M succeeded " << arma::endl;
       }
     }
     arma::vec yPy =arma::square(Mchol.submat( Mchol.n_rows-1, Mchol.n_cols-1, Mchol.n_rows-1,  Mchol.n_cols-1 ));
-    arma::mat Mpp = Mchol.submat( 0,0, Mchol.n_rows-2,  Mchol.n_cols-2 ); // M without y portion (last row and column of M)
-    double logDetC = 2 * accu(log(Mpp.diag()));
-    
+    Mchol_XZ = Mchol.submat( 0,0, Mchol.n_rows-2,  Mchol.n_cols-2 ); // M without y portion (last row and column of M)
+    arma::vec My = Mchol.submat( 0,Mchol.n_rows-1, Mchol.n_cols-2,  Mchol.n_cols-1 );
+    double logDetC = 2 * accu(log(Mchol_XZ.diag()));
     // ###########################
     // # 1.1) calculate the log-likelihood
     // # PAPER FORMULA (Lee and Van der Werf, 2006)    #
@@ -1644,26 +1683,26 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
     if(ok2 == false){ Rcpp::Rcout << "log determinant of R failed " << arma::endl;};
     double logDetR = nR * val * sign;
     llik(iIter) = (- 0.5) * ( llikp + logDetC + logDetR + arma::as_scalar(yPy) );
-    
     // ###########################
     // # 2) backsubstitute to get b and u (CORRECT)
     // # use the results from the absorption to obtain BLUE & BLUPs
     // # b = backsolve(MChol[,rest],MChol[,last])
     // ###########################
     
-    A = arma::sp_mat(Mchol.submat( 0,0, Mchol.n_rows-2,  Mchol.n_cols-2 )); // chol of C
-    arma::vec B = Mchol.submat( 0,Mchol.n_rows-1, Mchol.n_cols-2,  Mchol.n_cols-1 );
-    // arma::mat A = Mchol.submat( 0,0, Mchol.n_rows-2,  Mchol.n_cols-2 );
-    // bu = arma::solve(trimatu(A), B);  // indicate that A is triangular
-    arma::spsolve(bu, A, B, "lapack" );  // use LAPACK  solver
+    // arma::spsolve_factoriser SF;
+    // bool status = SF.factorise(arma::sp_mat(Mchol_XZ));
+    // if(status == false) { Rcpp::Rcout << "factorisation failed" << arma::endl; }
+    // double rcond_value = SF.rcond();
+    // bool solution1_ok = SF.solve(bu,My);
     
-    arma::uvec bInd = arma::regspace<arma::uvec>(0,  1,  (nX-1)); // equivalent to seq()
-    b = bu(bInd);
-    if(nZs > 0){
+    arma::spsolve(bu, arma::sp_mat(Mchol_XZ) , My, "lapack" );  // use LAPACK  solver
+    
+    arma::uvec bInd = arma::regspace<arma::uvec>(0,  1,  (nX-1)); // which ones are BLUEs, equivalent to seq()
+    b = bu(bInd); // move BLUEs to a different vector
+    if(nZs > 0){ // move BLUPs to a different vector
       arma::uvec uInd = arma::regspace<arma::uvec>((nX),  1,  (nX+Nu-1)); // equivalent to seq()
       u = bu(uInd);
     }
-    
     // ###########################
     // # 3) calculate Wu (working variates)
     // # PAPER FORMULA (Notes on Estimation of Genetic Parameters from Van der Werf)
@@ -1677,20 +1716,19 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
     // ###########################
     
     arma::sp_mat Wu;
-    arma::field<arma::sp_mat> uSinv(nReAl);
+    arma::field<arma::sp_mat> uSinv(nReAl); // field of sparse matrices to store products u * thetainv
     
     if(nZs > 0){ // if random effects exist
       for(int iR = 0; iR < nRe; ++iR){ // for each random effect u
-        arma::mat partitionsP = partitions(iR); // access the partition
-        arma::sp_mat U(partitionsP(0,1) - partitionsP(0,0) + 1, partitionsP.n_rows);
+        arma::mat partitionsP = partitions(iR); // access the partition for the iR random effect
+        arma::sp_mat U(partitionsP(0,1) - partitionsP(0,0) + 1, partitionsP.n_rows); // all BLUPs all the ith random effect
         for(int iRow = 0; iRow < partitionsP.n_rows; ++iRow){ // for each partition row
           arma::uvec usedPartition = arma::regspace<arma::uvec>((partitionsP(iRow,0)-1),  1, (partitionsP(iRow,1)-1)  ); // equivalent to seq()
-          U.col(iRow) = bu(usedPartition);
+          U.col(iRow) = bu(usedPartition); // move vector to a matrix: u -> [u1|u2|...]
         }
         // # [a || m] [s2a || sam] = [s2a a + sam m  || sam a + s2m m]
         // #          [sam || s2m]
-        arma::sp_mat lambdaProv = arma::sp_mat( lambda(iR) );
-        arma::sp_mat uSinvProv = U * lambdaProv;
+        arma::sp_mat uSinvProv = U * lambda(iR); // 
         uSinv(iR) = uSinvProv;
         arma::mat thetaCprov = thetaC[iR];
         // // for the ij var comp we calculate the Wu
@@ -1701,8 +1739,8 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
         int counterWu = 0;
         int counterZu = 0;
         //
-        for(int iRow = 0; iRow < lambdaProv.n_rows; ++iRow){
-          for(int iCol = 0; iCol < lambdaProv.n_cols; ++iCol){
+        for(int iRow = 0; iRow < lambda(iR).n_rows; ++iRow){
+          for(int iCol = 0; iCol < lambda(iR).n_cols; ++iCol){
             if(thetaCprov(iRow,iCol) > 0){ // if vc has to be estimated
               if(iRow == iCol){ // variance component
                 // Wu
@@ -1723,30 +1761,28 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
       } // end of loop for each random effect
     } // end of condition when random effects exist
     // calculate residuals
-    // Wu2=Wu;
-    
     arma::vec e = y - (arma::sp_mat(W.submat(0,0,W.n_rows-1,W.n_cols-1)) * bu);
     // Working variates for residual VCs
-    for(int iS = 0; iS < S.size(); ++iS){
-      arma::sp_mat Sprov(nR,nR);
+    for(int iS = 0; iS < Si.size(); ++iS){
+      
       arma::mat pSi = Rcpp::as<arma::mat>(partitionsS[iS]);
       int s1 = pSi(0,0)-1;
       int s2 = pSi(0,1)-1;
-      Sprov.submat(s1,s1,s2,s2)= S(iS);
-      Sprov = arma::sp_mat(Sprov);
+      arma::sp_mat Sprov(nR,nR);
+      Sprov.submat(s1,s1,s2,s2)= Si(iS);
+      // Sprov = arma::sp_mat(Sprov);
       if(nSs > 1){ // if R is complex do the whole product  (1/arma::as_scalar(thetaResidualsVec(0)))
         Wu = arma::join_rows(Wu , Sprov * Ri * arma::sp_mat(e) );
       }else{ // if R is not complex just use the factor
-        if(useH == true){
+        if(useH == true){ // if weights are used
           Wu = arma::join_rows(Wu , Sprov * Ri * arma::sp_mat(e) );
-        }else{
+        }else{ // if no weights are being used
           Wu = arma::join_rows(Wu , Sprov * (1/arma::as_scalar(thetaResidualsVec(0))) * arma::sp_mat(e) );
         }
       }
     }
-    
     // ###########################
-    // # 4) absorption of m onto Wu (2 VAR, 1 COV) to obtain Wu' P Wu  which is the AI matrix
+    // # 4) absorption of M into Wu (2 VAR, 1 COV) to obtain Wu' P Wu  which is the AI matrix
     // # we had to change the avInf to avInf/sigmas
     // # PAPER FORMULA (Smith, 1995) Differentiation of the Cholesky Algorithm
     // # avInf.ij = ((chol(M))[n,n])^2 # the square of the last diagonal element of the cholesky factorization
@@ -1766,10 +1802,10 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
       XWjxZWj = W.t() * Ri * Wu ;// [X'Riwj Z'Riwj]' # C12 upper right
       WiWj = Wu.t() * Ri * Wu ;//  wk'Riwj # C22 lower right
     }else{ // if R is simple multiply only obtain this matrices once and in every iteration multiply by a factor
-      if(useH == true){
+      if(useH == true){ // use weights
         XWjxZWj = W.t() * Ri * Wu ;// [X'Riwj Z'Riwj]' # C12 upper right
         WiWj = Wu.t() * Ri * Wu ;//  wk'Riwj # C22 lower right
-      }else{
+      }else{ // no using weights
         if(iIter == 0){
           XWjxZWj0 = W.t() * Wu ;// [X'Riwj Z'Riwj]' # C12 upper right
           WiWj0 = Wu.t() * Wu ;//  wk'Riwj # C22 lower right
@@ -1778,9 +1814,20 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
         WiWj = WiWj0 * (1/arma::as_scalar(thetaResidualsVec(0)));//  wk'Riwj # C22 lower right
       }
     }
-    arma::sp_mat A2 = M.submat( 0,0, M.n_rows-2,  M.n_cols-2 );
-    arma::spsolve(buWu, A2, arma::mat(XWjxZWj), "lapack" );  // use LAPACK  solver
-    avInf = WiWj - (buWu.t()*XWjxZWj);
+    // // solve method !!
+    // // similar to arma::spsolve(bu, arma::sp_mat(Mchol_XZ) , My, "lapack" ); but My = XZRiy and XWjxZWj = XZRi.Wu
+    arma::spsolve(buWu, arma::sp_mat(M.submat( 0,0, M.n_rows-2,  M.n_cols-2 )), arma::mat(XWjxZWj), "lapack" );  // use LAPACK  solver
+    avInf = WiWj - (buWu.t()*XWjxZWj); // WuWu' - bu.Wu'*W.Wu
+    
+    // cholesky method!! requires scaling of the response to work
+    // arma::mat MWu = arma::join_cols(
+    //   arma::join_rows(arma::mat(M.submat( 0,0, M.n_rows-2,  M.n_cols-2 )),arma::mat(XWjxZWj0) ),
+    //   arma::join_rows(arma::mat(XWjxZWj0.t()), arma::mat(WiWj) )
+    // );
+    // arma::chol(MWuchol, PMWu_mat, MWu, "lower", "matrix");
+    // MWuchol = PMWu_mat.t() * MWuchol;
+    // avInf = MWuchol.submat( MWuchol.n_cols-Wu.n_cols, MWuchol.n_cols-Wu.n_cols, MWuchol.n_cols-1, MWuchol.n_cols-1);
+    // avInf = avInf * avInf.t();
     
     // ##########################
     // # 5) get 1st derivatives (dL/ds2i) from MME-version
@@ -1801,19 +1848,17 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
     arma::sp_mat Cip = arma::sp_mat(Cichol);
     Ci = Cip * Cip.t() ;
     arma::field<arma::mat> emInfList(nRRe);
-    arma::vec dLu;//(nVcTotal); // we will join cols
+    arma::vec dLu;//(nVcTotal); // we will join cols // dLu(Wu.n_cols);//(nVcTotal); // we will join cols
     if(nZs > 0){ // if random effects exist
       for(int iR = 0; iR < nRe; ++iR){ // for each random effect u
-        arma::sp_mat lambdaProv = arma::sp_mat( lambda(iR) );
         arma::mat thetaCprov = thetaC[iR];
-        arma::sp_mat traces(lambdaProv.n_rows,lambdaProv.n_cols);
-        arma::sp_mat AiProv = Ai(iR);
-        for(int iRow = 0; iRow < lambdaProv.n_rows; ++iRow){
-          for(int iCol = 0; iCol < lambdaProv.n_cols; ++iCol){
+        arma::sp_mat traces(lambda(iR).n_rows,lambda(iR).n_cols);
+        for(int iRow = 0; iRow < lambda(iR).n_rows; ++iRow){
+          for(int iCol = 0; iCol < lambda(iR).n_cols; ++iCol){
             if(thetaCprov(iRow,iCol) > 0){ // if vc has to be estimated
               arma::mat partitionsP = partitions(iR);
               // X.submat( first_row, first_col, last_row, last_col )
-              double trAiCuu = arma::trace(  AiProv * Ci.submat(partitionsP(iRow,0)-1, partitionsP(iCol,0)-1, partitionsP(iRow,1)-1, partitionsP(iCol,1)-1 )  );
+              double trAiCuu = arma::trace(  Ai(iR) * Ci.submat(partitionsP(iRow,0)-1, partitionsP(iCol,0)-1, partitionsP(iRow,1)-1, partitionsP(iCol,1)-1 )  );
               traces(iRow,iCol) = trAiCuu;
             }else{
               traces(iRow,iCol) = 0;
@@ -1822,7 +1867,7 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
         }// end of loop for iRow
         traces = arma::symmatu(traces); // copy upper in lower triangular
         //  first derivatives = dL/ds2u = (q.i * lambda) - (lambda * (T + S) * lambda)    where S=UAiU and we use U.lambda
-        arma::sp_mat dLuProv = (arma::as_scalar(nUsTotal(iR)) * lambdaProv) - ( uSinv(iR).t() * AiProv * uSinv(iR) ) - ( lambdaProv * traces * lambdaProv );
+        arma::sp_mat dLuProv = (arma::as_scalar(nUsTotal(iR)) * lambda(iR) ) - ( uSinv(iR).t() * Ai(iR) * uSinv(iR) ) - ( lambda(iR) * traces * lambda(iR) );
         // althernative EM update
         // current(theta)   -   update(delta)  but we need to decompose the update(delta) = Iem * vech(dLu/ds2u) , Iem is then of dimensions equal to vech(dLu/ds2u)
         // theta[[iR]] - (theta[[iR]]%*%dLuProv%*%theta[[iR]])/Nus[iR]    Eq.34
@@ -1833,15 +1878,15 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
         dLu = join_cols( dLu, mat_to_vecCpp2(arma::mat(dLuProv),thetaCprov) );
       }// end of loop for each random effect
     }// end of condition if random effects exist
-    arma::vec dLe(S.size());
+    arma::vec dLe(Si.size());
     arma::sp_mat eProv = arma::sp_mat(e);
-    for(int iS = 0; iS < S.size(); ++iS){ // Rij <- S[[iS]]%*%Ri
+    for(int iS = 0; iS < Si.size(); ++iS){ // Rij <- S[[iS]]%*%Ri
       
       arma::sp_mat Sprov(nR,nR);
       arma::mat pSi = Rcpp::as<arma::mat>(partitionsS[iS]);
       int s1 = pSi(0,0)-1;
       int s2 = pSi(0,1)-1;
-      Sprov.submat(s1,s1,s2,s2)= S(iS);
+      Sprov.submat(s1,s1,s2,s2)= Si(iS);
       Sprov = arma::sp_mat(Sprov);
       if(nSs > 1){ // if R is complex do the whole matrix product  in every iteration
         dLe(iS) = ( arma::trace( Sprov *Ri) - arma::trace( Ci * W.t() * Ri * Sprov * Ri * W ) ) - arma::as_scalar( eProv.t() * Ri * Sprov * Ri * eProv );
@@ -1910,6 +1955,12 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
           }
         }// end of if(expectedNewTheta(i) < 1e-10)
       }// end of positive constraints
+      // any vc outide the search space should come back
+      if(expectedNewTheta(i) > 1){ // since we scale the modell we don't allow to explain more than 90%
+        // Rcpp::Rcout << "Restraining to small value" << arma::endl;
+        expectedNewTheta(i)=1;
+        toBoundary(iIter,i)=1; // toBoundary(nIters,nVcTotal)
+      }// end of if(expectedNewTheta(i) > 1)
       if(thetaCUnlisted(i) == 3){
         arma::vec thetaUnlistedPlusAddScaleParam;
         if(iIter == 0){
@@ -1988,6 +2039,7 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
       arma::uvec toFill = arma::regspace<arma::uvec>(nVcStart(i)-1,  1,  nVcEnd(i)-1); // equivalent to seq()
       arma::mat thetaProvNew = vec_to_matCpp(expectedNewTheta(toFill), thetaC[i] );
       arma::mat thetaProvNewPD = nearPDcpp(arma::symmatu(thetaProvNew), 100, 1e-06, 1e-07); // maxit=100, eig_tol = 1e-06, conv_tol = 1e-07
+      // arma::mat thetaProvNewPD = thetaProvNew + (arma::eye(thetaProvNew.n_rows,thetaProvNew.n_rows)*tolParInv); // nearPDcpp(arma::symmatu(thetaProvNew), 100, 1e-06, 1e-07);
       theta(i) = thetaProvNewPD; // arma::symmatu(thetaProvNew);
       //
       arma::mat thetaCProvNew = vec_to_matCpp(thetaCUnlisted(toFill), thetaC[i] );
@@ -2033,8 +2085,9 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
         break; //
       }
     }
-    
+    dLuOut = dLu;
   }// end of iterative optimization
+  
   
   double AIC = (-2 * llik((llik.n_cols-1))) + (2 * nX);
   double BIC = (-2 * llik((llik.n_cols-1))) + (log(nR) * nX);
@@ -2043,7 +2096,26 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
   for (int i = 0; i < nRRe; ++i) {
     thetaCUnlistedFinal = join_cols(thetaCUnlistedFinal,mat_to_vecCpp2(thetaC[i],thetaC[i]));
   }
-  
+  // bring back to original scale the variance components
+  for (int i = 0; i < nRRe; ++i) {
+    theta(i) = theta(i)*vary;
+  }
+  bu = bu*stdy;
+  b = b*stdy;
+  // Rcpp::Rcout << intercept << arma::endl;
+  if(intercept==true){ // if true mu is required in the first position only
+    b(0,0) = b(0,0) + muy;
+    bu(0,0) = bu(0,0) + muy;
+  }else{ // if false mu is required all over b
+    bu.submat(0, 0, (b.n_rows-1), 0) = bu.submat(0, 0, (b.n_rows-1), 0) + muy;
+    b = b + muy;
+  }
+  Ci = Ci*vary;
+  // InfMat=InfMat/stdy;//*(1/(vary2/2));
+  InfMatInv=InfMatInv*vary;//*(vary2/2);
+  Mchol_XZ=Mchol_XZ/stdy;
+  monitor=monitor*vary;
+  // dLuOut=dLuOut/vary;
   // move the effects from vector to a field with matrices
   arma::field<arma::mat> uList(nRe), uPevList(nRe); // store indices of the random effects
   for (int i = 0; i < nRe; ++i) {
@@ -2080,9 +2152,10 @@ Rcpp::List ai_mme_sp(const arma::sp_mat & X, const Rcpp::List & ZI,  const arma:
     Rcpp::Named("percDelta") = percDelta,
     Rcpp::Named("normMonitor") = normMonitor,
     Rcpp::Named("toBoundary") = toBoundary,
-    Rcpp::Named("Cchol") = A
-  
-  
+    Rcpp::Named("dLu") = dLuOut,
+    Rcpp::Named("Cchol") = Mchol_XZ
+    // Rcpp::Named("PMWu_mat") = PMWu_mat, 
+    // Rcpp::Named("MWuchol") = MWuchol
   );
   
 }

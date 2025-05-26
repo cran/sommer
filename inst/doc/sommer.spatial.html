@@ -142,7 +142,7 @@ section.footnotes::before {
 <div class="frontmatter">
 <div class="title"><h1>Spatial modeling using the sommer package</h1></div>
 <div class="author"><h2>Giovanny Covarrubias-Pazaran</h2></div>
-<div class="date"><h3>2025-04-04</h3></div>
+<div class="date"><h3>2025-05-26</h3></div>
 </div>
 <div class="body">
 <p>The sommer package was developed to provide R users with a powerful and reliable multivariate mixed model solver for different genetic (in diploid and polyploid organisms) and non-genetic analyses. This package allows the user to estimate variance components in a mixed model with the advantages of specifying the variance-covariance structure of the random effects, specifying heterogeneous variances, and obtaining other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc. The core algorithms of the package are coded in C++ using the Armadillo library to optimize dense matrix operations common in the derect-inversion algorithms.</p>
@@ -218,15 +218,15 @@ mix &lt;- mmes(Y~V, henderson = TRUE,
             data=M$data)
 summary(mix)$varcomp
 </code></pre>
-<pre><code>##                   VarComp  VarCompSE    Zratio Constraint
-## R:mu:mu       106.7372504 68.0312885 1.5689435   Positive
-## C:mu:mu       177.6246506 85.9690310 2.0661469   Positive
-## M:fC:mu:mu      1.5372882  4.6559585 0.3301765   Positive
-## M:fR:mu:mu      0.2247536  0.5629912 0.3992134   Positive
-## M:fC.R:mu:mu    0.4967322  1.5044611 0.3301729   Positive
-## M:C.fR:mu:mu    0.1566605  0.3953450 0.3962628   Positive
-## M:fC.fR:mu:mu   8.0964758  5.2934001 1.5295416   Positive
-## units:mu:mu   490.8149644 86.6773655 5.6625506   Positive
+<pre><code>##                    VarComp  VarCompSE       Zratio Constraint
+## R:mu:mu       1.561965e+02  3.4010863 4.592546e+01   Positive
+## C:mu:mu       1.718606e+02  3.2989080 5.209622e+01   Positive
+## M:fC:mu:mu    5.455182e+00  0.4330343 1.259757e+01   Positive
+## M:fR:mu:mu    7.321964e-08 11.7825223 6.214259e-09   Positive
+## M:fC.R:mu:mu  7.321964e-08  7.0294230 1.041617e-08   Positive
+## M:C.fR:mu:mu  7.321964e-08  4.4368201 1.650273e-08   Positive
+## M:fC.fR:mu:mu 2.847209e+01  0.4680617 6.082977e+01   Positive
+## units:mu:mu   7.321964e+02  4.0317806 1.816062e+02   Positive
 </code></pre>
 <h3 id="2-two-dimensional-splines-in-single-field-single-spatial-component">2) Two dimensional splines in single field (single spatial component)</h3>
 <p>To reduce the computational burden of fitting multiple spatial kernels <code>sommer</code> provides a single spatial kernel method through the <code>spl2Da</code> function. This as will be shown, can produce similar results to the more flexible model. Use the one that fits better your needs.</p>

@@ -1,5 +1,5 @@
 mmes <- function(fixed, random, rcov, data, W,
-                 nIters=25, tolParConvLL = 1e-04,
+                 nIters=50, tolParConvLL = 1e-04,
                  tolParConvNorm = 1e-04, tolParInv = 1e-06,
                  naMethodX="exclude",
                  naMethodY="exclude",
@@ -11,7 +11,7 @@ mmes <- function(fixed, random, rcov, data, W,
                  contrasts=NULL,
                  getPEV=TRUE, henderson=FALSE){
   
-  my.date <- "2025-07-01"
+  my.date <- "2025-08-01"
   your.date <- Sys.Date()
   ## if your month is greater than my month you are outdated
   if(dateWarning){
@@ -73,7 +73,7 @@ mmes <- function(fixed, random, rcov, data, W,
       checkvs <- intersect(all.names(as.formula(paste0("~",rtermss[u]))),c("vsm","spl2Dc")) # which(all.names(as.formula(paste0("~",rtermss[u]))) %in% c("vs","spl2Da","spl2Db")) # grep("vs\\(",rtermss[u])
       
       if(length(checkvs)==0){ ## if this term is not in a variance structure put it inside
-        rtermss[u] <- paste("vsm( ism(",rtermss[u],") )")
+        rtermss[u] <- paste("sommer::vsm( sommer::ism(",rtermss[u],") )")
       }
       ff <- eval(parse(text = rtermss[u]),data,parent.frame()) # evaluate the variance structure
       Z <- c(Z, lapply(ff$Z, function(x){if(nrow(x) != length(nonMissing)){return(x[nonMissing,])}else{return(x)} }) )
@@ -111,7 +111,7 @@ mmes <- function(fixed, random, rcov, data, W,
     checkvs <- intersect(all.names(as.formula(paste0("~",rcovtermss[u]))),c("vsm","gvs","spl2Da","spl2Db")) # which(all.names(as.formula(paste0("~",rtermss[u]))) %in% c("vs","spl2Da","spl2Db")) # grep("vs\\(",rtermss[u])
     
     if(length(checkvs)==0){ ## if this term is not in a variance structure put it inside
-      rcovtermss[u] <- paste("vsm( ism(",rcovtermss[u],") )")
+      rcovtermss[u] <- paste("sommer::vsm( sommer::ism(",rcovtermss[u],") )")
     }
     
     ff <- eval(parse(text = rcovtermss[u]),data,parent.frame()) # evalaute the variance structure
@@ -208,14 +208,14 @@ mmes <- function(fixed, random, rcov, data, W,
     if(henderson==FALSE){ # p > n
       emWeight <- rep(0, nIters)
     }else{ # n > p
-      initialEmSteps <- logspace(round(nIters*.8), 1, 0.009) # 80% of the iterations requested are used for the logarithmic decrease
-      restEmSteps <- rep(0.009, nIters - length(initialEmSteps)) # the rest we assign a very small emWeight value
-      emWeight <- c( initialEmSteps, restEmSteps) # plot(emWeight) # we bind both for the modeling
+      # initialEmSteps <- logspace(round(nIters*.8), 1, 0.009) # 80% of the iterations requested are used for the logarithmic decrease
+      # restEmSteps <- rep(0.009, nIters - length(initialEmSteps)) # the rest we assign a very small emWeight value
+      emWeight <- stan(logspace(seq(1,-1,- 2/nIters), p=3)) #c( initialEmSteps, restEmSteps) # plot(emWeight) # we bind both for the modeling
     }
     
   }
   if(is.null(stepWeight)){
-    w <- which(emWeight <= .04) # where AI starts
+    w <- which(emWeight <= .5) # where AI starts
     if(length(w) > 1){ # w has at least length = 2
       stepWeight <- rep(.9,nIters);
       if(nIters > 1){stepWeight[w[1:2]] <- c(0.5,0.7)} # .5, .7
@@ -237,15 +237,27 @@ mmes <- function(fixed, random, rcov, data, W,
   thetaFinput
   
   if(henderson){
-    nInverses <- length(unlist(lapply(Ai, function(x){attributes(x)$inverse})))
+    nInverses <- length(which(unlist(lapply(Ai, function(x){attributes(x)$inverse})) == TRUE))
     if(nInverses != length(Ai)){
       stop("You have selected the 'henderson' algorithm which requires all relationship
       matrices to be inverted. Please make sure that you have inverted your
-      matrices and set the attribute to your matrices as follows:
+      matrices and set the attributes of your matrices as follows:
+           Gu = as(as(as( Gu,  'dMatrix'), 'generalMatrix'), 'CsparseMatrix')
            attr(Gu, 'inverse')=TRUE 
-      where 'Gu' is to be replaced with your matrix name.", call. = FALSE)
+      where 'Gu' is to be replaced with the name of your matrix.", call. = FALSE)
     }
   }
+  # else{
+  #   nNoInverses <- length(which(unlist(lapply(Ai, function(x){attributes(x)$inverse})) == FALSE))
+  #   if(nNoInverses != length(Ai)){
+  #     stop("You have selected the 'direct-inversion' algorithm which requires all 
+  #     relationship matrices to NOT be inverted. Please make sure that you have 
+  #     provided your raw matrices and set the attributes of your matrices as follows:
+  #          Gu = as(as(as( Gu,  'dMatrix'), 'generalMatrix'), 'CsparseMatrix')
+  #          attr(Gu, 'inverse')=FALSE 
+  #     where 'Gu' is to be replaced with the name of your matrix.", call. = FALSE)
+  #   }
+  # }
   
   if(returnParam){ # if user just wants to get input matrices
     
@@ -255,8 +267,17 @@ mmes <- function(fixed, random, rcov, data, W,
                 verbose=verbose, addScaleParam=addScaleParam,
                 theta=theta,thetaC=thetaC, thetaFinput=thetaFinput,
                 stepWeight=stepWeight,emWeight=emWeight, 
-                rtermss=rtermss, partitionsX=partitionsX, getPEV=getPEV
+                rtermss=rtermss, partitionsX=partitionsX, getPEV=getPEV, rTermsNames=rTermsNames
     )
+    
+    # yvar=res$yvar; X=res$X;Z=res$Z;Zind=res$Zind;Ai=res$Ai;S=res$S;
+    # Spartitions=res$Spartitions; W=res$W; useH=res$useH;
+    # nIters=res$nIters; tolParConvLL=res$tolParConvLL; tolParConvNorm=res$tolParConvNorm;
+    # tolParInv=res$tolParInv;
+    # verbose=res$verbose; addScaleParam=res$addScaleParam;
+    # theta=res$theta;thetaC=res$thetaC; thetaFinput=res$thetaFinput;
+    # stepWeight=res$stepWeight;emWeight=res$emWeight; 
+    # rtermss=res$rtermss; partitionsX=res$partitionsX; getPEV=res$getPEV
     
   }else{
     
@@ -278,6 +299,8 @@ mmes <- function(fixed, random, rcov, data, W,
       THETA <- THETAc <- K <- Zdi <- list(); counter=1
       vary <- var(yvar[,1])
       thetaIndex <- thetaConstIndex <- numeric()
+      
+      
       for(iTheta in 1:length(theta)){
         for(iRow in 1:nrow(theta[[iTheta]])){ # iRow=1
           for(iCol in iRow:ncol(theta[[iTheta]])){ # iCol=1
@@ -291,14 +314,15 @@ mmes <- function(fixed, random, rcov, data, W,
               if(iTheta < length(theta)){ 
                 useZs <- which(Zind == iTheta)
                 if(iRow == iCol){ # if variance component
-                  K[[counter]] <- as.matrix(Ai[[iTheta]])
+                  K[[counter]] <- Ai[[iTheta]]
                   Zdi[[counter]] <-  Z[[useZs[iRow]]] 
                 }else{ # if covariance component
                   nrowcol <- nrow(Ai[[iTheta]])
-                  Kcov <- matrix(0,nrowcol*2,nrowcol*2)
-                  Kcov[1:nrowcol,(nrowcol+1):nrow(Kcov)] = as.matrix(Ai[[iTheta]])
-                  Kcov[(nrowcol+1):nrow(Kcov),1:nrowcol] = as.matrix(Ai[[iTheta]])
-                  K[[counter]] <- as.matrix(Kcov)
+                  Kcov <- Matrix::Matrix(0,nrowcol*2,nrowcol*2)
+                  Kcov <- as(as(as( Kcov,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
+                  Kcov[1:nrowcol,(nrowcol+1):nrow(Kcov)] = Ai[[iTheta]]
+                  Kcov[(nrowcol+1):nrow(Kcov),1:nrowcol] = Ai[[iTheta]]
+                  K[[counter]] <- Kcov
                   Zdi[[counter]] <-  cbind( Z[[useZs[iRow]]], Z[[useZs[iCol]]] ) 
                 }
               }
@@ -312,16 +336,15 @@ mmes <- function(fixed, random, rcov, data, W,
       if(!missing(random)){
         XZ <- cbind(X,do.call(cbind,Z))
       }else{XZ <- X}
-      # Z <- Zdi; Zdi <- NULL
       theta <- THETA; THETA <- NULL
       
       res <- .Call("_sommer_newton_di_sp",PACKAGE = "sommer",
-                   as.matrix(yvar),
-                   list(as.matrix(X)),
+                   yvar,
+                   list(X),
                    list(matrix(1)),
                    Zdi,K,R,
                    theta,THETAc,
-                   as.matrix(W),
+                   W,
                    isInvW,
                    nIters, tolParConvLL, tolParInv,
                    AI,getPEV,verbose, returnScaled,
@@ -329,12 +352,12 @@ mmes <- function(fixed, random, rcov, data, W,
                    thetaC, thetaIndex)
       
       # res <- newton_di_sp(
-      #              as.matrix(yvar),
-      #              list(as.matrix(X)),
+      #              yvar,
+      #              list(X),
       #              list(matrix(1)),
-      #              Z,K,R,
+      #              Zdi,K,R,
       #              theta,THETAc,
-      #              as.matrix(W),
+      #              W,
       #              isInvW,
       #              nIters, tolParConvLL, tolParInv,
       #              AI,getPEV,verbose, returnScaled,
@@ -343,6 +366,7 @@ mmes <- function(fixed, random, rcov, data, W,
       
     }else if(henderson == TRUE){ # n > p HENDERSON
       
+      Si <- lapply(S, solve)
       res <- .Call("_sommer_ai_mme_sp",PACKAGE = "sommer",
                    X,Z, Zind,
                    Ai,yvar,
@@ -358,7 +382,7 @@ mmes <- function(fixed, random, rcov, data, W,
       # res <- ai_mme_sp(
       #              X,Z, Zind,
       #              Ai,yvar,
-      #              S, Spartitions, W, useH,
+      #              Si, Spartitions, W, useH,
       #              nIters, tolParConvLL, tolParConvNorm,
       #              tolParInv,theta,
       #              thetaC,thetaFinput,
@@ -386,8 +410,12 @@ mmes <- function(fixed, random, rcov, data, W,
       names(res$partitions) <- rtermss
       names(res$uList) <- names(res$uPevList) <- rtermss
       for(i in 1:length(res$partitions)){ # i=1
-        colnames(res$uList[[i]]) <- colnames(res$uPevList[[i]]) <- colnames(thetaC[[i]])
-        rownames(res$uList[[i]]) <- rownames(res$uPevList[[i]]) <- rownames(res$bu)[res$partitions[[i]][1,1]:res$partitions[[i]][1,2]]
+        colnames(res$uList[[i]]) <- colnames(thetaC[[i]])
+        rownames(res$uList[[i]]) <- rownames(res$bu)[res$partitions[[i]][1,1]:res$partitions[[i]][1,2]]
+        if(getPEV){
+          colnames(res$uPevList[[i]]) <- colnames(thetaC[[i]])
+          rownames(res$uPevList[[i]]) <- rownames(res$bu)[res$partitions[[i]][1,1]:res$partitions[[i]][1,2]]
+        }
       }
       
       if(henderson==FALSE){ ######## adding ulist and upevlist similar to henderson mmes

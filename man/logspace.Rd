@@ -5,13 +5,12 @@
   logspace creates a vector with decreasing logaritmic trend.
 }
 \usage{
-  logspace(n, start, end)
+  logspace(x, p=1)
 }
 
 \arguments{
-  \item{n}{number of values to generate.}
-  \item{start}{initial value.}
-  \item{end}{last value.}
+  \item{x}{sequence of values to pass through the function.}
+   \item{p}{power to be applied to the values.}
 }
 \value{
   \describe{
@@ -29,7 +28,9 @@
 
 \examples{
 
-logspace(5, 1, .05)
+plot(logspace(1:100,p=1))
+plot(logspace(1:100,p=2))
+plot(logspace(1:100,p=3))
 
 }
 \seealso{The core functions of the package \code{\link{mmes}}  }

@@ -66,9 +66,33 @@ corImputation <- function(wide, Gu=NULL, nearest=10, roundR=FALSE){
   return(list(imputed=wide, corImputed=wide2))
 }
 
-logspace <- function (n, start, end) {
-  exp(seq(log(start), log(end), length.out = n))
+logspace <- function (x, p=1) {
+  
+  D=max(x) # new range
+  C=min(x) # new range
+  mysigns <- sign(x)
+  y = abs(x)^(1/p)
+  y <- y*mysigns
+  B=max(y) # current range
+  A=min(y) # current range
+  
+  scale = (D-C)/(B-A)
+  offset = -A*(D-C)/(B-A) + C
+  return(y*scale + offset)
+  
 }
+
+stan <-function (x, lb=0, ub=1) {
+  B=max(x) # current range
+  A=min(x) # current range
+  D=ub # new range
+  C=lb # new range
+  
+  scale = (D-C)/(B-A)
+  offset = -A*(D-C)/(B-A) + C
+  return(x*scale + offset)
+}
+
 
 r2 <- function(object, object2=NULL){
   if(!inherits(object, "mmes")){

@@ -143,7 +143,7 @@ section.footnotes::before {
 <div class="frontmatter">
 <div class="title"><h1>Quantitative genetics using the sommer package</h1></div>
 <div class="author"><h2>Giovanny Covarrubias-Pazaran</h2></div>
-<div class="date"><h3>2025-04-04</h3></div>
+<div class="date"><h3>2025-05-26</h3></div>
 </div>
 <div class="body">
 <p>The sommer package was developed to provide R users with a powerful and reliable multivariate mixed model solver for different genetic and non-genetic analyses in diploid and polyploid organisms. This package allows the user to estimate variance components for a mixed model with the advantages of specifying the variance-covariance structure of the random effects, specifying heterogeneous variances, and obtaining other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc. The core algorithms of the package are coded in C++ using the Armadillo library to optimize dense matrix operations common in the derect-inversion algorithms. Although the vignette shows examples using the mmes function with the default direct inversion algorithm (henderson=FALSE) the Henderson’s approach can be faster when the number of records surpasses the number of coefficients to estimate and setting the henderson argument to TRUE can bring significant speed ups.</p>
@@ -544,9 +544,9 @@ anss2 &lt;- mmes(GY~1,  henderson=TRUE,
 summary(anss2)$varcomp
 </code></pre>
 <pre><code>##                  VarComp VarCompSE    Zratio Constraint
-## dent:Adi:mu:mu  15.86817 1.9138581  8.291196   Positive
-## flint:Afi:mu:mu 11.29153 1.9068842  5.921458   Positive
-## units:mu:mu     15.97828 0.9895555 16.146927   Positive
+## dent:Adi:mu:mu  16.06350 0.2111024  76.09342   Positive
+## flint:Afi:mu:mu 11.42183 0.2128187  53.66927   Positive
+## units:mu:mu     16.81645 0.1185587 141.84070   Positive
 </code></pre>
 <pre><code class="language-r"># zu1 &lt;- model.matrix(~dent-1,y.trn) %*% anss2$uList$`vsm(ism(dent), Gu = Adi)`
 # zu2 &lt;- model.matrix(~flint-1,y.trn) %*% anss2$uList$`vsm(ism(flint), Gu = Afi)`
@@ -666,7 +666,7 @@ DT$setf &lt;- as.factor(DT$set)
 DT$repf &lt;- as.factor(DT$rep)
 DT$malef &lt;- as.factor(DT$male)
 DT$femalef &lt;- as.factor(DT$female)
-#levelplot(yield~male*female|set, data=DT, main=&quot;NC design I&quot;)
+# lattice::levelplot(yield~male * malef:femalef|set, data=DT, main=&quot;NC design I&quot;)
 ##############################
 ## Expected Mean Square method
 ##############################
