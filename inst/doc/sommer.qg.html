@@ -143,7 +143,7 @@ section.footnotes::before {
 <div class="frontmatter">
 <div class="title"><h1>Quantitative genetics using the sommer package</h1></div>
 <div class="author"><h2>Giovanny Covarrubias-Pazaran</h2></div>
-<div class="date"><h3>2025-05-26</h3></div>
+<div class="date"><h3>2025-07-29</h3></div>
 </div>
 <div class="body">
 <p>The sommer package was developed to provide R users with a powerful and reliable multivariate mixed model solver for different genetic and non-genetic analyses in diploid and polyploid organisms. This package allows the user to estimate variance components for a mixed model with the advantages of specifying the variance-covariance structure of the random effects, specifying heterogeneous variances, and obtaining other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc. The core algorithms of the package are coded in C++ using the Armadillo library to optimize dense matrix operations common in the derect-inversion algorithms. Although the vignette shows examples using the mmes function with the default direct inversion algorithm (henderson=FALSE) the Henderson’s approach can be faster when the number of records surpasses the number of coefficients to estimate and setting the henderson argument to TRUE can bring significant speed ups.</p>
@@ -556,26 +556,34 @@ summary(anss2)$varcomp
 <p>In the previous model we only used the GCA effects (GCA1 and GCA2) for practicity, altough it’s been shown that the SCA effect doesn’t actually help that much in increasing prediction accuracy, but does increase a lot the computation intensity required since the variance covariance matrix for SCA is the kronecker product of the variance covariance matrices for the GCA effects, resulting in a 10578 x 10578 matrix that increases in a very intensive manner the computation required.</p>
 <p>A model without covariance structures would show that the SCA variance component is insignificant compared to the GCA effects. This is why including the third random effect doesn’t increase the prediction accuracy.</p>
 <h3 id="8-multivariate-genetic-models-and-genetic-correlations">8) Multivariate genetic models and genetic correlations</h3>
-<p>Sometimes is important to estimate genetic variance-covariance among traits–multi-reponse models are very useful for such a task. Let see an example with 3 traits (<code>color</code>, <code>Yield</code>, and <code>Firmness</code>) and a single random effect (genotype; <code>id</code>) although multiple effects can be modeled as well. We need to use a variance covariance structure for the random effect to be able to obtain the genetic covariance among traits.</p>
+<p>Sometimes is important to estimate genetic variance-covariance among traits–multi-reponse models are very useful for such a task. Let see an example with 2 traits (<code>color</code> and <code>Yield</code>) and a single random effect (genotype; <code>id</code>) although multiple effects can be modeled as well. First, we need to create a dataset in the long format, that is having a single column for the trait value and the traits are row-binded one over the other (here we use reshape). Then the trait converts one more factor to model. We use the following variance covariance structure for the random effect id to be able to obtain the genetic covariance among traits.</p>
 <pre><code class="language-r"># data(DT_cpdata)
 # DT &lt;- DT_cpdata
 # GT &lt;- GT_cpdata
 # MP &lt;- MP_cpdata
-# A &lt;- A.mat(GT)
-# DT2 &lt;- stackTrait(DT, traits = c(&quot;color&quot;,&quot;Yield&quot;))
-# head(DT2$long)
+# traits &lt;- c(&quot;color&quot;,&quot;Yield&quot;)
+# DT[,traits] &lt;- apply(DT[,traits],2,scale)
+# DTL &lt;- reshape(DT[,c(&quot;id&quot;, traits)],
+#                idvar = c(&quot;id&quot;),
+#                varying = traits,
+#                v.names = &quot;value&quot;, direction = &quot;long&quot;,
+#                timevar = &quot;trait&quot;, times = traits )
+# DTL &lt;- DTL[with(DTL, order(trait)), ]
+# head(DTL)
+# 
 # A &lt;- A.mat(GT) # additive relationship matrix
-# # if using henderson=TRUE you need to provide the inverse
+# # if using mmes=TRUE you need to provide the inverse
 # Ai &lt;- solve(A + diag(1e-4,ncol(A),ncol(A)))
 # Ai &lt;- as(as(as( Ai,  &quot;dMatrix&quot;), &quot;generalMatrix&quot;), &quot;CsparseMatrix&quot;)
+# attr(Ai, 'inverse')=TRUE
 # #### be patient take some time
-# ansm &lt;- mmes( valueS ~ trait, # henderson=TRUE,
-#                random=~ vsm(usm(trait), ism(id), Gu=A),
+# ansm &lt;- mmes( value ~ trait, # henderson=TRUE,
+#                random=~ vsm(usm(trait), ism(id), Gu=A), # Ai if henderson
 #                rcov=~ vsm(dsm(trait), ism(units)),
-#                data=DT2$long)
+#                data=DTL)
 # cov2cor(ansm$theta[[1]])
 </code></pre>
-<p>Now you can extract the BLUPs using <code>randef(ans.m)</code> or simply <code>ans.m$u</code>. Also, genetic correlations and heritabilities can be calculated easily.</p>
+<p>Other examples of multi-trait models can be found in the documentation of the rice dataset (DT_rice) and in the example dataset (DT_example). The key here is to learn how to use the reshape function from base R.</p>
 <h2 id="section-3-special-topics-in-quantitative-genetics">SECTION 3: Special topics in Quantitative genetics</h2>
 <h3 id="1-partitioned-model">1) Partitioned model</h3>
 <p>The partitioned model was popularized by () to show that marker effects can be obtained by fitting a GBLUP model to reduce the computational burden and then recover them by creating some special matrices MM’ for GBLUP and  M’(M’M)- to recover marker effects. Here we show a very easy example using the DT_cpdata:</p>

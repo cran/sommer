@@ -32,32 +32,6 @@ covm <- function(ran1,ran2, thetaC=NULL, theta=NULL){
   return(ran1)
 }
 
-stackTrait <- function (data, traits) 
-{
-  dataScaled <- data
-  traits <- intersect(traits, colnames(data))
-  idvars <- setdiff(colnames(data), traits)
-  for (iTrait in traits) {
-    dataScaled[, iTrait] <- scale(dataScaled[, iTrait])
-  }
-  columnTypes <- unlist(lapply(data[idvars], class))
-  columnTypes <- columnTypes[which(columnTypes %in% c("factor", 
-                                                      "character"))]
-  idvars <- intersect(idvars, names(columnTypes))
-  data2 <- reshape(data[, c(idvars, traits)], idvar = idvars, 
-                   varying = traits, timevar = "trait", times = traits, 
-                   v.names = "value", direction = "long")
-  data2Scaled <- reshape(dataScaled[, c(idvars, traits)], idvar = idvars, 
-                         varying = traits, timevar = "trait", times = traits, 
-                         v.names = "value", direction = "long")
-  data2 <- as.data.frame(data2)
-  data2$valueS <- as.vector(unlist(data2Scaled$value))
-  rownames(data2) <- NULL
-  varG <- cov(data[, traits], use = "pairwise.complete.obs")
-  mu <- apply(data[, traits], 2, mean, na.rm = TRUE)
-  # x
-  return(list(long = data2, varG = varG, mu = mu))
-}
 
 add.diallel.vars <- function(df, par1="Par1", par2="Par2",sep.cross="-"){
   # Dummy variables for selfs, crosses, combinations

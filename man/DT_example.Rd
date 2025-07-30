@@ -61,6 +61,29 @@ summary(ans1)$varcomp
 #              rcov= ~ vsm(dsm(Env),ism(units)),
 #              data=DT)
 # summary(ans2)
+# 
+# ####===========================================####
+# #### Multi-trait variance models               ####
+# ####===========================================####
+# 
+# # stack traits
+# traits <- c("Yield","Weight")
+# DT[,traits] <- apply(DT[,traits],2,scale)
+# DTL <- reshape(DT[,c("Name","Env","Block", traits)], 
+#                idvar = c("Name","Env","Block"), 
+#                varying = traits,
+#                v.names = "value", direction = "long",
+#                timevar = "trait", times = traits )
+# DTL <- DTL[with(DTL, order(trait,Env)), ]
+# head(DTL)
+# 
+# ## model
+# ans1 <- mmes(value~ trait,
+#              random= ~ vsm(usm(trait), ism(Name)),
+#              rcov= ~ vsm(dsm(trait), ism(units)),
+#              data=DTL)
+# summary(ans1)$varcomp
+# cov2cor(ans1$theta$`vsm(usm(trait), ism(Name`)
 
 }
 \keyword{datasets}
