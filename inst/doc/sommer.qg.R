@@ -1,6 +1,6 @@
 ## -----------------------------------------------------------------------------
 library(sommer)
-data(DT_example)
+data(DT_example, package="enhancer")
 DT <- DT_example
 A <- A_example
 
@@ -13,7 +13,7 @@ summary(ans1)$varcomp
 vpredict(ans1, h2 ~ V1 / ( V1 + (V3/n.env) + (V5/(2*n.env)) ) )
 
 ## -----------------------------------------------------------------------------
-data(DT_cpdata)
+data(DT_cpdata, package="enhancer")
 DT <- DT_cpdata
 GT <- GT_cpdata
 MP <- MP_cpdata
@@ -31,7 +31,7 @@ vpredict(ans.ADE, h2 ~ (V1) / ( V1+V3) ) # narrow sense
 vpredict(ans.ADE, h2 ~ (V1+V2) / ( V1+V2+V3) ) # broad-sense
 
 ## ----fig.show='hold'----------------------------------------------------------
-# data(DT_cornhybrids)
+# data(DT_cornhybrids, package="enhancer")
 # DT <- DT_cornhybrids
 # DTi <- DTi_cornhybrids
 # GT <- GT_cornhybrids
@@ -44,7 +44,7 @@ vpredict(ans.ADE, h2 ~ (V1+V2) / ( V1+V2+V3) ) # broad-sense
 # summary(modFD)
 
 ## -----------------------------------------------------------------------------
-# data(DT_cornhybrids)
+# data(DT_cornhybrids, package="enhancer")
 # DT <- DT_cornhybrids
 # DTi <- DTi_cornhybrids
 # GT <- as(as(as( GT_cornhybrids,  "dMatrix"), "generalMatrix"), "CsparseMatrix") 
@@ -58,7 +58,7 @@ vpredict(ans.ADE, h2 ~ (V1+V2) / ( V1+V2+V3) ) # broad-sense
 # summary(modFD)
 
 ## -----------------------------------------------------------------------------
-data(DT_cpdata)
+data(DT_cpdata, package="enhancer")
 DT <- DT_cpdata
 GT <- GT_cpdata
 MP <- MP_cpdata
@@ -73,7 +73,7 @@ vpredict(ans, h2 ~ (V1) / ( V1+V2) )
 
 
 ## -----------------------------------------------------------------------------
-# data(DT_cornhybrids)
+# data(DT_cornhybrids, package="enhancer")
 # DT <- DT_cornhybrids
 # DTi <- DTi_cornhybrids
 # GT <- GT_cornhybrids
@@ -93,7 +93,7 @@ vpredict(ans, h2 ~ (V1) / ( V1+V2) )
 # (h2 <- Va / (Vg + (Ve)) )
 
 ## -----------------------------------------------------------------------------
-data("DT_halfdiallel")
+data("DT_halfdiallel", package="enhancer")
 DT <- DT_halfdiallel
 head(DT)
 DT$femalef <- as.factor(DT$female)
@@ -107,13 +107,14 @@ modh <- mmes(sugar~1,
 summary(modh)$varcomp
 
 ## -----------------------------------------------------------------------------
-data(DT_wheat)
+data(DT_wheat, package="enhancer")
 DT <- DT_wheat
-GT <- GT_wheat[,1:200]
+GT <- apply(GT_wheat,2,as.numeric)
+rownames(GT) <- rownames(GT_wheat)
+
 colnames(DT) <- paste0("X",1:ncol(DT))
 DT <- as.data.frame(DT);DT$id <- as.factor(rownames(DT))
 # select environment 1
-rownames(GT) <- rownames(DT)
 K <- A.mat(GT) # additive relationship matrix
 colnames(K) <- rownames(K) <- rownames(DT)
 # GBLUP pedigree-based approach
@@ -141,7 +142,7 @@ cor(u[vv,],DT[vv,"X1"]) # same correlation
 # the same can be applied in multi-response models in GBLUP or rrBLUP
 
 ## -----------------------------------------------------------------------------
-# data(DT_ige)
+# data(DT_ige, package="enhancer")
 # DT <- DT_ige
 # Af <- A_ige
 # An <- A_ige
@@ -155,7 +156,7 @@ cor(u[vv,],DT[vv,"X1"]) # same correlation
 
 
 ## -----------------------------------------------------------------------------
-# data(DT_ige)
+# data(DT_ige, package="enhancer")
 # DT <- DT_ige
 # A <- A_ige
 # 
@@ -191,10 +192,16 @@ cor(u[vv,],DT[vv,"X1"]) # same correlation
 
 
 ## -----------------------------------------------------------------------------
-data(DT_technow)
+data(DT_technow, package="enhancer")
 DT <- DT_technow
-Md <- (Md_technow*2) - 1
-Mf <- (Mf_technow*2) - 1
+
+Md <- apply(Md_technow,2,as.numeric)
+rownames(Md) <- rownames(Md_technow)
+Mf <- apply(Mf_technow,2,as.numeric)
+rownames(Mf) <- rownames(Mf_technow)
+
+Md <- (Md*2) - 1
+Mf <- (Mf*2) - 1
 Ad <- A.mat(Md)
 Af <- A.mat(Mf)
 Adi <- solve(Ad + diag(1e-4,ncol(Ad),ncol(Ad)))
@@ -220,7 +227,7 @@ summary(anss2)$varcomp
 # cor(u[vv2,], DT$GY[vv2])
 
 ## -----------------------------------------------------------------------------
-# data(DT_cpdata)
+# data(DT_cpdata, package="enhancer")
 # DT <- DT_cpdata
 # GT <- GT_cpdata
 # MP <- MP_cpdata
@@ -248,7 +255,7 @@ summary(anss2)$varcomp
 
 ## -----------------------------------------------------------------------------
 library(sommer)
-data("DT_cpdata")
+data("DT_cpdata", package="enhancer")
 DT <- DT_cpdata
 M <- GT_cpdata
 
@@ -285,9 +292,11 @@ plot(me.marker,me.part)
 
 ## -----------------------------------------------------------------------------
 
-# data("DT_wheat")
+# data("DT_wheat", package="enhancer")
 # rownames(GT_wheat) <- rownames(DT_wheat)
-# G <- A.mat(GT_wheat)
+# GT <- apply(GT_wheat,2,as.numeric)
+# rownames(GT) <- rownames(GT_wheat)
+# G <- A.mat(GT)
 # Y <- data.frame(DT_wheat)
 # 
 # # make the decomposition
@@ -325,7 +334,7 @@ plot(me.marker,me.part)
 
 ## -----------------------------------------------------------------------------
 
-data(DT_expdesigns)
+data(DT_expdesigns, package="enhancer")
 DT <- DT_expdesigns$car1
 DT <- aggregate(yield~set+male+female+rep, data=DT, FUN = mean)
 DT$setf <- as.factor(DT$set)
@@ -425,7 +434,7 @@ Vg=c(Va,Vd); names(Vg) <- c("Va","Vd"); Vg
 
 
 ## -----------------------------------------------------------------------------
-data(DT_cpdata)
+data(DT_cpdata, package="enhancer")
 DT <- DT_cpdata
 GT <- GT_cpdata[,1:200]
 MP <- MP_cpdata

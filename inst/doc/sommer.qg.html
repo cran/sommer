@@ -143,7 +143,7 @@ section.footnotes::before {
 <div class="frontmatter">
 <div class="title"><h1>Quantitative genetics using the sommer package</h1></div>
 <div class="author"><h2>Giovanny Covarrubias-Pazaran</h2></div>
-<div class="date"><h3>2025-07-29</h3></div>
+<div class="date"><h3>2025-11-19</h3></div>
 </div>
 <div class="body">
 <p>The sommer package was developed to provide R users with a powerful and reliable multivariate mixed model solver for different genetic and non-genetic analyses in diploid and polyploid organisms. This package allows the user to estimate variance components for a mixed model with the advantages of specifying the variance-covariance structure of the random effects, specifying heterogeneous variances, and obtaining other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc. The core algorithms of the package are coded in C++ using the Armadillo library to optimize dense matrix operations common in the derect-inversion algorithms. Although the vignette shows examples using the mmes function with the default direct inversion algorithm (henderson=FALSE) the Henderson’s approach can be faster when the number of records surpasses the number of coefficients to estimate and setting the henderson argument to TRUE can bring significant speed ups.</p>
@@ -235,7 +235,7 @@ $$</p>
 <p>In a classical breeding experiment with no molecular markers, special designs are performed to estimate and dissect the additive (\(\sigma^2_A\)) and non-additive (e.g., dominance \(\sigma^2_D\), and epistatic \(\sigma^2_E\)) variance along with environmental variability. Designs such as generation analysis, North Carolina designs are used to dissect \(\sigma^2_A\) and \(\sigma^2_D\) to estimate the narrow sense heritability (\(h^2\)) using only \(\sigma^2_A\) in the numerator. When no special design is available we can still disect the genetic variance (\(\sigma^2_G\)) and estimate the broad sense heritability. In this first example we will show the broad sense estimation which doesn’t use covariance matrices for the genotypic effect (e.g., genomic-additive relationship matrices). For big models with no relationship matrices, sommer’s direct inversion is a bad idea to use but we will still show how to do it, but keep in mind that for very sparse models with no relationship matrices or other special covariance structures we recommend using the <code>lmer()</code> function from the lme4 package or any other package using MME-based algorithms (e.g., asreml-R).</p>
 <p>The following dataset has 41 potato lines evaluated in 5 locations across 3 years in an RCBD design. We show how to fit the model and extract the variance components to calculate the \(h^2\).</p>
 <pre><code class="language-r">library(sommer)
-data(DT_example)
+data(DT_example, package=&quot;enhancer&quot;)
 DT &lt;- DT_example
 A &lt;- A_example
 
@@ -264,7 +264,7 @@ summary(ans1)$varcomp
 <p>That is an estimate of broad-sense heritability.</p>
 <p>Recently with markers becoming cheaper, thousand of markers can be run in the breeding materials. When markers are available, a special design is not neccesary to dissect the additive genetic variance. The availability of the additive, dominance and epistatic relationship matrices allow us to estimate \(\sigma^2_A\), \(\sigma^2_D\) and \(\sigma^2_I\), although given that A, D and E are not orthogonal the interpretation of models that fit more than the A matrix at the same time becomes cumbersome.</p>
 <p>Assume you have a population (even unreplicated) in the field but in addition we have genetic markers. Now we can fit the model and estimate the genomic heritability that explains a portion of the additive genetic variance (with high marker density \(\sigma^2_A\) = \(\sigma^2_{markers}\))</p>
-<pre><code class="language-r">data(DT_cpdata)
+<pre><code class="language-r">data(DT_cpdata, package=&quot;enhancer&quot;)
 DT &lt;- DT_cpdata
 GT &lt;- GT_cpdata
 MP &lt;- MP_cpdata
@@ -298,7 +298,7 @@ ans.ADE &lt;- mmes(color~1,
 <h3 id="2-specifying-heterogeneous-variances-in-univariate-models">2) Specifying heterogeneous variances in univariate models</h3>
 <p>Very often in multi-environment trials, the assumption that genetic variance is the same across locations may be too naive. Because of that, specifying a general genetic component and a location-specific genetic variance is the way to go.</p>
 <p>We estimate variance components for \(GCA_2\) and \(SCA\) specifying the variance structure.</p>
-<pre><code class="language-r"># data(DT_cornhybrids)
+<pre><code class="language-r"># data(DT_cornhybrids, package=&quot;enhancer&quot;)
 # DT &lt;- DT_cornhybrids
 # DTi &lt;- DTi_cornhybrids
 # GT &lt;- GT_cornhybrids
@@ -312,7 +312,7 @@ ans.ADE &lt;- mmes(color~1,
 </code></pre>
 <p>In the previous example we showed how the <code>atr()</code> function is used in the <code>mmes()</code> solver. By using the <code>atr()</code> function you can specify that i.e. the GCA2 has a different variance in different Locations, in this case locations 3 and 4, but also a main GCA variance. This is considered a CS + DIAG (compound symmetry + diagonal) model.</p>
 <p>In addition, other functions can be added on top to fit models with covariance structures, i.e. the <code>Gu</code> argument from the <code>vsm()</code> function to indicate a covariance matrix (A, pedigree or genomic relationship matrix)</p>
-<pre><code class="language-r"># data(DT_cornhybrids)
+<pre><code class="language-r"># data(DT_cornhybrids, package=&quot;enhancer&quot;)
 # DT &lt;- DT_cornhybrids
 # DTi &lt;- DTi_cornhybrids
 # GT &lt;- as(as(as( GT_cornhybrids,  &quot;dMatrix&quot;), &quot;generalMatrix&quot;), &quot;CsparseMatrix&quot;) 
@@ -328,7 +328,7 @@ ans.ADE &lt;- mmes(color~1,
 <h3 id="3-using-the-vpredict-calculator">3) Using the vpredict calculator</h3>
 <p>Sometimes the user needs to calculate ratios or functions of specific variance-covariance components and obtain the standard errors for such parameters. Examples of these are the genetic correlations, heritabilities, etc. Using the CPdata we will show how to estimate the heritability and the standard error using the <code>vpredict()</code> function that uses the delta method to come up with these parameters. This can be extended for any linear combination of the variance components.</p>
 <h4 id="3-1-standar-error-for-heritability">3.1) Standar error for heritability</h4>
-<pre><code class="language-r">data(DT_cpdata)
+<pre><code class="language-r">data(DT_cpdata, package=&quot;enhancer&quot;)
 DT &lt;- DT_cpdata
 GT &lt;- GT_cpdata
 MP &lt;- MP_cpdata
@@ -358,7 +358,7 @@ ans &lt;- mmes(color~1,
 <p>\(y = X\beta + Zu_1 + Zu_2 + Zu_S + \epsilon\)</p>
 <br>
 <p>We estimate variance components for \(GCA_1\), \(GCA_2\) and \(SCA\) and use them to estimate heritability. Additionally BLUPs for GCA and SCA effects can be used to predict crosses.</p>
-<pre><code class="language-r"># data(DT_cornhybrids)
+<pre><code class="language-r"># data(DT_cornhybrids, package=&quot;enhancer&quot;)
 # DT &lt;- DT_cornhybrids
 # DTi &lt;- DTi_cornhybrids
 # GT &lt;- GT_cornhybrids
@@ -380,7 +380,7 @@ ans &lt;- mmes(color~1,
 <p>Don’t worry too much about the <code>h2</code> value, the data was simulated to be mainly dominance variance, therefore the <code>Va</code> was simulated extremely small leading to such value of narrow sense <code>h2</code>.</p>
 <p>In the second data set we show a small half diallel with 7 parents crossed in one direction. There are n(n-1)/2 possible crosses; 7(6)/2 = 21 unique crosses. Parents appear as males or females indistictly. Each with two replications in a CRD. For a half diallel design a single GCA variance component for both males and females can be estimated and an SCA as well (\(\sigma^2_GCA\) and \(\sigma^2_SCA\) respectively), and BLUPs for GCA and SCA of the parents can be extracted. We will show first how to do so with the <code>mmes()</code> function using the <code>overlay()</code> function. The specific model here is:</p>
 <p>\(y = X\beta + Zu_g + Zu_s + \epsilon\)</p>
-<pre><code class="language-r">data(&quot;DT_halfdiallel&quot;)
+<pre><code class="language-r">data(&quot;DT_halfdiallel&quot;, package=&quot;enhancer&quot;)
 DT &lt;- DT_halfdiallel
 head(DT)
 </code></pre>
@@ -414,13 +414,14 @@ summary(modh)$varcomp
 <p>\(y = X\beta + Zu + \epsilon\)</p>
 <br>
 <p>and takes advantage of the variance covariance matrix for the genotype effect known as the additive relationship matrix (A) and calculated using the <code>A.mat</code> function to establish connections among all individuals and predict the BLUPs for individuals that were not measured. The prediction accuracy depends on several factors such as the heritability (\(h^2\)), training population used (TP), size of TP, etc.</p>
-<pre><code class="language-r">data(DT_wheat)
+<pre><code class="language-r">data(DT_wheat, package=&quot;enhancer&quot;)
 DT &lt;- DT_wheat
-GT &lt;- GT_wheat[,1:200]
+GT &lt;- apply(GT_wheat,2,as.numeric)
+rownames(GT) &lt;- rownames(GT_wheat)
+
 colnames(DT) &lt;- paste0(&quot;X&quot;,1:ncol(DT))
 DT &lt;- as.data.frame(DT);DT$id &lt;- as.factor(rownames(DT))
 # select environment 1
-rownames(GT) &lt;- rownames(DT)
 K &lt;- A.mat(GT) # additive relationship matrix
 colnames(K) &lt;- rownames(K) &lt;- rownames(DT)
 # GBLUP pedigree-based approach
@@ -445,7 +446,7 @@ ans &lt;- mmes(X1~1,
             data=y.trn, verbose = FALSE) # kinship based
 cor(ans$u[vv,] ,DT[vv,&quot;X1&quot;], use=&quot;complete&quot;)
 </code></pre>
-<pre><code>## [1] 0.4310543
+<pre><code>## [1] 0.5076055
 </code></pre>
 <pre><code class="language-r">## rrBLUP
 ans2 &lt;- mmes(X1~1,
@@ -457,7 +458,7 @@ u &lt;- GT %*% as.matrix(ans2$uList$`vsm(ism(GT), buildGu = FALSE`) # BLUPs for 
 rownames(u) &lt;- rownames(GT)
 cor(u[vv,],DT[vv,&quot;X1&quot;]) # same correlation
 </code></pre>
-<pre><code>## [1] 0.431055
+<pre><code>## [1] 0.5737633
 </code></pre>
 <pre><code class="language-r"># the same can be applied in multi-response models in GBLUP or rrBLUP
 </code></pre>
@@ -465,7 +466,7 @@ cor(u[vv,],DT[vv,&quot;X1&quot;]) # same correlation
 <h3 id="6-indirect-genetic-effects">6) Indirect genetic effects</h3>
 <p>General variance structures can be used to fit indirect genetic effects. Here, we use an example dataset to show how we can fit the variance and covariance components between two or more different random effects.</p>
 <p>We first fit a direct genetic effects model:</p>
-<pre><code class="language-r"># data(DT_ige)
+<pre><code class="language-r"># data(DT_ige, package=&quot;enhancer&quot;)
 # DT &lt;- DT_ige
 # Af &lt;- A_ige
 # An &lt;- A_ige
@@ -478,7 +479,7 @@ cor(u[vv,],DT[vv,&quot;X1&quot;]) # same correlation
 # summary(modDGE)$varcomp
 </code></pre>
 <p>We now fit the indirect genetic effects model without covariance between DGE and IGE:</p>
-<pre><code class="language-r"># data(DT_ige)
+<pre><code class="language-r"># data(DT_ige, package=&quot;enhancer&quot;)
 # DT &lt;- DT_ige
 # A &lt;- A_ige
 # 
@@ -520,10 +521,16 @@ cor(u[vv,],DT[vv,&quot;X1&quot;]) # same correlation
 <p>\(u_s\) ~ N(0, $K_3$$\sigma^2_us$)</p>
 <br>
 <p>And we can specify the K matrices. The main difference between this model and the full and half diallel designs is the fact that this model will include variance covariance structures in each of the three random effects (GCA1, GCA2 and SCA) to be able to predict the crosses that have not ocurred yet. We will use the data published by Technow et al. (2015) to show how to do prediction of single crosses.</p>
-<pre><code class="language-r">data(DT_technow)
+<pre><code class="language-r">data(DT_technow, package=&quot;enhancer&quot;)
 DT &lt;- DT_technow
-Md &lt;- (Md_technow*2) - 1
-Mf &lt;- (Mf_technow*2) - 1
+
+Md &lt;- apply(Md_technow,2,as.numeric)
+rownames(Md) &lt;- rownames(Md_technow)
+Mf &lt;- apply(Mf_technow,2,as.numeric)
+rownames(Mf) &lt;- rownames(Mf_technow)
+
+Md &lt;- (Md*2) - 1
+Mf &lt;- (Mf*2) - 1
 Ad &lt;- A.mat(Md)
 Af &lt;- A.mat(Mf)
 Adi &lt;- solve(Ad + diag(1e-4,ncol(Ad),ncol(Ad)))
@@ -557,7 +564,7 @@ summary(anss2)$varcomp
 <p>A model without covariance structures would show that the SCA variance component is insignificant compared to the GCA effects. This is why including the third random effect doesn’t increase the prediction accuracy.</p>
 <h3 id="8-multivariate-genetic-models-and-genetic-correlations">8) Multivariate genetic models and genetic correlations</h3>
 <p>Sometimes is important to estimate genetic variance-covariance among traits–multi-reponse models are very useful for such a task. Let see an example with 2 traits (<code>color</code> and <code>Yield</code>) and a single random effect (genotype; <code>id</code>) although multiple effects can be modeled as well. First, we need to create a dataset in the long format, that is having a single column for the trait value and the traits are row-binded one over the other (here we use reshape). Then the trait converts one more factor to model. We use the following variance covariance structure for the random effect id to be able to obtain the genetic covariance among traits.</p>
-<pre><code class="language-r"># data(DT_cpdata)
+<pre><code class="language-r"># data(DT_cpdata, package=&quot;enhancer&quot;)
 # DT &lt;- DT_cpdata
 # GT &lt;- GT_cpdata
 # MP &lt;- MP_cpdata
@@ -588,7 +595,7 @@ summary(anss2)$varcomp
 <h3 id="1-partitioned-model">1) Partitioned model</h3>
 <p>The partitioned model was popularized by () to show that marker effects can be obtained by fitting a GBLUP model to reduce the computational burden and then recover them by creating some special matrices MM’ for GBLUP and  M’(M’M)- to recover marker effects. Here we show a very easy example using the DT_cpdata:</p>
 <pre><code class="language-r">library(sommer)
-data(&quot;DT_cpdata&quot;)
+data(&quot;DT_cpdata&quot;, package=&quot;enhancer&quot;)
 DT &lt;- DT_cpdata
 M &lt;- GT_cpdata
 
@@ -626,9 +633,11 @@ plot(me.marker,me.part)
 <p>As can be seen, these two models are equivalent with the exception that the partitioned model is more computationally efficient.</p>
 <h3 id="2-udu-decomposition">2) UDU’ decomposition</h3>
 <p>Lee and Van der Warf (2015) proposed a decomposition of the relationship matrix A=UDU’ together with a transformation of the response and fixed effects Uy = Ux + UZ + e, to fit a model where the phenotypic variance matrix V is a diagonal because the relationship matrix is the diagonal matrix D from the decomposition that can be inverted easily and make multitrait models more feasible.</p>
-<pre><code class="language-r"># data(&quot;DT_wheat&quot;)
+<pre><code class="language-r"># data(&quot;DT_wheat&quot;, package=&quot;enhancer&quot;)
 # rownames(GT_wheat) &lt;- rownames(DT_wheat)
-# G &lt;- A.mat(GT_wheat)
+# GT &lt;- apply(GT_wheat,2,as.numeric)
+# rownames(GT) &lt;- rownames(GT_wheat)
+# G &lt;- A.mat(GT)
 # Y &lt;- data.frame(DT_wheat)
 # 
 # # make the decomposition
@@ -667,7 +676,7 @@ plot(me.marker,me.part)
 <h3 id="3-mating-designs">3) Mating designs</h3>
 <p>Estimating variance components has been a topic of interest for the breeding community for a long time. Here we show how to calculate additive and dominance variance using the North Carolina Design I (Nested design) and North Carolina Design II (Factorial design) using the classical Expected Mean Squares method and the REML methods from sommer and how these two are equivalent.</p>
 <h4 id="north-carolina-design-i-nested-design">North Carolina Design I (Nested design)</h4>
-<pre><code class="language-r">data(DT_expdesigns)
+<pre><code class="language-r">data(DT_expdesigns, package=&quot;enhancer&quot;)
 DT &lt;- DT_expdesigns$car1
 DT &lt;- aggregate(yield~set+male+female+rep, data=DT, FUN = mean)
 DT$setf &lt;- as.factor(DT$set)
@@ -830,7 +839,7 @@ Vg=c(Va,Vd); names(Vg) &lt;- c(&quot;Va&quot;,&quot;Vd&quot;); Vg
 <h3 id="4-gwas-by-gblup">4) GWAS by GBLUP</h3>
 <p>Gualdron-Duarte et al. (2014) and Bernal-Rubio et al. (2016) proved that in (SingleStep)GBLUP or RRBLUP/SNP-BLUP, dividing the estimate of the marker effect by its standard error is mathematically equivalent to fixed regression EMMAX GWAS, even if markers are estimated as random effects in GBLUP and as fixed effects in EMMAX. That way fitting a GBLUP model is enough to perform GWAS for additive and on-additive effects.</p>
 <p>Let us use the DT_cpdata dataset to explore the GWAS by GBLUP method</p>
-<pre><code class="language-r">data(DT_cpdata)
+<pre><code class="language-r">data(DT_cpdata, package=&quot;enhancer&quot;)
 DT &lt;- DT_cpdata
 GT &lt;- GT_cpdata[,1:200]
 MP &lt;- MP_cpdata

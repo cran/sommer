@@ -1,6 +1,6 @@
 ## -----------------------------------------------------------------------------
 library(sommer)
-data(DT_example)
+data(DT_example, package="enhancer")
 DT <- DT_example
 A <- A_example
 
@@ -111,7 +111,7 @@ summary(ansCS)
 
 ## -----------------------------------------------------------------------------
 
-data(DT_h2)
+data(DT_h2, package="enhancer")
 DT <- DT_h2
 
 ## build the environmental index
@@ -157,7 +157,7 @@ text(y=preds[,2],x=e, labels = rownames(mu), cex=0.5, pos = 1)
 
 ## -----------------------------------------------------------------------------
 
-data(DT_h2)
+data(DT_h2, package="enhancer")
 DT <- DT_h2
 DT=DT[with(DT, order(Env)), ]
 head(DT)
@@ -205,7 +205,7 @@ u <- uFA + uDG
 ## stage 1
 ## use mmes for dense field trials
 ##########
-data(DT_h2)
+data(DT_h2, package="enhancer")
 DT <- DT_h2
 head(DT)
 envs <- unique(DT$Env)

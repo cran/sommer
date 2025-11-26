@@ -1,6 +1,6 @@
 ## -----------------------------------------------------------------------------
 library(sommer)
-data(DT_yatesoats)
+data(DT_yatesoats, package="enhancer")
 DT <- DT_yatesoats
 DT$row <- as.numeric(as.character(DT$row))
 DT$col <- as.numeric(as.character(DT$col))

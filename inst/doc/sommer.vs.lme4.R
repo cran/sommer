@@ -2,7 +2,7 @@
 # install.packages("lme4")
 # library(lme4)
 library(sommer)
-data(DT_sleepstudy)
+data(DT_sleepstudy, package="enhancer")
 DT <- DT_sleepstudy
 ###########
 ## lme4
