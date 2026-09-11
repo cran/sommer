@@ -254,6 +254,38 @@ summary(anss2)$varcomp
 # cov2cor(ansm$theta[[1]])
 
 ## -----------------------------------------------------------------------------
+data(DT_legendre)
+DT <- DT_legendre
+head(DT)
+DT$SUBJECT <- paste("s",DT$SUBJECT,sep="_")
+DT1 <- DT2 <- DT
+DT1$TRAIT <- "T1"
+DT2$TRAIT <- "T2"
+DT2$Y <- sample(DT2$Y)
+DTC <- rbind(DT1,DT2)
+
+## -----------------------------------------------------------------------------
+# library(orthopolynom)
+# 
+# Z <- with(DTC, dsm(leg(X,1)) )
+# for(i in 1:ncol(Z)){DTC[,colnames(Z)[i]] <- Z[,i]}
+# 
+# X <- with(DTC, dsm(TRAIT) )
+# for(i in 1:ncol(X)){DTC[,colnames(X)[i]] <- X[,i]}
+# 
+# A <- diag(length(unique(DTC$SUBJECT)))
+# rownames(A) <- colnames(A) <- unique(DTC$SUBJECT)
+# 
+# ## 
+# M <- model.matrix(~ T1:leg0 + T1:leg1 + T2:leg0 + T2:leg1 - 1 , data=DTC)
+# mRR2b<-mmes(Y ~ Xf, 
+#             random=~ vsm( usm( M ) ,  ism(SUBJECT) , Gu = A),
+#             rcov = ~ vsm( dsm(TRAIT), ism(units) ),
+#             nIters = 10, verbose = FALSE,
+#             data=DTC)
+# summary(mRR2b)$varcomp
+
+## -----------------------------------------------------------------------------
 library(sommer)
 data("DT_cpdata", package="enhancer")
 DT <- DT_cpdata

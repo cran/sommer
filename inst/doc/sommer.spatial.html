@@ -142,7 +142,7 @@ section.footnotes::before {
 <div class="frontmatter">
 <div class="title"><h1>Spatial modeling using the sommer package</h1></div>
 <div class="author"><h2>Giovanny Covarrubias-Pazaran</h2></div>
-<div class="date"><h3>2026-07-08</h3></div>
+<div class="date"><h3>2026-09-10</h3></div>
 </div>
 <div class="body">
 <p>The sommer package was developed to provide R users with a powerful and reliable multivariate mixed model solver for different genetic (in diploid and polyploid organisms) and non-genetic analyses. This package allows the user to estimate variance components in a mixed model with the advantages of specifying the variance-covariance structure of the random effects, specifying heterogeneous variances, and obtaining other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc. The core algorithms of the package are coded in C++ using the Armadillo library to optimize dense matrix operations common in the derect-inversion algorithms.</p>
@@ -218,15 +218,15 @@ mix &lt;- mmes(Y~V, henderson = TRUE,
             data=M$data)
 summary(mix)$varcomp
 </code></pre>
-<pre><code>##                    VarComp  VarCompSE       Zratio Constraint
-## R:mu:mu       1.561965e+02  3.4010863 4.592546e+01   Positive
-## C:mu:mu       1.718606e+02  3.2989080 5.209622e+01   Positive
-## M:fC:mu:mu    5.455182e+00  0.4330343 1.259757e+01   Positive
-## M:fR:mu:mu    7.321964e-08 11.7825223 6.214259e-09   Positive
-## M:fC.R:mu:mu  7.321964e-08  7.0294230 1.041617e-08   Positive
-## M:C.fR:mu:mu  7.321964e-08  4.4368201 1.650273e-08   Positive
-## M:fC.fR:mu:mu 2.847209e+01  0.4680617 6.082977e+01   Positive
-## units:mu:mu   7.321964e+02  4.0317806 1.816062e+02   Positive
+<pre><code>##                    VarComp VarCompSE       Zratio Constraint
+## R:mu:mu       1.063884e+02 2.2787802 4.668657e+01   Positive
+## C:mu:mu       1.782536e+02 4.4313770 4.022534e+01   Positive
+## M:fC:mu:mu    2.677326e+00 0.4831000 5.541970e+00   Positive
+## M:fR:mu:mu    7.321964e-08 1.6967211 4.315361e-08   Positive
+## M:fC.R:mu:mu  7.321964e-08 0.8869838 8.254902e-08   Positive
+## M:C.fR:mu:mu  7.321964e-08 0.4368587 1.676049e-07   Positive
+## M:fC.fR:mu:mu 1.509979e+01 0.5553636 2.718901e+01   Positive
+## units:mu:mu   4.923285e+02 2.7046113 1.820330e+02   Positive
 </code></pre>
 <h3 id="2-two-dimensional-splines-in-single-field-single-spatial-component">2) Two dimensional splines in single field (single spatial component)</h3>
 <p>To reduce the computational burden of fitting multiple spatial kernels <code>sommer</code> provides a single spatial kernel method through the <code>spl2Da</code> function. This as will be shown, can produce similar results to the more flexible model. Use the one that fits better your needs.</p>
@@ -252,12 +252,12 @@ DT2$trial &lt;- c(rep(&quot;A&quot;,nrow(DT)),rep(&quot;B&quot;,nrow(DT)))
 head(DT2)
 </code></pre>
 <pre><code>##   row col         Y   N          V  B         MP R C trial
-## 1   1   1  90.15611 0.2    Victory B2    Victory 1 1     A
-## 2   2   1  60.69612   0    Victory B2    Victory 2 1     A
-## 3   3   1 119.85452 0.4 Marvellous B2 Marvellous 3 1     A
-## 4   4   1 143.93575 0.6 Marvellous B2 Marvellous 4 1     A
-## 5   5   1 148.26361 0.6 GoldenRain B2 GoldenRain 5 1     A
-## 6   6   1 107.00112 0.2 GoldenRain B2 GoldenRain 6 1     A
+## 1   1   1  89.97931 0.2    Victory B2    Victory 1 1     A
+## 2   2   1  60.02877   0    Victory B2    Victory 2 1     A
+## 3   3   1 120.83909 0.4 Marvellous B2 Marvellous 3 1     A
+## 4   4   1 145.20469 0.6 Marvellous B2 Marvellous 4 1     A
+## 5   5   1 149.06675 0.6 GoldenRain B2 GoldenRain 5 1     A
+## 6   6   1 107.11754 0.2 GoldenRain B2 GoldenRain 6 1     A
 </code></pre>
 <pre><code class="language-r"># SOMMER MODEL
 mix &lt;- mmes(Y~V,
@@ -268,11 +268,11 @@ mix &lt;- mmes(Y~V,
 summary(mix)$varcomp
 </code></pre>
 <pre><code>##                            VarComp VarCompSE    Zratio Constraint
-## R:mu:mu                   188.0076  82.90759 2.2676763   Positive
-## C:mu:mu                   179.6440 158.99523 1.1298702   Positive
-## row:col:trial:A:all:A:all 246.4509 304.32889 0.8098176   Positive
-## row:col:trial:B:all:B:all 265.0399 309.25820 0.8570181   Positive
-## units:mu:mu               344.3400  59.26901 5.8097827   Positive
+## R:mu:mu                   188.1346  83.08947 2.2642416   Positive
+## C:mu:mu                   184.1256 162.87461 1.1304743   Positive
+## row:col:trial:A:all:A:all 274.4534 312.90564 0.8771123   Positive
+## row:col:trial:B:all:B:all 259.9397 309.06144 0.8410615   Positive
+## units:mu:mu               345.2265  59.49410 5.8027013   Positive
 </code></pre>
 <h2 id="literature">Literature</h2>
 <p>Covarrubias-Pazaran G. 2016. Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6):1-15.</p>
