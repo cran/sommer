@@ -4,44 +4,35 @@ data(DT_example, package="enhancer")
 DT <- DT_example
 A <- A_example
 
+Ai <- solve(A)
+Ai <- as(as(as( Ai,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
+attr(Ai, "inverse")=TRUE
+
 ansSingle <- mmes(Yield~1,
-              random= ~ vsm(ism(Name), Gu=A),
+              random= ~ vsm(ism(Name), Gu=Ai),
               rcov= ~ units,
               data=DT, verbose = FALSE)
 summary(ansSingle)
 
-# if setting henderson=TRUE provide the inverse
-# Ai <- solve(A)
-# Ai <- as(as(as( Ai,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
-# attr(Ai, "inverse")=TRUE
 
 
 ## -----------------------------------------------------------------------------
 
 ansMain <- mmes(Yield~Env,
-              random= ~ vsm(ism(Name), Gu=A),
+              random= ~ vsm(ism(Name), Gu=Ai),
               rcov= ~ units,
               data=DT, verbose = FALSE)
 summary(ansMain)
 
-# if setting henderson=TRUE provide the inverse
-# Ai <- solve(A)
-# Ai <- as(as(as( Ai,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
-# attr(Ai, "inverse")=TRUE
 
 
 ## -----------------------------------------------------------------------------
 
 ansDG <- mmes(Yield~Env,
-              random= ~ vsm(dsm(Env),ism(Name), Gu=A),
+              random= ~ vsm(dsm(Env),ism(Name), Gu=Ai),
               rcov= ~ units,
               data=DT, verbose = FALSE)
 summary(ansDG)
-
-# if setting henderson=TRUE provide the inverse
-# Ai <- solve(A)
-# Ai <- as(as(as( Ai,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
-# attr(Ai, "inverse")=TRUE
 
 
 ## -----------------------------------------------------------------------------
@@ -64,14 +55,10 @@ summary(ansCS)
 ## -----------------------------------------------------------------------------
 
 ansUS <- mmes(Yield~Env,
-              random= ~ vsm(usm(Env),ism(Name), Gu=A),
+              random= ~ vsm(usm(Env),ism(Name), Gu=Ai),
               rcov= ~ units,
               data=DT, verbose = FALSE)
 summary(ansUS)
-# if setting henderson=TRUE provide the inverse
-Ai <- solve(A)
-Ai <- as(as(as( Ai,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
-attr(Ai, "inverse")=TRUE
 
 
 
@@ -99,14 +86,11 @@ summary(ansRR)
 
 ## -----------------------------------------------------------------------------
 
-E <- AR1(DT$Env) # can be AR1() or CS(), etc.
-rownames(E) <- colnames(E) <- unique(DT$Env)
-EA <- kronecker(E,A, make.dimnames = TRUE)
-ansCS <- mmes(Yield~Env,
-              random= ~ vsm(ism(Name), Gu=A) + vsm(ism(Env:Name), Gu=EA),
+ansAR1 <- mmes(Yield~Env,
+              random= ~ vsm(csm(Env),ism(Name)),
               rcov= ~ units,
               data=DT, verbose = FALSE)
-summary(ansCS)
+summary(ansAR1)
 
 
 ## -----------------------------------------------------------------------------
@@ -126,17 +110,16 @@ DT2 <- merge(DT,ei, by="Env")
 # numeric by factor variables like envIndex:Name can't be used in the random part like this
 # they need to come with the vsm() structure
 DT2 <- DT2[with(DT2, order(Name)), ]
-mix2 <- mmes(y~ envIndex, henderson=TRUE,
-             random=~ Name + vsm(dsm(envIndex),ism(Name)), data=DT2,
+mix2 <- mmes(y~ envIndex, 
+             random=~ Name + vsm(ism(envIndex),ism(Name)), data=DT2,
              rcov=~vsm(dsm(Name),ism(units)),
-             tolParConvNorm = .0001,
              nIters = 50, verbose = FALSE
 )
 # summary(mix2)$varcomp
 
-b=mix2$uList$`vsm(dsm(envIndex), ism(Name))` # adaptability (b) or genotype slopes
-mu=mix2$uList$`sommer::vsm( sommer::ism( Name ) ` # general adaptation (mu) or main effect
-e=sqrt(summary(mix2)$varcomp[-c(1:2),1]) # error variance for each individual
+b=mix2$uList$`vsm(ism(envIndex), ism(Name` # adaptability (b) or genotype slopes
+mu=mix2$uList$`vsm(ism(Name`# general adaptation (mu) or main effect
+e=sqrt(summary(mix2)$varcomp[-c(1:2),"estimate"]) # error variance for each individual
 
 ## general adaptation (main effect) vs adaptability (response to better environments)
 plot(mu[,1]~b[,1], ylab="general adaptation", xlab="adaptability")
@@ -147,6 +130,8 @@ Dt <- mix2$Dtable
 Dt[1,"average"]=TRUE
 Dt[2,"include"]=TRUE
 Dt[3,"include"]=TRUE
+
+mix2 <- postPEV(mix2, mode=2)
 pp <- predict(mix2,Dtable = Dt, D="Name")
 preds <- pp$pvals
 # preds[with(preds, order(-predicted.value)), ]
@@ -165,6 +150,45 @@ indNames <- na.omit(unique(DT$Name))
 A <- diag(length(indNames))
 rownames(A) <- colnames(A) <- indNames
 
+# factor analytic model with 2 factors
+ansFA2 <- mmes(y~Env, 
+               random=~vsm( fam(Env, 2) , ism(Name)) ,
+               rcov=~units,
+               nIters = 100, verbose = FALSE,
+               data=DT)
+
+Dt <- ansFA2$Dtable; Dt
+Dt[1:2,"average"]=TRUE
+Dt[3,c("average","include")]=TRUE
+
+ppfa <- predict(ansFA2, D="Env:Name", Dtable = Dt)
+head(ppfa$pvals)
+
+
+## -----------------------------------------------------------------------------
+
+# reduced rank model with 2 factors
+ansRR2 <- mmes(y~Env, henderson=TRUE,
+              random=~vsm( rrm(Env, 2) , ism(Name)) + # rr
+                vsm(dsm(Env), ism(Name)), # diag
+              rcov=~units,
+              nIters = 100, verbose = FALSE,
+              data=DT)
+
+
+Dt <- ansRR2$Dtable; Dt
+Dt[1:2,"average"]=TRUE
+Dt[3:4,c("average","include")]=TRUE
+
+pprr <- predict(ansRR2, D="Env:Name", Dtable = Dt)
+head(pprr$pvals)
+
+# compare 
+plot(ppfa$pvals[,"predicted.value"],pprr$pvals[,"predicted.value"])
+
+
+## -----------------------------------------------------------------------------
+
 # fit diagonal model first to produce H matrix
 ansDG <- mmes(y~Env, henderson=TRUE,
               random=~ vsm(dsm(Env), ism(Name)),
@@ -173,30 +197,33 @@ ansDG <- mmes(y~Env, henderson=TRUE,
 
 H0 <- ansDG$uList$`vsm(dsm(Env), ism(Name))` # GxE table
 
-# reduced rank model
-ansFA <- mmes(y~Env, henderson=TRUE,
-              random=~vsm( usm(rrm(Env, H = H0, nPC = 3)) , ism(Name)) + # rr
-                vsm(dsm(Env), ism(Name)), # diag
-              rcov=~units,
-              # we recommend giving more iterations to these models
-              nIters = 100, verbose = FALSE,
-              # we recommend giving more EM iterations at the beggining
-              data=DT)
-
-vcFA <- ansFA$theta[[1]]
-vcDG <- ansFA$theta[[2]]
-
-loadings=with(DT, rrm(Env, nPC = 3, H = H0, returnGamma = TRUE) )$Gamma
-scores <- ansFA$uList[[1]]
-
-vcUS <- loadings %*% vcFA %*% t(loadings)
-G <- vcUS + vcDG
-# colfunc <- colorRampPalette(c("steelblue4","springgreen","yellow"))
-# hv <- heatmap(cov2cor(G), col = colfunc(100), symm = TRUE)
-
-uFA <- scores %*% t(loadings)
-uDG <- ansFA$uList[[2]]
-u <- uFA + uDG
+# # reduced rank model
+# ansFA <- mmes(y~Env, henderson=TRUE,
+#               random=~vsm( usm(rrmat(Env, H = H0, nPC = 2)) , ism(Name)) + # rr
+#                 vsm(dsm(Env), ism(Name)), # diag
+#               rcov=~units,
+#               # we recommend giving more iterations to these models
+#               nIters = 100, verbose = FALSE,
+#               # we recommend giving more EM iterations at the beggining
+#               data=DT)
+# 
+# vcFA <- ansFA$theta[[1]]
+# vcDG <- ansFA$theta[[2]]
+# 
+# loadings=with(DT, rrmat(Env, nPC = 2, H = H0, returnGamma = TRUE) )$Gamma
+# scores <- ansFA$uList[[1]]
+# 
+# vcUS <- loadings %*% vcFA %*% t(loadings)
+# G <- vcUS + vcDG
+# # colfunc <- colorRampPalette(c("steelblue4","springgreen","yellow"))
+# # hv <- heatmap(cov2cor(G), col = colfunc(100), symm = TRUE)
+# 
+# uFA <- scores %*% t(loadings)
+# uDG <- ansFA$uList[[2]]
+# u <- uFA + uDG
+# 
+# plot(ppfa$pvals[,"predicted.value"],as.vector(t(u)))
+# plot(as.vector(t(u)),pprr$pvals[,"predicted.value"])
 
 
 ## -----------------------------------------------------------------------------
@@ -215,8 +242,8 @@ for(i in 1:length(envs)){
   ans1 <- mmes(y~Name-1,
                random=~Block,
                verbose=FALSE,
-               data=droplevels(DT[which(DT$Env == envs[i]),]
-               )
+               computeCi = 2,
+               data=droplevels(DT[which(DT$Env == envs[i]),])
   )
   ans1$Beta$Env <- envs[i]
   
@@ -228,16 +255,21 @@ for(i in 1:length(envs)){
 }
 
 DT2 <- do.call(rbind, BLUEL)
-OM <- do.call(adiag1,XtXL)
+OM <- Reduce(adiag1,lapply(XtXL,as.matrix))
 
 ##########
 ## stage 2
 ## use mmes for sparse equation
 ##########
 m <- matrix(1/var(DT2$Estimate, na.rm = TRUE))
+
 ans2 <- mmes(Estimate~Env, henderson=TRUE,
              random=~ Effect + Env:Effect, 
-             rcov=~vsm(ism(units,thetaC = matrix(3), theta = m)),
+             rcov = ~ vsm(
+               ism(units),
+               sigma2 = 1,
+               fixedSigma2 = TRUE
+             ),
              W=OM, 
              verbose=FALSE,
              data=DT2

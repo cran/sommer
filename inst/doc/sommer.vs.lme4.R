@@ -61,7 +61,7 @@ summary(fm2)$varcomp
 ## sommer
 ###########
 fm2 <- mmes(Reaction ~ Days, # henderson=TRUE,
-            random= ~ covm( vsm(ism(Subject)) , vsm(ism(Days), ism(Subject)) ), 
+            random= ~ vsm(usm(cbind(1,Days)), ism(Subject)) , 
             nIters = 200, data=DT, tolParInv = 1e-6, verbose = FALSE)
 summary(fm2)$varcomp
 cov2cor(fm2$theta[[1]])

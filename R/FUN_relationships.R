@@ -1,39 +1,4 @@
 
-AR1 = function(x,rho=0.25) {
-  unx <- levels(as.factor(x))
-  dims <- length(unx)
-  M = diag(dims)
-  M = rho^abs(row(M)-col(M))
-  colnames(M) <- rownames(M) <- unx
-  return(M)
-}
-
-CS = function(x, rho=0.25) {
-  unx <- levels(as.factor(x))
-  dims <- length(unx)
-  M = matrix(rho,dims,dims)
-  diag(M) <- 1
-  colnames(M) <- rownames(M) <- unx
-  return(M)
-}
-
-ARMA = function(x, rho=0.25, lambda=0.25) {
-  ## for ar
-  unx <- levels(as.factor(x))
-  dimo <- length(unx)
-  M = diag(dimo)
-  M = abs(row(M)-col(M))
-  M[lower.tri(M)] <- M[lower.tri(M)]-1
-  M[upper.tri(M)] <- M[upper.tri(M)]-1
-  MM <- rho^M
-  ## for lam
-  N <- matrix(lambda,dimo,dimo)
-  diag(N) <- 1 # or 0?
-  ## final
-  MN <- MM*N
-  colnames(MN) <- rownames(MN) <- unx
-  return(MN)
-}
 
 A.mat <- function(X, min.MAF=0, return.imputed=FALSE){
   ################
@@ -65,7 +30,7 @@ D.mat <- function(X, nishio=TRUE, min.MAF=0, return.imputed=FALSE){
   if(nrow(missingCheck) > 0){
     cat("Imputing markers with mean value\n")
     uniqueCols <- unique(missingCheck[,2])
-    X[,uniqueCols] <- apply(X[,uniqueCols],2,imputev)
+    X[,uniqueCols] <- apply(X[,uniqueCols,drop=FALSE],2,imputev,method="mean")
   }
   ##################
   res <- .Call("_sommer_dmat",PACKAGE = "sommer", 
@@ -77,6 +42,92 @@ D.mat <- function(X, nishio=TRUE, min.MAF=0, return.imputed=FALSE){
   }else{
     return(res)
   }
+}
+
+APY <- function(G, core, tol=1e-10, return.details=FALSE){
+  G <- as.matrix(G)
+  if(!is.numeric(G) || length(dim(G)) != 2L || nrow(G) != ncol(G) ||
+     nrow(G) < 1L || any(!is.finite(G))){
+    stop("G must be a finite, non-empty square numeric relationship matrix.", call.=FALSE)
+  }
+  if(length(tol) != 1L || !is.finite(tol) || tol <= 0 || tol >= 1){
+    stop("tol must be one finite value strictly between zero and one.", call.=FALSE)
+  }
+  scale <- max(1, max(abs(diag(G))))
+  if(max(abs(G - t(G))) > tol * scale){
+    stop("G must be symmetric within the requested tolerance.", call.=FALSE)
+  }
+  G <- 0.5 * (G + t(G))
+
+  ids <- rownames(G)
+  if(!is.null(ids) && (anyNA(ids) || any(!nzchar(ids)) || anyDuplicated(ids))){
+    stop("G row names must be non-missing, non-empty and unique.", call.=FALSE)
+  }
+  if(!is.null(colnames(G)) && !identical(colnames(G), ids)){
+    stop("G row and column names must be identical and in the same order.", call.=FALSE)
+  }
+  if(is.character(core)){
+    if(is.null(ids) || anyNA(core) || anyDuplicated(core) || any(!core %in% ids)){
+      stop("Character core identifiers must be unique row names of G.", call.=FALSE)
+    }
+    coreIndex <- match(core, ids)
+  }else if(is.numeric(core) || is.integer(core)){
+    if(length(core) < 1L || any(!is.finite(core)) || any(core != as.integer(core)) ||
+       any(core < 1L | core > nrow(G)) || anyDuplicated(core)){
+      stop("core must contain unique valid one-based row indices or row names.", call.=FALSE)
+    }
+    coreIndex <- as.integer(core)
+  }else{
+    stop("core must contain row names or one-based row indices.", call.=FALSE)
+  }
+
+  nonCoreIndex <- setdiff(seq_len(nrow(G)), coreIndex)
+  Gcc <- G[coreIndex, coreIndex, drop=FALSE]
+  coreChol <- tryCatch(chol(Gcc), error=function(e) NULL)
+  if(is.null(coreChol)){
+    stop("The core relationship submatrix is not positive definite.", call.=FALSE)
+  }
+  GccInverse <- chol2inv(coreChol)
+  if(length(nonCoreIndex)){
+    Gnc <- G[nonCoreIndex, coreIndex, drop=FALSE]
+    B <- t(backsolve(coreChol, forwardsolve(t(coreChol), t(Gnc))))
+    conditionalVariance <- diag(G)[nonCoreIndex] - rowSums(B * Gnc)
+    if(any(!is.finite(conditionalVariance)) ||
+       any(conditionalVariance <= tol * scale)){
+      stop("APY conditional variances must exceed tol times the relationship scale; revise the core or explicitly blend G before APY().", call.=FALSE)
+    }
+    weightedB <- B / conditionalVariance
+    Qcc <- GccInverse + crossprod(B, weightedB)
+    Qcn <- -t(weightedB)
+  }else{
+    conditionalVariance <- numeric()
+    B <- matrix(numeric(), 0L, length(coreIndex))
+    Qcc <- GccInverse
+    Qcn <- matrix(numeric(), length(coreIndex), 0L)
+  }
+
+  Q <- Matrix::Matrix(0, nrow(G), ncol(G), sparse=TRUE)
+  Q[coreIndex, coreIndex] <- Matrix::Matrix(Qcc, sparse=TRUE)
+  if(length(nonCoreIndex)){
+    Q[coreIndex, nonCoreIndex] <- Matrix::Matrix(Qcn, sparse=TRUE)
+    Q[nonCoreIndex, coreIndex] <- Matrix::t(Q[coreIndex, nonCoreIndex])
+    Q[cbind(nonCoreIndex, nonCoreIndex)] <- 1 / conditionalVariance
+  }
+  dimnames(Q) <- list(ids, ids)
+  Q <- methods::as(Q, "CsparseMatrix")
+  attr(Q, "inverse") <- TRUE
+  attr(Q, "APY") <- list(
+    core=if(is.null(ids)) coreIndex else ids[coreIndex],
+    coreIndex=coreIndex,
+    nonCore=if(is.null(ids)) nonCoreIndex else ids[nonCoreIndex],
+    conditionalVariance=conditionalVariance,
+    tolerance=tol
+  )
+  if(return.details){
+    return(list(Gu=Q, core=coreIndex, nonCore=nonCoreIndex,
+                B=B, conditionalVariance=conditionalVariance))
+  }
+  Q
 }
 
 E.mat <- function(X,nishio=TRUE,type="A#A",min.MAF=0.02){

@@ -6,7 +6,7 @@ A <- A_example
 
 ans1 <- mmes(Yield~1,
              random= ~ Name + Env + Env:Name + Env:Block,
-             rcov= ~ units, nIters=10,
+             rcov= ~ units, 
              data=DT, verbose = FALSE)
 summary(ans1)$varcomp
 (n.env <- length(levels(DT$Env)))
@@ -22,40 +22,36 @@ DT$idd <-DT$id; DT$ide <-DT$id
 A <- A.mat(GT) # additive relationship matrix
 D <- D.mat(GT) # dominance relationship matrix
 E <- E.mat(GT) # epistatic relationship matrix
-ans.ADE <- mmes(color~1, 
-                 random=~vsm(ism(id),Gu=A) + vsm(ism(idd),Gu=D), 
-                 rcov=~units, nIters=10,
-                 data=DT,verbose = FALSE)
-(summary(ans.ADE)$varcomp)
-vpredict(ans.ADE, h2 ~ (V1) / ( V1+V3) ) # narrow sense
-vpredict(ans.ADE, h2 ~ (V1+V2) / ( V1+V2+V3) ) # broad-sense
+
+Ai <- solve(A + diag(1e-5, nrow(A), nrow(A)))
+Ai[lower.tri(Ai)] <- t(Ai)[lower.tri(Ai)] # fill the lower triangular
+Ai <- as(as(as( Ai,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
+attr(Ai, "inverse")=TRUE
+
+Di <- solve(D+ diag(1e-5, nrow(A), nrow(A)))
+Di <- as(as(as( Di,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
+attr(Di, "inverse")=TRUE
+
+
+# ans.ADE <- mmes(Yield~1, 
+#                  random=~vsm(ism(id),Gu=Ai) + vsm(ism(idd),Gu=Di), 
+#                  rcov=~units, nIters=10,
+#                  data=DT,verbose = FALSE)
+# (summary(ans.ADE)$varcomp)
+# vpredict(ans.ADE, h2 ~ (V1) / ( V1+V3) ) # narrow sense
+# vpredict(ans.ADE, h2 ~ (V1+V2) / ( V1+V2+V3) ) # broad-sense
 
 ## ----fig.show='hold'----------------------------------------------------------
-# data(DT_cornhybrids, package="enhancer")
-# DT <- DT_cornhybrids
-# DTi <- DTi_cornhybrids
-# GT <- GT_cornhybrids
-# ### fit the model
-# modFD <- mmes(Yield~1, 
-#               random=~ vsm(atr(Location,c("3","4")),ism(GCA2)), 
-#               rcov= ~ vsm(dsm(Location),ism(units)), nIters=10,
-#               returnParam = F,
-#               data=DT, verbose = FALSE)
-# summary(modFD)
-
-## -----------------------------------------------------------------------------
-# data(DT_cornhybrids, package="enhancer")
-# DT <- DT_cornhybrids
-# DTi <- DTi_cornhybrids
-# GT <- as(as(as( GT_cornhybrids,  "dMatrix"), "generalMatrix"), "CsparseMatrix") 
-# GT[1:4,1:4]
-# DT=DT[with(DT, order(Location)), ]
-# ### fit the model
-# modFD <- mmes(Yield~1, 
-#               random=~ vsm(atr(Location,c("3","4")),ism(GCA2),Gu=GT), 
-#               rcov= ~ vsm(dsm(Location),ism(units)), nIters=10,
-#               data=DT, verbose = FALSE)
-# summary(modFD)
+data(DT_cornhybrids, package="enhancer")
+DT <- DT_cornhybrids
+DTi <- DTi_cornhybrids
+GT <- GT_cornhybrids
+### fit the model
+modFD <- mmes(Yield~1,
+              random=~ vsm(atm(Location,c("3","4")),ism(GCA2)),
+              rcov= ~ vsm(dsm(Location),ism(units)), 
+              data=DT, verbose = FALSE)
+summary(modFD)
 
 ## -----------------------------------------------------------------------------
 data(DT_cpdata, package="enhancer")
@@ -64,33 +60,38 @@ GT <- GT_cpdata
 MP <- MP_cpdata
 ### look at the data
 A <- A.mat(GT) # additive relationship matrix
+Ai <- solve(A+ diag(1e-4, nrow(A),nrow(A))) 
+Ai[lower.tri(Ai)] <- t(Ai)[lower.tri(Ai)] # fill the lower triangular
+Ai <- as(as(as( Ai,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
+attr(Ai, "inverse")=TRUE
+
 ans <- mmes(color~1, 
-                random=~vsm(ism(id),Gu=A), 
-                rcov=~units, nIters=10,
-                data=DT, verbose = FALSE)
-(summary(ans.ADE)$varcomp)
+            random=~vsm(ism(id),Gu=Ai), 
+            rcov=~units, nIters=10,
+            data=DT, verbose = FALSE)
+summary(ans)$varcomp
 vpredict(ans, h2 ~ (V1) / ( V1+V2) )
 
 
 ## -----------------------------------------------------------------------------
-# data(DT_cornhybrids, package="enhancer")
-# DT <- DT_cornhybrids
-# DTi <- DTi_cornhybrids
-# GT <- GT_cornhybrids
-# 
-# modFD <- mmes(Yield~Location, 
-#               random=~GCA1+GCA2+SCA, 
-#               rcov=~units, nIters=10,
-#               data=DT, verbose = FALSE)
-# (suma <- summary(modFD)$varcomp)
-# Vgca <- sum(suma[1:2,1])
-# Vsca <- suma[3,1]
-# Ve <- suma[4,1]
-# Va = 4*Vgca
-# Vd = 4*Vsca
-# Vg <- Va + Vd
-# (H2 <- Vg / (Vg + (Ve)) )
-# (h2 <- Va / (Vg + (Ve)) )
+data(DT_cornhybrids, package="enhancer")
+DT <- DT_cornhybrids
+DTi <- DTi_cornhybrids
+GT <- GT_cornhybrids
+
+modFD <- mmes(Yield~Location,
+              random=~GCA1+GCA2+SCA,
+              rcov=~units,
+              data=DT, verbose = FALSE)
+(suma <- summary(modFD)$varcomp)
+Vgca <- sum(suma[1:2,"estimate"])
+Vsca <- suma[3,"estimate"]
+Ve <- suma[4,"estimate"]
+Va = 4*Vgca
+Vd = 4*Vsca
+Vg <- Va + Vd
+(H2 <- Vg / (Vg + (Ve)) )
+(h2 <- Va / (Vg + (Ve)) )
 
 ## -----------------------------------------------------------------------------
 data("DT_halfdiallel", package="enhancer")
@@ -102,11 +103,11 @@ DT$genof <- as.factor(DT$geno)
 #### model using overlay
 modh <- mmes(sugar~1, 
              random=~vsm(ism(overlay(femalef,malef)) )
-             + genof, nIters=10,
-             data=DT, verbose = FALSE)
+             + genof, data=DT, verbose = FALSE)
 summary(modh)$varcomp
 
 ## -----------------------------------------------------------------------------
+
 data(DT_wheat, package="enhancer")
 DT <- DT_wheat
 GT <- apply(GT_wheat,2,as.numeric)
@@ -117,78 +118,90 @@ DT <- as.data.frame(DT);DT$id <- as.factor(rownames(DT))
 # select environment 1
 K <- A.mat(GT) # additive relationship matrix
 colnames(K) <- rownames(K) <- rownames(DT)
+Ki <- solve(K+ diag(1e-4, nrow(K),nrow(K))) 
+Ki[lower.tri(Ki)] <- t(Ki)[lower.tri(Ki)] # fill the lower triangular
+Ki <- as(as(as( Ki,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
+attr(Ki, "inverse")=TRUE
+
+
 # GBLUP pedigree-based approach
 set.seed(12345)
 y.trn <- DT
 vv <- sample(rownames(DT),round(nrow(DT)/5))
 y.trn[vv,"X1"] <- NA
 head(y.trn)
-## GBLUP
+## GBLUP with mmes
 ans <- mmes(X1~1,
-            random=~vsm(ism(id),Gu=K), 
-            rcov=~units,nIters=10,
+            random=~vsm(ism(id),Gu=Ki), 
+            rcov=~units,
             data=y.trn, verbose = FALSE) # kinship based
 cor(ans$u[vv,] ,DT[vv,"X1"], use="complete")
 
-## rrBLUP
-ans2 <- mmes(X1~1,
-             random=~vsm(ism(GT), buildGu = FALSE), 
-             rcov=~units, getPEV = TRUE, nIters=10, # you do more iterations
+## rrBLUP with mmer
+ans2 <- mmer(X1~1,
+             random=~vsr(list(GT)), 
+             rcov=~units, getPEV = TRUE,
              data=y.trn, verbose = FALSE) # kinship based
 
-u <- GT %*% as.matrix(ans2$uList$`vsm(ism(GT), buildGu = FALSE`) # BLUPs for individuals
+u <- GT %*% ans2$U$`u:GT`$X1 # BLUPs for individuals
 rownames(u) <- rownames(GT)
 cor(u[vv,],DT[vv,"X1"]) # same correlation
 # the same can be applied in multi-response models in GBLUP or rrBLUP
 
-## -----------------------------------------------------------------------------
-# data(DT_ige, package="enhancer")
-# DT <- DT_ige
-# Af <- A_ige
-# An <- A_ige
 
-## Direct genetic effects model
-# modDGE <- mmes(trait ~ block,
-#                random = ~ focal,
-#                rcov = ~ units, nIters=30,
-#                data = DT, verbose=FALSE)
-# summary(modDGE)$varcomp
 
+## ----eval=FALSE---------------------------------------------------------------
+# G <- A.mat(GT)
+# Ki <- solve(0.99 * G + 0.01 * diag(nrow(G))); attr(Ki, "inverse") <- TRUE
+# ans <- mmes(X1 ~ 1, random = ~ vsm(ism(id), Gu = Ki), data = y.trn, verbose = FALSE)
+# markers <- meffects_mmes(ans, 1, GT, blend = 0.01, se = TRUE)
+# head(markers[order(markers$p.value), ])
 
 ## -----------------------------------------------------------------------------
-# data(DT_ige, package="enhancer")
-# DT <- DT_ige
-# A <- A_ige
-# 
-# ## Indirect genetic effects model
-# modIGE <- mmes(trait ~ block, dateWarning = FALSE,
-#                random = ~ focal + neighbour, verbose = FALSE,
-#                rcov = ~ units, nIters=100,
-#               data = DT)
-# summary(modIGE)$varcomp
+data(DT_ige, package="enhancer")
+DT <- DT_ige
+Af <- A_ige
+An <- A_ige
+
+# Direct genetic effects model
+modDGE <- mmes(trait ~ block,
+               random = ~ focal,
+               rcov = ~ units,
+               data = DT, verbose=FALSE)
+summary(modDGE)$varcomp
 
 
 ## -----------------------------------------------------------------------------
+data(DT_ige, package="enhancer")
+DT <- DT_ige
+A <- A_ige
 
-# ### Indirect genetic effects model
-# modIGE <- mmes(trait ~ block, dateWarning = FALSE,
-#                random = ~ covm( vsm(ism(focal)), vsm(ism(neighbour)) ),
-#                rcov = ~ units, nIters=100, verbose = FALSE,
-#               data = DT)
-# summary(modIGE)$varcomp
+## Indirect genetic effects model
+modIGE <- mmes(trait ~ block, dateWarning = FALSE,
+               random = ~ focal + neighbour, verbose = FALSE,
+               rcov = ~ units, 
+              data = DT)
+summary(modIGE)$varcomp
 
 
 ## -----------------------------------------------------------------------------
 
-### Indirect genetic effects model
-# Ai <- solve(A_ige + diag(1e-5, nrow(A_ige),nrow(A_ige) ))
-# Ai <- as(as(as( Ai,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
-# # Indirect genetic effects model with covariance between DGE and IGE using relationship matrices
-# modIGE <- mmes(trait ~ block, dateWarning = FALSE,
-#                random = ~ covm( vsm(ism(focal), Gu=Ai), vsm(ism(neighbour), Gu=Ai) ),
-#                rcov = ~ units, nIters=100, verbose = FALSE,
-#               data = DT)
-# summary(modIGE)$varcomp
+modIGE <- mmes(trait ~ block, dateWarning = FALSE,
+               random = ~ strm(dge = vsm(ism(focal)), ige = vsm(ism(neighbour))),
+               rcov = ~ units, verbose = FALSE,
+              data = DT)
+summary(modIGE)$varcomp
+
+
+## -----------------------------------------------------------------------------
+
+Ai <- solve(A_ige + diag(1e-5, nrow(A_ige),nrow(A_ige) ))
+attr(Ai, "inverse") <- TRUE
+modIGE <- mmes(trait ~ block, dateWarning = FALSE,
+               random = ~ strm(dge = vsm(ism(focal)), ige = vsm(ism(neighbour)), Gu = Ai),
+               rcov = ~ units, verbose = FALSE,
+              data = DT)
+summary(modIGE)$varcomp
 
 
 ## -----------------------------------------------------------------------------
@@ -205,9 +218,11 @@ Mf <- (Mf*2) - 1
 Ad <- A.mat(Md)
 Af <- A.mat(Mf)
 Adi <- solve(Ad + diag(1e-4,ncol(Ad),ncol(Ad)))
+Adi[lower.tri(Adi)] <- t(Adi)[lower.tri(Adi)] # fill the lower triangular
 Adi <- as(as(as( Adi,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
 attr(Adi, 'inverse')=TRUE
 Afi <- solve(Af + diag(1e-4,ncol(Af),ncol(Af)))
+Afi[lower.tri(Afi)] <- t(Afi)[lower.tri(Afi)] # fill the lower triangular
 Afi <- as(as(as( Afi,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
 attr(Afi, 'inverse')=TRUE
 # RUN THE PREDICTION MODEL
@@ -244,14 +259,24 @@ summary(anss2)$varcomp
 # A <- A.mat(GT) # additive relationship matrix
 # # if using mmes=TRUE you need to provide the inverse
 # Ai <- solve(A + diag(1e-4,ncol(A),ncol(A)))
+# Ai[lower.tri(Ai)] <- t(Ai)[lower.tri(Ai)] # fill the lower triangular
 # Ai <- as(as(as( Ai,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
 # attr(Ai, 'inverse')=TRUE
-# #### be patient take some time
+# #### be patient this model is heavier
 # ansm <- mmes( value ~ trait, # henderson=TRUE,
-#                random=~ vsm(usm(trait), ism(id), Gu=A), # Ai if henderson
+#                random=~ vsm(usm(trait), ism(id), Gu=Ai), # Ai if henderson
 #                rcov=~ vsm(dsm(trait), ism(units)),
 #                data=DTL)
 # cov2cor(ansm$theta[[1]])
+
+
+## -----------------------------------------------------------------------------
+# DTL <- stackTraits(DT, traits = c("color", "Yield"), keep = "id")
+# ansm <- mmes(value ~ trait,
+#              random = ~ vsm(usm(trait), ism(id), Gu = Ai),
+#              rcov = ~ vsm(usm(trait), ism(record)), data = DTL)
+# covmatrix_mmes(ansm, 1)$correlation  # genetic correlation
+# covmatrix_mmes(ansm, 2)$correlation  # residual correlation
 
 ## -----------------------------------------------------------------------------
 data(DT_legendre)
@@ -265,21 +290,25 @@ DT2$Y <- sample(DT2$Y)
 DTC <- rbind(DT1,DT2)
 
 ## -----------------------------------------------------------------------------
+# 
 # library(orthopolynom)
 # 
-# Z <- with(DTC, dsm(leg(X,1)) )
+# Z <- with(DTC, dsm(leg(X,1)) )$Z
 # for(i in 1:ncol(Z)){DTC[,colnames(Z)[i]] <- Z[,i]}
 # 
-# X <- with(DTC, dsm(TRAIT) )
+# X <- with(DTC, dsm(TRAIT) )$Z
 # for(i in 1:ncol(X)){DTC[,colnames(X)[i]] <- X[,i]}
 # 
 # A <- diag(length(unique(DTC$SUBJECT)))
 # rownames(A) <- colnames(A) <- unique(DTC$SUBJECT)
-# 
-# ## 
+# Ai <- solve(A + diag(1e-4,ncol(A),ncol(A)))
+# Ai[lower.tri(Ai)] <- t(Ai)[lower.tri(Ai)] # fill the lower triangular
+# Ai <- as(as(as( Ai,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
+# attr(Ai, 'inverse')=TRUE
+# ##
 # M <- model.matrix(~ T1:leg0 + T1:leg1 + T2:leg0 + T2:leg1 - 1 , data=DTC)
-# mRR2b<-mmes(Y ~ Xf, 
-#             random=~ vsm( usm( M ) ,  ism(SUBJECT) , Gu = A),
+# mRR2b<-mmes(Y ~ Xf,
+#             random=~ vsm( usm( M ) ,  ism(SUBJECT) , Gu = Ai),
 #             rcov = ~ vsm( dsm(TRAIT), ism(units) ),
 #             nIters = 10, verbose = FALSE,
 #             data=DTC)
@@ -294,74 +323,113 @@ M <- GT_cpdata
 ################
 # MARKER MODEL
 ################
-mix.marker <- mmes(color~1,
-                   random=~Rowf+vsm(ism(M)),
+mix.marker <- mmer(Yield~1,
+                   random=~Rowf+vsr(list(M)),
                    rcov=~units,data=DT, 
                    verbose = FALSE)
 
 
-me.marker <- mix.marker$uList$`vsm(ism(M`
+me.marker <- mix.marker$U$`u:M`$Yield
 
 ################
 # PARTITIONED GBLUP MODEL
 ################
 
 MMT <-tcrossprod(M) ## MM' = additive relationship matrix 
-MMTinv<-solve(MMT) ## inverse
+MMTinv<-solve(MMT + diag(1e-4, nrow(MMT), nrow(MMT))) ## inverse
 MTMMTinv<-t(M)%*%MMTinv # M' %*% (M'M)-
+MMTinv <- as(as(as( MMTinv,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
+attr(MMTinv, 'inverse')=TRUE
 
-mix.part <- mmes(color~1,
-                 random=~Rowf+vsm(ism(id), Gu=MMT),
+mix.part <- mmes(Yield~1, nIters = 20, 
+                 random=~Rowf+vsm(ism(id), Gu=MMTinv),
                  rcov=~units,data=DT,
                  verbose = FALSE)
 
 #convert BLUPs to marker effects me=M'(M'M)- u
-me.part<-MTMMTinv%*%matrix(mix.part$uList$`vsm(ism(id), Gu = MMT`,ncol=1)
+me.part<-MTMMTinv%*%matrix(mix.part$uList$`vsm(ism(id), Gu = MMTinv`,ncol=1)
 
 # compare marker effects between both models
 plot(me.marker,me.part)
 
 
+
 ## -----------------------------------------------------------------------------
 
-# data("DT_wheat", package="enhancer")
-# rownames(GT_wheat) <- rownames(DT_wheat)
-# GT <- apply(GT_wheat,2,as.numeric)
-# rownames(GT) <- rownames(GT_wheat)
-# G <- A.mat(GT)
-# Y <- data.frame(DT_wheat)
-# 
-# # make the decomposition
-# UD<-eigen(G) # get the decomposition: G = UDU'
-# U<-UD$vectors
-# D<-diag(UD$values)# This will be our new 'relationship-matrix'
-# rownames(D) <- colnames(D) <- rownames(G)
-# X<-model.matrix(~1, data=Y) # here: only one fixed effect (intercept)
-# UX<-t(U)%*%X # premultiply X and y by U' 
-# UY <- t(U) %*% as.matrix(Y) # multivariate
-# 
-# # dataset for decomposed model
-# DTd<-data.frame(id = rownames(G) ,UY, UX =UX[,1])
-# DTd$id<-as.character(DTd$id)
-# 
-# modeld <- mmes(cbind(X1,X2) ~ UX - 1, 
-#               random = ~vsm(id,Gu=D), 
-#               rcov = ~vsm(units),
-#               data=DTd, verbose = FALSE)
-# 
-# # dataset for normal model
-# DTn<-data.frame(id = rownames(G) , DT_wheat)
-# DTn$id<-as.character(DTn$id)
-# 
-# modeln <- mmes(cbind(X1,X2) ~ 1, 
-#               random = ~vsm(id,Gu=G), 
-#               rcov = ~vsm(units),
-#               data=DTn, verbose = FALSE)
-# 
-# ## compare regular and transformed blups
-# plot(x=(solve(t(U)))%*%modeld$U$`u:id`$X2[colnames(D)], 
-#      y=modeln$U$`u:id`$X2[colnames(D)], xlab="UDU blup",
-#      ylab="blup")
+data("DT_wheat", package="enhancer")
+rownames(GT_wheat) <- rownames(DT_wheat)
+GT <- apply(GT_wheat,2,as.numeric)
+rownames(GT) <- rownames(GT_wheat)
+A <- A.mat(GT)
+Ai <- solve(A + diag(1e-5, nrow(A)))
+Ai[lower.tri(Ai)] <- t(Ai)[lower.tri(Ai)] # fill the lower triangular
+Ai <- as(as(as(Ai, "dMatrix"), "generalMatrix"), "CsparseMatrix")
+attr(Ai, "inverse") <- TRUE
+isSymmetric(Ai)
+# One complete observation per relationship level gives a balanced example.
+DTn <- data.frame(
+  id=rownames(A),
+  y=as.numeric(DT_wheat[,1])
+)
+
+model_regular <- mmes(
+  y~1,
+  random=~vsm(ism(id), Gu=Ai),
+  rcov=~units, data=DTn, verbose=FALSE
+)
+
+# Henderson MME formulation with eigenbasis random coefficients.
+model_rotation_h <- mmes(
+  y~1,
+  random=~vsm(ism(id), Gu=Ai, rotation=TRUE),
+  rcov=~units, data=DTn, henderson=TRUE, verbose=FALSE
+)
+
+# Lee--van der Werf direct observation-covariance formulation.
+model_rotation_d <- mmes(
+  y~1,
+  random=~vsm(ism(id), Gu=Ai, rotation=TRUE),
+  rcov=~units, data=DTn, henderson=FALSE, verbose=FALSE
+)
+
+model_regular$covParNative
+model_rotation_h$covParNative
+model_rotation_d$covParNative
+
+plot(model_rotation_h$bu[,1], model_regular$bu[,1])
+plot(model_rotation_d$bu[,1], model_regular$bu[,1])
+
+
+## -----------------------------------------------------------------------------
+
+data("DT_wheat", package="enhancer")
+rownames(GT_wheat) <- rownames(DT_wheat)
+GT <- apply(GT_wheat,2,as.numeric)
+rownames(GT) <- rownames(GT_wheat)
+A <- A.mat(GT)
+Ai <- solve(A + diag(1e-5, nrow(A)))
+Ai[lower.tri(Ai)] <- t(Ai)[lower.tri(Ai)] # fill the lower triangular
+Ai <- as(as(as(Ai, "dMatrix"), "generalMatrix"), "CsparseMatrix")
+attr(Ai, "inverse") <- TRUE
+isSymmetric(Ai)
+# One complete observation per relationship level gives a balanced example.
+data(DT_wheat)
+DT <- DT_wheat
+GT <- apply(GT_wheat,2,as.numeric)
+rownames(GT) <- rownames(GT_wheat)
+DT <- data.frame(pheno=as.vector(DT),
+                 env=as.factor(paste0("e", sort(rep(1:4,nrow(DT))))),
+                 id=rep(rownames(DT),4))
+
+# Henderson MME formulation with eigenbasis random coefficients.
+model_rotation_h <- mmes(
+  pheno~1,
+  random=~vsm(usm(env),ism(id), Gu=Ai, rotation=TRUE),
+  rcov=~vsm(dsm(env),ism(units)), data=DT, henderson=TRUE, verbose=FALSE
+)
+
+# genetic correlation
+cov2cor(model_rotation_h$theta[[1]])
 
 
 ## -----------------------------------------------------------------------------
@@ -395,11 +463,11 @@ Vg=c(Va,Vd); names(Vg) <- c("Va","Vd"); Vg
 ## REML method
 ##############################
 mix2 <- mmes(yield~ setf + setf:repf,
-            random=~femalef:malef:setf + malef:setf, nIters=10,
+            random=~femalef:malef:setf + malef:setf, 
             data=DT, verbose = FALSE)
 vc <- summary(mix2)$varcomp; vc
-Vfm <- vc[1,"VarComp"]
-Vm <- vc[2,"VarComp"]
+Vfm <- vc[1,"estimate"]
+Vm <- vc[2,"estimate"]
 
 ## Calculate Va and Vd
 Va=4*Vm # assuming no inbreeding (4/(1+F))
@@ -452,12 +520,11 @@ Vg=c(Va,Vd); names(Vg) <- c("Va","Vd"); Vg
 
 mix2 <- mmes(yield~ setf + setf:repf ,
             random=~femalef:malef:setf + malef:setf + femalef:setf, 
-            nIters=10,
             data=DT, verbose = FALSE)
 vc <- summary(mix2)$varcomp; vc
-Vfm <- vc[1,"VarComp"]
-Vm <- vc[2,"VarComp"]
-Vf <- vc[3,"VarComp"]
+Vfm <- vc[1,"estimate"]
+Vm <- vc[2,"estimate"]
+Vf <- vc[3,"estimate"]
 
 Va=4*Vm; # assuming no inbreeding (4/(1+F))
 Va=4*Vf; # assuming no inbreeding (4/(1+F))
@@ -482,26 +549,24 @@ k <- 1 # to be used for degrees of freedom (number of levels in fixed effects)
 # mix2 <- GWAS(color~1,
 #              random=~vsm(ism(id), Gu=A) + Rowf + Colf,
 #              rcov=~units, M=GT, gTerm = "u:id",
-#              verbose = FALSE, nIters=10,
+#              verbose = FALSE, 
 #              data=DT)
 
 ## -----------------------------------------------------------------------------
-###########################
-#### GWAS by RRBLUP approach
-###########################
+# ###########################
+# #### GWAS by RRBLUP approach
+# ###########################
 # Z <- GT[as.character(DT$id),]
-# mixRRBLUP <- mmes(color~1,
-#               random=~vsm(ism(Z)) + Rowf + Colf,
+# mixRRBLUP <- mmer(Yield~1,
+#               random=~vsr(list(Z)) + Rowf + Colf,
 #               rcov=~units, nIters=10,
 #               verbose = FALSE,
 #               data=DT)
 # 
-# a <- mixRRBLUP$uList$`vsm(ism(Z`# marker effects
-# start=mixRRBLUP$partitions[[1]][1]
-# end=mixRRBLUP$partitions[[1]][2]
-# se.a <- sqrt( diag(kronecker(diag(ncol(Z)),mixRRBLUP$theta[[1]]) - mixRRBLUP$Ci[start:end,start:end] ) ) # SE of marker effects
+# a <- mixRRBLUP$U$`u:Z`$Yield
+# se.a <- sqrt( diag(kronecker(diag(ncol(Z)),mixRRBLUP$sigma$`u:Z`) - mixRRBLUP$PevU$`u:Z`$Yield ) ) # SE of marker effects
 # t.stat <- a/se.a # t-statistic
-# pvalRRBLUP <- dt(t.stat[,1],df=n-k-1) # -log10(pval)
+# pvalRRBLUP <- dt(t.stat,df=n-k-1) # -log10(pval)
 
 ## -----------------------------------------------------------------------------
 # ###########################
@@ -509,14 +574,17 @@ k <- 1 # to be used for degrees of freedom (number of levels in fixed effects)
 # ###########################
 # M<- GT
 # MMT <-tcrossprod(M) ## MM' = additive relationship matrix
-# MMTinv<-solve(MMT + diag(1e-6, ncol(MMT), ncol(MMT))) ## inverse of MM'
+# MMTinv<-solve(MMT + diag(1e-4, ncol(MMT), ncol(MMT))) ## inverse of MM'
 # MTMMTinv<-t(M)%*%MMTinv # M' %*% (M'M)-
-# mixGBLUP <- mmes(color~1,
-#              random=~vsm(ism(id), Gu=MMT) + Rowf + Colf,
-#              rcov=~units, nIters=10,
-#              verbose = FALSE,
+# MMTinv <- as(as(as( MMTinv,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
+# attr(MMTinv, 'inverse')=TRUE
+# 
+# mixGBLUP <- mmes(Yield~1,
+#              random=~vsm(ism(id), Gu=MMTinv) + Rowf + Colf,
+#              rcov=~units, nIters=25,
+#              verbose = T, computeCi = 2,
 #              data=DT)
-# a.from.g <-MTMMTinv%*%matrix(mixGBLUP$uList$`vsm(ism(id), Gu = MMT`,ncol=1)
+# a.from.g <-MTMMTinv%*%matrix(mixGBLUP$uList$`vsm(ism(id), Gu = MMTinv`,ncol=1)
 # start=mixGBLUP$partitions[[1]][1]
 # end=mixGBLUP$partitions[[1]][2]
 # var.g <- kronecker(MMT,mixGBLUP$theta[[1]]) - mixGBLUP$Ci[start:end,start:end]

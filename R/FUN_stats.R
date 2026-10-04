@@ -1,3 +1,50 @@
+postPEV <- function(object, mode = 1L){
+  
+  if(!inherits(object, "mmes")){
+    stop("'object' must inherit from class 'mmes'.", call. = FALSE)
+  }
+  
+  mode <- as.integer(mode)
+  
+  if(length(mode) != 1L || is.na(mode) || !mode %in% 0:2){
+    stop("'mode' must be one of 0, 1, or 2.", call. = FALSE)
+  }
+
+  if(!is.null(object$rotation) && mode == 1L){
+    stop(
+      paste0(
+        "Rotated effects require mode=2 so their full eigen-coordinate ",
+        "covariance can be transformed back exactly."
+      ),
+      call.=FALSE
+    )
+  }
+  
+  object <- post_mme_Cinverse_cpp(object, mode)
+
+  if(!is.null(object$rotation) && mode == 2L){
+    term <- object$rotation$term
+    U <- object$rotation$vectors
+    ranges <- object$partitions[[term]]
+    for(j in seq_len(nrow(ranges))){
+      rr <- ranges[j,1]:ranges[j,2]
+      block <- U %*% as.matrix(object$Ci[rr,rr,drop=FALSE]) %*% t(U)
+      object$uPevList[[term]][,j] <- diag(block)
+    }
+  }
+  
+  if(length(object$uPevList) && length(object$uList)){
+    names(object$uPevList) <- names(object$uList)
+    
+    for(i in seq_along(object$uPevList)){
+      if(length(object$uPevList[[i]])){
+        dimnames(object$uPevList[[i]]) <- dimnames(object$uList[[i]])
+      }
+    }
+  }
+  
+  object
+}
 
 
 corImputation <- function(wide, Gu=NULL, nearest=10, roundR=FALSE){

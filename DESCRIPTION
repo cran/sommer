@@ -1,29 +1,34 @@
 Package: sommer
 Type: Package
 Title: Solving Mixed Model Equations in R
-Version: 4.4.7
-Date: 2026-09-07
+Version: 4.4.87
+Date: 2026-09-30
 Authors@R: c(
     person("Giovanny","Covarrubias-Pazaran", email="cova_ruber@live.com.mx", role=c("aut","cre"),
 	comment=c(ORCID="0000-0002-7194-3837"))
 	)
 Maintainer: Giovanny Covarrubias-Pazaran <cova_ruber@live.com.mx>
-Description: Structural multivariate-univariate linear mixed model solver for estimation of multiple random effects with unknown variance-covariance structures (e.g., heterogeneous and unstructured) and known covariance among levels of random effects (e.g., pedigree and genomic relationship matrices) (Covarrubias-Pazaran, 2016 <doi:10.1371/journal.pone.0156744>; Maier et al., 2015 <doi:10.1016/j.ajhg.2014.12.006>; Jensen et al., 1997). REML estimates can be obtained using the Direct-Inversion Newton-Raphson and Direct-Inversion Average Information algorithms for the problems r x r (r being the number of records) or using the Henderson-based average information algorithm for the problem c x c (c being the number of coefficients to estimate). Spatial models can also be fitted using the two-dimensional spline functionality available.
-Depends: R (>= 3.5.0), Matrix (>= 1.1.1), methods, stats, MASS, crayon,
+Description: Structural multivariate-univariate linear mixed model solver for estimation of multiple random effects with unknown variance-covariance structures (e.g., unstructured, diagonal, autoregressive, factor analytic, reduced rank, among others) and known covariance among levels of random effects (e.g., pedigree and genomic relationship matrices) (Covarrubias-Pazaran, 2016 <doi:10.1371/journal.pone.0156744>; Maier et al., 2015 <doi:10.1016/j.ajhg.2014.12.006>; Jensen et al., 1997). REML estimates can be obtained using the Direct-Inversion Newton-Raphson and Direct-Inversion Average Information algorithms for the problems r x r (r being the number of records) or using the Henderson-based average information algorithm for the problem c x c (c being the number of coefficients to estimate).
+Depends: R (>= 3.5.0), Matrix (>= 1.6-2), methods, stats, MASS, crayon,
         enhancer
 LazyLoad: yes
-License: GPL (>= 2)
+License: GPL-3
 Imports: Rcpp (>= 0.12.19)
 BugReports: https://github.com/covaruber/sommer/issues
 URL: https://github.com/covaruber/sommer
-LinkingTo: Rcpp, RcppArmadillo, RcppProgress
+LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen, Matrix
+SystemRequirements: METIS graph partitioning library (optional; enables
+        nested-dissection sparse ordering for large relationship
+        matrices, auto-detected at configure time, falls back to AMD
+        ordering when absent)
 Suggests: rmarkdown, knitr, plyr, parallel, orthopolynom, RSpectra,
-        lattice, testthat (>= 3.0.0)
+        lattice, emmeans (>= 1.4), estimability, testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 3
+RoxygenNote: 7.3.2
 NeedsCompilation: yes
-Packaged: 2026-09-11 04:06:41 UTC; giovannycovarrubias
+Packaged: 2026-10-04 04:23:15 UTC; giovannycovarrubias
 Author: Giovanny Covarrubias-Pazaran [aut, cre] (ORCID:
     <https://orcid.org/0000-0002-7194-3837>)
 Repository: CRAN
-Date/Publication: 2026-09-11 06:50:02 UTC
+Date/Publication: 2026-10-04 03:20:02 UTC

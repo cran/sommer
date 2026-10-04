@@ -89,11 +89,35 @@ nearPDcpp <- function(X0, maxit, eig_tol, conv_tol) {
     .Call(`_sommer_nearPDcpp`, X0, maxit, eig_tol, conv_tol)
 }
 
+post_mme_Cinverse_cpp <- function(model, mode = 1L) {
+    .Call(`_sommer_post_mme_Cinverse_cpp`, model, mode)
+}
+
+predict_mmes_vcov_cpp <- function(model, Dmat) {
+    .Call(`_sommer_predict_mmes_vcov_cpp`, model, Dmat)
+}
+
 ai_mme_sp <- function(X, ZI, Zind, AiI, y0, SI, partitionsS, H, useH, nIters, tolParConvLL, tolParConvNorm, tolParInv, thetaI, thetaCI, thetaF, addScaleParam, weightEmInf, weightInf, verbose) {
     .Call(`_sommer_ai_mme_sp`, X, ZI, Zind, AiI, y0, SI, partitionsS, H, useH, nIters, tolParConvLL, tolParConvNorm, tolParInv, thetaI, thetaCI, thetaF, addScaleParam, weightEmInf, weightInf, verbose)
 }
 
 MNR <- function(Y, X, Gx, Z, K, R, Ge, GeI, W, isInvW, iters, tolpar, tolparinv, ai, pev, verbose, retscaled, stepweight, emweight) {
     .Call(`_sommer_MNR`, Y, X, Gx, Z, K, R, Ge, GeI, W, isInvW, iters, tolpar, tolparinv, ai, pev, verbose, retscaled, stepweight, emweight)
+}
+
+ai_mme_sp2 <- function(X, ZI, Zind, AiI, y0, H, useH, residualBlockI, residualIndexI, nIters, tolParConvLL, tolParConvNorm, tolParInv, covStructI, weightEmInf, weightInf, verbose, computeCi = 0L, solver = "ldlt", pcgTol = 1.0e-8, pcgMaxIters = 0L, pcgTraceProbes = 8L, pcgLanczosSteps = 20L, reml = TRUE, responsePrepared = FALSE, preparedMean = 0.0, preparedSd = 1.0, preparedIntercept = FALSE) {
+    .Call(`_sommer_ai_mme_sp2`, X, ZI, Zind, AiI, y0, H, useH, residualBlockI, residualIndexI, nIters, tolParConvLL, tolParConvNorm, tolParInv, covStructI, weightEmInf, weightInf, verbose, computeCi, solver, pcgTol, pcgMaxIters, pcgTraceProbes, pcgLanczosSteps, reml, responsePrepared, preparedMean, preparedSd, preparedIntercept)
+}
+
+evaluate_covstruct_cpp <- function(covStruct, par) {
+    .Call(`_sommer_evaluate_covstruct_cpp`, covStruct, par)
+}
+
+ai_reml_direct_sp2 <- function(X, ZI, Zind, AiI, y0, H, useH, residualBlockI, residualIndexI, nIters, tolParConvLL, tolParConvNorm, tolParInv, covStructI, weightEmInf, weightInf, verbose, computePev = 0L, reml = TRUE, responsePrepared = FALSE, preparedMean = 0.0, preparedSd = 1.0, preparedIntercept = FALSE) {
+    .Call(`_sommer_ai_reml_direct_sp2`, X, ZI, Zind, AiI, y0, H, useH, residualBlockI, residualIndexI, nIters, tolParConvLL, tolParConvNorm, tolParInv, covStructI, weightEmInf, weightInf, verbose, computePev, reml, responsePrepared, preparedMean, preparedSd, preparedIntercept)
+}
+
+mme_pcg_solve <- function(design, y, nFixed, termStart, termLevels, AiI, lambdaI, residualCovStruct, residualPar, residualBlock, residualIndex, weights, tol, maxIter, denseFixedMax, maxResidualBlock, start, verbose) {
+    .Call(`_sommer_mme_pcg_solve`, design, y, nFixed, termStart, termLevels, AiI, lambdaI, residualCovStruct, residualPar, residualBlock, residualIndex, weights, tol, maxIter, denseFixedMax, maxResidualBlock, start, verbose)
 }
 
