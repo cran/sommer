@@ -29,6 +29,64 @@
   X
 }
 
+.mmes_check_fixed_design <- function(fixedDesign, fixedTerms){
+  designColumns <- ncol(fixedDesign)
+  if(!designColumns) return(invisible(NULL))
+  columnLabels <- colnames(fixedDesign)
+  columnTerms <- attr(fixedDesign, "assign")
+  describeColumns <- function(columnIndices){
+    examples <- head(columnLabels[columnIndices], 5L)
+    paste0(paste(examples, collapse=", "),
+           if(length(columnIndices) > 5L) ", ..." else "")
+  }
+  describeTerms <- function(columnIndices){
+    termIndices <- unique(columnTerms[columnIndices])
+    paste(c(if(0L %in% termIndices) "(Intercept)",
+            fixedTerms[termIndices[termIndices > 0L]]), collapse=", ")
+  }
+  zeroColumns <- which(Matrix::colSums(abs(fixedDesign)) == 0)
+  if(length(zeroColumns)){
+    stop("The fixed-effect design matrix X is rank deficient after observation filtering: ",
+         length(zeroColumns), " of ", designColumns, " columns are all zero (",
+         nrow(fixedDesign), " retained observations).\n",
+         "To fit supported Gaussian models with aliased columns removed, use:\n",
+         "control=mmes_control(representation=list(fixedRank='drop'))\n",
+         "Omitted coefficients are constrained to zero, not independently estimated.\n",
+         "Affected fixed terms: ", describeTerms(zeroColumns), ".\n",
+         "Example zero columns: ", describeColumns(zeroColumns), ".\n",
+         "Check unused factor levels, unobserved factor combinations, and covariates that become zero after missing-value filtering. ",
+         "Use droplevels() on the retained data; for sparse interactions, consider an observed-cell factor ",
+         "created with interaction(..., drop=TRUE) and a cell-means formula such as response ~ 0 + cell. ",
+         "Dropping unused levels alone may not remove unobserved combinations or other aliases.",
+         call.=FALSE)
+  }
+  # Sparse QR requires a tall matrix; transposition preserves rank.
+  designRank <- withCallingHandlers(
+    .sparse_rank(if(nrow(fixedDesign) < designColumns)
+      Matrix::t(fixedDesign) else fixedDesign),
+    warning=function(rankWarning){
+      if(startsWith(conditionMessage(rankWarning),
+                    "matrix is structurally rank deficient; using augmented matrix")){
+        invokeRestart("muffleWarning")
+      }
+    })
+  if(designRank < designColumns){
+    stop("The fixed-effect design matrix X is rank deficient after observation filtering: rank ",
+         designRank, " < ", designColumns, " columns (", nrow(fixedDesign),
+         " retained observations). Fixed-effect coefficients are not uniquely estimable.\n",
+         "To fit supported Gaussian models with aliased columns removed, use:\n",
+         "control=mmes_control(representation=list(fixedRank='drop'))\n",
+         "Omitted coefficients are constrained to zero, not independently estimated.\n",
+         "Fixed terms: ", describeTerms(seq_len(designColumns)), ".\n",
+         "Check redundant terms, duplicated/constant covariates, and nested factors. ",
+         "For example, a locale effect is already contained in unrestricted locale-cultivar cell effects. ",
+         "Use a full-column-rank parameterization, such as response ~ 0 + cell for observed cell means; ",
+         "do not also include the parent factor unless explicit identifying contrasts are used.",
+         call.=FALSE)
+  }
+  invisible(NULL)
+}
+
 .set_covstruct_par <- function(cs, work){
   cs$par <- as.numeric(work)
   cs$free[] <- FALSE
@@ -98,10 +156,11 @@
 # mmes(solveOnly=TRUE) result). NULL requires every parameter to be fixed in
 # the formula already.
 .mmes_known_covpar <- function(covStruct, labels, covPar){
+  if(inherits(covPar, "mmesSolve")) covPar <- covPar$vcParams
   if(is.null(covPar)){
     free <- vapply(covStruct, function(cs) any(as.logical(cs$free)), logical(1))
     if(any(free)){
-      stop("solveOnly=TRUE needs every covariance parameter. Supply covPar (e.g. a fitted mmes ",
+      stop("task$mode='solve' needs every covariance parameter. Supply covPar (e.g. a fitted mmes ",
            "object) or fix the parameters of: ", paste(labels[free], collapse=", "), call.=FALSE)
     }
     return(covStruct)
@@ -175,9 +234,17 @@
 
 .mmes_solve <- function(X, Z, Zind, Ai, yvar, W, useH, residualBlock, localIndex,
                         covStruct, labels, covPar, pcgTol, pcgMaxIters, verbose,
-                        data, dataOriginal, obsInfo, partitionsX, call, args){
+                        data, dataOriginal, obsInfo, partitionsX, call, args,
+                        pcg = .mme_pcg_control()){
   if(ncol(yvar) != 1L){
-    stop("solveOnly=TRUE requires one response column; use the long format with vsm(usm(trait), ...).",
+    stop("task$mode='solve' requires one response column; use the long format with vsm(usm(trait), ...).",
+         call.=FALSE)
+  }
+  if(pcg$preconditioner == "nystrom" || pcg$rhsMethod != "independent" ||
+     pcg$recycleRank > 0L || pcg$logDetScaling != "none" ||
+     pcg$traceEstimator != "hutchinson" || pcg$accuracy != "fixed" ||
+     pcg$compression != "off" || pcg$recycleMethod != "coarse"){
+    stop("task$mode='solve' supports solve$preconditioner 'diagonal' or 'block-jacobi', solve$warmStart and solve$residualRefresh, but not REML-only PCG estimator, recycling or block-RHS settings.",
          call.=FALSE)
   }
   covStruct <- .mmes_known_covpar(covStruct, labels, covPar)
@@ -187,7 +254,7 @@
   weights <- numeric(0)
   if(isTRUE(useH)){
     if(!Matrix::isDiagonal(W)){
-      stop("solveOnly=TRUE supports diagonal weight matrices W only.", call.=FALSE)
+      stop("task$mode='solve' supports diagonal weight matrices W only.", call.=FALSE)
     }
     weights <- as.numeric(Matrix::diag(W))
   }
@@ -229,19 +296,30 @@
 
   design <- to_sparse(do.call(cbind, c(list(X), Z)))
   y <- as.numeric(yvar[, 1L])
+  effectNames <- c(colnames(X), unlist(lapply(Z, colnames), use.names=FALSE))
+  start <- numeric(0)
+  if(pcg$warmStart){
+    if(!inherits(covPar, c("mmes", "mmesSolve")) ||
+       is.null(covPar$bu) || !identical(rownames(covPar$bu), effectNames) ||
+       ncol(covPar$bu) != 1L || any(!is.finite(covPar$bu))){
+      stop("task$mode='solve' with solve$warmStart requires a fitted covPar object with identical coefficient names and finite coefficients.",
+           call.=FALSE)
+    }
+    start <- as.numeric(covPar$bu)
+  }
+  attr(residual, "pcgResidualRefresh") <- pcg$residualRefresh
 
-  message(crayon::blue("Engine selected: known-covariance PCG (solveOnly=TRUE)"))
+  message(crayon::blue("Engine selected: known-covariance PCG (task$mode='solve')"))
   sol <- mme_pcg_solve(design, y, nFixed, termStart, termLevels, AiGeneral, lambda,
                        residual, residual$par, as.integer(residualBlock),
                        as.integer(localIndex), weights, pcgTol, as.integer(pcgMaxIters),
-                       1000L, 10000L, numeric(0), verbose)
+                       1000L, 10000L, start, verbose)
   if(!sol$converged){
     warning("PCG did not reach the requested tolerance (relative residual ",
             signif(sol$relres, 3), " after ", sol$iterations,
             " iterations); increase pcgMaxIters.", call.=FALSE)
   }
 
-  effectNames <- c(colnames(X), unlist(lapply(Z, colnames), use.names=FALSE))
   bu <- matrix(sol$solution, ncol=1L, dimnames=list(effectNames, NULL))
   b <- bu[seq_len(nFixed), , drop=FALSE]
   u <- bu[-seq_len(nFixed), , drop=FALSE]

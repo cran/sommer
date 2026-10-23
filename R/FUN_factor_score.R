@@ -1,3 +1,53 @@
+.factor_score_decomposition <- function(factor){
+  q <- as.integer(factor$dim)
+  par <- as.numeric(factor$par)
+  representation <- factor$representation$kind
+
+  if(identical(representation, "lowrank_diagonal") &&
+     factor$model %in% c("fa", "rr")){
+    if(factor$model == "rr"){
+      stop("rrm() has zero specific variances and uses native reduced-rank fitting, not representation$factorScores. Use representation$factorScores='none'.",
+           call.=FALSE)
+    }
+    order <- as.integer(factor$order)
+    nload <- if(factor$model == "fa") as.integer(factor$fa_nload) else
+      as.integer(factor$rr_nload)
+    rows <- if(factor$model == "fa") as.integer(factor$fa_row) else
+      as.integer(factor$rr_row)
+    cols <- if(factor$model == "fa") as.integer(factor$fa_col) else
+      as.integer(factor$rr_col)
+    diagonal <- if(factor$model == "fa") as.logical(factor$fa_diag) else
+      as.logical(factor$rr_diag)
+    loading <- matrix(0, q, order)
+    for(index in seq_len(nload)){
+      loading[rows[index], cols[index]] <-
+        if(diagonal[index]) exp(par[index]) else par[index]
+    }
+    specific <- if(!identical(factor$variance, "homogeneous")){
+      c(1, exp(par[nload + seq_len(q - 1L)]))
+    }else{
+      rep(1, q)
+    }
+    return(list(loading=loading, specific=specific,
+                normalization=1 + loading[1L, 1L]^2))
+  }
+
+  if(identical(representation, "compound_symmetry")){
+    lower <- factor$report$lower[1L]
+    upper <- factor$report$upper[1L]
+    rho <- lower + (upper - lower) * stats::plogis(par[1L])
+    if(!length(par) %in% c(1L, q) || !is.finite(rho) || rho < 0 || rho >= 1){
+      return(NULL)
+    }
+    variance <- if(length(par) == 1L) rep(1, q) else c(1, exp(par[-1L]))
+    loading <- matrix(sqrt(rho * variance), ncol=1L)
+    return(list(loading=loading, specific=variance * (1 - rho),
+                normalization=1))
+  }
+
+  NULL
+}
+
 .factor_score_augment <- function(Z, Ai, covStruct, Zind, rtermss, rTermsNames,
                                  allowFree=FALSE){
   expandedZ <- list()
@@ -14,8 +64,13 @@
     zIndex <- which(Zind == term)
     shape <- covStruct[[term]]
     factors <- shape$factors
-    factorModel <- if(length(factors) == 1L) factors[[1L]]$model else NULL
-    if(is.null(factorModel) || !factorModel %in% c("fa", "rr")){
+    representation <- if(length(factors) == 1L){
+      factors[[1L]]$representation$kind
+    }else{
+      NULL
+    }
+    if(is.null(representation) ||
+       !representation %in% c("lowrank_diagonal", "compound_symmetry")){
       expandedZ <- c(expandedZ, Z[zIndex])
       newIndex <- length(expandedCovStruct) + 1L
       expandedAi[[newIndex]] <- Ai[[term]]
@@ -34,23 +89,20 @@
     factorEnd <- as.integer(factor$par_end)
     factor$par <- if(factorEnd >= factorStart) shape$par[factorStart:factorEnd] else numeric()
     if(any(shape$free[-1L]) && !allowFree){
-      stop("factorScoreAugmentation='fixed' requires every FA/RR loading and specific-variance parameter to be fixed; only the shared variance scale may be estimated.", call.=FALSE)
+      stop("representation$factorScores='fixed-shape' requires all covariance-shape parameters to be fixed; only the shared variance scale may be estimated.", call.=FALSE)
     }
     q <- as.integer(factor$dim)
-    order <- as.integer(factor$order)
     if(length(zIndex) != q || any(vapply(Z[zIndex], ncol, integer(1)) != ncol(Z[[zIndex[1L]]]))){
-      stop("FA/RR factor-score augmentation currently requires one equal-width incidence block per covariance level.", call.=FALSE)
+      stop("Factor-score augmentation requires one equal-width incidence block per covariance level.", call.=FALSE)
     }
-    nload <- if(factorModel == "fa") as.integer(factor$fa_nload) else as.integer(factor$rr_nload)
-    rows <- if(factorModel == "fa") as.integer(factor$fa_row) else as.integer(factor$rr_row)
-    cols <- if(factorModel == "fa") as.integer(factor$fa_col) else as.integer(factor$rr_col)
-    diagonal <- if(factorModel == "fa") as.logical(factor$fa_diag) else as.logical(factor$rr_diag)
-    loading <- matrix(0, q, order)
-    for(index in seq_len(nload)){
-      loading[rows[index], cols[index]] <- if(diagonal[index]) exp(factor$par[index]) else factor$par[index]
+    decomposition <- .factor_score_decomposition(factor)
+    if(is.null(decomposition)){
+      stop("Factor-score augmentation requires a positive low-rank-plus-diagonal covariance representation.", call.=FALSE)
     }
-    specific <- if(factorModel == "fa") c(1, exp(factor$par[nload + seq_len(q-1L)])) else rep(1, q)
-    normalization <- 1 + loading[1L,1L]^2
+    loading <- decomposition$loading
+    specific <- decomposition$specific
+    normalization <- decomposition$normalization
+    order <- ncol(loading)
     sourceDesigns <- Z[zIndex]
     latentDesigns <- lapply(seq_len(order), function(component){
       Reduce(`+`, Map(function(design, coefficient) design * coefficient,
@@ -227,22 +279,31 @@
      !identical(family$link, "identity") || !isTRUE(REML) || !isTRUE(henderson) ||
       computeCi != 0L || !is.null(vcc) ||
       !(tolower(solver) %in% c("auto", "ldlt", "cholmod"))){
-    stop("factorScoreAugmentation='profile' currently requires Gaussian REML Henderson fitting, computeCi=0, and no user vcc constraints or rotation.", call.=FALSE)
+    stop("representation$factorScores='profile' currently requires Gaussian REML Henderson fitting, output$inverse=0, and no user vcc constraints or rotation.", call.=FALSE)
   }
   setupCall <- call
-  setupCall$factorScoreAugmentation <- "none"
+  engine <- eval(call$engine, envir=caller)
+  setupEngine <- engine
+  setupEngine$factorScoreAugmentation <- "none"
+  setupCall$engine <- setupEngine
   setupCall$returnParam <- TRUE
   setup <- eval(setupCall, envir=caller)
   if(!is.null(setup$rotation)){
-    stop("factorScoreAugmentation='profile' does not support rotation=TRUE.", call.=FALSE)
+    stop("representation$factorScores='profile' does not support rotation=TRUE.", call.=FALSE)
   }
   shapeTerms <- integer()
   startingShapes <- list()
   freeShapes <- list()
   for(term in seq_along(setup$rtermss)){
     shape <- setup$covStruct[[term]]
+    if(any(vapply(shape$factors, function(factor)
+      isTRUE(factor$representation$loadings$zero_specific), logical(1)))){
+      stop("rrm() uses native reduced-rank fitting, not representation$factorScores. Use representation$factorScores='none'.",
+           call.=FALSE)
+    }
     if(length(shape$factors) != 1L ||
-       !shape$factors[[1L]]$model %in% c("fa", "rr")) next
+       !shape$factors[[1L]]$representation$kind %in%
+         c("lowrank_diagonal", "compound_symmetry")) next
     free <- which(shape$free[-1L])
     if(!length(free)) next
     shapeTerms <- c(shapeTerms, term)
@@ -250,7 +311,7 @@
     freeShapes[[as.character(term)]] <- free
   }
   if(!length(shapeTerms)){
-    stop("factorScoreAugmentation='profile' requires free fam()/rrm() shape parameters.", call.=FALSE)
+    stop("representation$factorScores='profile' requires free shape parameters on an eligible low-rank or compound-symmetry random term.", call.=FALSE)
   }
 
   initial <- unlist(lapply(names(startingShapes), function(term){
@@ -271,8 +332,10 @@
     out
   }
   augmentedSetupCall <- call
-  augmentedSetupCall$factorScoreAugmentation <- "fixed-shape"
-  augmentedSetupCall$.factorScoreParameters <- as.name(".factorScoreParameters")
+  augmentedEngine <- engine
+  augmentedEngine$factorScoreAugmentation <- "fixed-shape"
+  augmentedSetupCall$engine <- augmentedEngine
+  augmentedSetupCall$.internal <- quote(list(factorScoreParameters=.factorScoreParameters))
   augmentedSetupCall$returnParam <- TRUE
   augmentedSetupEnvironment <- new.env(parent=caller)
   augmentedSetupEnvironment$.factorScoreParameters <- unpack(initial)
@@ -300,10 +363,9 @@
       return(cachedObjective)
     }
     innerCall <- call
-    innerCall$factorScoreAugmentation <- "fixed-shape"
-    innerCall$.factorScoreParameters <- as.name(".factorScoreParameters")
-    innerCall$.pqlInner <- TRUE
-    innerCall$.pqlStart <- as.name(".factorScoreStart")
+    innerCall$engine <- augmentedEngine
+    innerCall$.internal <- quote(list(factorScoreParameters=.factorScoreParameters,
+      pqlInner=TRUE, pqlStart=.factorScoreStart))
     profileEnvironment <- new.env(parent=caller)
     profileEnvironment$.factorScoreParameters <- unpack(parameters)
     profileEnvironment$.factorScoreStart <- innerStart
@@ -339,14 +401,26 @@
   for(term in names(freeShapes)){
     shape <- setup$covStruct[[as.integer(term)]]
     factor <- shape$factors[[1L]]
-    nload <- if(factor$model == "fa") factor$fa_nload else factor$rr_nload
     positions <- freeShapes[[term]]
     offset <- sum(vapply(names(freeShapes)[seq_len(match(term,names(freeShapes))-1L)],
       function(previous) length(freeShapes[[previous]]), integer(1)))
-    for(local in seq_along(positions)){
-      position <- positions[local]
-      upper[offset + local] <- if(position <= nload) 6 else 10
-      lower[offset + local] <- -upper[offset + local]
+    if(identical(factor$representation$kind, "compound_symmetry")){
+      lower[offset + seq_along(positions)] <- -10
+      upper[offset + seq_along(positions)] <- 10
+      rhoPosition <- which(positions == 1L)
+      if(length(rhoPosition)){
+        rhoLower <- factor$report$lower[1L]
+        rhoUpper <- factor$report$upper[1L]
+        zeroRhoEta <- stats::qlogis((0 - rhoLower) / (rhoUpper - rhoLower))
+        lower[offset + rhoPosition] <- max(lower[offset + rhoPosition], zeroRhoEta)
+      }
+    }else{
+      nload <- if(factor$model == "fa") factor$fa_nload else factor$rr_nload
+      for(local in seq_along(positions)){
+        position <- positions[local]
+        upper[offset + local] <- if(position <= nload) 6 else 10
+        lower[offset + local] <- -upper[offset + local]
+      }
     }
   }
   lower[1L] <- max(lower[1L], -6)
@@ -391,4 +465,3 @@
   result$convergence <- isTRUE(result$convergence) && optimum$convergence == 0L
   result
 }
-

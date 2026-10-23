@@ -139,8 +139,225 @@
   out
 }
 
+.mmes_prediction_memory <- function(object, predictionRows, fixedOnly, VarU,
+                                    sed, pairwise, maxMemoryMB){
+  engineColumns <- nrow(object$C)
+  covarianceCopies <- if(fixedOnly || !VarU) 3 else 10
+  workspaceMB <- 8e-6 * (3 * engineColumns * predictionRows +
+    (covarianceCopies + if(sed || !isFALSE(pairwise)) 4 else 0) * predictionRows^2)
+  if(!is.finite(workspaceMB) || workspaceMB > maxMemoryMB){
+    stop("Prediction for ", predictionRows, " rows needs approximately ",
+         format(round(workspaceMB, 1), scientific=FALSE),
+         " MB of dense solve/covariance workspace, exceeding maxMemoryMB=",
+         maxMemoryMB, ". Each full covariance alone needs ",
+         format(round(8e-6 * predictionRows^2, 1), scientific=FALSE),
+         " MB. Request fewer levels or smaller explicit contrast batches",
+         if(VarU && !fixedOnly) ", or use VarU=FALSE" else "",
+         "; increase maxMemoryMB only if sufficient memory is available. ",
+         "PEV=FALSE does not remove the full vcov output.",
+         call.=FALSE)
+  }
+  invisible(NULL)
+}
+
+.mmes_observed_predictions <- function(object, classify, Dtable, levels,
+                                       VarU, sed, pairwise, maxMemoryMB){
+  if(length(classify) != 1L || is.na(classify) || !nzchar(classify)){
+    stop("observed=TRUE requires one categorical fixed-effect classify term in D.",
+         call.=FALSE)
+  }
+  predictionRules <- if(is.null(Dtable)) object$Dtable else Dtable
+  requiredColumns <- c("type", "term", "include", "average")
+  if(!is.data.frame(predictionRules) ||
+     !all(requiredColumns %in% names(predictionRules)) ||
+     nrow(predictionRules) != nrow(object$Dtable) ||
+     anyDuplicated(predictionRules$term) ||
+     !setequal(predictionRules$term, object$Dtable$term)){
+    stop("With observed=TRUE, Dtable must contain each fitted term exactly once, ",
+         "with type, term, include and average columns; start from object$Dtable.",
+         call.=FALSE)
+  }
+  predictionRules <- predictionRules[match(object$Dtable$term, predictionRules$term), , drop=FALSE]
+  if(!identical(as.character(predictionRules$type), as.character(object$Dtable$type)) ||
+     !is.logical(predictionRules$include) || !is.logical(predictionRules$average) ||
+     anyNA(predictionRules$include) || anyNA(predictionRules$average)){
+    stop("Dtable types must match the fitted terms, and include/average must be nonmissing logical flags.",
+         call.=FALSE)
+  }
+  predictionRules$levels <- NULL
+  fixedRules <- predictionRules$type == "fixed"
+  if(any(predictionRules$include[fixedRules] != object$Dtable$include[fixedRules]) ||
+     any(predictionRules$average[fixedRules] != object$Dtable$average[fixedRules])){
+    stop("With observed=TRUE, fixed Dtable flags must remain as in object$Dtable: ",
+         "all fixed terms use retained-record averages. Only random-term flags may be changed. ",
+         "Use explicit estimable contrasts for other fixed-effect rules.", call.=FALSE)
+  }
+  classifyVariables <- strsplit(classify, ":", fixed=TRUE)[[1L]]
+  fixedVariables <- all.vars(stats::delete.response(stats::terms(object$args$fixed)))
+  if(anyDuplicated(classifyVariables) ||
+     !all(classifyVariables %in% intersect(fixedVariables, names(object$data)))){
+    stop("observed=TRUE requires D to name categorical variables in the fitted fixed formula.",
+         call.=FALSE)
+  }
+  classifyData <- object$data[, classifyVariables, drop=FALSE]
+  if(!all(vapply(classifyData, function(values) is.factor(values) || is.character(values),
+                 logical(1))) || anyNA(classifyData)){
+    stop("observed=TRUE requires nonmissing categorical classify variables in the retained fitting data.",
+         call.=FALSE)
+  }
+  if(nrow(classifyData) != nrow(object$W)){
+    stop("The retained prediction data do not match the fitted design rows.", call.=FALSE)
+  }
+  groupCodes <- lapply(classifyData, function(values) match(values, unique(values)))
+  groupKeys <- do.call(paste, c(groupCodes, sep="\r"))
+  firstRows <- which(!duplicated(groupKeys))
+  groupIndices <- match(groupKeys, groupKeys[firstRows])
+  predictionLabels <- do.call(paste, c(lapply(classifyData[firstRows, , drop=FALSE],
+                                              as.character), sep=":"))
+  if(anyDuplicated(predictionLabels)){
+    stop("Observed classify labels are ambiguous when joined with ':'. ",
+         "Rename the conflicting levels or supply explicit contrasts.", call.=FALSE)
+  }
+  selectedGroups <- seq_along(firstRows)
+  if(length(levels)){
+    if(!is.list(levels) || is.null(names(levels)) || anyNA(names(levels)) ||
+       anyDuplicated(names(levels)) ||
+       !all(names(levels) %in% c(classify, predictionRules$term[!fixedRules]))){
+      stop("With observed=TRUE, levels must be a named list for D and/or fitted random terms.",
+           call.=FALSE)
+    }
+  }
+  classifyLevels <- levels[[classify]]
+  if(!is.null(classifyLevels)){
+    if(!is.character(classifyLevels) || !length(classifyLevels) ||
+       anyNA(classifyLevels) || anyDuplicated(classifyLevels)){
+      stop("With observed=TRUE, classify levels must contain unique observed labels.",
+           call.=FALSE)
+    }
+    selectedGroups <- match(classifyLevels, predictionLabels)
+    if(anyNA(selectedGroups)){
+      stop("Requested levels were not observed in the retained fitting data: ",
+           paste(head(classifyLevels[is.na(selectedGroups)], 5L), collapse=", "),
+           ". observed=TRUE does not add unobserved combinations.", call.=FALSE)
+    }
+  }
+  activeRandom <- !fixedRules & (predictionRules$include | predictionRules$average)
+  .mmes_prediction_memory(object, length(selectedGroups), !any(activeRandom), VarU, sed,
+                          pairwise, maxMemoryMB)
+  selectedRows <- match(groupIndices, selectedGroups)
+  usedRows <- which(!is.na(selectedRows))
+  groupSizes <- tabulate(groupIndices, nbins=length(firstRows))
+  averages <- Matrix::sparseMatrix(i=selectedRows[usedRows], j=usedRows,
+    x=1 / groupSizes[groupIndices[usedRows]],
+    dims=c(length(selectedGroups), nrow(object$W)))
+  fixedColumns <- nrow(object$b)
+  fixedContrasts <- averages %*% object$W[, seq_len(fixedColumns), drop=FALSE]
+  contrasts <- cbind(fixedContrasts, Matrix::Matrix(0, nrow(fixedContrasts),
+    nrow(object$bu) - fixedColumns, sparse=TRUE))
+  for(ruleIndex in which(!fixedRules)){
+    randomIndex <- match(predictionRules$term[ruleIndex], names(object$partitions))
+    ranges <- object$partitions[[randomIndex]]
+    randomColumns <- unlist(lapply(seq_len(nrow(ranges)), function(coordinate)
+      seq.int(ranges[coordinate, 1L], ranges[coordinate, 2L])), use.names=FALSE)
+    selectedColumns <- rep(TRUE, length(randomColumns))
+    requestedLevels <- levels[[predictionRules$term[ruleIndex]]]
+    if(!is.null(requestedLevels)){
+      effects <- object$uList[[randomIndex]]
+      effectRows <- rep(rownames(effects), times=ncol(effects))
+      effectCoordinates <- rep(colnames(effects), each=nrow(effects))
+      effectLabels <- list(rownames(object$bu)[randomColumns], effectRows,
+        paste(effectCoordinates, effectRows, sep=":"),
+        paste(effectRows, effectCoordinates, sep=":"), effectCoordinates)
+      if(!is.character(requestedLevels) || !length(requestedLevels) ||
+         anyNA(requestedLevels) || anyDuplicated(requestedLevels)){
+        stop("Random-term levels must be unique nonmissing character labels for '",
+             predictionRules$term[ruleIndex], "'.", call.=FALSE)
+      }
+      unknownLevels <- setdiff(requestedLevels, unlist(effectLabels, use.names=FALSE))
+      if(length(unknownLevels)){
+        stop("Unknown levels for term '", predictionRules$term[ruleIndex], "': ",
+             paste(head(unknownLevels, 5L), collapse=", "), call.=FALSE)
+      }
+      selectedColumns <- Reduce(`|`, lapply(effectLabels, function(labels)
+        labels %in% requestedLevels))
+    }
+    if(!activeRandom[ruleIndex]){
+      if(!is.null(requestedLevels)){
+        warning("levels given for term '", predictionRules$term[ruleIndex],
+                "' are ignored because it is neither included nor averaged.", call.=FALSE)
+      }
+      next
+    }
+    termColumns <- randomColumns[selectedColumns]
+    if(!length(termColumns)){
+      stop("No fitted coefficients selected for random term '",
+           predictionRules$term[ruleIndex], "'.", call.=FALSE)
+    }
+    if(predictionRules$include[ruleIndex]){
+      randomDesign <- object$W[, termColumns, drop=FALSE]
+      if(predictionRules$average[ruleIndex]){
+        if(any(randomDesign@x != 1)){
+          stop("include=TRUE with average=TRUE requires an indicator random design for term '",
+               predictionRules$term[ruleIndex],
+               "'. Use include=TRUE alone for empirical numeric-design averages.",
+               call.=FALSE)
+        }
+        weights <- averages %*% randomDesign
+        weights <- as(weights != 0, "dMatrix")
+        presentCount <- Matrix::rowSums(weights)
+        if(any(presentCount == 0)){
+          stop("No selected random levels co-occur with some observed prediction rows for term '",
+               predictionRules$term[ruleIndex], "'.", call.=FALSE)
+        }
+        weights <- Matrix::Diagonal(x=1 / presentCount) %*% weights
+      }else{
+        weights <- averages %*% randomDesign
+      }
+      contrasts[, termColumns] <- weights
+    }else{
+      contrasts[, termColumns] <- 1 / length(termColumns)
+    }
+  }
+  dimnames(contrasts) <- list(predictionLabels[selectedGroups], rownames(object$bu))
+  list(D=contrasts, observations=groupSizes[selectedGroups],
+       classify=classifyData[firstRows[selectedGroups], , drop=FALSE],
+       Dtable=predictionRules, levels=levels,
+       randomTerms=predictionRules$term[activeRandom])
+}
+
 "predict.mmes" <- function(object, Dtable=NULL, D, levels=NULL, sed=FALSE,
-                           pairwise=FALSE, adjust="none", df=Inf, ...){
+                           pairwise=FALSE, adjust="none", df=Inf,
+                           PEV=TRUE, VarU=TRUE, observed=FALSE,
+                           maxMemoryMB=NULL, ...){
+  .mmes_require_coefficient_matrix(object)
+  if(length(PEV) != 1L || is.na(PEV) || !is.logical(PEV)){
+    stop("PEV must be TRUE or FALSE.", call.=FALSE)
+  }
+  if(length(VarU) != 1L || is.na(VarU) || !is.logical(VarU)){
+    stop("VarU must be TRUE or FALSE.", call.=FALSE)
+  }
+  if(length(observed) != 1L || is.na(observed) || !is.logical(observed)){
+    stop("observed must be TRUE or FALSE.", call.=FALSE)
+  }
+  if(!is.null(Dtable) && "levels" %in% names(Dtable)){
+    stop("Dtable no longer accepts a levels column; supply selections and numeric settings through the levels argument.",
+         call.=FALSE)
+  }
+  if(!is.null(levels) &&
+     (!is.list(levels) || (length(levels) &&
+      (is.null(names(levels)) || anyNA(names(levels)) ||
+       any(names(levels) == "") || anyDuplicated(names(levels)))))){
+    stop("levels must be a named list with unique nonmissing term names.", call.=FALSE)
+  }
+  resolvedLevels <- levels
+  if(is.null(maxMemoryMB)){
+    maxMemoryMB <- object$control$execution$denseMemoryMB
+    if(is.null(maxMemoryMB)) maxMemoryMB <- 1000
+  }
+  maxMemoryMB <- .mme_positive(maxMemoryMB, "maxMemoryMB")
+  if(inherits(object, "mmes.glmm") && VarU){
+    stop("VarU is currently available only for Gaussian mmes fits.", call.=FALSE)
+  }
   if(is.character(D)){classify <- D}else{classify="id"} # save a copy before D is overwriten
   # Prediction variances are obtained by solving C %*% X = t(D) for the
   # handful of rows in D (see predict_mmes_vcov_cpp), so the complete or
@@ -150,6 +367,27 @@
   }
   if(length(levels) && !is.character(D)){
     stop("levels can only be used when D is a character classify term.", call.=FALSE)
+  }
+  observedInfo <- NULL
+  if(observed){
+    if(is.null(object$fixedRank) || !is.character(D)){
+      stop("observed=TRUE requires a rank-reduced fit and a categorical fixed classify term. ",
+           "For explicit D matrices use observed=FALSE.", call.=FALSE)
+    }
+    observedInfo <- .mmes_observed_predictions(object, D, Dtable, levels,
+      VarU, sed, pairwise, maxMemoryMB)
+    D <- observedInfo$D
+    Dtable <- observedInfo$Dtable
+    resolvedLevels <- observedInfo$levels
+  }else if(!is.null(object$fixedRank) && is.character(D)){
+    stop("Classify prediction for a rank-reduced fixed model is disabled by default ",
+         "before constructing the Cartesian level grid. Zero-constrained coefficients ",
+         "do not make unobserved combinations estimable. Use observed=TRUE for ",
+         "observation-weighted fixed predictions over combinations present in the retained ",
+         "fitting data, optionally selecting random contributions with Dtable, ",
+         "or supply an explicit estimable D matrix. ",
+         "Dense covariance allocation is checked against maxMemoryMB.",
+         call.=FALSE)
   }
   # complete the Dtable withnumber of effects in each term
   xEffectN <- lapply(object$partitionsX, as.vector)
@@ -181,15 +419,21 @@
   # fill the Dt table for rules
   if(is.null(Dtable) & is.character(D) ){ # if user didn't provide the Dtable but D is character
     Dtable <- object$Dtable # we extract it from the model
+    Dtable$levels <- NULL
     termsInDtable <- apply(data.frame(Dtable$term),1,function(xx){all.names(as.formula(paste0("~",xx)))})
     termsInDtable <- lapply(termsInDtable, function(x){intersect(x,colnames(object$data))})
     termsInDtable <- lapply(termsInDtable, function(x){return(unique(c(x, paste(x, collapse=":"))))})
     # term identified
     termsInDtableN <- unlist(lapply(termsInDtable,length))
-    pickTerm <- which( unlist(lapply(termsInDtable, function(xxx){ifelse(length(which(xxx == D)) > 0, 1, 0)})) > 0)
+    d_vars <- strsplit(D, ":", fixed=TRUE)[[1]]
+    pickTerm <- which(vapply(termsInDtable, function(xxx){
+      any(xxx == D) || (length(d_vars) > 1 && any(vapply(xxx, function(cand){
+        setequal(strsplit(cand, ":", fixed=TRUE)[[1]], d_vars)
+      }, logical(1))))
+    }, logical(1)))
     if(length(pickTerm) == 0){
-      isInDf <- which(colnames(object$data) %in% D)
-      if(length(isInDf) > 0){ # is in data frame but not in model
+      isInDf <- intersect(d_vars, colnames(object$data))
+      if(length(isInDf) == length(d_vars)){ # is in data frame but not in model
         stop(paste("Predict:",classify,"not in the model but present in the original dataset. You may need to provide the
                    Dtable argument to know how to predict", classify), call. = FALSE)
       }else{
@@ -216,7 +460,7 @@
   }
   ## if user has provided D as a classify then we create the D matrix
   if(is.character(D)){
-    if(is.null(Dtable$levels)) Dtable$levels <- vector("list", nrow(Dtable))
+    termLevels <- stats::setNames(vector("list", nrow(Dtable)), Dtable$term)
     if(length(levels)){
       if(!is.list(levels) || is.null(names(levels)) || any(names(levels) == "")){
         stop("levels must be a named list whose names are terms of the Dtable.", call.=FALSE)
@@ -227,10 +471,10 @@
              ". Valid terms are: ", paste(Dtable$term, collapse=", "), call.=FALSE)
       }
       for(nm in names(levels)){
-        if(!is.null(levels[[nm]])) Dtable$levels[[match(nm, Dtable$term)]] <- levels[[nm]]
+        if(!is.null(levels[[nm]])) termLevels[[nm]] <- levels[[nm]]
       }
     }
-    hasLevels <- !vapply(Dtable$levels, is.null, logical(1))
+    hasLevels <- !vapply(termLevels, is.null, logical(1))
     termVars <- lapply(Dtable$term, function(xx){
       v <- intersect(all.names(as.formula(paste0("~", xx))), colnames(object$data))
       unique(c(v, paste(v, collapse=":")))
@@ -250,9 +494,21 @@
       else classify %in% termVars[[i]]
     }, logical(1)))
     if(length(classifyRows)){
-      rowLevels <- unique(as.character(unlist(Dtable$levels[classifyRows])))
+      rowLevels <- unique(as.character(unlist(termLevels[classifyRows])))
       newRows <- setdiff(rowLevels, rownames(D))
-      unknown <- setdiff(newRows, cd)
+      # Collect all available levels for classify across data, coefficients, and random effect dimensions
+      availableLevels <- c(cd, rownames(D))
+      if(length(classifyVars) > 1){
+        for(k in seq_along(object$uList)){
+          uMat <- object$uList[[k]]
+          if(!is.null(colnames(uMat)) && !is.null(rownames(uMat))){
+            availableLevels <- c(availableLevels,
+              as.vector(outer(colnames(uMat), rownames(uMat), paste, sep=":")),
+              as.vector(outer(rownames(uMat), colnames(uMat), paste, sep=":")))
+          }
+        }
+      }
+      unknown <- setdiff(newRows, availableLevels)
       if(length(unknown)){
         stop("Levels not present in the data nor among the fitted coefficients of '", classify,
              "': ", paste(unknown, collapse=", "), call.=FALSE)
@@ -279,77 +535,307 @@
       term <- Dtable[iRow,"term"]
       isFixed <- Dtable[iRow,"type"] == "fixed" && term != "1"
       vars <- strsplit(term, ":", fixed=TRUE)[[1]]
-      lv <- Dtable$levels[[iRow]]
-      full <- NULL
+      lv <- termLevels[[iRow]]
+
       if(isFixed){
-        full <- sparse.model.matrix(reformulate(term, intercept=FALSE), data=object$data)
-        fullLabels <- .dt_strip_labels(colnames(full), vars)
-        colLabels <- .dt_strip_labels(cd[w], vars)
-      }else{
-        colLabels <- cd[w]
-      }
-      isCovariate <- isFixed && all(vars %in% colnames(object$data)) &&
-        all(vapply(vars, function(x) is.numeric(object$data[[x]]), logical(1)))
-      if(!is.null(lv) && isCovariate){
-        if(!is.numeric(lv) || !(length(lv) %in% c(1L, length(w)))){
-          stop("levels for covariate term '", term, "' must be numeric values at which to predict.",
-               call.=FALSE)
+        numVars <- vars[vapply(vars, function(x) is.numeric(object$data[[x]]), logical(1))]
+        facVars <- vars[vapply(vars, function(x) !is.numeric(object$data[[x]]), logical(1))]
+        hasCovariate <- length(numVars) > 0
+
+        if(!hasCovariate){
+          full <- sparse.model.matrix(reformulate(term, intercept=FALSE), data=object$data)
+          fullLabels <- .dt_strip_labels(colnames(full), vars)
+          colLabels <- .dt_strip_labels(cd[w], vars)
+          if(!is.null(lv)){
+            unknown <- setdiff(as.character(lv), fullLabels)
+            if(length(unknown)){
+              stop("Unknown levels for term '", term, "': ", paste(unknown, collapse=", "), call.=FALSE)
+            }
+            if(!Dtable[iRow,"include"] && !Dtable[iRow,"average"]){
+              warning("levels given for term '", term, "' are ignored because it is neither included nor averaged.",
+                      call.=FALSE)
+            }
+          }
+          selected <- if(is.null(lv)) rep(TRUE, length(w)) else colLabels %in% as.character(lv)
+          fullSelected <- if(is.null(lv)) rep(TRUE, ncol(full)) else fullLabels %in% as.character(lv)
+          if(Dtable[iRow,"include"]){
+            subD <- D[,w,drop=FALSE]
+            subD[which(subD > 0, arr.ind = TRUE)] = 1
+            if(any(!selected)) subD[, which(!selected)] <- 0
+            if(Dtable[iRow,"average"]){
+              present <- as.matrix(cooc %*% full[, fullSelected, drop=FALSE]) > 0
+              averageN <- rowSums(present)
+              averageN[noData] <- sum(fullSelected)
+              subD <- Matrix::Diagonal(x=1/pmax(averageN, 1)) %*% subD
+            }
+            D[,w] <- subD
+          }else{
+            if(Dtable[iRow,"average"]){
+              averageN <- sum(fullSelected)
+              D[,w] <- matrix(rep(ifelse(selected, 1/averageN, 0), each=nrow(D)), nrow=nrow(D))
+            }else{
+              D[,w] <- D[,w] * 0
+            }
+          }
+        }else{
+          # Fixed term with covariate(s)
+          if(is.null(lv)){
+            refValues <- stats::setNames(lapply(numVars, function(v) mean(object$data[[v]], na.rm=TRUE)), numVars)
+            termLevels[[iRow]] <- refValues
+            lv <- refValues
+          }else if(is.numeric(lv)){
+            if(any(!is.finite(lv))){
+              stop("levels for covariate term '", term, "' must be finite numeric values at which to predict.", call.=FALSE)
+            }
+            if(length(lv) == 1){
+              refValues <- stats::setNames(as.list(rep(lv, length(numVars))), numVars)
+              termLevels[[iRow]] <- refValues
+              lv <- refValues
+            }else if(length(lv) == length(w) && length(facVars) == 0){
+              termLevels[[iRow]] <- lv
+            }else{
+              refValues <- stats::setNames(as.list(rep(lv[1], length(numVars))), numVars)
+              termLevels[[iRow]] <- refValues
+              lv <- refValues
+            }
+          }else if(is.list(lv)){
+            unknownVars <- setdiff(names(lv), vars)
+            if(length(unknownVars) > 0){
+              stop("Unknown variables in levels for term '", term, "': ", paste(unknownVars, collapse=", "), call.=FALSE)
+            }
+            for(nv in intersect(names(lv), numVars)){
+              val <- lv[[nv]]
+              if(!is.numeric(val) || any(!is.finite(val))){
+                stop("levels for covariate term '", term, "' must be finite numeric values at which to predict.", call.=FALSE)
+              }
+            }
+            for(nv in numVars){
+              if(is.null(lv[[nv]])){
+                lv[[nv]] <- mean(object$data[[nv]], na.rm=TRUE)
+              }
+            }
+            termLevels[[iRow]] <- lv
+          }else{
+            stop("levels for covariate term '", term, "' must be numeric values or a named list at which to predict.", call.=FALSE)
+          }
+
+          if(!Dtable[iRow,"include"] && !Dtable[iRow,"average"]){
+            if(!is.null(termLevels[[iRow]])){
+              warning("levels given for term '", term, "' are ignored because it is neither included nor averaged.", call.=FALSE)
+            }
+            D[,w] <- 0
+            next
+          }
+
+          if(length(facVars) == 0){
+            if(is.numeric(lv) && length(lv) == length(w)){
+              D[,w] <- matrix(rep(lv, each=nrow(D)), nrow=nrow(D))
+            }else{
+              prod_val <- prod(vapply(numVars, function(v) as.numeric(lv[[v]]), numeric(1)))
+              D[,w] <- prod_val
+            }
+          }else{
+            contrastsArg <- if(!is.null(object$inputArgs$contrasts)) object$inputArgs$contrasts else if(!is.null(object$args$contrasts)) object$args$contrasts else NULL
+            fixedFormula <- if(!is.null(object$args$fixed)) object$args$fixed else if(!is.null(object$inputArgs$fixed)) object$inputArgs$fixed else NULL
+
+            allFacVars <- facVars
+            levsList <- lapply(allFacVars, function(fv){
+              l <- levels(object$data[[fv]])
+              if(is.null(l)) unique(as.character(object$data[[fv]])) else l
+            })
+            names(levsList) <- allFacVars
+            gridDf <- expand.grid(levsList, stringsAsFactors=TRUE)
+            for(nv in numVars){
+              gridDf[[nv]] <- as.numeric(lv[[nv]])
+            }
+            otherFixedVars <- setdiff(all.vars(stats::delete.response(terms(fixedFormula))), c(names(gridDf), names(object$data)[1]))
+            for(ov in otherFixedVars){
+              if(ov %in% colnames(object$data)){
+                if(is.numeric(object$data[[ov]])){
+                  gridDf[[ov]] <- mean(object$data[[ov]], na.rm=TRUE)
+                }else{
+                  l <- levels(object$data[[ov]])
+                  gridDf[[ov]] <- factor(if(is.null(l)) object$data[[ov]][1] else l[1], levels=if(is.null(l)) unique(object$data[[ov]]) else l)
+                }
+              }
+            }
+            mmGrid <- model.matrix(stats::delete.response(terms(fixedFormula)), gridDf, contrasts.arg=contrastsArg)
+
+            specifiedFac <- intersect(names(lv), allFacVars)
+            if(length(specifiedFac) > 0){
+              rowMatches <- rep(TRUE, nrow(gridDf))
+              for(sf in specifiedFac){
+                rowMatches <- rowMatches & (gridDf[[sf]] == as.character(lv[[sf]]))
+              }
+              selRow <- which(rowMatches)[1]
+              if(!is.na(selRow)){
+                colVals <- mmGrid[selRow, w]
+                D[,w] <- matrix(rep(colVals, each=nrow(D)), nrow=nrow(D))
+              }
+            }else{
+              if(Dtable[iRow, "include"]){
+                gridRowNames <- if(length(allFacVars) == 1) as.character(gridDf[[allFacVars[1]]]) else apply(gridDf[, allFacVars, drop=FALSE], 1, paste, collapse=":")
+                for(jRow in seq_len(nrow(D))){
+                  matchIdx <- match(rd[jRow], gridRowNames)
+                  if(is.na(matchIdx) && length(allFacVars) == 1){
+                    rdParts <- strsplit(rd[jRow], ":", fixed=TRUE)[[1]]
+                    matchIdx <- match(rdParts[1], gridRowNames)
+                    if(is.na(matchIdx) && length(rdParts) >= 2) matchIdx <- match(rdParts[2], gridRowNames)
+                  }
+                  if(!is.na(matchIdx)){
+                    D[jRow, w] <- mmGrid[matchIdx, w]
+                  }
+                }
+              }else if(Dtable[iRow, "average"]){
+                expCols <- colMeans(mmGrid[, w, drop=FALSE])
+                D[,w] <- matrix(rep(expCols, each=nrow(D)), nrow=nrow(D))
+              }else{
+                D[,w] <- 0
+              }
+            }
+          }
         }
-        D[,w] <- matrix(rep(lv, each=nrow(D)), nrow=nrow(D))
-        next
-      }
-      if(!is.null(lv)){
-        available <- if(isFixed) fullLabels else colLabels
-        unknown <- setdiff(as.character(lv), available)
-        if(length(unknown)){
-          stop("Unknown levels for term '", term, "': ", paste(unknown, collapse=", "), call.=FALSE)
+      }else if(Dtable[iRow, "type"] == "random"){
+        # Random effect term
+        r <- match(iRow, which(Dtable$type == "random"))
+        effects <- object$uList[[r]]
+        ranges <- object$partitions[[r]]
+        if(ncol(effects) > 1){
+          available <- c(cd[w],
+            as.vector(outer(colnames(effects), rownames(effects), paste, sep=":")),
+            as.vector(outer(rownames(effects), colnames(effects), paste, sep=":")),
+            colnames(effects), rownames(effects))
+        }else{
+          available <- c(cd[w], rownames(effects))
+        }
+        if(!is.null(lv)){
+          unknown <- setdiff(as.character(lv), available)
+          if(length(unknown)){
+            stop("Unknown levels for term '", term, "': ", paste(unknown, collapse=", "), call.=FALSE)
+          }
+          if(!Dtable[iRow,"include"] && !Dtable[iRow,"average"]){
+            warning("levels given for term '", term, "' are ignored because it is neither included nor averaged.", call.=FALSE)
+          }
         }
         if(!Dtable[iRow,"include"] && !Dtable[iRow,"average"]){
-          warning("levels given for term '", term, "' are ignored because it is neither included nor averaged.",
-                  call.=FALSE)
+          D[,w] <- 0
+          next
         }
-      }
-      selected <- if(is.null(lv)) rep(TRUE, length(w)) else colLabels %in% as.character(lv)
-      fullSelected <- if(isFixed){
-        if(is.null(lv)) rep(TRUE, ncol(full)) else fullLabels %in% as.character(lv)
-      }else NULL
-      if(Dtable[iRow,"include"]){
-        subD <- D[,w,drop=FALSE]
-        subD[which(subD > 0, arr.ind = TRUE)] = 1
-        if(any(!selected)) subD[, which(!selected)] <- 0
-        if(Dtable[iRow,"average"]){
-          if(isFixed){
-            # cells of the full term (reference levels included) present for each prediction row
-            present <- as.matrix(cooc %*% full[, fullSelected, drop=FALSE]) > 0
-            averageN <- rowSums(present)
-            averageN[noData] <- sum(fullSelected)
+        if(Dtable[iRow,"include"]){
+          if(ncol(effects) > 1){
+            # Structured random term
+            for(jRow in seq_len(nrow(D))){
+              D[jRow, w] <- 0
+              rd_parts <- strsplit(rd[jRow], ":", fixed=TRUE)[[1]]
+              if(length(rd_parts) >= 2){
+                col_env <- match(rd_parts[1], colnames(effects))
+                row_name <- match(rd_parts[2], rownames(effects))
+                if(is.na(col_env) || is.na(row_name)){
+                  col_env <- match(rd_parts[2], colnames(effects))
+                  row_name <- match(rd_parts[1], rownames(effects))
+                }
+                if(!is.na(col_env) && !is.na(row_name)){
+                  target_col <- ranges[col_env, 1L] + row_name - 1L
+                  D[jRow, target_col] <- 1
+                }
+              }else if(length(rd_parts) == 1){
+                row_name <- match(rd[jRow], rownames(effects))
+                col_env <- match(rd[jRow], colnames(effects))
+                if(!is.na(row_name)){
+                  target_cols <- ranges[, 1L] + row_name - 1L
+                  D[jRow, target_cols] <- 1 / length(target_cols)
+                }else if(!is.na(col_env)){
+                  target_cols <- seq.int(ranges[col_env, 1L], ranges[col_env, 2L])
+                  D[jRow, target_cols] <- 1 / length(target_cols)
+                }
+              }
+            }
           }else{
-            averageN <- Matrix::rowSums(subD > 0)
+            # Unstructured random term
+            for(jRow in seq_len(nrow(D))){
+              idx <- match(rd[jRow], rownames(effects))
+              if(is.na(idx)){
+                rd_parts <- strsplit(rd[jRow], ":", fixed=TRUE)[[1]]
+                if(length(rd_parts) >= 2){
+                  idx <- match(rd_parts[1], rownames(effects))
+                  if(is.na(idx)) idx <- match(rd_parts[2], rownames(effects))
+                }
+              }
+              if(!is.na(idx)){
+                D[jRow, w] <- 0
+                D[jRow, w[idx]] <- 1
+              }
+            }
+            if(Dtable[iRow,"average"]){
+              D[,w] <- 1 / length(w)
+            }
           }
-          subD <- Matrix::Diagonal(x=1/pmax(averageN, 1)) %*% subD
-        }
-        D[,w] <- subD
-      }else{
-        if(Dtable[iRow,"average"]){
-          averageN <- if(isFixed) sum(fullSelected) else sum(selected)
-          D[,w] <- matrix(rep(ifelse(selected, 1/averageN, 0), each=nrow(D)), nrow=nrow(D))
         }else{
-          D[,w] <- D[,w] * 0
+          # !include, but average
+          if(Dtable[iRow,"average"]){
+            D[,w] <- 1 / length(w)
+          }else{
+            D[,w] <- 0
+          }
         }
       }
     }
     if(length(interceptColumn) > 0){D[,interceptColumn] = 1}
+    resolvedLevels <- Filter(Negate(is.null), termLevels)
   }else{ }# user has provided D as a matrix to do direct multiplication
   ## calculate predictions and standard errors
+  .mmes_check_estimable_fixed(object, D)
+  nFixed <- nrow(object$b)
+  fixedOnly <- nFixed == ncol(D) ||
+    !any(D[, seq.int(nFixed + 1L, ncol(D)), drop=FALSE] != 0)
+  if(!is.null(object$fixedRank)){
+    .mmes_prediction_memory(object, nrow(D), fixedOnly, VarU, sed, pairwise,
+                            maxMemoryMB)
+  }
   bu <- object$bu
   predicted.value <- D %*% bu
-  vcov <- predict_mmes_vcov_cpp(object, .mmes_engine_contrast(object, D))
+  solveVcov <- .mmes_vcov_solver(object)
+  vcov <- solveVcov(D)
+  pev <- if(PEV) vcov else NULL
+  varU <- NULL
+  samplingVcov <- NULL
+  if(VarU){
+    .mmes_varu_check(object)
+    if(fixedOnly){
+      varU <- matrix(0, nrow(D), nrow(D))
+      samplingVcov <- vcov
+    }else{
+      randomD <- D
+      if(nFixed) randomD[, seq_len(nFixed)] <- 0
+      prior <- .mmes_prior_vcov(object, randomD)
+      randomError <- solveVcov(randomD)
+      varU <- prior - randomError
+      varU <- (varU + t(varU))/2
+      fixedD <- D
+      if(nFixed < ncol(D)) fixedD[, seq.int(nFixed + 1L, ncol(D))] <- 0
+      fixedSampling <- solveVcov(fixedD)
+      samplingVcov <- fixedSampling + varU
+    }
+  }
   std.error <- sqrt(diag(vcov))
-  pvals <- data.frame(id=rownames(D),predicted.value=predicted.value[,1], std.error=std.error)
+  predictionIds <- rownames(D)
+  if(is.null(predictionIds)) predictionIds <- as.character(seq_len(nrow(D)))
+  pvals <- data.frame(id=predictionIds, predicted.value=predicted.value[,1],
+                      std.error=std.error, pev=diag(vcov),
+                      var.u=if(is.null(varU)) rep(NA_real_, nrow(D)) else diag(varU))
   if(is.character(classify)){colnames(pvals)[1] <- classify}
-  out <- list(pvals=pvals,D=D,vcov=vcov, Dtable=Dtable)
+  out <- list(pvals=pvals,D=D,vcov=vcov,PEV=pev,VarU=varU,
+              sampling.vcov=samplingVcov,Dtable=Dtable,levels=resolvedLevels)
+  if(!is.null(observedInfo)){
+    out$observed <- list(classify=observedInfo$classify,
+      observations=observedInfo$observations,
+      randomTerms=observedInfo$randomTerms,
+      weighting=paste0("observation-weighted fixed predictor within retained observed combinations; ",
+        if(length(observedInfo$randomTerms)) "random contributions follow the returned Dtable" else
+          "random contributions excluded"))
+  }
   if(sed || !isFALSE(pairwise)){
-    out <- c(out, .predict_comparisons(pvals, vcov, rownames(D), sed, pairwise,
+    out <- c(out, .predict_comparisons(pvals, vcov, predictionIds, sed, pairwise,
                                        adjust, df, object, D))
   }
   return(out)

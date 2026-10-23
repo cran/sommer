@@ -143,7 +143,7 @@ section.footnotes::before {
 <div class="frontmatter">
 <div class="title"><h1>Generalized linear mixed models with sommer</h1></div>
 <div class="author"><h2>sommer development team</h2></div>
-<div class="date"><h3>2026-10-03</h3></div>
+<div class="date"><h3>2026-10-23</h3></div>
 </div>
 <div class="body">
 <pre><code class="language-r">library(sommer)
@@ -163,13 +163,12 @@ matrices, and covariance structures are specified exactly as for a Gaussian
 mixed model.</p>
 <p>The default <code>family = gaussian()</code> with its identity link takes the ordinary
 linear mixed-model path. Supply another family explicitly for a GLMM:</p>
-<pre><code class="language-r">fit &lt;- mmes(
-  fixed = outcome ~ treatment,
+<pre><code class="language-r">fit &lt;- mmes(fixed = outcome ~ treatment,
   random = ~ subject,
   rcov = ~ units,
   data = dat,
-  family = binomial()
-)
+  family = binomial(),
+  control = mmes_control(update = list(blendWeight = 0)))
 </code></pre>
 <p>The initial implementation accepts one numeric response. Binomial responses
 may be a zero/one numeric vector; grouped-binomial matrix responses are not
@@ -207,24 +206,22 @@ quasi-likelihood approximations in those settings.</p>
 one. For other families, sommer estimates the Gaussian working-scale residual
 covariance using the supplied <code>rcov</code> structure. All existing random-effect
 structures remain available. For example:</p>
-<pre><code class="language-r">fit &lt;- mmes(
-  y ~ environment,
+<pre><code class="language-r">fit &lt;- mmes(y ~ environment,
   random = ~ vsm(usm(environment), ism(genotype)),
   rcov = ~ units,
   data = dat,
-  family = poisson()
-)
+  family = poisson(),
+  control = mmes_control(update = list(blendWeight = 0)))
 </code></pre>
 <h2 id="offsets-and-precision-weights">Offsets and precision weights</h2>
 <p>Use <code>offset()</code> in the fixed formula as in <code>glm()</code>. A common Poisson rate model
 uses the logarithm of an exposure:</p>
-<pre><code class="language-r">fit &lt;- mmes(
-  events ~ treatment + offset(log(exposure)),
+<pre><code class="language-r">fit &lt;- mmes(events ~ treatment + offset(log(exposure)),
   random = ~ site,
   rcov = ~ units,
   data = dat,
-  family = poisson()
-)
+  family = poisson(),
+  control = mmes_control(update = list(blendWeight = 0)))
 </code></pre>
 <p><code>W</code> is an optional symmetric positive-definite observation precision matrix.
 It may be sparse and non-diagonal. If \(W = U^\mathsf{T}U\), sommer combines it
@@ -263,37 +260,44 @@ fit_gaussian &lt;- mmes(
 <h2 id="binomial">Binomial</h2>
 <pre><code class="language-r">probability &lt;- plogis(-0.7 + 1.1 * dat$x)
 dat$y_binomial &lt;- rbinom(nrow(dat), size = 1, prob = probability)
-fit_binomial &lt;- mmes(
-  y_binomial ~ x, random = ~ group, rcov = ~ units, data = dat,
-  family = binomial()
-)
+fit_binomial &lt;- mmes(y_binomial ~ x,
+  random = ~ group,
+  rcov = ~ units,
+  data = dat,
+  family = binomial(),
+  control = mmes_control(update = list(blendWeight = 0)))
 </code></pre>
 <h2 id="poisson">Poisson</h2>
 <pre><code class="language-r">rate &lt;- dat$exposure * exp(0.2 + 0.4 * dat$x)
 dat$y_poisson &lt;- rpois(nrow(dat), lambda = rate)
-fit_poisson &lt;- mmes(
-  y_poisson ~ x + offset(log(exposure)),
-  random = ~ group, rcov = ~ units, data = dat,
-  family = poisson()
-)
+fit_poisson &lt;- mmes(y_poisson ~ x + offset(log(exposure)),
+  random = ~ group,
+  rcov = ~ units,
+  data = dat,
+  family = poisson(),
+  control = mmes_control(update = list(blendWeight = 0)))
 </code></pre>
 <h2 id="gamma">Gamma</h2>
 <p>The Gamma family requires a strictly positive response.</p>
 <pre><code class="language-r">mean_gamma &lt;- exp(0.3 + 0.25 * dat$x)
 dat$y_gamma &lt;- rgamma(nrow(dat), shape = 4, scale = mean_gamma / 4)
-fit_gamma &lt;- mmes(
-  y_gamma ~ x, random = ~ group, rcov = ~ units, data = dat,
-  family = Gamma(link = &quot;log&quot;)
-)
+fit_gamma &lt;- mmes(y_gamma ~ x,
+  random = ~ group,
+  rcov = ~ units,
+  data = dat,
+  family = Gamma(link = &quot;log&quot;),
+  control = mmes_control(update = list(blendWeight = 0)))
 </code></pre>
 <h2 id="inverse-gaussian">Inverse Gaussian</h2>
 <p>The inverse-Gaussian family also requires a strictly positive response. The
 response below is positive synthetic data for demonstrating the interface.</p>
 <pre><code class="language-r">dat$y_inverse_gaussian &lt;- exp(0.2 + 0.3 * dat$x + rnorm(nrow(dat), sd = 0.2))
-fit_inverse_gaussian &lt;- mmes(
-  y_inverse_gaussian ~ x, random = ~ group, rcov = ~ units, data = dat,
-  family = inverse.gaussian(link = &quot;log&quot;)
-)
+fit_inverse_gaussian &lt;- mmes(y_inverse_gaussian ~ x,
+  random = ~ group,
+  rcov = ~ units,
+  data = dat,
+  family = inverse.gaussian(link = &quot;log&quot;),
+  control = mmes_control(update = list(blendWeight = 0)))
 </code></pre>
 <h2 id="quasi-families">Quasi families</h2>
 <p>Quasi families use the same mean/link and variance definitions as their
@@ -301,21 +305,26 @@ corresponding GLM families, but do not define a likelihood. Consequently,
 devience is useful for PQL convergence, while likelihood-based comparisons
 such as AIC or likelihood-ratio tests are not appropriate.</p>
 <pre><code class="language-r">dat$y_quasi &lt;- 1 + 0.5 * dat$x + rnorm(nrow(dat), sd = 0.5)
-fit_quasi &lt;- mmes(
-  y_quasi ~ x, random = ~ group, rcov = ~ units, data = dat,
-  family = quasi(link = &quot;identity&quot;, variance = &quot;constant&quot;)
-)
+fit_quasi &lt;- mmes(y_quasi ~ x,
+  random = ~ group,
+  rcov = ~ units,
+  data = dat,
+  family = quasi(link = &quot;identity&quot;, variance = &quot;constant&quot;),
+  control = mmes_control(update = list(blendWeight = 0)))
 
-fit_quasibinomial &lt;- mmes(
-  y_binomial ~ x, random = ~ group, rcov = ~ units, data = dat,
-  family = quasibinomial()
-)
+fit_quasibinomial &lt;- mmes(y_binomial ~ x,
+  random = ~ group,
+  rcov = ~ units,
+  data = dat,
+  family = quasibinomial(),
+  control = mmes_control(update = list(blendWeight = 0)))
 
-fit_quasipoisson &lt;- mmes(
-  y_poisson ~ x + offset(log(exposure)),
-  random = ~ group, rcov = ~ units, data = dat,
-  family = quasipoisson()
-)
+fit_quasipoisson &lt;- mmes(y_poisson ~ x + offset(log(exposure)),
+  random = ~ group,
+  rcov = ~ units,
+  data = dat,
+  family = quasipoisson(),
+  control = mmes_control(update = list(blendWeight = 0)))
 </code></pre>
 <h1 id="extracting-results-and-controlling-pql">Extracting results and controlling PQL</h1>
 <p>For a GLMM, <code>fitted()</code> returns conditional fitted means on the response scale.
@@ -330,26 +339,28 @@ fit_poisson$pqlMonitor
 fit_poisson$pqlConverged
 fit_poisson$family
 </code></pre>
-<p>Use <code>pqlControl</code> to set the outer PQL maximum iterations and relative
-devience tolerance. The usual <code>nIters</code>, <code>tolParConvLL</code>, <code>stepWeight</code>,
-<code>emWeight</code>, and solver arguments continue to control the Gaussian
-variance-component fit inside each outer iteration.</p>
-<pre><code class="language-r">fit &lt;- mmes(
-  y_poisson ~ x + offset(log(exposure)),
+<p>Use <code>task$pql</code> to set outer PQL iterations and relative deviance tolerance.
+Set <code>update$blendWeight = 0</code> to retain pure-AI covariance updates in PQL;
+positive EM-direction blending is not supported. <code>convergence$maxIters</code>,
+<code>convergence$likelihoodTol</code>, <code>proposal$stepWeight</code>, and <code>solve$method</code> control
+the Gaussian variance-component fit inside each outer iteration.</p>
+<pre><code class="language-r">fit &lt;- mmes(y_poisson ~ x + offset(log(exposure)),
   random = ~ group,
   rcov = ~ units,
   data = dat,
   family = poisson(),
-  pqlControl = list(maxit = 30, tol = 1e-6),
-  nIters = 20,
-  solver = &quot;auto&quot;
-)
+  control = mmes_control(
+    update = list(blendWeight = 0),
+    task = list(pql = list(maxit = 30, tol = 1e-6)),
+    convergence = list(maxIters = 20),
+    solve = list(method = &quot;auto&quot;)
+  ))
 </code></pre>
 <h1 id="practical-guidance">Practical guidance</h1>
 <ul>
 <li>Begin with a simple random-intercept GLMM and inspect <code>pqlMonitor</code> before
 adding complex covariance structures.</li>
-<li>Check <code>pqlConverged</code>; reaching <code>pqlControl$maxit</code> indicates that the outer
+<li>Check <code>pqlConverged</code>; reaching <code>task$pql$maxit</code> indicates that the outer
 PQL criterion was not met.</li>
 <li>Keep binomial responses away from complete separation where possible; very
 small derivatives can create unstable IRLS weights.</li>

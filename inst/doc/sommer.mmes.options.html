@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>Modular numerical controls for sommer::mmes</title>
+<style type="text/css">
+/**
+ * Prism.s theme ported from highlight.js's xcode style
+ */
+pre code {
+  padding: 1em;
+}
+.token.comment {
+  color: #007400;
+}
+.token.punctuation {
+  color: #999;
+}
+.token.tag,
+.token.selector {
+  color: #aa0d91;
+}
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol {
+  color: #1c00cf;
+}
+.token.property,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin {
+  color: #c41a16;
+}
+.token.inserted {
+  background-color: #ccffd8;
+}
+.token.deleted {
+  background-color: #ffebe9;
+}
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #9a6e3a;
+}
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: #836c28;
+}
+.token.function,
+.token.class-name {
+  color: #DD4A68;
+}
+.token.regex,
+.token.important,
+.token.variable {
+  color: #5c2699;
+}
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+.token.italic {
+  font-style: italic;
+}
+</style>
+<style type="text/css">
+body {
+  font-family: sans-serif;
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+body, .footnotes, code { font-size: .9em; }
+li li { font-size: .95em; }
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+pre, img { max-width: 100%; }
+pre, pre:hover {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+pre code {
+  display: block;
+  overflow-x: auto;
+}
+code { font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace; }
+:not(pre) > code, code[class] { background-color: #F8F8F8; }
+code.language-undefined, pre > code:not([class]) {
+  background-color: inherit;
+  border: 1px solid #eee;
+}
+table {
+  margin: auto;
+  border-top: 1px solid #666;
+}
+table thead th { border-bottom: 1px solid #ddd; }
+th, td { padding: 5px; }
+thead, tfoot, tr:nth-child(even) { background: #eee; }
+blockquote {
+  color: #666;
+  margin: 0;
+  padding-left: 1em;
+  border-left: 0.5em solid #eee;
+}
+hr, .footnotes::before { border: 1px dashed #ddd; }
+.frontmatter { text-align: center; }
+#TOC .numbered li { list-style: none; }
+#TOC .numbered { padding-left: 0; }
+#TOC .numbered ul { padding-left: 1em; }
+table, .body h2 { border-bottom: 1px solid #666; }
+.body .appendix, .appendix ~ h2 { border-bottom-style: dashed; }
+.footnote-ref a::before { content: "["; }
+.footnote-ref a::after { content: "]"; }
+section.footnotes::before {
+  content: "";
+  display: block;
+  max-width: 20em;
+}
+
+@media print {
+  body {
+    font-size: 12pt;
+    max-width: 100%;
+  }
+  tr, img { page-break-inside: avoid; }
+}
+@media only screen and (min-width: 992px) {
+  pre { white-space: pre; }
+}
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
+</head>
+<body>
+<div class="frontmatter">
+<div class="title"><h1>Modular numerical controls for sommer::mmes</h1></div>
+<div class="author"><h2>sommer development team</h2></div>
+<div class="date"><h3></h3></div>
+</div>
+<div class="body">
+<h1 id="purpose">Purpose</h1>
+<p>For a clickable decision tree with searchable controls, defaults, examples,
+and compatibility checks, open the
+<a href="https://covaruber.github.io/sommer/mmes-options.html">interactive mmes_control guide</a>.</p>
+<p><code>mmes()</code> separates statistical model specification from numerical policy.
+Formulas, data, weights, family, constraints, and known covariance parameters
+remain <code>mmes()</code> arguments. Numerical choices belong in one validated object:</p>
+<pre><code class="language-r">fit &lt;- mmes(
+  fixed = trait ~ environment,
+  random = ~ genotype,
+  rcov = ~ units,
+  data = trial_data,
+  control = mmes_control()
+)
+</code></pre>
+<p>This vignette documents the modular API, defaults, mathematical ownership,
+eligibility constraints, and migration from the removed numerical formals.
+It is explanation only: code is displayed, not run. Building this vignette does
+not fit models, benchmark methods, or change hardware settings.</p>
+<h1 id="public-interfaces">Public interfaces</h1>
+<p>The current public numerical interface is:</p>
+<pre><code class="language-r">mmes(fixed, random, rcov, data, W, weights = NULL,
+     naMethodX = &quot;exclude&quot;, naMethodY = &quot;exclude&quot;,
+     naMethodRandom = &quot;exclude&quot;, naMethodR = &quot;exclude&quot;,
+     contrasts = NULL, family = stats::gaussian(), vcc = NULL,
+     covPar = NULL, control = mmes_control(), .internal = NULL)
+
+mmes_control(
+  formulation = &quot;henderson&quot;, task = list(), representation = list(),
+  solve = list(), logdet = list(), score = list(), curvature = list(),
+  update = list(), proposal = list(), convergence = list(),
+  output = list(), execution = list(), diagnostics = list()
+)
+</code></pre>
+<p><code>fixed</code>, <code>random</code>, <code>rcov</code>, <code>data</code>, and <code>W</code> remain model inputs. <code>weights</code>
+declares independent blocks in a supplied <code>W</code>; it does not create weights.
+<code>family</code>, <code>vcc</code>, <code>covPar</code>, missing-data policies, and <code>contrasts</code> retain their
+statistical or data-preparation roles. <code>.internal</code> is reserved for package
+recursion and is not a user control.</p>
+<p><code>mmes_control()</code> validates top-level and nested module names. Unknown fields,
+duplicate names, and malformed named lists error. Removed options are not
+accepted through <code>...</code>, aliases, or a legacy <code>engine</code> argument. Controls record
+requests; they do not fit a model or establish model-specific eligibility.
+Fitting validation remains authoritative.</p>
+<h1 id="ownership-and-defaults">Ownership and defaults</h1>
+<p>The default control retains the established numerical bundle: Henderson
+formulation, REML fitting, exact AI curvature, EM recovery, no extrapolation,
+30 inner iterations, full covariance information, coefficient-matrix
+retention, and inherited solver/resource defaults. These defaults preserve
+the prior numerical bundle; they do not authorize new combinations.</p>
+<table>
+<thead>
+<tr>
+<th align="left">Module</th>
+<th align="left">Mathematical ownership</th>
+<th align="left">Fields and defaults</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left"><code>formulation</code></td>
+<td align="left">Equation domain</td>
+<td align="left"><code>&quot;henderson&quot;</code>; <code>&quot;henderson&quot;</code> or <code>&quot;direct&quot;</code>.</td>
+</tr>
+<tr>
+<td align="left"><code>task</code></td>
+<td align="left">Fit versus known-covariance solve; objective; outer PQL</td>
+<td align="left"><code>mode=&quot;fit&quot;</code>, <code>objective=&quot;reml&quot;</code>, <code>pql=list(maxit=20L, tol=1e-5, estimateTheta=FALSE, warmStart=TRUE)</code>.</td>
+</tr>
+<tr>
+<td align="left"><code>representation</code></td>
+<td align="left">Equation/covariance representation</td>
+<td align="left"><code>compression=&quot;off&quot;</code>, <code>factorScores=&quot;none&quot;</code>, <code>fixedRank=&quot;error&quot;</code>, <code>equations=&quot;normal&quot;</code>, <code>sparseFactors=&quot;off&quot;</code>, <code>matrixFree=&quot;auto&quot;</code>; modes can inherit global options, and <code>equations</code> defaults to <code>&quot;saddle-point&quot;</code> if that mode is globally forced.</td>
+</tr>
+<tr>
+<td align="left"><code>solve</code></td>
+<td align="left">Linear solves, preconditioning, reuse, elimination</td>
+<td align="left"><code>method=&quot;auto&quot;</code>; PCG fields below; <code>blockSchur</code>, <code>blockBanded</code>, <code>factorSchurMultiFactor</code>, and <code>dFirstML</code> default to <code>&quot;auto&quot;</code>.</td>
+</tr>
+<tr>
+<td align="left"><code>logdet</code></td>
+<td align="left">Determinant approximation</td>
+<td align="left"><code>scaling=&quot;none&quot;</code>, <code>lanczosSteps=20L</code>.</td>
+</tr>
+<tr>
+<td align="left"><code>score</code></td>
+<td align="left">Covariance derivatives and trace estimation</td>
+<td align="left"><code>traceProbes=8L</code>, <code>estimator=&quot;hutchinson&quot;</code>, <code>rank=16L</code>, <code>covarianceChecks=&quot;auto&quot;</code>, <code>traceBatch=&quot;off&quot;</code>.</td>
+</tr>
+<tr>
+<td align="left"><code>curvature</code></td>
+<td align="left">AI metric and reduced-direction assembly</td>
+<td align="left"><code>method=&quot;exact-ai&quot;</code>, <code>reduced=&quot;off&quot;</code>.</td>
+</tr>
+<tr>
+<td align="left"><code>update</code></td>
+<td align="left">Covariance-coordinate update and recovery</td>
+<td align="left"><code>method=&quot;ai&quot;</code>, <code>recovery=&quot;em&quot;</code>, <code>blendWeight=NULL</code>, <code>commonScale=&quot;off&quot;</code>.</td>
+</tr>
+<tr>
+<td align="left"><code>proposal</code></td>
+<td align="left">Proposal scaling and extrapolation</td>
+<td align="left"><code>stepWeight=NULL</code>, <code>extrapolation=&quot;none&quot;</code>.</td>
+</tr>
+<tr>
+<td align="left"><code>convergence</code></td>
+<td align="left">Inner iterations and stochastic accuracy</td>
+<td align="left"><code>maxIters=30L</code>, <code>likelihoodTol=1e-4</code>, <code>parameterTol=1e-4</code>, <code>accuracy=&quot;fixed&quot;</code>, <code>maxTraceProbes=NULL</code>, <code>maxLanczosSteps=NULL</code>, <code>logDetTol=1e-3</code>, <code>scoreTol=1e-3</code>.</td>
+</tr>
+<tr>
+<td align="left"><code>output</code></td>
+<td align="left">Coefficient and covariance uncertainty; setup output</td>
+<td align="left"><code>inverse=0L</code>, <code>covariance=&quot;full&quot;</code>, <code>coefficientMatrix=TRUE</code>, <code>setup=FALSE</code>, <code>selectedInverse=&quot;auto&quot;</code>, <code>panelSize=64L</code>.</td>
+</tr>
+<tr>
+<td align="left"><code>execution</code></td>
+<td align="left">Memory, hardware, threads, precision, seed</td>
+<td align="left"><code>denseMemoryMB=1000</code>, <code>memoryPolicy=&quot;speed&quot;</code>, <code>gpu=FALSE</code>, <code>gpuMinSize=256L</code>, <code>blasThreads=NULL</code>, <code>inverseTol=1e-6</code>, <code>seed=0L</code>.</td>
+</tr>
+<tr>
+<td align="left"><code>diagnostics</code></td>
+<td align="left">Messages, package-age warning, profiling</td>
+<td align="left"><code>verbose=TRUE</code>, <code>dateWarning=TRUE</code>, <code>profile=&quot;off&quot;</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>The PCG fields under <code>solve</code> default to <code>tol=1e-8</code>, <code>maxIters=0L</code>,
+<code>preconditioner=&quot;diagonal&quot;</code>, <code>nystromRank=32L</code>, <code>warmStart=FALSE</code>,
+<code>recycleRank=0L</code>, <code>recycleMethod=&quot;coarse&quot;</code>, <code>recycleState=NULL</code>,
+<code>exportRecycle=FALSE</code>, <code>rhsMethod=&quot;independent&quot;</code>, <code>blockSize=16L</code>, and
+<code>residualRefresh=0L</code>. <code>maxIters=0L</code> selects the solver’s automatic limit.
+PCG-specific requests matter only when an eligible PCG path uses them.</p>
+<p><code>output$inverse</code> controls final coefficient-inverse work and fit-time PEVs.
+Mode <code>0L</code> computes neither. Mode <code>1L</code> computes random-effect PEVs from the
+selected inverse without forming full <code>Ci</code>. Mode <code>2L</code> forms full <code>Ci</code> and
+computes PEVs. To defer this work, retain the default mode <code>0L</code> and
+<code>output$coefficientMatrix=TRUE</code>, then call <code>postPEV(fit, mode=1L)</code> for PEVs
+only or <code>postPEV(fit, mode=2L)</code> for PEVs and full <code>Ci</code>.</p>
+<p>Options may supply defaults for experimental modes, memory budget/policy, and
+GPU settings. For example, a non-<code>NULL</code> <code>sommer.mme.denseMemoryMB</code> option
+replaces the <code>1000</code> MB default. Explicit control values override option-derived
+mode defaults. Use them for reproducible intent. Hardware and library
+availability can still affect execution.</p>
+<p>Constructors and valid values:</p>
+<ul>
+<li><code>solve$method</code>: <code>&quot;auto&quot;</code>, <code>&quot;ldlt&quot;</code>, <code>&quot;cholmod&quot;</code>, or <code>&quot;pcg&quot;</code>.</li>
+<li><code>representation$compression</code>: <code>&quot;off&quot;</code>, <code>&quot;groups&quot;</code>, or <code>&quot;classes&quot;</code>.</li>
+<li><code>representation$factorScores</code>: <code>&quot;none&quot;</code>, <code>&quot;fixed-shape&quot;</code>, or <code>&quot;profile&quot;</code>.</li>
+<li><code>representation$fixedRank</code>: <code>&quot;error&quot;</code> (default) or opt-in <code>&quot;drop&quot;</code>.</li>
+<li><code>representation$equations</code>: <code>&quot;normal&quot;</code>, <code>&quot;saddle-point&quot;</code> or experimental <code>&quot;conditional&quot;</code>.</li>
+<li><code>logdet$scaling</code>: <code>&quot;none&quot;</code> or <code>&quot;diagonal&quot;</code>.</li>
+<li><code>score$estimator</code>: <code>&quot;hutchinson&quot;</code> or <code>&quot;control-variate&quot;</code>.</li>
+<li><code>curvature$method</code>: <code>&quot;exact-ai&quot;</code> or <code>&quot;hybrid-ai&quot;</code>.</li>
+<li><code>update$method</code>: <code>&quot;ai&quot;</code>, conditional <code>&quot;em&quot;</code>, or the earlier <code>&quot;conditional-fa&quot;</code> EM selector.</li>
+<li><code>update$recovery</code>: <code>&quot;em&quot;</code> or <code>&quot;pxem&quot;</code>.</li>
+<li><code>proposal$extrapolation</code>: <code>&quot;none&quot;</code> or <code>&quot;aitken&quot;</code>.</li>
+<li><code>convergence$accuracy</code>: <code>&quot;fixed&quot;</code> or <code>&quot;adaptive&quot;</code>.</li>
+<li><code>output$inverse</code>: <code>0</code>, <code>1</code>, or <code>2</code>; <code>output$covariance</code>: <code>&quot;full&quot;</code> or <code>&quot;none&quot;</code>.</li>
+<li><code>execution$memoryPolicy</code>: <code>&quot;speed&quot;</code> or <code>&quot;limit&quot;</code>.</li>
+<li>Experimental mode fields accept <code>&quot;auto&quot;</code>, <code>&quot;off&quot;</code>, <code>&quot;force&quot;</code>, or logical
+<code>TRUE</code>/<code>FALSE</code>. A forced request still obeys mathematical, structural, and
+memory checks.</li>
+</ul>
+<p>The complete field reference and mapping from old names are in
+<code>?mmes_control</code>.</p>
+<h1 id="decision-graph-and-constraints">Decision graph and constraints</h1>
+<h2 id="rank-deficient-fixed-effects">Rank-deficient fixed effects</h2>
+<p>By default, <code>mmes()</code> stops with diagnostics when the fixed design contains
+zero columns or linear dependencies. For Gaussian identity-link fits, both
+the Henderson and direct engines can instead use a shared sparse C++ QR
+basis selected once after observation filtering:</p>
+<pre><code class="language-r">fit &lt;- mmes(
+  response ~ locale + cell,
+  data = observations,
+  control = mmes_control(representation = list(fixedRank = &quot;drop&quot;))
+)
+fit$fixedRank[c(&quot;rank&quot;, &quot;retained&quot;, &quot;omitted&quot;)]
+summary(fit)$betas
+</code></pre>
+<p>The original coefficient layout is retained. Omitted coefficients are
+constrained to zero and explicitly marked aliased, with no inferential
+standard errors or tests. Retained coefficients are conditional on those
+constraints. This preserves the fitted-mean space but need not reproduce
+ASReml’s particular coefficient constraints. Different fixed bases can
+shift REML likelihoods by a constant.</p>
+<p><code>fit$fixedRank$relation</code> is a sparse map from the retained design to the
+original columns. Direct-engine <code>VarBeta</code> stays in retained coordinates;
+it is not expanded to a potentially huge original-column covariance.
+Henderson prediction contrasts are checked against the original model’s
+estimability relations. Non-estimable rows are rejected. Wald tests,
+likelihood-ratio comparisons, Satterthwaite/Kenward-Roger inference, and
+<code>emmeans</code> require an explicitly full-rank refit. Existing direct-engine
+prediction limitations are unchanged.</p>
+<p>Character classify predictions for rank-reduced fits stop before a Cartesian
+level grid is constructed. To explicitly request observed combinations:</p>
+<pre><code class="language-r">cells &lt;- predict(fit, D = &quot;locale:cell&quot;, observed = TRUE)
+cells$observed
+</code></pre>
+<p>This path averages the fixed predictor over retained records within each
+observed group and excludes random contributions by default. It is not an
+equally weighted balanced-grid marginal mean. Random contributions can be
+requested explicitly through <code>Dtable</code>, without changing its fixed rows:</p>
+<pre><code class="language-r">rules &lt;- fit$Dtable
+rules$include[rules$type == &quot;random&quot;] &lt;- TRUE
+conditional &lt;- predict(fit, D = &quot;locale:cell&quot;, observed = TRUE, Dtable = rules)
+</code></pre>
+<p>For random terms, include alone uses empirical within-group design averages;
+include plus average uses equally weighted co-occurring indicator levels;
+average alone uses equally weighted selected fitted coefficient levels.
+Random level restrictions are given through entries of
+<code>levels</code> named by the fitted random term. The returned <code>Dtable</code> contains only
+term-level rules; selections are returned separately in <code>levels</code> and can be
+reused with those rules. A
+<code>levels</code> entry named exactly as <code>D</code> may select and order observed labels.
+Unobserved requests produce an error. Numeric classify variables and custom
+fixed-effect rules require explicit estimable contrasts instead. See
+<code>?predict.mmes</code> for random-level filtering and weighting details.</p>
+<p>Observed combinations can still produce a large dense covariance.
+<code>maxMemoryMB</code> defaults to the fitted dense memory budget (1000 MB otherwise)
+and checks estimated prediction workspace before constructing grouped
+contrasts or solving. Restrict <code>levels</code> or use smaller explicit contrast
+batches if necessary. <code>PEV = FALSE</code> does not remove the mandatory <code>vcov</code>.</p>
+<p>This option is not supported with PQL, solve mode, conditional FA, factor
+scores, observation rotation or compression; these combinations fail
+explicitly rather than silently ignore the rank policy.</p>
+<h2 id="conditional-fa-reusable-posterior-moments-with-ai-or-em">Conditional FA: reusable posterior moments with AI or EM</h2>
+<p>The default ordinary AI workflow is unchanged. The opt-in
+<code>representation$equations=&quot;conditional&quot;</code> selects sparse latent FA equations
+using the existing formula preparation, observation map, covariance
+descriptors, model methods, controls, and execution-plan reporting.
+The optimizer is a separate block: <code>update$method=&quot;ai&quot;</code> (the default)
+uses exact REML scores and average-information curvature on these equations;
+<code>update$method=&quot;em&quot;</code> uses conditional-moment EM. The earlier
+<code>update$method=&quot;conditional-fa&quot;</code> API retains its EM behavior even without
+an explicit representation request.</p>
+<pre><code class="language-r">long &lt;- stackTraits(wide, traits = trait_names, keep = &quot;id&quot;)
+Ainv &lt;- solve(A)
+attr(Ainv, &quot;inverse&quot;) &lt;- TRUE
+
+fit &lt;- mmes(
+  value ~ trait,
+  random = ~ vsm(fam(trait, k = 2), ism(id), Gu = Ainv),
+  rcov = ~ vsm(fam(trait, k = 1), ism(record)),
+  data = long,
+  control = mmes_control(
+    representation = list(equations = &quot;conditional&quot;),
+    update = list(method = &quot;ai&quot;),
+    convergence = list(maxIters = 300),
+    output = list(covariance = &quot;none&quot;, coefficientMatrix = FALSE,
+                  inverse = 0, panelSize = 32)
+  )
+)
+fit$convergence
+fit$conditionalFA$likelihood
+fit$conditionalFA$updates  # accepted AI steps and any EM recovery
+fit$conditionalFA$ai       # final score norm, curvature rank and workspace
+fit$executionPlan$admission$conditionalFA
+covmatrix_mmes(fit, term = 1, se = FALSE)
+</code></pre>
+<p>Missing responses are excluded by the usual observation map, not imputed.
+Repeated individuals and incomplete residual pairing blocks are supported;
+<code>record</code> must identify the actual experimental unit. The genetic incidence
+must select exactly one individual and one trait per observed value.
+The fixed design may contain covariates and interactions but must have full
+column rank. Each trait must retain observations. Known positive-definite
+relationship <strong>precision</strong> matrices retain the usual <code>Gu</code> contract.
+Each covariance source must be entirely free or entirely fixed. FA specifics
+can be heterogeneous or homogeneous; diagonal and homogeneous residuals
+are also supported.</p>
+<h3 id="mathematical-blocks">Mathematical blocks</h3>
+<p>Write the latent model as</p>
+<p>$$
+y=Xb+Z_g(L_g f_g+s_g)+L_e f_e+\epsilon,\quad
+\operatorname{Var}(s_g)=\Psi_g\otimes A,\quad
+\operatorname{Var}(\epsilon)=\operatorname{diag}(\psi_{e,t(i)}).
+$$</p>
+<p>Residual factors are indexed by pairing key, genetic factors by individual.
+The prepared sparse design is denoted by \(D\) and its random-effect precision
+by \(Q\) (with zeros on fixed-effect coordinates). At every iteration:</p>
+<ol>
+<li>Assemble \(H=D^\mathsf{T}R_0^{-1}D+Q\) and factor it numerically.</li>
+<li>Compute conditional means and the entries of \(H^{-1}\) needed by the
+complete-data quadratics, including fixed-effect uncertainty.</li>
+<li>Select the update block: exact REML score/AI contractions, or loading
+regressions and expected quadratic forms for EM. Do <strong>not</strong> treat
+predicted factors as observed data.</li>
+<li>Evaluate the observed restricted log likelihood and reject a material
+decrease. EM convergence requires likelihood and parameter stabilization;
+AI requires a small diagonally scaled REML score.</li>
+</ol>
+<p>On the original response scale, omitting the Gaussian normalizing constant,
+the restricted objective uses</p>
+<p>$$
+-2\ell_R=\log|R_0|-\log|Q_{\mathrm{random}}|+\log|H|
++(y-D\hat a)^\mathsf{T}R_0^{-1}(y-D\hat a)
++\hat a^\mathsf{T}Q\hat a .
+$$</p>
+<p>Integrating the fixed coefficients with a flat measure gives the restricted
+objective; their conditional second moments are essential to the EM update.
+Specific variances have a machine-precision positive floor to keep the
+conditional distribution well-defined during EM. AI uses log-specific
+coordinates and, for shared factors, logit allocations.</p>
+<h3 id="exact-score-and-ai-blocks">Exact score and AI blocks</h3>
+<p>For covariance coordinate \(\theta_i\), let \(V_i=\partial V/\partial\theta_i\),
+\(P=V^{-1}-V^{-1}X(X^\mathsf{T}V^{-1}X)^{-1}X^\mathsf{T}V^{-1}\),
+and \(z=Py\). The score and average information are</p>
+<p>$$
+s_i=\tfrac12(z^\mathsf{T}V_i z-\operatorname{tr}(PV_i)),\qquad
+\mathcal A_{ij}=\tfrac12(V_i z)^\mathsf{T}P(V_j z).
+$$</p>
+<p>The implementation differentiates the sparse latent design, residual
+diagonal and random precision. Selected posterior moments give the exact
+score traces; relationship-factor solves apply random prior covariances
+without forming a dense relationship inverse. The already factored \(H\)
+projects derivative right-hand sides in bounded panels. Neither \(V\) nor \(P\)
+is constructed. Shared loading derivatives affect both covariance sources
+in the same coordinate.</p>
+<p>Independent loading matrices retain rotationally redundant coordinates.
+A diagonally scaled, rank-revealing curvature eigensolve drops numerically
+null directions rather than inverting a singular information matrix.
+Steps have a bounded coordinate displacement and a backtracking
+observed-likelihood Armijo test. If no AI proposal is accepted, an EM recovery
+step uses the same posterior moments; <code>conditionalFA$updates</code> records
+<code>&quot;ai&quot;</code> or <code>&quot;em-recovery&quot;</code> explicitly. This changes optimization, not the
+REML objective. <code>conditionalFA$ai$scoreNorm</code> is the diagonally scaled score
+checked against <code>convergence$parameterTol</code>; a small displacement alone cannot
+certify AI convergence.</p>
+<p>Near-zero conditional noise can make the latent equations ill-conditioned
+even when the marginal covariance remains well-conditioned. Conditional AI
+therefore has explicit numerical bounds: writing
+\(\tau=\max(10^{-8},\texttt{execution\\)inverseTol})$, free physical specifics
+must be at least \(\tau\operatorname{var}(y)\) and shared allocations lie in
+\([\tau,1-\tau]\) (<code>inverseTol</code> must be below 0.5). Initial values must satisfy
+these bounds. An active-set solve excludes outward directions at a bound;
+convergence uses the projected KKT score, not an unconstrained zero-gradient
+claim. The actual <code>varianceFloor</code>, <code>allocationFloor</code>, and <code>activeBounds</code>
+are reported in <code>conditionalFA$ai</code>. These physical-coordinate constraints are
+not identical to the ordinary engine’s descriptor-coordinate bounds.
+EM recovery stays within the AI feasible set. Explicit conditional EM retains
+its earlier machine-precision floor, so optima at numerical boundaries need
+not match exactly between optimizers.</p>
+<p><code>conditionalFA$rawLikelihood</code> retains this original-scale objective.
+For compatibility with the ordinary solver’s standardized-response reporting,
+<code>llik</code> and <code>conditionalFA$likelihood</code> add
+\((n-\operatorname{ncol}(X))\log(\operatorname{sd}(y))\).
+This constant does not affect updates or convergence. <code>AIC</code> and <code>BIC</code>
+retain the existing solver’s fixed-design-column penalty convention; the
+covariance-model parameter count is recorded separately rather than silently
+changing those established fields.</p>
+<h3 id="reuse-and-memory-policy">Reuse and memory policy</h3>
+<p>The native conditional-moment block reuses symbolic LDLT analysis only while
+the sparse pattern is identical. Numeric factors are recomputed at every
+covariance update. Fixed sparse quadratic contractions are compiled once;
+identical factor incidence/missingness patterns share their Gram contractions.
+Selected inverse entries are obtained in bounded panels. No dense
+observation covariance or full posterior inverse is constructed. EM does
+not assemble an AI matrix; conditional AI does assemble a dense
+parameter-by-parameter matrix and observation-by-parameter derivative RHS.</p>
+<p><code>output$panelSize</code> controls inverse/projection-panel width;
+<code>execution$denseMemoryMB</code> admits their dense workspace and, for AI, the
+retained RHS/curvature/eigensolve workspace (not a process-memory cap).
+Oversized AI requests fail explicitly rather than switching optimizers.
+Sparse factor fill, latent genetic specifics, and the number of exact
+inverse solves can still be expensive, especially with dense relationships.
+This first engine prioritizes exactness and bounded dense intermediates;
+it is <strong>not a claim of MegaLMM-like thousand-trait runtime</strong>. EM can converge
+slowly near boundaries. Compare converged objectives and predictions, not
+equal iteration counts.</p>
+<h3 id="shared-loading-covariance-model">Shared-loading covariance model</h3>
+<p>For common trait axes, use matching tags:</p>
+<pre><code class="language-r">random = ~ vsm(fam(trait, k = 2, shared = &quot;axes&quot;), ism(id), Gu = Ainv)
+rcov   = ~ vsm(fam(trait, k = 2, shared = &quot;axes&quot;), ism(record))
+</code></pre>
+<p>This changes the covariance family to
+\(G=L D_g L^\mathsf{T}+\Psi_g\) and
+\(R=L D_e L^\mathsf{T}+\Psi_e\).
+Both sources must be free with equal rank. Diagonal factor variances are
+updated from conditional quadratics and normalized so \(D_g+D_e=I\);
+the compensating scale is absorbed into \(L\). Starting loading columns must
+be positive scalar multiples between sources. Defaults satisfy this.
+The common basis is in <code>fit$conditionalFA$state$loading</code>, with allocations
+<code>weightG</code> and <code>weightE</code>; sign and ordering are not uniquely identified.
+<code>loadings_mmes()</code> instead reports triangular marginal loadings for each source.
+Other engines reject shared tags rather than ignoring the restriction.</p>
+<h3 id="output-and-compatibility">Output and compatibility</h3>
+<p>Fits remain <code>mmes</code> objects. <code>fitted()</code>, <code>residuals()</code>, <code>coef()</code>, covariance
+parameter reports, and explicit <code>covmatrix_mmes(..., se=FALSE)</code> remain
+available. <code>theta</code> has named empty entries rather than dense trait matrices.
+The covariance descriptors and conditional state are the authoritative
+factorized covariance representation. Covariance-parameter SEs, retained
+public <code>C</code>, coefficient PEVs, and uncertainty-dependent methods are not
+available on this path; they fail explicitly. No implicit handoff to another
+estimator is made. For shared models, the usual marginal parameter reports
+are redundant representations; the independent parameter count is reported
+in <code>fit$conditionalFA$parameterCount</code>.
+The public <code>llik</code> retains its usual one-row history shape. <code>monitor</code> contains
+the final marginal covariance parameters only, not every intermediate EM
+state; the likelihood history is retained in <code>conditionalFA$likelihood</code>.</p>
+<p>Weights, non-Gaussian families, ML, multiple random covariance sources,
+rotation, user <code>vcc</code>, random-regression/overlapping incidence, <code>rrm()</code>,
+spatial residuals, and combinations with AI acceleration/augmentation are
+not admitted. Such models continue to use the unchanged ordinary engine
+unless the conditional engine is explicitly requested.</p>
+<h3 id="validation-and-measured-limits">Validation and measured limits</h3>
+<p>The posterior kernel is checked against dense means, inverse entries and
+log determinants, including symbolic reuse/invalidation. End-to-end tests
+compare incomplete-record REML, GLS and genetic BLUPs with dense reference
+equations, check shared and independent EM monotonicity, and verify convergence
+against a separately optimized one-dimensional restricted likelihood with
+a fixed genetic covariance. Unequal genetic/residual ranks and homogeneous
+specifics have separate coverage. Conditional AI scores and curvature are
+also checked against independently finite-differenced marginal covariance
+matrices, including rank-two shared loadings and homogeneous specifics.
+Convergence is compared with a separately optimized restricted likelihood;
+numerical-bound KKT convergence, EM recovery and legacy-EM parity have
+separate tests.</p>
+<p>Baseline-versus-candidate checks used the enhancer split-plot, compound-symmetry
+and diagonal GxE, multivariate, random-regression, field row/column, and genomic
+relationship models. Covariance parameters, BLUPs, likelihood histories and
+convergence flags matched exactly for all seven. This is regression evidence,
+not an independent certification of a model optimum. The earlier conditional
+EM selector and the explicit conditional EM control also produce identical
+histories, parameters and predictions. Measured R allocations changed by less than 0.03%;
+elapsed times were noisy on the shared machine, so unchanged ordinary paths
+are not claimed as a speedup.</p>
+<p>A separate single-thread, synthetic score benchmark with 2,000 traits, rank
+5 and 200 individuals compared the new regression score routine with
+<code>U %*% solve(Sigma, L)</code>: maximum absolute difference was below \(5\,10^{-14}\),
+median elapsed time was 0.003 versus 0.146 seconds (seven repetitions), and
+profiled R allocations were 3.84 versus 30.67 MiB. This measures <strong>score
+calculation only</strong>, not model fitting or process peak memory.</p>
+<p>Conditional EM is not uniformly competitive with AI. In a four-trait,
+24-individual, four-replicate incomplete-data experiment with a near-boundary
+genetic specific variance, AI converged in about 5 seconds; conditional EM
+had not met both convergence tolerances after 1,500 updates and about
+123 seconds. The engine reports nonconvergence explicitly. These measurements
+motivate future acceleration/reduced-latent-system work; they do not establish
+thousand-trait fitting scalability.</p>
+<p>On the same near-boundary fixture, conditional AI with active numerical bounds
+converged in 16 updates rather than the 1,500 unfinished EM updates.
+Conditional AI took about 1.5 seconds versus 0.6 seconds for ordinary AI.
+These shared-machine timings do not establish
+a general speed advantage; the numerical bounds and stopping rules must
+also be considered when comparing optima.</p>
+<h2 id="ordinary-fitting-paths">Ordinary fitting paths</h2>
+<p>The sequence below shows dependencies, not a sequence of arbitrary method
+switches. Several paths dispatch early, and later choices remain gated by the
+model, task, solver, and output request.</p>
+<pre><code class="language-text">Model formulas, covariance descriptors, data and weights
+|
++-- task$mode = &quot;solve&quot;
+|   +-- Known covariance parameters; no covariance estimation
+|   +-- Gaussian identity and restricted solve/output requests
+|
++-- task$mode = &quot;fit&quot;
+    |
+    +-- Non-Gaussian family
+    |   +-- Outer PQL uses task$pql
+    |   +-- Inner fits remain subject to Gaussian-path restrictions
+    |
+    +-- Gaussian identity / inner Gaussian fit
+        |
+        +-- formulation = &quot;direct&quot;
+        |   +-- Observation-space fitting
+        |   +-- No Henderson solver selection
+        |
+        +-- formulation = &quot;henderson&quot;
+            +-- solve$method = &quot;pcg&quot;
+            |   +-- REML estimation; iterative solves and stochastic
+            |       determinant/score evaluation
+            +-- solve$method = &quot;auto&quot;, &quot;ldlt&quot;, or &quot;cholmod&quot;
+                +-- Deterministic sparse-factorization paths
+                +-- Exact determinant/score paths when eligible
+
+Representation, evaluation, update, proposal, convergence, output,
+execution, and diagnostics requests apply within those branches only
+when their model-dependent admission checks pass.
+</code></pre>
+<p>Model-independent combinations are checked by one compatibility table when
+<code>mmes_control()</code> builds the object and again in <code>mmes()</code>. A supplied setting
+that conflicts with another, or that the selected path would ignore, stops
+the call. The error names every offending setting and suggests a fix.
+Restating a default is always accepted. Rules that depend on the data,
+family, <code>vcc</code> or rotation are checked at fit time. See
+<code>?mmes_control</code> (section Compatibility) for the rule list.</p>
+<pre><code class="language-r">mmes_control(solve = list(method = &quot;ldlt&quot;), score = list(traceProbes = 32L))
+#&gt; Error: Incompatible mmes_control() settings:
+#&gt; * PCG preconditioning, recycling, stochastic log-determinant and
+#&gt;   trace-estimation settings only apply when solve$method='pcg' ...
+#&gt;   Offending: score$traceProbes. Remove them or set solve$method='pcg'.
+</code></pre>
+<p>Examples of coupled prerequisites:</p>
+<ul>
+<li><code>formulation=&quot;direct&quot;</code> uses observation-space equations. Henderson
+settings such as <code>solve$method</code>, <code>representation</code>, <code>curvature</code> or PCG
+estimators have no effect there and stop the call when supplied.</li>
+<li>For covariance estimation, PCG is a Henderson REML bundle. It combines
+iterative linear solves with stochastic determinant and score work, and
+supports <code>output$inverse</code> 0 or 2, not selected-inverse mode 1. The known-
+covariance solve task has its own restricted PCG path and requires
+<code>output$inverse=0</code>. Solve tolerance does not bound stochastic estimator error.</li>
+<li><code>proposal$extrapolation=&quot;aitken&quot;</code> and
+<code>curvature$method=&quot;hybrid-ai&quot;</code> cannot be requested together.</li>
+<li><code>representation$compression</code> requires an eligible Gaussian Henderson model,
+independent residuals, fixed diagonal weights, and matching design rows.
+PQL, known-covariance solving, rotation, correlated residuals, saddle-point
+equations, factor-score augmentation, and latent reduced rank are excluded.</li>
+<li><code>representation$equations=&quot;saddle-point&quot;</code> requires an eligible deterministic
+Gaussian Henderson path. It is not compatible with PCG, PQL, known-
+covariance solving, acceleration, rotation, compression, factor-score
+augmentation, or latent reduced rank.</li>
+<li><code>representation$factorScores</code> requires a compatible deterministic Henderson
+REML model and eligible covariance structure. It excludes known-covariance
+solving, PCG, user covariance constraints, rotation, compression, positive
+EM blending, and latent reduced rank.</li>
+<li><code>representation$sparseFactors</code> applies only to eligible supported structured
+factors, including selected AR, ANTE, SAR, and CAR structures. It does not
+introduce new covariance models. <code>representation$matrixFree</code> avoids eligible
+tensor-prior assembly for PCG; it does not make every model operation
+matrix-free.</li>
+<li><code>solve$blockSchur</code>, <code>blockBanded</code>, <code>factorSchurMultiFactor</code>, and <code>dFirstML</code>
+request specialized elimination only for eligible coefficient graphs,
+likelihoods, backends, and workspaces. Forcing a request does not bypass
+structural or memory checks.</li>
+<li><code>score$traceBatch</code> requires an eligible exact LDLT score path and panel
+workspace. <code>score$covarianceChecks</code> can use available certificates, but no
+certificate bypasses positive-definiteness validation.</li>
+<li><code>curvature$reduced</code> needs an eligible reducing constraint map and supported
+update path. <code>update$commonScale</code> needs free product scales, a full-rank fixed
+design, and scale-preserving constraints. Both exclude several accelerated,
+PCG, PQL, and special-representation paths.</li>
+<li><code>output$covariance=&quot;none&quot;</code> is restricted to supported Gaussian Henderson
+fits; it does not disable curvature needed by optimization. Setting
+<code>output$coefficientMatrix=FALSE</code> requires the eligible saddle-point path and
+<code>output$inverse=0</code>. These output requests do not substitute for one another.
+<code>output$selectedInverse</code> matters only for eligible Henderson selected-inverse
+output (<code>output$inverse=1</code>); <code>output$panelSize</code> controls full-inverse panels
+(<code>output$inverse=2</code>).</li>
+<li>GPU requests require a CUDA-enabled Henderson build and usable CUDA runtime
+and device. Direct inversion and the known-covariance solve path remain CPU
+paths.</li>
+<li><code>output$inverse</code> controls coefficient-matrix uncertainty.
+<code>output$covariance</code> controls covariance-parameter information.
+<code>output$coefficientMatrix</code> controls retained coefficient-matrix output.
+These are separate requests with separate eligibility conditions.</li>
+<li><code>&quot;auto&quot;</code> records a request for policy-based selection, not a promise that a
+specialized method will be selected. <code>&quot;force&quot;</code> cannot bypass mathematical
+or structural restrictions.</li>
+</ul>
+<p>For the descriptive capability inventory and conceptual decision graph, inspect
+the internal catalog:</p>
+<pre><code class="language-r">capabilities &lt;- sommer:::.mmes_capabilities()
+capabilities$modules
+capabilities$controls
+capabilities$decisions
+capabilities$edges
+</code></pre>
+<p>This inventory does not inspect a fitted model, resolve eligibility, or predict
+the selected execution path. It complements, but does not replace, control
+validation and fit-time diagnostics.</p>
+<h1 id="migration-from-removed-numerical-formals">Migration from removed numerical formals</h1>
+<p>Move every numerical choice into <code>control</code>; do not pass old formals to
+<code>mmes()</code>. Use one control object rather than conflicting duplicated values.</p>
+<table>
+<thead>
+<tr>
+<th align="left">Former argument or path</th>
+<th align="left">Current setting</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left"><code>henderson=TRUE/FALSE</code></td>
+<td align="left"><code>formulation=&quot;henderson&quot;/&quot;direct&quot;</code></td>
+</tr>
+<tr>
+<td align="left"><code>solver</code></td>
+<td align="left"><code>solve$method</code></td>
+</tr>
+<tr>
+<td align="left"><code>nIters</code></td>
+<td align="left"><code>convergence$maxIters</code></td>
+</tr>
+<tr>
+<td align="left"><code>tolParConvLL</code></td>
+<td align="left"><code>convergence$likelihoodTol</code></td>
+</tr>
+<tr>
+<td align="left"><code>tolParConvNorm</code></td>
+<td align="left"><code>convergence$parameterTol</code></td>
+</tr>
+<tr>
+<td align="left"><code>tolParInv</code></td>
+<td align="left"><code>execution$inverseTol</code></td>
+</tr>
+<tr>
+<td align="left"><code>REML=TRUE/FALSE</code></td>
+<td align="left"><code>task$objective=&quot;reml&quot;/&quot;ml&quot;</code></td>
+</tr>
+<tr>
+<td align="left"><code>solveOnly=TRUE/FALSE</code></td>
+<td align="left"><code>task$mode=&quot;solve&quot;/&quot;fit&quot;</code></td>
+</tr>
+<tr>
+<td align="left"><code>pqlControl</code></td>
+<td align="left"><code>task$pql</code></td>
+</tr>
+<tr>
+<td align="left"><code>computeCi</code></td>
+<td align="left"><code>output$inverse</code></td>
+</tr>
+<tr>
+<td align="left"><code>getPEV</code></td>
+<td align="left">No separate replacement; <code>output$inverse</code> controls fit-time PEVs. Use <code>postPEV()</code> to compute PEVs after fitting.</td>
+</tr>
+<tr>
+<td align="left"><code>returnParam</code></td>
+<td align="left"><code>output$setup</code></td>
+</tr>
+<tr>
+<td align="left"><code>blend</code>, <code>blendWeight</code></td>
+<td align="left"><code>update$recovery</code>, <code>update$blendWeight</code></td>
+</tr>
+<tr>
+<td align="left"><code>stepWeight</code></td>
+<td align="left"><code>proposal$stepWeight</code></td>
+</tr>
+<tr>
+<td align="left"><code>acceleration=&quot;aitken&quot;</code></td>
+<td align="left"><code>proposal$extrapolation=&quot;aitken&quot;</code></td>
+</tr>
+<tr>
+<td align="left"><code>acceleration=&quot;hybrid-ai&quot;</code></td>
+<td align="left"><code>curvature$method=&quot;hybrid-ai&quot;</code></td>
+</tr>
+<tr>
+<td align="left"><code>compression</code></td>
+<td align="left"><code>representation$compression</code></td>
+</tr>
+<tr>
+<td align="left"><code>factorScoreAugmentation</code></td>
+<td align="left"><code>representation$factorScores</code></td>
+</tr>
+<tr>
+<td align="left"><code>experimental$sparseFactors</code>, <code>matrixFreePcg</code>, <code>saddlePoint</code></td>
+<td align="left"><code>representation$sparseFactors</code>, <code>representation$matrixFree</code>, <code>representation$equations</code></td>
+</tr>
+<tr>
+<td align="left"><code>experimental$blockSchur</code>, <code>blockBanded</code>, <code>factorSchurMultiFactor</code>, <code>dFirstML</code></td>
+<td align="left">Same-named <code>solve</code> fields</td>
+</tr>
+<tr>
+<td align="left"><code>experimental$pdCertificates</code>, <code>traceBatch</code></td>
+<td align="left"><code>score$covarianceChecks</code>, <code>score$traceBatch</code></td>
+</tr>
+<tr>
+<td align="left"><code>experimental$reducedAI</code>, <code>commonScale</code></td>
+<td align="left"><code>curvature$reduced</code>, <code>update$commonScale</code></td>
+</tr>
+<tr>
+<td align="left"><code>experimental$cholmodFinalSelected</code>, <code>panelCi2</code></td>
+<td align="left"><code>output$selectedInverse</code>, <code>output$panelSize</code></td>
+</tr>
+<tr>
+<td align="left"><code>experimental$profile</code></td>
+<td align="left"><code>diagnostics$profile</code></td>
+</tr>
+<tr>
+<td align="left"><code>covarianceInformation</code></td>
+<td align="left"><code>output$covariance</code></td>
+</tr>
+<tr>
+<td align="left"><code>retainCoefficientMatrix</code></td>
+<td align="left"><code>output$coefficientMatrix</code></td>
+</tr>
+<tr>
+<td align="left">PCG <code>tol</code>, <code>maxIters</code>, preconditioner, reuse</td>
+<td align="left"><code>solve</code> fields</td>
+</tr>
+<tr>
+<td align="left">PCG determinant scaling and Lanczos depth</td>
+<td align="left"><code>logdet$scaling</code>, <code>logdet$lanczosSteps</code></td>
+</tr>
+<tr>
+<td align="left">PCG trace probes, estimator, rank</td>
+<td align="left"><code>score$traceProbes</code>, <code>score$estimator</code>, <code>score$rank</code></td>
+</tr>
+<tr>
+<td align="left">PCG covariance checks and trace batching</td>
+<td align="left"><code>score$covarianceChecks</code>, <code>score$traceBatch</code></td>
+</tr>
+<tr>
+<td align="left">PCG accuracy budgets</td>
+<td align="left"><code>convergence</code> fields</td>
+</tr>
+<tr>
+<td align="left">PCG seed</td>
+<td align="left"><code>execution$seed</code></td>
+</tr>
+<tr>
+<td align="left">Experimental elimination requests</td>
+<td align="left">Corresponding <code>solve</code> fields</td>
+</tr>
+<tr>
+<td align="left">Experimental sparse factors, matrix-free, saddle point</td>
+<td align="left">Corresponding <code>representation</code> fields</td>
+</tr>
+<tr>
+<td align="left">Experimental trace checks/batching</td>
+<td align="left"><code>score$covarianceChecks</code>, <code>score$traceBatch</code></td>
+</tr>
+<tr>
+<td align="left">Experimental reduced AI</td>
+<td align="left"><code>curvature$reduced</code></td>
+</tr>
+<tr>
+<td align="left">Experimental common scale</td>
+<td align="left"><code>update$commonScale</code></td>
+</tr>
+<tr>
+<td align="left">Experimental inverse selection/panel size</td>
+<td align="left"><code>output$selectedInverse</code>, <code>output$panelSize</code></td>
+</tr>
+<tr>
+<td align="left">Experimental profiling</td>
+<td align="left"><code>diagnostics$profile</code></td>
+</tr>
+<tr>
+<td align="left"><code>denseMemoryMB</code>, <code>memoryPolicy</code>, <code>gpu</code>, <code>gpuMinSize</code>, <code>blasThreads</code></td>
+<td align="left">Same-named <code>execution</code> fields</td>
+</tr>
+<tr>
+<td align="left"><code>verbose</code>, <code>dateWarning</code></td>
+<td align="left">Same-named <code>diagnostics</code> fields</td>
+</tr>
+<tr>
+<td align="left"><code>recordDiagnostics</code>, <code>verboseDiagnostics</code></td>
+<td align="left">Removed flags; use <code>diagnostics$verbose</code> for fit output and <code>diagnostics$profile</code> for profiling</td>
+</tr>
+<tr>
+<td align="left"><code>engine</code></td>
+<td align="left">Pass the complete object as <code>control</code></td>
+</tr>
+<tr>
+<td align="left"><code>...</code> legacy/pass-through options</td>
+<td align="left">No replacement; set documented module fields only</td>
+</tr>
+</tbody>
+</table>
+<p>For example, former settings spread across top-level formals and engine lists
+now have one canonical owner:</p>
+<pre><code class="language-r">control &lt;- mmes_control(
+  formulation = &quot;henderson&quot;,
+  task = list(objective = &quot;reml&quot;),
+  solve = list(method = &quot;pcg&quot;, tol = 1e-8, maxIters = 0L),
+  score = list(traceProbes = 16L),
+  convergence = list(accuracy = &quot;adaptive&quot;, maxIters = 40L),
+  output = list(inverse = 0L, covariance = &quot;full&quot;)
+)
+</code></pre>
+<p>The statistical model is unchanged by choosing a numerical representation or
+solver only when that method is mathematically equivalent and eligible. Do not
+interpret the module structure as permission to combine unsupported methods.</p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/combine/npm/katex/dist/katex.min.js,npm/katex/dist/contrib/auto-render.min.js,npm/@xiee/utils/js/render-katex.js" defer></script>
+</body>
+</html>

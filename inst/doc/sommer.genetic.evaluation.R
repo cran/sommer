@@ -88,7 +88,7 @@ trace_pedigree <- function(ped, index){
   sub
 }
 
-pilotHerds <- levels(long$herd)[1:60]
+pilotHerds <- levels(long$herd)[1:40]
 pilot <- droplevels(long[long$herd %in% pilotHerds, ])
 pilotPed <- trace_pedigree(ped, recorded$index[recorded$herd %in% pilotHerds])
 c(records=nrow(pilot), animals=length(unique(pilot$id)), pedigree=nrow(pilotPed))
@@ -97,9 +97,11 @@ c(records=nrow(pilot), animals=length(unique(pilot$id)), pedigree=nrow(pilotPed)
 Ainv <- pedigree_ainv(pilotPed)
 timeReml <- system.time(
   reml <- mmes(value ~ trait + trait:herd,
-               random = ~ vsm(usm(trait), ism(id), Gu=Ainv),
-               rcov = ~ vsm(usm(trait), ism(record)),
-               data=pilot, verbose=FALSE)
+  random = ~ vsm(usm(trait), ism(id), Gu=Ainv),
+  rcov = ~ vsm(usm(trait), ism(record)),
+  data=pilot,
+  control = mmes_control(convergence = list(maxIters = 1L),
+                         diagnostics = list(verbose = FALSE)))
 )
 timeReml[["elapsed"]]
 
@@ -114,9 +116,12 @@ round(R0hat$covariance, 3)
 Ainv <- pedigree_ainv(ped)
 timeEval <- system.time(
   ebv <- mmes(value ~ trait + trait:herd,
-              random = ~ vsm(usm(trait), ism(id), Gu=Ainv),
-              rcov = ~ vsm(usm(trait), ism(record)),
-              data=long, solveOnly=TRUE, covPar=reml, verbose=FALSE)
+  random = ~ vsm(usm(trait), ism(id), Gu=Ainv),
+  rcov = ~ vsm(usm(trait), ism(record)),
+  data=long,
+  covPar=reml,
+  control = mmes_control(task = list(mode = "solve"),
+  diagnostics = list(verbose = FALSE)))
 )
 timeEval[["elapsed"]]
 ebv
@@ -142,9 +147,12 @@ data.frame(id=names(top), index=round(top, 3),
 
 ## ----truePars-----------------------------------------------------------------
 ebvTrue <- mmes(value ~ trait + trait:herd,
-                random = ~ vsm(usm(trait), ism(id), Gu=Ainv),
-                rcov = ~ vsm(usm(trait), ism(record)),
-                data=long, solveOnly=TRUE, covPar=list(G0, R0), verbose=FALSE)
+  random = ~ vsm(usm(trait), ism(id), Gu=Ainv),
+  rcov = ~ vsm(usm(trait), ism(record)),
+  data=long,
+  covPar=list(G0, R0),
+  control = mmes_control(task = list(mode = "solve"),
+  diagnostics = list(verbose = FALSE)))
 uTrue <- ebvTrue$uList[[1]][ped$id, ]
 diag(cor(u, uTrue))
 diag(cor(uTrue[ped$gen == 6, ], bv[ped$gen == 6, ]))
@@ -152,8 +160,10 @@ ebvTrue$vcParams[, c("term", "parameter", "value")]
 
 ## ----singleTrait--------------------------------------------------------------
 single <- mmes(y1 ~ herd,
-               random = ~ vsm(ism(id), Gu=Ainv, sigma2=0.30, fixedSigma2=TRUE),
-               rcov = ~ vsm(ism(units), sigma2=0.70, fixedSigma2=TRUE),
-               data=pheno, solveOnly=TRUE, verbose=FALSE)
+  random = ~ vsm(ism(id), Gu=Ainv, sigma2=0.30, fixedSigma2=TRUE),
+  rcov = ~ vsm(ism(units), sigma2=0.70, fixedSigma2=TRUE),
+  data=pheno,
+  control = mmes_control(task = list(mode = "solve"),
+  diagnostics = list(verbose = FALSE)))
 cor(single$uList[[1]][candidates, 1], bv[candidates, "y1"])
 

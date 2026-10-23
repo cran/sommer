@@ -5,6 +5,71 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>Inside sommer: the ai_mme_sp2 engine</title>
 <style type="text/css">
+/**
+ * Prism.s theme ported from highlight.js's xcode style
+ */
+pre code {
+  padding: 1em;
+}
+.token.comment {
+  color: #007400;
+}
+.token.punctuation {
+  color: #999;
+}
+.token.tag,
+.token.selector {
+  color: #aa0d91;
+}
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol {
+  color: #1c00cf;
+}
+.token.property,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin {
+  color: #c41a16;
+}
+.token.inserted {
+  background-color: #ccffd8;
+}
+.token.deleted {
+  background-color: #ffebe9;
+}
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #9a6e3a;
+}
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: #836c28;
+}
+.token.function,
+.token.class-name {
+  color: #DD4A68;
+}
+.token.regex,
+.token.important,
+.token.variable {
+  color: #5c2699;
+}
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+.token.italic {
+  font-style: italic;
+}
+</style>
+<style type="text/css">
 body {
   font-family: sans-serif;
   max-width: 800px;
@@ -78,7 +143,7 @@ section.footnotes::before {
 <div class="frontmatter">
 <div class="title"><h1>Inside sommer: the ai_mme_sp2 engine</h1></div>
 <div class="author"><h2>sommer development team</h2></div>
-<div class="date"><h3>2026-10-03</h3></div>
+<div class="date"><h3>2026-10-23</h3></div>
 </div>
 <div class="body">
 <p>This vignette is a technical tour of <code>ai_mme_sp2()</code>, the C++ engine used by
@@ -86,7 +151,7 @@ section.footnotes::before {
 the engine solves, how covariance parameters are represented and estimated,
 why there are three sparse-system solvers, and where the major computational
 savings come from. Small examples connect the equations to actual R output.</p>
-<p>The discussion is specific to the Henderson engine (<code>mmes(..., henderson=TRUE)</code>, the default). <code>henderson=FALSE</code> selects a different,
+<p>The discussion is specific to the Henderson engine (<code>mmes(..., formulation=&quot;henderson&quot;)</code>, the default). <code>formulation=&quot;direct&quot;</code> selects a different,
 direct-inversion engine and is outside the solver comparisons below. Some
 implementation details evolve; the source comments in <code>src/MNR.cpp</code> are the
 authoritative record of the current implementation.</p>
@@ -133,7 +198,7 @@ the supplied covariance descriptors. Fixed covariance parameters are held
 at their specified values and omitted from the free update.</p>
 <p>For REML, the target is the restricted likelihood, which accounts for the
 fixed-effect design while estimating covariance. For ML, it is the ordinary
-likelihood. <code>REML=TRUE</code> is the default. <code>REML=FALSE</code> is supported by the
+likelihood. <code>task$objective=&quot;reml&quot;</code> is the default. <code>task$objective=&quot;ml&quot;</code> is supported by the
 <code>ldlt</code> and <code>cholmod</code> solvers; the current <code>pcg</code> path is REML-only.</p>
 <h1 id="2-henderson-equations-and-the-restricted-likelihood">2. Henderson equations and the restricted likelihood</h1>
 <h2 id="2-1-the-coefficient-matrix">2.1 The coefficient matrix</h2>
@@ -304,21 +369,222 @@ $$</p>
 the complete likelihood. Cross-derivatives between distinct covariance
 structures are zero where the structures are parameter-independent; within
 a structure, second derivative corrections are included as needed.</p>
-<h2 id="4-2-why-blend-ai-with-em-information">4.2 Why blend AI with EM information?</h2>
+<h2 id="4-2-why-blend-ai-and-em-update-directions">4.2 Why blend AI and EM update directions?</h2>
 <p>AI steps are usually much faster than expectation-maximization (EM) near the
 optimum, but can be aggressive when a parameter is near a boundary or when
-the local curvature is poorly behaved. EM-style information tends to give
-more conservative, stable movement for simple variance parameters. The
-implementation combines them:</p>
+the local curvature is poorly behaved. EM updates provide a stable alternative.
+<code>update$blendWeight</code> now combines covariance-update directions, not information matrices:</p>
 <p>$$
-\mathcal I_{used}
-= (1-w_{EM})\mathcal I_{AI}+w_{EM}\mathcal I_{EM}.
+\Delta_{blend}
+= (1-w)\Delta_{AI}+w\Delta_{EM}.
 $$</p>
-<p><code>emWeight</code> controls \(w_{EM}\) by iteration. By default it starts relatively
-conservatively and tapers toward a small value, so early updates get more
-stabilization and later updates rely more heavily on AI. <code>stepWeight</code>
-separately scales the score step. They are distinct controls: one blends
-information matrices; the other damps the proposed correction.</p>
+<p><code>update$blendWeight</code> is \(w\): 1 selects the EM direction, 0 selects AI, and intermediate
+values interpolate proposals. The default <code>update$blendWeight=NULL</code> instead starts
+with AI and computes no EM/PX moments while AI makes useful progress.
+At exact explicit EM
+endpoints, iterations skip AI construction except for final inference. Generic
+covariance structures use increasing-Q generalized EM updates.
+A single whole-number <code>update$blendWeight</code> greater than 1 sets the decay length.
+For example, <code>update$blendWeight=5</code> decays exponentially from 1 to 0.03 over five
+iterations, then holds at 0.03. The decay length is capped at <code>convergence$maxIters</code>.
+Fractional counts and vectors containing values greater than 1 are errors.
+<code>proposal$stepWeight</code> damps the resulting proposal and defaults to 1 when blending is
+active or automatic recovery is selected, preserving exact standalone EM
+updates and allowing full AI proposals subject to trust caps and backtracking.
+Explicit pure-AI fits retain their
+previous damping schedule. Set <code>update$blendWeight=0</code> to request the existing pure-AI path.
+Positive blend weights support Gaussian Henderson or direct REML/ML
+fitting; Henderson PCG, PQL, acceleration, factor-score augmentation,
+and saddle-point fitting do not support them. These modes default to pure AI
+when weights are omitted; explicitly positive weights are rejected.
+Diagnostics, including numerical M-step convergence, appear in
+<code>engineDiagnostics$blend</code>.</p>
+<h3 id="ml-posterior-moments-and-fixed-effects">ML posterior moments and fixed effects</h3>
+<p>The same AI-first policy applies to <code>task$objective=&quot;ml&quot;</code>. At each accepted covariance,
+the engine profiles the fixed effects by GLS. REML E-steps use the joint
+coefficient inverse, including fixed-effect uncertainty. ML instead conditions
+on that GLS estimate and uses random-effect posterior covariance
+\(S=(Z'R^{-1}Z+G^{-1})^{-1}=D^{-1}\).
+The random moment is \(mm'+S\); the residual moment is
+\(rr'+ZSZ'\), where \(r=y-X\hat\beta-Zm\).
+Weights apply the existing residual transformation to errors and designs.</p>
+<p>Fixed effects stay deterministic during covariance Q and PX optimization,
+including reduced-rank loading probes. Every likelihood trial then profiles
+fixed effects again at its proposed covariance. Acceptance uses the observed
+profile ML likelihood, not the auxiliary Q objective. The scalar residual
+update divides by \(n\), not \(n-p\); its uncertainty trace includes only random
+coefficients for ML. Final coefficient uncertainty still uses the joint
+inverse. Diagnostics identify the likelihood mode as <code>&quot;ML&quot;</code> or <code>&quot;REML&quot;</code>.</p>
+<h3 id="ai-first-recovery">AI-first recovery</h3>
+<p>With <code>verbose=TRUE</code>, all <code>mmes()</code> optimizer paths share a compact table:</p>
+<pre><code> iter         LogLik    deltaLL       update          policy  trust   line notPD  time(s)
+</code></pre>
+<p><code>update</code> identifies AI, scaled regularized AI (<code>AI-reg</code>), EM, PXEM, or a
+weighted mixture such as <code>AI+EM:0.40</code>.
+<code>policy</code> shows <code>auto:em</code> or <code>auto:pxem</code> while AI-first monitoring is active.
+Recovery rows show <code>backtracking</code>, <code>low-gain</code>, <code>line-search</code>, or <code>info-solve</code>;
+the update column identifies the selected recovery method. <code>scheduled</code> means
+an explicit positive blend weight; <code>off</code> means automatic recovery is disabled.
+Trigger labels denote attempts, not successful recovery or convergence.
+Detailed acceptance and stop reasons remain in <code>engineDiagnostics$recovery</code>.</p>
+<p><code>deltaLL</code> compares successive accepted likelihoods. <code>time(s)</code> is cumulative
+elapsed time, including rejected trials; redundant clock and CPU columns are
+removed. Trust, line-search and failed-structure diagnostics remain visible.
+<code>-</code> denotes unavailable/unattempted scales or no applicable local <code>notPD</code> repair.
+Q gains and step norms remain available in stored diagnostics.
+See <code>?mmes</code> for the timing of safeguard scales on each optimizer path.</p>
+<p>Automatic recovery uses <code>update$recovery=&quot;em&quot;</code> by default; <code>update$recovery=&quot;pxem&quot;</code> selects the
+scalar expanded alternative. Recovery requires a non-small projected score
+and one of these events:</p>
+<ul>
+<li>Three consecutive accepted AI steps each require at least four halvings.</li>
+<li>Three consecutive accepted AI steps gain less than <code>convergence$likelihoodTol</code>.</li>
+<li>The AI line search exhausts its 25 trials.</li>
+<li>The projected AI system fails a positive-definiteness, solve-residual, or
+ascent-direction check, or its trust-scaled reciprocal condition estimate
+falls below the square root of machine precision.</li>
+</ul>
+<p>For an unreliable information solve, ordinary AI first retries with a
+scaled, ridge-regularized direction in the feasible parameter tangent.
+Trust-cap scaling and an increasing ridge bound each working-coordinate step,
+preventing a nearly flat coordinate from shrinking all other updates.
+An otherwise usable ordinary AI direction also takes this retry when its
+undamped trust multiplier would be below <code>0.1</code>; user-requested step damping
+does not trigger it.
+The <code>AI-reg</code> / <code>info-solve</code> row identifies this retry. It must remain feasible
+and improve observed likelihood by more than <code>1e-10</code> through backtracking.
+Only if that direction or its line search fails are EM/PXEM moments computed.
+Other recovery triggers still use EM/PXEM directly.</p>
+<p>An EM/PXEM recovery step also must improve observed likelihood by more than
+<code>1e-10</code>. The next iteration always retries ordinary AI. This sequence may
+repeat up to <code>convergence$maxIters</code>; repeated recoveries have no separate iteration cap.
+If EM/PXEM recovery also stalls, the fit returns the
+last accepted parameters, warns, and reports <code>convergence=FALSE</code>. An approaching
+variance floor alone does not trigger recovery. These are initial fixed
+heuristics, not guarantees that recovery will improve speed on every model.</p>
+<p>Variance floors apply to free product-level log variances and to log variance,
+specific-variance and innovation-variance ratios, not to log loadings,
+Cholesky factors or spatial range parameters. The floor is
+<code>max(1e-8, execution$inverseTol)</code> in each parameter’s natural units (absolute
+variance for product scales, relative variance for ratios).
+Adaptive AI uses a boundary-constrained solve: a joint step that crosses a
+floor, supported by an outward marginal score/curvature step, fixes that
+coordinate at the floor and re-solves the remaining directions. Correlated
+overshoots without this marginal support retain the trust safeguard instead.
+Boundary moves do not shrink unrelated coordinates through the global trust
+multiplier. Fixed parameters and equality/scaling constraints remain exact;
+a floor-bound parameter can re-enter the solve when its score points inward.
+All such proposals still require observed-likelihood acceptance.
+Experimental common-scale profiling rejects proposals at any variance floor;
+refit with common-scale profiling off when a boundary is needed.</p>
+<p>Convergence requires both a small projected score and either a small likelihood
+change or relative parameter step. The score is projected through the free/tied
+parameter tangent and removes outward directions at variance floors. Each
+component is scaled by the square root of its projected AI diagonal, floored
+at <code>execution$inverseTol</code>. Inward-pointing directions at a variance floor use
+the unfloored curvature (bounded away from numerical zero), so a vanishing
+log-variance derivative cannot falsely certify convergence. The maximum must not exceed
+<code>sqrt(max(convergence$likelihoodTol, convergence$parameterTol))</code>.</p>
+<p><code>engineDiagnostics$recovery</code> records the method, attempted and accepted step
+counts, source iterations,
+trigger reasons, stop reason, and final score certificate. Those step counts
+refer to EM/PXEM. <code>regularizedAttempts</code> counts stabilized-direction solves,
+including failures and active-set retries; <code>regularizedAcceptedSteps</code> counts
+accepted regularized AI updates. Paired <code>regularizedIterations</code> and
+<code>regularizedRidges</code> record source iterations and ridges for usable stabilized
+directions, whether or not the subsequent proposal is accepted. The existing blend
+counters report actual AI, moment, and M-step work. Explicit numeric
+<code>update$blendWeight</code> schedules disable automatic recovery and retain their semantics.</p>
+<p>AI, EM, and PXEM remain local methods. A feasible covariance and a small score
+do not establish a global maximum. Compare converged fits from alternative
+starting values when competing optima are a concern.</p>
+<h3 id="scalar-parameter-expansion">Scalar parameter expansion</h3>
+<p>Set <code>update$recovery=&quot;pxem&quot;</code> to replace the EM/GEM direction with a scalar
+parameter-expanded generalized EM (PX-GEM) direction:</p>
+<p>$$
+\Delta_{blend}=(1-w)\Delta_{AI}+w\Delta_{PX}.
+$$</p>
+<p>Each random term uses \(u_j=a_jv_j\), \(a_j&gt;0\), and
+\(G_{*j}=G_j(\phi)/a_j^2\). The current E-step uses \(a_j=1\).
+An ordinary EM/GEM update seeds joint numerical optimization over admissible
+original covariance parameters and log expansion factors. Reduction recovers
+\(G_j=a_j^2G_{*j}\) before blending; expansion resets to identity each iteration.
+Keeping constraints on the original parameters preserves fixed values and
+equality/ratio ties without clipping a reduced proposal.</p>
+<pre><code class="language-r"># Standalone scalar PX-GEM
+fit &lt;- mmes(y ~ 1,
+  random = ~id,
+  data = dat,
+  control = mmes_control(update = list(recovery = &quot;pxem&quot;, blendWeight = 1)))
+
+# PX-GEM/AI with a five-iteration exponential taper
+fit &lt;- mmes(y ~ 1,
+  random = ~id,
+  data = dat,
+  control = mmes_control(update = list(recovery = &quot;pxem&quot;, blendWeight = 5)))
+</code></pre>
+<p>This is increasing-Q numerical PX-GEM, not full matrix expansion.
+All existing covariance families supported by EM/GEM can use it, including
+latent reduced-rank terms. Residual-only models have no expansion and retain
+their ordinary update. Solver and fitting-mode restrictions remain unchanged.
+Full weight skips iterative AI; zero weight skips all EM and PX work.
+Non-reduced-rank AI directions use native exact AI kernels even within a
+blended schedule. Reduced-rank AI uses the same latent kernels as standalone
+RR AI. Accepted trial fits can supply the next zero-weight iteration and
+final exact inference without repeated coefficient factorization. Existing
+blend constraints and likelihood guards remain active.</p>
+<p>The expanded residual objective includes cross-term posterior uncertainty.
+Non-reduced-rank models cache quadratic expansion moments, with storage
+quadratic in the number of random terms. Reduced-rank models cache exact
+quadratic moments in a normalized loading/design basis once per E-step;
+objective evaluations require no additional coefficient solves.
+Cache storage is quadratic in the basis size. Extra workspace obeys
+<code>denseMemoryMB</code>. PX proposals always pass observed-likelihood backtracking;
+rejected proposals can fall back to the ordinary EM/GEM seed.</p>
+<p>Both EM and PX reuse exact Schur inverse blocks or selected-inverse
+contractions for random moments. Diagonal covariance updates omit unused
+off-diagonal moments. Scalar residual updates use a trace identity, including
+fixed-effect uncertainty. Scalar non-reduced-rank PX expansion moments also
+reuse exact coefficient contractions when their sparse products fit the
+memory budget. Generic bounded panel solves remain the exact fallback.</p>
+<p>Diagnostics report <code>pxQGains</code>, <code>pxLogExpansion</code>, numerical PX convergence and
+evaluation counts, and <code>pxEMFallbacks</code>. These describe proposals before
+backtracking. Fewer iterations need not mean less wall time: compare PX-AI
+against EM-AI at the same final accuracy before choosing a method.
+The default remains <code>update$recovery=&quot;em&quot;</code>.</p>
+<h3 id="direct-engine-em-and-recovery">Direct-engine EM and recovery</h3>
+<p>The direct engine (<code>formulation=&quot;direct&quot;</code>) accepts the same <code>blend</code> and <code>update$blendWeight</code>
+controls. Its default is AI-first recovery, explicit zero selects AI only, and
+positive scalar/vector schedules blend genuine posterior-moment EM/GEM or
+scalar PX-GEM directions with AI. These updates do not call Henderson.</p>
+<p>For a random term with covariance \(\Sigma\otimes K\) and \(m\) relationship
+levels, cache \(B_{ab}=Z_aKZ_b'\). At an accepted fit, let \(r=Py\) and
+\(A=P\) for REML or \(A=V^{-1}\) for ML. The sufficient statistic is</p>
+<p>$$
+C_{ab}=r’B_{ab}r-\operatorname{tr}(AB_{ab}),\qquad
+S=m\Sigma+\Sigma C\Sigma.
+$$</p>
+<p>Eligible scalar, diagonal, and unstructured random M-steps use these moments
+directly. Other families use numerical increasing-Q GEM, including custom
+covariances, constrained parameters, and structured or incomplete residual
+blocks. Zero-specific RR moves loadings into a latent design with nonsingular
+prior covariance. Candidate loading/PX changes retain exact cross-term
+posterior uncertainty in residual Q without a coefficient-sized posterior
+matrix. ML profiles beta inside the residual Q objective; REML integrates
+fixed-effect uncertainty.</p>
+<p>Full EM proposals bypass AI trust caps and still pass covariance and observed
+likelihood checks. The direct driver retains projected-score convergence
+certification and clean final AI standard errors. Healthy AI iterations prepare
+no EM moments; failed or persistently difficult AI steps can request one
+EM/PX recovery, then resume AI. Direct information reliability uses
+diagonal-normalized curvature, avoiding recovery solely because a variance
+approaches its numerical floor.</p>
+<p><code>engineDiagnostics$direct</code> reports AI update solves and accepted-state
+likelihood work. <code>engineDiagnostics$blend</code> reports moment preparations, Q gains,
+numerical M-step status, actual weights, expansions, and fallbacks.
+<code>engineDiagnostics$recovery</code> records automatic triggers and accepted recoveries.
+Exact EM workspace obeys <code>denseMemoryMB</code>, separately from existing direct
+caches. Structured/PX numerical updates may cost more than AI.</p>
 <h2 id="4-3-safeguards-around-the-proposed-step">4.3 Safeguards around the proposed step</h2>
 <p>The candidate update is not accepted merely because the information system
 was solvable. The engine applies several layers of protection:</p>
@@ -344,7 +610,7 @@ not every internal line-search retry.</p>
 <p>All three choices solve the same statistical model. The difference is how
 they handle the coefficient matrix \(C\) and the traces/log determinants
 needed for covariance estimation.</p>
-<h2 id="5-1-solver-quot-ldlt-quot-sparse-direct-factorization">5.1 <code>solver=&quot;ldlt&quot;</code>: sparse direct factorization</h2>
+<h2 id="5-1-solve-method-quot-ldlt-quot-sparse-direct-factorization">5.1 <code>solve$method=&quot;ldlt&quot;</code>: sparse direct factorization</h2>
 <p>The default for the usual sparse MME is Eigen’s simplicial sparse LDLT
 factorization:</p>
 <p>$$
@@ -359,14 +625,14 @@ the numerical factorization is redone because covariance values change.</p>
 forming all of \(C^{-1}\). In the LDLT case, a Takahashi recursion computes the
 inverse entries associated with the factor’s nonzero pattern. If a needed
 entry is outside the selected subset, the code falls back to batched solves.
-<code>computeCi=1</code> uses this sparse selected-inverse route for requested
+<code>output$inverse=1</code> uses this sparse selected-inverse route for requested
 uncertainty calculations.</p>
 <p><strong>Strengths:</strong> deterministic direct solves and log determinants; useful
 selected-inverse structure; generally effective when \(C\) remains sparse.</p>
 <p><strong>Cost:</strong> a direct factorization can become expensive when a dense
 relationship precision causes extensive fill-in. Sparse input does not
 guarantee a sparse factor.</p>
-<h2 id="5-2-solver-quot-cholmod-quot-supernodal-direct-factorization">5.2 <code>solver=&quot;cholmod&quot;</code>: supernodal direct factorization</h2>
+<h2 id="5-2-solve-method-quot-cholmod-quot-supernodal-direct-factorization">5.2 <code>solve$method=&quot;cholmod&quot;</code>: supernodal direct factorization</h2>
 <p>CHOLMOD is accessed through the <code>Matrix</code> package’s registered CHOLMOD
 callables. Its supernodal sparse Cholesky factorization groups dense parts
 of the factor into supernodes and uses matrix-matrix kernels. In broad terms,
@@ -378,7 +644,7 @@ relationship matrices.</p>
 round-off. For the score traces, CHOLMOD’s factor representation is not
 converted to the LDLT/Takahashi selected-inverse representation in this
 implementation. It uses cached inverse blocks when available and otherwise
-batched factor solves. If <code>computeCi=1</code> is requested, a final LDLT
+batched factor solves. If <code>output$inverse=1</code> is requested, a final LDLT
 factorization is used to obtain the selected inverse subset.</p>
 <p>There is also an exact block-Schur engine for eligible REML patterns. When
 random-effect blocks are uncoupled except through a relatively small
@@ -396,7 +662,7 @@ more efficient; may activate the exact block-Schur path.</p>
 <p><strong>Cost:</strong> still a direct factorization in the general case. Dense factors
 need memory, and trace calculations may require solves when the inverse
 cache does not cover a requested entry.</p>
-<h2 id="5-3-solver-quot-pcg-quot-iterative-solves-and-stochastic-traces">5.3 <code>solver=&quot;pcg&quot;</code>: iterative solves and stochastic traces</h2>
+<h2 id="5-3-solve-method-quot-pcg-quot-iterative-solves-and-stochastic-traces">5.3 <code>solve$method=&quot;pcg&quot;</code>: iterative solves and stochastic traces</h2>
 <p>Preconditioned conjugate gradients (PCG) solves \(Cx=b\) using products with
 \(C\) rather than a sparse direct factorization. The current preconditioner
 is diagonal. This avoids storing a large fill-heavy factor and is attractive
@@ -418,13 +684,13 @@ Reusing them at successive parameter values gives common random numbers:
 likelihood changes are less confounded by fresh Monte Carlo variation at
 every iteration. The estimates are still approximations, so probe count,
 Lanczos steps, and solve tolerance influence the speed-accuracy tradeoff.</p>
-<p>Current defaults are <code>pcgTol=1e-8</code>, <code>pcgTraceProbes=8</code>, and
-<code>pcgLanczosSteps=20</code>; <code>pcgMaxIters=0</code> chooses an automatic iteration limit.
+<p>Current defaults are <code>solve$tol=1e-8</code>, <code>score$traceProbes=8</code>, and
+<code>logdet$lanczosSteps=20</code>; <code>solve$maxIters=0</code> chooses an automatic iteration limit.
 The defaults are practical settings, not a universal error bound.</p>
-<p><code>solver=&quot;pcg&quot;</code> currently requires <code>REML=TRUE</code>. <code>computeCi=1</code> is not
+<p><code>solve$method=&quot;pcg&quot;</code> currently requires <code>task$objective=&quot;reml&quot;</code>. <code>output$inverse=1</code> is not
 available because it requests the LDLT/Takahashi selected inverse. Use
-<code>computeCi=0</code> for the factorization-free fit, or request
-<code>computeCi=2</code> only when an explicit full inverse is genuinely needed and
+<code>output$inverse=0</code> for the factorization-free fit, or request
+<code>output$inverse=2</code> only when an explicit full inverse is genuinely needed and
 the system is small enough.</p>
 <p><strong>Strengths:</strong> can avoid direct factorization and its fill/memory cost;
 often benefits from parallel SLQ probes.</p>
@@ -468,13 +734,13 @@ matrices for which the preconditioner is weak.</p>
 <td>Approximate determinant/traces</td>
 </tr>
 <tr>
-<td>ML (<code>REML=FALSE</code>)</td>
+<td>ML (<code>task$objective=&quot;ml&quot;</code>)</td>
 <td>Yes</td>
 <td>Yes</td>
 <td>No</td>
 </tr>
 <tr>
-<td>Selected inverse (<code>computeCi=1</code>)</td>
+<td>Selected inverse (<code>output$inverse=1</code>)</td>
 <td>Native Takahashi subset</td>
 <td>Final LDLT subset</td>
 <td>Not supported</td>
@@ -487,7 +753,7 @@ matrices for which the preconditioner is weak.</p>
 </tr>
 </tbody>
 </table>
-<p>The default <code>solver=&quot;auto&quot;</code> in <code>mmes()</code> selects <code>cholmod</code> if any supplied
+<p>The default <code>solve$method=&quot;auto&quot;</code> in <code>mmes()</code> selects <code>cholmod</code> if any supplied
 random-effect relationship inverse has density greater than 0.2, and
 otherwise selects <code>ldlt</code>. This is a heuristic for separating dense genomic
 relationship matrices from sparse pedigree-style matrices. An explicit
@@ -543,7 +809,7 @@ of a dense inverse when only a sparse subset is needed.</p>
 <p>If a requested inverse entry is unavailable from the selected subset, the
 implementation solves for batches of right-hand sides rather than
 immediately materializing all of \(C^{-1}\). A full inverse is reserved for
-the explicit <code>computeCi=2</code> request.</p>
+the explicit <code>output$inverse=2</code> request.</p>
 <h2 id="6-4-reuse-what-does-not-change-across-iterations">6.4 Reuse what does not change across iterations</h2>
 <p>Covariance values change at every accepted parameter update, but many
 structural objects do not. When the sparse pattern is unchanged, LDLT and
@@ -554,12 +820,12 @@ common sparse-optimization pattern: distinguish the graph/pattern from the
 numeric values stored on that graph.</p>
 <h2 id="6-5-matrix-free-pcg-for-compatible-reml-models">6.5 Matrix-free PCG for compatible REML models</h2>
 <p>For a subset of REML models with compatible factor-wise random covariance
-precision and <code>computeCi=0</code>, the PCG iteration can apply the random prior
+precision and <code>output$inverse=0</code>, the PCG iteration can apply the random prior
 through Kronecker/tensor operations. It does not need to assemble the full
 random precision contribution into \(C\) on each iteration. The full \(C\) is
 materialized once at the end when needed for the fitted-object interface.</p>
 <p>This path is intentionally narrower than PCG itself. It does not currently
-cover ML or <code>computeCi&gt;0</code>; direct LDLT and CHOLMOD use an explicit coefficient
+cover ML or <code>output$inverse&gt;0</code>; direct LDLT and CHOLMOD use an explicit coefficient
 matrix. Compatibility depends on the model’s covariance structure, not only
 on its size.</p>
 <h2 id="6-6-why-dense-relationship-matrices-are-a-different-regime">6.6 Why dense relationship matrices are a different regime</h2>
@@ -592,7 +858,7 @@ execute it. The main components are:</p>
 </tr>
 <tr>
 <td><strong>CHOLMOD</strong>, through <strong>Matrix</strong></td>
-<td>Supernodal sparse Cholesky and solves for <code>solver=&quot;cholmod&quot;</code></td>
+<td>Supernodal sparse Cholesky and solves for <code>solve$method=&quot;cholmod&quot;</code></td>
 <td>Dense supernodes use efficient matrix-matrix kernels; runtime access is through Matrix’s registered C callables rather than a separate package link.</td>
 </tr>
 <tr>
@@ -639,7 +905,7 @@ successive parameter values and uses the likelihood score and information
 to update them.</p>
 <p>The usual <code>rcov = ~ units</code> residual model is assumed. There is one record in
 each environment-by-entry cell, so the residual covariance at the worked
-iterate is \(R=I_6\). <code>henderson=TRUE</code> is the <code>mmes()</code> default; the solver choice
+iterate is \(R=I_6\). <code>formulation=&quot;henderson&quot;</code> is the <code>mmes()</code> default; the solver choice
 is explicitly <code>cholmod</code>.</p>
 <h2 id="8-1-data-ordering-and-design-matrices">8.1 Data, ordering, and design matrices</h2>
 <p>Use the observation order</p>
@@ -934,8 +1200,8 @@ incidence pattern, and symbolic factorization structure can be reused when
 their sparsity pattern remains unchanged.</p>
 <h2 id="8-8-the-converged-fit-is-a-different-point">8.8 The converged fit is a different point</h2>
 <p>For comparison with the deliberately chosen iterate above, fitting the
-specified six observations with <code>solver=&quot;cholmod&quot;</code> and
-<code>henderson=TRUE</code> (using the usual independent <code>units</code> residual) gives the
+specified six observations with <code>solve$method=&quot;cholmod&quot;</code> and
+<code>formulation=&quot;henderson&quot;</code> (using the usual independent <code>units</code> residual) gives the
 following native-scale covariance estimates on this run:</p>
 <p>$$
 \widehat{\operatorname{var}}(u_{A,\cdot})=0.664395,\qquad
@@ -993,17 +1259,17 @@ structure, Kronecker identities, and numerical-library kernels determine
 whether those steps are affordable.</p>
 <h1 id="9-choosing-settings-and-interpreting-results">9. Choosing settings and interpreting results</h1>
 <ul>
-<li>Start with <code>solver=&quot;auto&quot;</code> or <code>solver=&quot;ldlt&quot;</code> for sparse pedigree-like
-relationship precision. Try <code>solver=&quot;cholmod&quot;</code> when supplied relationship
+<li>Start with <code>solve$method=&quot;auto&quot;</code> or <code>solve$method=&quot;ldlt&quot;</code> for sparse pedigree-like
+relationship precision. Try <code>solve$method=&quot;cholmod&quot;</code> when supplied relationship
 precision is dense or the LDLT factor has substantial fill.</li>
-<li>Consider <code>solver=&quot;pcg&quot;</code> when factor memory or direct factorization is the
+<li>Consider <code>solve$method=&quot;pcg&quot;</code> when factor memory or direct factorization is the
 bottleneck and approximate log determinants/traces are acceptable. Check
-convergence and sensitivity to <code>pcgTol</code>, <code>pcgTraceProbes</code>, and
-<code>pcgLanczosSteps</code>; do not assume solver agreement from BLUP convergence
+convergence and sensitivity to <code>solve$tol</code>, <code>score$traceProbes</code>, and
+<code>logdet$lanczosSteps</code>; do not assume solver agreement from BLUP convergence
 alone.</li>
-<li>Use <code>computeCi=0</code> when inverse-based prediction-error output is not
-required. <code>computeCi=1</code> requests a sparse selected inverse and is a natural
-choice with LDLT. <code>computeCi=2</code> requests the full inverse and can be very
+<li>Use <code>output$inverse=0</code> when inverse-based prediction-error output is not
+required. <code>output$inverse=1</code> requests a sparse selected inverse and is a natural
+choice with LDLT. <code>output$inverse=2</code> requests the full inverse and can be very
 expensive in both time and memory.</li>
 <li>The number of covariance parameters matters. Unstructured covariance
 factors can make the AI information solve grow quadratically in the number
@@ -1020,6 +1286,8 @@ It uses Henderson’s equations to avoid observation-space dense matrices,
 descriptor-level formulas to exploit covariance structure, and a solver
 chosen for the sparsity and scale of the resulting coefficient system.</p>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/combine/npm/katex/dist/katex.min.js,npm/katex/dist/contrib/auto-render.min.js,npm/@xiee/utils/js/render-katex.js" defer></script>
 </body>
 </html>

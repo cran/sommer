@@ -2,10 +2,8 @@ test_that("Gaussian identity fits retain the linear mixed-model path", {
   data(DT_example)
   DT <- DT_example[complete.cases(DT_example[, c("Yield", "Env", "Name")]), ]
 
-  fitDefault <- mmes(Yield~Env, random=~Name, rcov=~units, data=DT,
-                     nIters=10, verbose=FALSE)
-  fitGaussian <- mmes(Yield~Env, random=~Name, rcov=~units, data=DT,
-                      nIters=10, verbose=FALSE, family=gaussian())
+  fitDefault <- mmes(Yield~Env, random=~Name, rcov=~units, data=DT, control=mmes_control(convergence=list(maxIters=10), diagnostics=list(verbose=FALSE)))
+  fitGaussian <- mmes(Yield~Env, random=~Name, rcov=~units, data=DT, family=gaussian(), control=mmes_control(convergence=list(maxIters=10), diagnostics=list(verbose=FALSE)))
 
   expect_s3_class(fitGaussian, "mmes")
   expect_false(inherits(fitGaussian, "mmes.glmm"))
@@ -23,15 +21,12 @@ test_that("PQL binomial and Poisson fits expose response and link scales", {
     y=rpois(length(x), exp(0.2 + 0.35 * x)), x=x, group=group
   )
 
-  binomialFit <- mmes(y~x, random=~group, rcov=~units, data=binomialData,
-                      family=binomial(), nIters=8, verbose=FALSE,
-                      pqlControl=list(maxit=4))
-  poissonFit <- mmes(y~x, random=~group, rcov=~units, data=poissonData,
-                     family=poisson(), nIters=8, verbose=FALSE,
-                     pqlControl=list(maxit=4))
+  binomialFit <- mmes(y~x, random=~group, rcov=~units, data=binomialData, family=binomial(), control=mmes_control(convergence=list(maxIters=8), diagnostics=list(verbose=FALSE), task=list(pql=list(maxit=4))))
+  poissonFit <- mmes(y~x, random=~group, rcov=~units, data=poissonData, family=poisson(), control=mmes_control(convergence=list(maxIters=8), diagnostics=list(verbose=FALSE), task=list(pql=list(maxit=4))))
 
   for(fit in list(binomialFit, poissonFit)){
     expect_s3_class(fit, "mmes.glmm")
+    expect_equal(fit$inputArgs$blendWeight, rep(0, 8L))
     expect_true(all(is.finite(fitted(fit))))
     expect_true(all(is.finite(fitted(fit, type="link"))))
     expect_true(all(is.finite(residuals(fit, type="deviance"))))
@@ -42,28 +37,13 @@ test_that("PQL binomial and Poisson fits expose response and link scales", {
   expect_true(all(fitted(poissonFit) > 0))
 })
 
-test_that("PQL Poisson fit without random effects matches glm", {
-  set.seed(23)
-  data <- data.frame(x=rep(c(0, 1), each=100))
-  data$y <- rpois(nrow(data), exp(0.2 + 0.6 * data$x))
-
-  glmFit <- glm(y~x, data=data, family=poisson())
-  pqlFit <- mmes(y~x, rcov=~units, data=data, family=poisson(),
-                 nIters=15, verbose=FALSE,
-                 pqlControl=list(maxit=20, tol=1e-8))
-
-  expect_equal(as.numeric(pqlFit$b), unname(coef(glmFit)), tolerance=1e-4)
-})
-
 test_that("PQL honors offsets on the link scale", {
   set.seed(41)
   data <- data.frame(x=rep(c(0, 1), each=100), exposure=runif(200, 0.4, 2))
   data$y <- rpois(nrow(data), data$exposure * exp(0.2 + 0.5 * data$x))
 
   glmFit <- glm(y~x+offset(log(exposure)), data=data, family=poisson())
-  pqlFit <- mmes(y~x+offset(log(exposure)), rcov=~units, data=data,
-                 family=poisson(), nIters=15, verbose=FALSE,
-                 pqlControl=list(maxit=20, tol=1e-8))
+  pqlFit <- mmes(y~x+offset(log(exposure)), rcov=~units, data=data, family=poisson(), control=mmes_control(update=list(blendWeight=0), convergence=list(maxIters=15), diagnostics=list(verbose=FALSE), task=list(pql=list(maxit=20, tol=1e-8))))
 
   expect_equal(as.numeric(pqlFit$b), unname(coef(glmFit)), tolerance=1e-4)
   expect_equal(fitted(pqlFit, type="link"), pqlFit$offset +
@@ -76,9 +56,7 @@ test_that("PQL covariance warm starts agree with converged cold starts", {
   effects <- rnorm(20L, sd=0.4)
   data$y <- rpois(160L, exp(0.2 + 0.3 * data$x + effects[data$group]))
   fit <- function(warm){
-    mmes(y~x, random=~group, rcov=~units, data=data, family=poisson(),
-      nIters=80, tolParConvLL=1e-9, tolParConvNorm=1e-9, verbose=FALSE,
-      dateWarning=FALSE, pqlControl=list(maxit=30, tol=1e-9, warmStart=warm))
+    mmes(y~x, random=~group, rcov=~units, data=data, family=poisson(), control=mmes_control(update=list(blendWeight=0), convergence=list(maxIters=80, likelihoodTol=1e-9, parameterTol=1e-9), diagnostics=list(verbose=FALSE, dateWarning=FALSE), task=list(pql=list(maxit=30, tol=1e-9, warmStart=warm))))
   }
   warm <- fit(TRUE)
   cold <- fit(FALSE)
@@ -98,9 +76,7 @@ test_that("PQL covariance warm starts agree with converged cold starts", {
   cholmodData <- data.frame(x=rep(c(0, 1), each=40L))
   cholmodData$y <- rpois(80L, exp(0.2 + 0.4 * cholmodData$x))
   fitCholmod <- function(warmStart){
-    mmes(y~x, rcov=~units, data=cholmodData, family=poisson(),
-      solver="cholmod", nIters=4, verbose=FALSE, dateWarning=FALSE,
-      pqlControl=list(maxit=6, tol=1e-8, warmStart=warmStart))
+    mmes(y~x, rcov=~units, data=cholmodData, family=poisson(), control=mmes_control(update=list(blendWeight=0), solve=list(method="cholmod"), convergence=list(maxIters=4), diagnostics=list(verbose=FALSE, dateWarning=FALSE), task=list(pql=list(maxit=6, tol=1e-8, warmStart=warmStart))))
   }
   cholmodWarm <- fitCholmod(TRUE)
   cholmodCold <- fitCholmod(FALSE)
@@ -123,8 +99,7 @@ test_that("PQL accepts sparse non-diagonal W after observation filtering", {
   data <- data.frame(y=rpois(n, exp(0.1)), x=rep(c(0, 1), length.out=n))
   data$y[7] <- NA_real_
 
-  fit <- mmes(y~x, rcov=~units, data=data, W=precision, family=poisson(),
-              nIters=8, verbose=FALSE, pqlControl=list(maxit=4))
+  fit <- mmes(y~x, rcov=~units, data=data, W=precision, family=poisson(), control=mmes_control(update=list(blendWeight=0), convergence=list(maxIters=8), diagnostics=list(verbose=FALSE), task=list(pql=list(maxit=4))))
 
   expect_s3_class(fit, "mmes.glmm")
   expect_length(fitted(fit), n - 1L)
@@ -144,9 +119,7 @@ pqlGlmData <- function(){
 }
 
 pqlFit <- function(formula, family, data, ...){
-  mmes(formula, rcov=~units, data=data, family=family, verbose=FALSE,
-       nIters=40, tolParConvLL=1e-8, tolParConvNorm=1e-8,
-       pqlControl=utils::modifyList(list(maxit=50, tol=1e-12), list(...)))
+  mmes(formula, rcov=~units, data=data, family=family, control=mmes_control(update=list(blendWeight=0), diagnostics=list(verbose=FALSE), convergence=list(maxIters=40, likelihoodTol=1e-8, parameterTol=1e-8), task=list(pql=utils::modifyList(list(maxit=50, tol=1e-12), list(...)))))
 }
 
 test_that("PQL without random effects reproduces glm for several families and links", {
@@ -204,8 +177,7 @@ test_that("negative binomial theta estimation matches MASS::glm.nb", {
 test_that("PQL fits do not report working-model likelihoods", {
   d <- pqlGlmData()
   d$g <- factor(rep(1:30, each=10))
-  fit <- mmes(binm(succ, fail)~x, random=~g, data=d, family=binomial(),
-              verbose=FALSE)
+  fit <- mmes(binm(succ, fail)~x, random=~g, data=d, family=binomial(), control=mmes_control(update=list(blendWeight=0), diagnostics=list(verbose=FALSE)))
   expect_true(is.na(fit$AIC))
   expect_true(all(is.na(fit$llik)))
   expect_error(anova(fit, fit), "not available for PQL")

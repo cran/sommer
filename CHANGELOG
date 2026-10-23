@@ -582,7 +582,389 @@ version 4.4.81 (2026-09-30)
    rows and pairs residual records without ave(); input preparation for
    large data is several times faster and uses far less memory.
 
+########################
+version 4.4.90 (2026-10-13)
+########################
+
+  Engine speed work for ai_mme_sp2 (details and measurements in
+  src/ai-mme-sp2-acceleration-plan.md).
+ + New mmes_control(experimental=list(profile="force")) records per-phase
+   seconds and workload counters in fit$engineDiagnostics$profile. New
+   profile_mme_workload() tabulates them; run_mme_benchmark() carries phase_*
+   columns; benchmarks/profile_phase0.R profiles AR(p), SAR/CAR and dense-Gu fits.
+ + New mmes_control(memoryPolicy="speed"|"limit"), default "speed": when the
+   CHOLMOD selected-inverse caches do not fit denseMemoryMB the fit stops and
+   reports the memory needed, instead of a silently slower fallback
+   ("limit" keeps the old fallbacks).
+ + The block-banded engine is no longer chosen automatically (up to 80x slower
+   than generic CHOLMOD on AR1 fits); it remains available with
+   experimental=list(blockBanded="force").
+ + General dense block-Schur admission now compares predicted sparse-factor
+   work (AMD symbolic fill) with dense-plan cost instead of block density.
+   Coupled plans require a work/cost ratio of at least 0.05; uncoupled groups
+   retain their solve/trace fast path. Invalid estimates do not admit Schur.
+   An isolated low-fill random-graph fixture improved from 2.968 s to 0.641 s,
+   with maximum relative output differences below 1.6e-9 across nine fixtures.
+   Chain/latent/banded policies are unchanged by this guard. The CHOLMOD dense
+   inverse-block cache still skips sparse groups. The provisional 64/1000
+   fragmentation rule was removed after true on/off validation contradicted
+   the earlier memory-budget proxy comparison.
+ + The positive-definiteness check of single-factor covariance structures with
+   >= 128 effects (SAR, CAR, large AR/Toeplitz) uses a shifted Cholesky test
+   instead of an eigendecomposition; identical fits, 2-4x less time in the
+   constraint step.
+ + mmes() starting values for variance components no longer use a dense QR
+   of the fixed-effects design (a 12000 x 1000 design spent about 90% of the
+   wall time there with multithreaded BLAS); a sparse normal-equations solve
+   is used for well-conditioned full-rank designs. Same converged estimates,
+   about 6x faster end to end on that model.
+ + New mmes_control(experimental=list(blockSchur="auto"|"off"|"force")) to
+   disable (off) or bypass the density/group-size rules of (force) the block
+   elimination engines; engineDiagnostics$profile gains traceFallbackSolves.
+ + Opt-in experimental=list(traceBatch="force") batches exact LDLT random-score
+   fallback solves in independent OpenMP panels, without the shared solve lock.
+   A 1000-level AR2 fixture improves from 7.959 s to 6.084 s with four threads;
+   likelihood, scores, AI, estimates and uncertainty match the old exact path.
+   Peak RSS increases about 14.2 MiB. One-thread fits do not benefit, so the
+   default stays off. Panel scratch obeys speed/limit memory policies.
+   New profile counters: traceBatchSolves and traceBatchWorkspaceBytes.
+ + Opt-in experimental=list(sparseFactors="force") uses exact sparse AR(p)/ANTE
+   precision operands in derivative products and tensor applications, compact
+   ANTE innovation rows, and sparse SAR/CAR covariance/derivative solves.
+   On paired 1000-level fixtures, whole-fit medians improve from 6.287 s to
+   4.770 s for SAR and 5.699 s to 4.168 s for CAR; peak RSS falls about
+   114.9 MiB and 45.0 MiB, respectively. Likelihood, scores, AI, estimates
+   and uncertainty agree within 5.23e-9 relative error across ten fixtures.
+   AR/ANTE whole-fit gains are modest or unestablished, so defaults stay off.
+   Dense compatibility and covariance-derivative storage remain; no derivative
+   thresholding, PCG estimator change, or optimizer change is introduced.
+ + LDLT selected inverse indexes dense columns by position instead of hashing
+   (solver="ldlt" with a dense Gu, 300 individuals: 72 s to 16.5 s).
+
+ + ai_mme_sp2 now delegates covariance evaluation, precision, derivatives and
+   tensor operations to a shared covariance engine. Structured kernels use
+   representation capabilities rather than model labels, including custom
+  modified-Cholesky innovation callbacks. Saved built-in factors acquire
+  missing capabilities at the R compilation boundary. Path and workspace policy remains
+   in mme_paths.h; existing acceleration defaults and output names are retained.
+ + BUG FIX complete-block ANTE residuals with sparseFactors="force" no longer
+   reject valid covariance derivative indices. Multi-factor SAR/CAR scores now
+   include the Kronecker log-determinant multiplicity. Sparse spatial evaluation
+   caches obey their aggregate entry allowance without unsigned underflow.
+
+ + rrm() now fits genuine reduced-rank covariance with all specific variances
+   fixed at zero, matching the covariance family of ASReml rr(). The first
+   loading is fixed to one to identify the overall scale supplied by vsm().
+   Native latent-factor Henderson and direct-inversion fitting support the
+   singular random covariance without an artificial diagonal remainder.
+ + fam() gains variance="homogeneous" to estimate a common specific variance
+   (the former rrm() covariance family); the default remains "heterogeneous".
+   loadings_mmes() returns exactly zero specifics for RR and scales specific
+   variances by sigma2, not sqrt(sigma2). RR regression scores recover latent
+   BLUP coordinates; Bartlett scoring rejects zero-specific RR models.
+ + Native latent RR fitting now uses loading-aware scores and average
+   information instead of BFGS and numerical observed information. Covariance
+   derivatives include changes in the latent design; the original
+   covariance-family descriptors and sparse Henderson solves are reused.
+   Parameter uncertainty uses final unblended AI, while stepWeight and
+   emWeight control updates and the iteration monitor records accepted fits.
+ + Native RR AI traces now share exact design and residual contractions across
+   covariance parameters, avoiding repeated observation-space derivative and
+   relationship solves. Conditional likelihood trials skip unused ordinary
+   trace preparation. Verbose RR fits report their MME path, coefficient solver
+   (including eligible block-Schur dispatch), and accepted iteration progress.
+ + RR progress prints the coefficient engine before the table header and
+   includes wall/CPU times, EMweight and actual accepted trust/line-search
+   scales. Numeric values are retained in engineDiagnostics$iterationProgress;
+   inapplicable boundary-restraint and notPD columns remain omitted.
+
+ + BUG FIX native RR AI fitting now supports dsumm() spatial residuals.
+   Covariances, analytic derivatives, and shared trace contractions operate
+   on observed residual blocks rather than expanding the section-by-grid
+   covariance. Existing section slicing and factor derivatives are reused.
+
+ + Native RR AI now reuses the live LDLT/CHOLMOD or block-Schur coefficient
+   solver and the likelihood's residual precision operator. Spatial fits use
+   the shared grid engine and its factor-wise derivatives rather than a
+   second dense observed-block precision. Random traces cancel relationship
+   covariance actions through the latent Henderson identity. Verbose output
+   identifies the shared residual engine; AI phase timings are retained.
+
+ + Opt-in mmes_control(acceleration="hybrid-ai") reduces repeated Henderson
+   sensitivity solves using Powell-damped BFGS between exact AI refreshes.
+   Scores, likelihood acceptance, bounds and PD safeguards remain unchanged;
+   intermediate stabilization uses the BFGS diagonal. Final InfMat and
+   covariance-parameter uncertainty always use exact AI, including at the
+   iteration limit. Convergence requires exact step and projected-score checks.
+   Gaussian LDLT/CHOLMOD fits are supported; vcc ties explicitly retain exact
+   AI. Other optimizers and the default behavior are unchanged. Diagnostics
+   expose refreshes, resets, certifications and sensitivity RHS counts.
+
+ + Experimental mmes_control(experimental=list(saddlePoint="force")) adds an
+   exact augmented Henderson MME solver using pivoted Eigen sparse LU.
+   Defaults and "auto" remain unchanged. Backend-independent exact panel
+   contractions and normal-equation output assembly are reusable in
+   mme_exact.h; the augmented factorization lives in mme_saddle.h.
+   REML/ML retain exact scores, AI, covariance SE and coefficient uncertainty.
+   Fitting avoids normal-equation cross-products; final C is assembled once
+   for prediction and saved-object compatibility. Unsupported routes fail
+   explicitly. Initial benchmarks do not establish a speed or memory gain;
+   the solver remains force-only, with no automatic admission rule.
+
+ + mmes() now blends genuine EM/GEM and AI proposal directions rather than
+   information matrices. blendWeight replaces emWeight (a deprecated named
+   alias), and blend="em" selects this method.
+   Scalar, fully free diagonal and unstructured terms use closed-form
+   posterior-moment updates when available; other structures and constraints
+   use numerical increasing-Q generalized EM. Complete unstructured residual
+   blocks also have closed-form M-steps. Mixtures use likelihood
+   backtracking with an EM fallback. Full EM weights skip iterative AI,
+   zero weights skip EM, and final inference always uses exact AI.
+   Positive weights require deterministic Gaussian Henderson REML or ML without
+   other accelerators, factor-score augmentation, PQL or saddle-point fitting.
+   Unsupported modes default to pure AI when blendWeight is omitted;
+   explicitly positive weights remain errors.
+   Blended fits default to stepWeight=1; pure AI retains its previous damping.
+   engineDiagnostics$blend reports work counts, Q gains and numerical
+   M-step convergence. Exact moments obey the denseMemoryMB budget.
+   Henderson weight factorizations now consistently preserve observation
+   order across EM and AI. This fixes a previous correlated-weight ordering
+   discrepancy; affected weighted estimates can differ from earlier versions.
+   A scalar whole-number blendWeight greater than 1 now sets the exponential
+   decay length from 1 to 0.03, capped at nIters, followed by constant 0.03.
+   Fractional counts and vectors containing values above 1 are rejected.
+
+ + blend="pxem" now selects scalar parameter-expanded generalized EM (PX-GEM)
+   blended with AI. Each random term has a positive expansion scalar; joint
+   numerical optimization preserves all covariance families, fixed values,
+   scale floors and vcc constraints in original reduced coordinates.
+   Existing EM/GEM updates seed the expanded M-step. Posterior moments include
+   fixed/random and cross-random uncertainty, and reuse existing MME paths.
+   PX proposals use observed-likelihood backtracking with ordinary EM/GEM
+   fallback. Full weight skips iterative AI; zero weight skips EM/PX work.
+   Final inference remains exact AI. Diagnostics expose expansion factors,
+   additional Q gains, numerical convergence/evaluation counts and fallbacks.
+   Additional moment/optimizer workspace obeys denseMemoryMB. This is scalar
+   numerical PX-GEM, not full matrix expansion; fewer iterations do not
+   guarantee lower runtime. The default remains blend="em".
+   Reduced-rank EM/PX-GEM now cache exact loading-basis posterior moments
+   once per E-step instead of repeating coefficient solves at every numerical
+   M-step objective probe. This fixes severe first-iteration latency in
+   models with many loading and residual parameters, without changing Q.
+   EM/PX random moments now reuse exact Schur/inverse-block and selected-inverse
+   contractions, requesting only diagonal moments for diagonal covariance
+   updates. Scalar residual moments reuse a fixed-effect-aware trace identity.
+   Scalar non-reduced-rank PX expansion moments reuse sparse coefficient
+   contractions when memory permits. Generic bounded exact panel solves remain
+   the fallback. New work counters expose contraction and fallback usage.
+   AI directions inside EM/PX schedules now use native exact AI kernels for
+   non-reduced-rank models instead of generic latent information calculations.
+   Zero-weight iterations skip moment callbacks. Mixed iterations share native
+   AI factorizations and inverse caches with posterior-moment work. Accepted
+   exact-information trials supply subsequent zero-weight iterations and final
+   inference without duplicate factorization. Reduced-rank AI retains its shared
+   latent kernels; blend guards and constraints remain unchanged.
+
+ + Omitted blendWeight now selects AI-first optimization with on-demand
+   EM/GEM recovery (or scalar PX-GEM with blend="pxem") for eligible Gaussian
+   Henderson REML or ML fits. Healthy AI iterations skip EM/PX moment and objective
+   work. Repeated poor progress, failed AI line search, or unreliable
+   information solves trigger one recovery step when the projected score
+   remains non-small. Recovery must improve likelihood before AI resumes.
+   Automatic convergence requires a scaled projected-score certificate.
+   Failed recovery warns and returns the last accepted point without
+   convergence. Explicit numeric blend schedules and unsupported-engine
+   defaults retain their behavior. Recovery diagnostics record triggers and
+   stop reasons; automatic refits retain blendWeight=NULL.
+
+ + ML now supports explicit EM/PX-GEM schedules and default AI-first recovery.
+   ML posterior moments use the random-only D inverse, with deterministic
+   current GLS fixed effects during covariance and loading Q/PX probes.
+   Likelihood trials reprofile fixed effects and accept against profile ML.
+   Random, residual, weighted and reduced-rank moment paths share a separate
+   posterior action; joint solves and final coefficient uncertainty are unchanged.
+   CHOLMOD retains independent C/D symbolic caches across conditional fits.
+   Diagnostics identify ML versus REML. Dense conditional-moment and expanded-Q
+   tests cover both likelihood modes.
+
+ + mmes() iteration output now shares one compact formatter across ordinary,
+   hybrid and reduced-rank AI, scheduled EM/PX blends, AI-first recovery and
+   direct inversion. Columns show accepted likelihood/gain, update method,
+   recovery policy/trigger, trust and line-search scales, notPD repairs, and
+   elapsed seconds. Redundant wall-clock/CPU columns are removed; detailed
+   stored diagnostics remain unchanged. Recovery rows identify the actual
+   method tried, including late line-search recovery and EM/PX fallbacks.
+
+ + Unreliable automatic AI solves now try a scaled, ridge-regularized,
+   trust-limited AI direction before computing EM/PXEM moments. Both retries
+   require feasible observed-likelihood improvement; ordinary AI resumes
+   after each accepted step. Explicit numeric blend schedules are unchanged.
+   Progress reports AI-reg and diagnostics record regularized attempts,
+   accepted steps, source iterations, and ridges.
+
+ + Standalone sparse, saddle, and PCG native tests now check for their private
+   source headers before compiling. They skip in installed-package check
+   layouts without src/, while source-tree runs retain the native checks.
+
+ + Direct inversion (henderson=FALSE) now supports the same blend/blendWeight
+   controls as Henderson: true observation-space EM/GEM, scalar PX-GEM,
+   mixed directions, scalar/vector schedules, and exponential tapers.
+   Omitted weights select lazy AI-first recovery; explicit zero preserves
+   AI-only fitting. All direct covariance families support ML and REML,
+   including custom factors, constrained and ragged residual structures,
+   and zero-specific reduced-rank latent terms. Numerical M-steps increase Q;
+   they do not claim global maximization. ML profiles fixed effects in Q,
+   and REML includes joint fixed-effect posterior uncertainty.
+   Full EM skips AI update solves, while final inference remains clean AI.
+   Direct EM workspace obeys denseMemoryMB. Diagnostics record Q work,
+   actual methods, numerical M-step status, recovery, and likelihood reuse.
+   Henderson algorithms are unchanged; the existing numerical Q minimizer
+   is shared without changing its implementation.
+
+ + Opt-in experimental=list(reducedAI="force") now packs independent vcc
+   directions before Henderson sensitivity solves and assembles exact reduced
+   AI without full sensitivity or AI buffers. Default AI-first recovery and
+   positive EM/PXEM direction blending support Gaussian deterministic REML/ML,
+   preserving fixed/tied coordinates, boundary restrictions, trust units,
+   regularized AI recovery and exact score certification. Full covariance
+   reporting retains a full exact final evaluation. covarianceInformation="none"
+   avoids report-only full information while preserving coefficient uncertainty.
+   Default remains off. Auto admission reports unsupported-path fallbacks;
+   force rejects them. Legacy explicit blendWeight=0, acceleration, latent
+   reduced rank, PCG, PQL, solve-only, saddle-point and factor-score augmentation
+   are not supported. Full score traces and active local curvature-pair work
+   remain unchanged; small full-reporting fits can be slower. Diagnostics expose
+   actual/skipped sensitivity columns and reduced workspace sizes.
+
+ + Opt-in experimental=list(commonScale="force") profiles the overall covariance
+   scale analytically in eligible Gaussian deterministic Henderson REML/ML fits.
+   Independent shape sensitivities incorporate vcc ties directly; exact profile
+   scores and AI scale Schur elimination need no extra factorization per candidate.
+   The dedicated optimizer uses trust caps, regularized AI, likelihood backtracking
+   and exact final score certification, not EM recovery. Product-level variance
+   scales must be free, fixed designs full column rank, and ties common-scale
+   compatible. Fixed shapes and positive variance-ratio ties are supported.
+   Only interior product variances above max(1e-8,tolParInv) are supported:
+   initial floor violations error, trial violations backtrack and stalls warn
+   without declaring convergence. Refit with commonScale="off" for boundary
+   fitting or ordinary AI/EM recovery. Positive blendWeight, PCG, PQL, solve-only,
+   acceleration, latent reduced rank, saddle-point and factor-score augmentation
+   are excluded; omitted or zero blendWeight is accepted. Default remains off.
+   Auto admission exposes static fallback reasons rather than hiding runtime
+   failures. A final ordinary evaluation preserves original-coordinate outputs,
+   coefficient uncertainty and requested full covariance scale/shape information.
+   Information omission still performs that final evaluation. Wald/KR perturbed
+   fixed-parameter evaluations bypass scale profiling. Common-scale diagnostics
+   expose total work and certification; no general speedup is claimed.
+
+ + Breaking numerical-control API: mmes() now accepts one modular control
+   object through control=mmes_control(). Numerical arguments and the former
+   engine/experimental/pcg containers are replaced by task, formulation,
+   representation, solve, logdet, score, curvature, update, proposal,
+   convergence, output, execution and diagnostics settings. Unknown names
+   are errors; legacy public aliases are not accepted. Model formulas,
+   families, covariance constraints and known covariance inputs remain
+   model arguments. See sommer.mmes.options for migration examples.
+   Default algorithms, schedules, tolerances, work budgets and output requests
+   retain the previous numerical bundle. Aitken extrapolation belongs to
+   proposal; hybrid AI belongs to curvature. Their combination remains
+   unsupported. Shared typed native policy separates those responsibilities
+   without changing numerical kernels. Fitted objects retain control and an
+   executionPlan; detailed native diagnostics remain the eligibility evidence.
+
+ + mmes_control() and mmes() check model-independent option combinations
+   against one compatibility table. Supplied settings that conflict, or that
+   the selected path would ignore (for example PCG estimator settings with a
+   deterministic solver, Henderson settings with formulation="direct", or
+   estimation modules with task$mode="solve"), stop with one message naming
+   every offending setting and a fix. Restated defaults are accepted.
+   Changing task$pql on a Gaussian identity fit is an error. Fit-time
+   eligibility messages now use module option names (e.g. solve$method,
+   output$inverse, representation$equations) instead of removed arguments.
+
+ + Consolidated legacy mmer, its methods, covariance constructors and GWAS
+   functions in R/DEPRECATED_mmer.R without changing their definitions.
+   Removed duplicate current-path helper definitions.
+ + Current mmes post-fit prediction, posterior variance and marker inference
+   reuse operation-local coefficient factorizations. Marker SE calculations
+   form relationship-marker products by block, reuse retained precision and
+   preserve sparse supplied inverses.
+ + Native covariance reporting now propagates cross-term uncertainty jointly;
+   vpredict uses the full native covariance matrix. Unavailable uncertainty
+   does not contaminate independent native quantities.
+ + Reduced allocations in covariance-matrix SEs, leverage diagonals, spatial
+   splines and APY assembly; reused covariance-factor compilation, shared
+   control defaults and PQL warm-start compatibility checks.
+ + Benchmark results now record the actual convergence flag, retain uniform
+   rows on warmup/timed failures, compare final likelihoods and mark unchecked
+   or unavailable-reference parity as NA.
+
+ + Simplified the regression suite by removing overlapping family/solver
+   smoke sweeps, detailed internal-counter and output-format checks, and unused
+   reference helpers. Retained independent numerical references, public API
+   validation and reported-bug regressions. Replaced spatial hash snapshots
+   with direct tensor/design checks and reduced repeated threading stress fits.
+   Future tests should cover a distinct public contract or numerical failure,
+   rather than repeat the full cross-product of already tested options.
+
+ + Package consolidation: separated covariance descriptor/family code and
+   formula helpers without changing their contracts. Lifecycle hooks now
+   live in R/zzz.R. Native utilities, relationships, post-fit inference,
+   direct fitting and known-covariance solving have separate translation
+   units; shared direct covariance evaluation and MME design assembly have
+   explicit internal boundaries.
+ + Consolidated public-to-private PCG option mappings and added ownership
+   and mutable-control regression tests.
+ + Added cross-platform package-check CI and a required source-tree native
+   test job. Existing standalone native control checks now run automatically,
+   with temporary caches and restoration of both global test options.
+ + Reduced benchmarks to one seeded performance/parity runner and its usage
+   guide; removed historical outputs, installed libraries and exploratory
+   scripts. Old recorded measurements remain historical, not current files.
+ + Added an executable README quick start and contributor/test guidance.
+   MASS and crayon are implementation imports rather than attached
+   dependencies; use qualified calls (e.g. MASS::mvrnorm) in user scripts.
+   Matrix and enhancer remain attached for the established model interface.
+
+ + Fixed Henderson random-effect vector u to use the original response scale,
+   consistent with bu and uList. Added independent mixed-model equation checks
+   across LDLT, CHOLMOD, PCG and direct fitting, and strengthened prediction
+   fixtures to require converged fits away from zero-variance boundaries.
+
+ + Gaussian REML fits now omit independent random covariance components whose
+   designs lie entirely in the fixed-effect space. The conservative check
+   handles free single-axis dsm/atm variances and whole free-scale terms with
+   fixed shapes. Omitted components retain zero covariance and random effects
+   in public outputs, with NA uncertainty, an explicit status and an audit
+   table; numerical regularization is no longer mistaken for estimability.
+
+ + Added opt-in Gaussian REML conditional FA updates through
+   mmes_control(update=list(method="conditional-fa")). Sparse posterior
+   moments are a separate mathematical block with per-fit symbolic reuse,
+   refreshed numeric factors, cached sparse quadratic contractions and
+   bounded inverse panels. Incomplete/repeated records and diagonal or FA
+   residuals are supported; unsupported combinations fail explicitly.
+ + Added fam(shared="group") for common genetic/residual loading axes and
+   source-specific diagonal factor variances on the conditional path.
+   Factorized outputs omit dense trait covariances and uncertainty matrices.
+   This exact EM foundation is experimental, not a thousand-trait speed
+   guarantee; convergence may be slow near variance boundaries.
+ + Regression FA scores now use a rank-sized Woodbury solve instead of a
+   dense trait covariance solve, including factorized conditional-fit output.
+
+ + Separated latent FA equations from optimization: use
+   representation=list(equations="conditional") with update$method="ai"
+   (default) or "em". The earlier method="conditional-fa" remains EM.
+   Added exact analytic REML scores and average-information contractions,
+   joint shared-loading derivatives, reusable posterior-factor RHS solves,
+   rank-revealing safeguarded AI steps and explicit EM recovery diagnostics.
+   Physical-specific/allocation bounds use execution$inverseTol and report
+   their active KKT coordinates, preventing near-deterministic latent systems
+   from accepting numerically unreliable likelihood improvements.
+   Conditional AI admits dense derivative/curvature workspace through the
+   existing memory policy; ordinary AI and conditional EM defaults are unchanged.
+
 ######################
-## PENDINGS AND PRIORITIES 
+## PENDINGS AND PRIORITIES
 + Fix plot.mmes
 + check how dense schur engine is used when more than one random term with dense Gu is used

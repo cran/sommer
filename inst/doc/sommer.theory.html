@@ -143,7 +143,7 @@ section.footnotes::before {
 <div class="frontmatter">
 <div class="title"><h1>Theory: how sommer parameterizes and optimizes covariance structures</h1></div>
 <div class="author"><h2>sommer development team</h2></div>
-<div class="date"><h3>2026-10-03</h3></div>
+<div class="date"><h3>2026-10-23</h3></div>
 </div>
 <div class="body">
 <p>This vignette is written like a short book. Each chapter builds on the
@@ -410,7 +410,7 @@ numbers) and a diagonal matrix \(\Psi\) with positive entries (again via the
 family-1 recipe). A sum of “something squared” (\(\Lambda\Lambda'\), always
 positive semi-definite) and “something positive on the diagonal” (\(\Psi\))
 is always positive definite — again, automatically, for <em>any</em> real
-\(\Lambda\). Used by <code>fam()</code>/<code>rrcm()</code> (Chapter 3.9) and, in a
+\(\Lambda\). Used by <code>fam()</code>/<code>rrm()</code> (Chapter 3.8) and, in a
 triangular/banded variant, by <code>antem()</code> (Chapter 3.10).</li>
 </ul>
 <p><strong>The common thread across all three families:</strong> every recipe in this
@@ -534,7 +534,7 @@ nonsingular). Total \(q(q+1)/2 - 1\) free parameters (the \(-1\) is
 covariance shape is reachable, at the cost of \(O(q^2)\) parameters. It mixes
 <strong>variance-type</strong> (log-diagonal) and <strong>correlation-type</strong> (off-diagonal)
 working parameters in a single structure.</p>
-<h2 id="3-8-fam-x-k-loadings-specific-fixed-rrcm-x-k-loadings-fixed-factor-analytic-covariance">3.8 <code>fam(x, k, loadings, specific, fixed)</code> / <code>rrcm(x, k, loadings, fixed)</code> — factor-analytic covariance</h2>
+<h2 id="3-8-fam-x-k-loadings-specific-fixed-variance-rrm-x-k-loadings-fixed-factor-analytic-covariance">3.8 <code>fam(x, k, loadings, specific, fixed, variance)</code> / <code>rrm(x, k, loadings, fixed)</code> — factor-analytic covariance</h2>
 <p>$$
 M = \Lambda\Lambda’ + \Psi, \qquad K = M / M_{11}
 $$</p>
@@ -552,9 +552,11 @@ reference level, per Chapter 2.6).</li>
 <strong>variance-type</strong> component (specific variances) — a compact alternative to
 <code>usm()</code> when \(q\) is large and a low-rank + diagonal approximation is
 statistically reasonable (the standard “FA” model for many traits or many
-environments). <code>rrcm()</code> is the same loading parameterization with
-\(\Psi=I\) fixed (a pure reduced-rank approximation, no free specific
-variances) — purely correlation/shape-type.</p>
+environments). <code>fam(..., variance=&quot;homogeneous&quot;)</code> uses \(\Psi=I\) internally,
+estimating a common specific variance on the fitted scale. <code>rrm()</code> instead
+fixes \(\Psi=0\) for a genuine rank-$k$ covariance and fixes the first loading
+to one to remove the internal scale. Its singular random covariance is fitted
+using latent-factor Henderson equations or the direct-inversion engine.</p>
 <h2 id="3-9-antem-x-order-beta-innovations-fixed-antedependence">3.9 <code>antem(x, order, beta, innovations, fixed)</code> — antedependence</h2>
 <p>$$
 Ty = e,\quad \mathrm{Cov}(e)=D \text{ diagonal},\qquad
@@ -692,10 +694,10 @@ backward compatibility with older model specifications.</p>
 <td>mixed</td>
 </tr>
 <tr>
-<td><code>rrcm</code></td>
-<td>loadings (\(k\)-rank)</td>
+<td><code>rrm</code></td>
+<td>loadings (\(k\)-rank), first loading fixed</td>
 <td>3 (loadings)</td>
-<td>correlation</td>
+<td>singular shape</td>
 </tr>
 <tr>
 <td><code>antem</code></td>
@@ -1050,7 +1052,7 @@ $$</p>
 working parameters are simply \(\eta=(0.2,\ 0.1,\ 0.15)\), i.e. <code>par</code> equals
 the lower-triangular entries directly, with no chain-rule factor to apply
 when differentiating \(K\) with respect to \(\eta\).</p>
-<h2 id="5-10-fam-rrcm">5.10 <code>fam()</code> / <code>rrcm()</code></h2>
+<h2 id="5-10-fam-rrm">5.10 <code>fam()</code> / <code>rrm()</code></h2>
 <p>\(q=3\), rank \(k=1\). Loadings \(\Lambda=(0.6,\ 0.4,\ 0.2)'\) (with the leading
 entry \(\Lambda_{11}=0.6&gt;0\) log-parameterized:
 \(\eta_{load,1}=\log(0.6)=-0.5108\); the remaining loadings unconstrained:
@@ -1063,8 +1065,10 @@ M=\Lambda\Lambda’+\Psi=
 \end{pmatrix},
 \qquad K=M/M_{11}
 $$</p>
-<p><code>rrcm()</code> would drop the \(\psi\) working parameters entirely (fixing
-\(\Psi=I\)) and keep only the loading parameters \(\eta_{load}\).</p>
+<p><code>fam(..., variance=&quot;homogeneous&quot;)</code> drops the \(\psi\) working parameters
+(using \(\Psi=I\) internally). <code>rrm()</code> instead sets \(\Psi=0\) and normalizes
+the supplied loadings to \((1,\ &amp;frac23;,\ &amp;frac13;)'\), fixing the first loading.
+The overall variance remains owned by <code>vsm()</code>.</p>
 <h2 id="5-11-antem">5.11 <code>antem()</code></h2>
 <p>\(q=3\), order 1. Regression coefficients on the first subdiagonal only,
 \(\beta_{21}=0.4\), \(\beta_{32}=0.3\) (unconstrained, \(\eta=\beta\) directly —

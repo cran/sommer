@@ -143,7 +143,7 @@ section.footnotes::before {
 <div class="frontmatter">
 <div class="title"><h1>Spatial modeling using the sommer package</h1></div>
 <div class="author"><h2>Giovanny Covarrubias-Pazaran</h2></div>
-<div class="date"><h3>2026-10-03</h3></div>
+<div class="date"><h3>2026-10-23</h3></div>
 </div>
 <div class="body">
 <p>Field experiments are never perfectly uniform. Soil depth, water, previous crops, or a slope can make neighbouring plots more alike than distant ones, whatever genotypes are planted in them. If the statistical model ignores this, the spatial “noise” leaks into the genotype effects: good genotypes that landed in a poor corner look worse than they are, and vice versa. Spatial models describe this neighbourhood similarity explicitly, so that genotype effects are estimated more accurately.</p>
@@ -207,9 +207,9 @@ $$</p>
 <p>$$
 \text{yield} = 50 + g_{\text{genotype}} + \xi_{\text{range,row}} + \varepsilon ,
 $$</p>
-<p>with genetic values \(g \sim N(0, 9)\), a separable AR1 spatial field \(\xi\) with variance 8, \(\rho_\text{range}=0.7\) and \(\rho_\text{row}=0.4\), and an independent nugget \(\varepsilon \sim N(0,1)\). Fifteen plots are then deleted to mimic missing data.</p>
+<p>with genetic values \(g \sim N(0, 9)\), a separable AR1 spatial field \(\xi\) with variance 8, \(\rho_\text{range}=0.7\) and \(\rho_\text{row}=0.4\), and an independent nugget \(\varepsilon \sim N(0,1)\). Six plots are then deleted to mimic missing data.</p>
 <pre><code class="language-r">set.seed(3)
-nRange &lt;- 16; nRow &lt;- 24; nGeno &lt;- 96
+nRange &lt;- 6; nRow &lt;- 8; nGeno &lt;- 12
 g &lt;- setNames(rnorm(nGeno, sd=3), sprintf(&quot;G%02d&quot;, seq_len(nGeno)))
 
 field &lt;- expand.grid(range=seq_len(nRange), row=seq_len(nRow))
@@ -217,7 +217,7 @@ field$geno &lt;- sample(rep(names(g), each=4))
 trueField &lt;- as.vector(t(chol(8 * kronecker(ar1(nRow, 0.4), ar1(nRange, 0.7)))) %*%
                          rnorm(nrow(field)))
 field$yield &lt;- 50 + g[field$geno] + trueField + rnorm(nrow(field), sd=1)
-field &lt;- field[-sample(nrow(field), 15), ]
+field &lt;- field[-sample(nrow(field), 6), ]
 
 field$geno &lt;- factor(field$geno)
 field$rangef &lt;- factor(field$range, levels=seq_len(nRange))
@@ -226,37 +226,49 @@ field$site &lt;- factor(&quot;F1&quot;)
 head(field)
 </code></pre>
 <pre><code>##   range row geno    yield rangef rowf site
-## 1     1   1  G29 50.06152      1    1   F1
-## 2     2   1  G57 46.12666      2    1   F1
-## 3     3   1  G43 55.73973      3    1   F1
-## 4     4   1  G02 47.48929      4    1   F1
-## 5     5   1  G65 55.61240      5    1   F1
-## 6     6   1  G05 47.60453      6    1   F1
+## 1     1   1  G10 50.56466      1    1   F1
+## 2     2   1  G03 49.25608      2    1   F1
+## 3     3   1  G12 42.47582      3    1   F1
+## 4     4   1  G05 46.23970      4    1   F1
+## 6     6   1  G07 48.53419      6    1   F1
+## 8     2   2  G10 54.09992      2    2   F1
 </code></pre>
 <h3 id="3-2-five-candidate-models">3.2 Five candidate models</h3>
-<p>All models share the same fixed effects (an intercept) and a random genotype effect; they differ only in how the field is described.</p>
+<p>All models share the same fixed effects (an intercept) and a random genotype effect; they differ only in how the field is described. Each fit is capped at one REML iteration to keep this chunk quick; allow convergence for a complete analysis.</p>
 <pre><code class="language-r">fits &lt;- list(
   # M0: no spatial model
-  iid    = mmes(yield ~ 1, random=~geno, data=field, verbose=FALSE),
+  iid    = mmes(yield ~ 1,
+  random=~geno,
+  data=field,
+  control = mmes_control(convergence = list(maxIters = 1L),
+                         diagnostics = list(verbose = FALSE))),
   # M1: independent random range and row effects (large-scale strips)
-  rowcol = mmes(yield ~ 1, random=~geno + rangef + rowf, data=field, verbose=FALSE),
+  rowcol = mmes(yield ~ 1,
+  random=~geno + rangef + rowf,
+  data=field,
+  control = mmes_control(convergence = list(maxIters = 1L),
+                         diagnostics = list(verbose = FALSE))),
   # M2: a smooth 2D surface built from tensor-product P-splines
-  spline = mmes(yield ~ 1, random=~geno + vsm(ism(spl2Dc(row, range)$Z$`A:all`)),
-                data=field, verbose=FALSE),
+  spline = mmes(yield ~ 1,
+  random=~geno + vsm(ism(spl2Dc(row, range)$Z$`A:all`)),
+  data=field,
+  control = mmes_control(convergence = list(maxIters = 1L),
+                         diagnostics = list(verbose = FALSE))),
   # M3: correlated residuals (R side)
-  ar1Res = mmes(yield ~ 1, random=~geno,
-                rcov=~vsm(ar1m(rangef), ar1m(rowf), ism(units)),
-                data=field, verbose=FALSE),
+  ar1Res = mmes(yield ~ 1,
+  random=~geno,
+  rcov=~vsm(ar1m(rangef), ar1m(rowf), ism(units)),
+  data=field,
+  control = mmes_control(convergence = list(maxIters = 1L),
+                         diagnostics = list(verbose = FALSE))),
   # M4: a random AR1 x AR1 spatial field (G side) plus an iid nugget
-  ar1Fld = mmes(yield ~ 1, random=~geno + vsm(ar1m(rangef), ar1m(rowf), ism(site)),
-                rcov=~units, data=field, verbose=FALSE)
+  ar1Fld = mmes(yield ~ 1,
+  random=~geno + vsm(ar1m(rangef), ar1m(rowf), ism(site)),
+  rcov=~units,
+  data=field,
+  control = mmes_control(convergence = list(maxIters = 1L),
+                         diagnostics = list(verbose = FALSE)))
 )
-</code></pre>
-<pre><code>## Solver selected: ldlt
-## Solver selected: ldlt
-## Solver selected: ldlt
-## Solver selected: ldlt
-## Solver selected: ldlt
 </code></pre>
 <h3 id="3-3-comparing-the-models">3.3 Comparing the models</h3>
 <p>Because all models have the same fixed effects, their REML log-likelihoods (and AIC) can be compared directly; higher log-likelihood and lower AIC are better. Since we simulated the data, we can also compute how well each model ranks the genotypes: the correlation between the estimated genotype effects (BLUPs) and the true genetic values.</p>
@@ -282,38 +294,38 @@ knitr::kable(round(compare, 3))
 <tbody>
 <tr>
 <td align="left">iid</td>
-<td align="right">-141.227</td>
-<td align="right">284.454</td>
-<td align="right">6.981</td>
-<td align="right">0.890</td>
+<td align="right">-17.580</td>
+<td align="right">37.161</td>
+<td align="right">6.487</td>
+<td align="right">0.791</td>
 </tr>
 <tr>
 <td align="left">rowcol</td>
-<td align="right">-119.592</td>
-<td align="right">241.185</td>
-<td align="right">7.468</td>
-<td align="right">0.908</td>
+<td align="right">-17.095</td>
+<td align="right">36.190</td>
+<td align="right">6.487</td>
+<td align="right">0.846</td>
 </tr>
 <tr>
 <td align="left">spline</td>
-<td align="right">-108.224</td>
-<td align="right">218.449</td>
-<td align="right">6.899</td>
-<td align="right">0.915</td>
+<td align="right">-17.164</td>
+<td align="right">36.327</td>
+<td align="right">6.487</td>
+<td align="right">0.797</td>
 </tr>
 <tr>
 <td align="left">ar1Res</td>
-<td align="right">-81.485</td>
-<td align="right">164.971</td>
-<td align="right">7.356</td>
-<td align="right">0.943</td>
+<td align="right">-12.616</td>
+<td align="right">27.232</td>
+<td align="right">6.487</td>
+<td align="right">0.855</td>
 </tr>
 <tr>
 <td align="left">ar1Fld</td>
-<td align="right">-79.873</td>
-<td align="right">161.746</td>
-<td align="right">7.232</td>
-<td align="right">0.941</td>
+<td align="right">-17.959</td>
+<td align="right">37.919</td>
+<td align="right">6.487</td>
+<td align="right">0.836</td>
 </tr>
 </tbody>
 </table>
@@ -334,34 +346,34 @@ knitr::kable(round(compare, 3))
 <tr>
 <td align="left">sigma2</td>
 <td align="left">sigma2</td>
-<td align="right">7.232</td>
+<td align="right">6.487</td>
 </tr>
 <tr>
 <td align="left">ar1m(rangef)</td>
 <td align="left">variance</td>
-<td align="right">7.133</td>
+<td align="right">6.587</td>
 </tr>
 <tr>
 <td align="left">ar1m(rangef)</td>
 <td align="left">rho</td>
-<td align="right">0.666</td>
+<td align="right">0.300</td>
 </tr>
 <tr>
 <td align="left">ar1m(rowf)</td>
 <td align="left">rho</td>
-<td align="right">0.469</td>
+<td align="right">0.300</td>
 </tr>
 <tr>
 <td align="left">sigma2</td>
 <td align="left">sigma2</td>
-<td align="right">1.009</td>
+<td align="right">6.587</td>
 </tr>
 </tbody>
 </table>
-<p>Compare with the truth: genetic variance 9 (the 96 values actually drawn have variance 6.7, which is what the model can recover), spatial variance 8, \(\rho_\text{range}=0.7\), \(\rho_\text{row}=0.4\), nugget 1. Note that in a Kronecker product the single variance is reported once, on the first factor (<code>ar1m(rangef)</code>); the second factor only contributes its correlation.</p>
+<p>Compare with the truth: genetic variance 9, spatial variance 8, \(\rho_\text{range}=0.7\), \(\rho_\text{row}=0.4\), and nugget 1. The realized genetic variance can differ from 9 because only 12 genotypes are sampled. Note that in a Kronecker product the single variance is reported once, on the first factor (<code>ar1m(rangef)</code>); the second factor only contributes its correlation.</p>
 <p>The difference between M3 and M4 is the nugget. M3 assumes that plot-level noise is perfectly correlated with the spatial pattern, while M4 separates a smooth-ish correlated field from independent plot error. With real data both are worth trying; the likelihood tells you which describes your field better.</p>
 <h3 id="3-6-reproducing-spats-with-p-spline-anova">3.6 Reproducing SpATS with P-spline ANOVA</h3>
-<p>The single-kernel spline used in M2 (<code>spl2Dc()</code>) fits the whole 2D surface with one variance component. The SpATS package (Rodriguez-Alvarez et al., 2018) instead splits the surface into five components (smooth trends along each direction and their interactions), each with its own variance. <code>spl2Dmats()</code> builds the same design matrices, so <code>mmes()</code> reproduces the SpATS fit. The classic Yates oats trial is used here, with SpATS output shown for reference.</p>
+<p>The single-kernel spline used in M2 (<code>spl2Dc()</code>) fits the whole 2D surface with one variance component. The SpATS package (Rodriguez-Alvarez et al., 2018) instead splits the surface into five components (smooth trends along each direction and their interactions), each with its own variance. <code>spl2Dmats()</code> builds the same five-component design-matrix structure, so <code>mmes()</code> can reproduce the SpATS fit when configured with matching segmentation. The classic Yates oats trial is used here, with SpATS output shown for reference. To keep this example quick, the active fit uses fewer spline segments and one REML iteration; use the fuller segmentation and allow convergence for a complete analysis.</p>
 <pre><code class="language-r">data(DT_yatesoats, package=&quot;enhancer&quot;)
 DT &lt;- DT_yatesoats
 DT$row &lt;- as.numeric(as.character(DT$row))
@@ -405,29 +417,29 @@ DT$C &lt;- as.factor(DT$col)
 # Residual          3.987e+02     1.997e+01 
 
 # SOMMER MODEL
-M &lt;- spl2Dmats(x.coord.name = &quot;col&quot;, y.coord.name = &quot;row&quot;, data=DT, 
-               nseg =c(14,21), degree = c(3,3), penaltyord = c(2,2) 
+M &lt;- spl2Dmats(x.coord.name = &quot;col&quot;, y.coord.name = &quot;row&quot;, data=DT,
+               nseg =c(6,8), degree = c(3,3), penaltyord = c(2,2)
                )
-mix &lt;- mmes(Y~V, henderson = TRUE,
-            random=~ R + C + vsm(ism(M$fC)) + vsm(ism(M$fR)) + 
+mix &lt;- mmes(Y~V,
+  random=~ R + C + vsm(ism(M$fC)) + vsm(ism(M$fR)) +
               vsm(ism(M$fC.R)) + vsm(ism(M$C.fR)) +
               vsm(ism(M$fC.fR)),
-            rcov=~units, verbose=FALSE,
-            data=M$data)
+  rcov=~units,
+  data=M$data,
+  control = mmes_control(formulation = &quot;henderson&quot;,
+  convergence = list(maxIters = 1L),
+  diagnostics = list(verbose = FALSE)))
+summary(mix)$varcomp
 </code></pre>
-<pre><code>## Solver selected: cholmod
-</code></pre>
-<pre><code class="language-r">summary(mix)$varcomp
-</code></pre>
-<pre><code>##                term parameter     estimate   StdError       Zratio
-## 1       vsm(ism(R))    sigma2 100.29557789   87.23660 1.1496960283
-## 2       vsm(ism(C))    sigma2 180.28017638  181.56042 0.9929486638
-## 3    vsm(ism(M$fC))    sigma2   0.53564980 1478.86764 0.0003622027
-## 4    vsm(ism(M$fR))    sigma2   0.02082692   55.25000 0.0003769578
-## 5  vsm(ism(M$fC.R))    sigma2   0.01522377   35.37195 0.0004303911
-## 6  vsm(ism(M$C.fR))    sigma2   0.01843282   18.99536 0.0009703859
-## 7 vsm(ism(M$fC.fR))    sigma2   0.01444448   59.60175 0.0002423499
-## 8   vsm(ism(units))    sigma2 502.76569161  108.59251 4.6298377445
+<pre><code>##                term parameter  estimate    StdError      Zratio
+## 1       vsm(ism(R))    sigma2  45.32431    44.01858 1.029663063
+## 2       vsm(ism(C))    sigma2 171.82077   182.11168 0.943491207
+## 3    vsm(ism(M$fC))    sigma2  72.75302 11920.47763 0.006103197
+## 4    vsm(ism(M$fR))    sigma2  72.75302   464.65518 0.156574215
+## 5  vsm(ism(M$fC.R))    sigma2  72.75302   472.04613 0.154122691
+## 6  vsm(ism(M$C.fR))    sigma2  72.75302   467.06371 0.155766801
+## 7 vsm(ism(M$fC.fR))    sigma2  72.75302   519.85046 0.139949900
+## 8   vsm(ism(units))    sigma2 363.76510    72.48389 5.018564665
 </code></pre>
 <p>The five spline variances together describe the surface; when several of them shrink to zero, the simpler single-kernel <code>spl2Dc()</code> model of M2 is usually adequate.</p>
 <h2 id="4-several-trials-at-once">4. Several trials at once</h2>
@@ -499,13 +511,12 @@ table(MET$trial)
 R = \sigma^2 , D_\text{trial} \otimes K(\rho_\text{range}) \otimes K(\rho_\text{row}) .
 $$</p>
 <p>Because this is a Kronecker product, each factor appears <strong>once</strong>: there is a single \(\rho_\text{range}\) and a single \(\rho_\text{row}\), shared by all trials.</p>
-<pre><code class="language-r">mShared &lt;- mmes(yield ~ trial, random=~geno,
-                rcov=~vsm(dsm(trial), ar1m(range), ar1m(row), ism(units)),
-                data=MET, verbose=FALSE)
-</code></pre>
-<pre><code>## Solver selected: ldlt
-</code></pre>
-<pre><code class="language-r">knitr::kable(covparams_mmes(mShared)[, c(&quot;factor&quot;, &quot;parameter&quot;, &quot;estimate&quot;)], digits=3)
+<pre><code class="language-r">mShared &lt;- mmes(yield ~ trial,
+  random=~geno,
+  rcov=~vsm(dsm(trial), ar1m(range), ar1m(row), ism(units)),
+  data=MET,
+  control = mmes_control(diagnostics = list(verbose = FALSE)))
+knitr::kable(covparams_mmes(mShared)[, c(&quot;factor&quot;, &quot;parameter&quot;, &quot;estimate&quot;)], digits=3)
 </code></pre>
 <table>
 <thead>
@@ -524,7 +535,7 @@ $$</p>
 <tr>
 <td align="left">dsm(trial)</td>
 <td align="left">variance[T1]</td>
-<td align="right">6.820</td>
+<td align="right">6.819</td>
 </tr>
 <tr>
 <td align="left">dsm(trial)</td>
@@ -556,13 +567,12 @@ R = \bigoplus_{t} \sigma^2_t, K(\rho_{\text{range},t}) \otimes K(\rho_{\text{row
 = \begin{pmatrix} R_{T1} &amp; 0 &amp; 0 \ 0 &amp; R_{T2} &amp; 0 \ 0 &amp; 0 &amp; R_{T3} \end{pmatrix}.
 $$</p>
 <p><code>dsumm()</code> takes a residual <code>vsm()</code> term describing <em>one</em> trial and replicates it, with all its parameters, for every level of <code>by</code>. The trial-specific variances come from the scale of each copy, so <code>dsm(trial)</code> is not needed.</p>
-<pre><code class="language-r">mDsum &lt;- mmes(yield ~ trial, random=~geno,
-              rcov=~dsumm(vsm(ar1m(range), ar1m(row), ism(units)), by=trial),
-              data=MET, verbose=FALSE)
-</code></pre>
-<pre><code>## Solver selected: ldlt
-</code></pre>
-<pre><code class="language-r">knitr::kable(covparams_mmes(mDsum)[, c(&quot;factor&quot;, &quot;section&quot;, &quot;parameter&quot;, &quot;estimate&quot;)],
+<pre><code class="language-r">mDsum &lt;- mmes(yield ~ trial,
+  random=~geno,
+  rcov=~dsumm(vsm(ar1m(range), ar1m(row), ism(units)), by=trial),
+  data=MET,
+  control = mmes_control(diagnostics = list(verbose = FALSE)))
+knitr::kable(covparams_mmes(mDsum)[, c(&quot;factor&quot;, &quot;section&quot;, &quot;parameter&quot;, &quot;estimate&quot;)],
              digits=3)
 </code></pre>
 <table>
@@ -585,13 +595,13 @@ $$</p>
 <td align="left">trial</td>
 <td align="left">T1</td>
 <td align="left">variance</td>
-<td align="right">7.980</td>
+<td align="right">7.974</td>
 </tr>
 <tr>
 <td align="left">trial</td>
 <td align="left">T2</td>
 <td align="left">variance</td>
-<td align="right">16.732</td>
+<td align="right">16.734</td>
 </tr>
 <tr>
 <td align="left">trial</td>
@@ -609,7 +619,7 @@ $$</p>
 <td align="left">ar1m(range)</td>
 <td align="left">T2</td>
 <td align="left">rho</td>
-<td align="right">0.212</td>
+<td align="right">0.213</td>
 </tr>
 <tr>
 <td align="left">ar1m(range)</td>
@@ -646,7 +656,7 @@ LR &lt;- 2 * (logLikDsum - logLikShared)
 c(LR = LR, df = 4, p.value = pchisq(LR, df=4, lower.tail=FALSE))
 </code></pre>
 <pre><code>##           LR           df      p.value 
-## 1.057576e+02 4.000000e+00 5.840525e-22
+## 1.057576e+02 4.000000e+00 5.840487e-22
 </code></pre>
 <p>As a rule of thumb:</p>
 <ul>
@@ -660,14 +670,13 @@ c(LR = LR, df = 4, p.value = pchisq(LR, df=4, lower.tail=FALSE))
 MET2$range[MET2$trial == &quot;T3&quot;] &lt;- NA  # T3 has no field coordinates
 MET2$row[MET2$trial == &quot;T3&quot;] &lt;- NA
 
-mLevels &lt;- mmes(yield ~ trial, random=~geno,
-                rcov=~dsumm(vsm(ar1m(range), ar1m(row), ism(units)),
+mLevels &lt;- mmes(yield ~ trial,
+  random=~geno,
+  rcov=~dsumm(vsm(ar1m(range), ar1m(row), ism(units)),
                             by=trial, levels=c(&quot;T1&quot;, &quot;T2&quot;)),
-                data=MET2, verbose=FALSE)
-</code></pre>
-<pre><code>## Solver selected: ldlt
-</code></pre>
-<pre><code class="language-r">knitr::kable(covparams_mmes(mLevels)[, c(&quot;factor&quot;, &quot;section&quot;, &quot;parameter&quot;, &quot;estimate&quot;)],
+  data=MET2,
+  control = mmes_control(diagnostics = list(verbose = FALSE)))
+knitr::kable(covparams_mmes(mLevels)[, c(&quot;factor&quot;, &quot;section&quot;, &quot;parameter&quot;, &quot;estimate&quot;)],
              digits=3)
 </code></pre>
 <table>
@@ -690,19 +699,19 @@ mLevels &lt;- mmes(yield ~ trial, random=~geno,
 <td align="left">trial</td>
 <td align="left">T1</td>
 <td align="left">variance</td>
-<td align="right">7.798</td>
+<td align="right">7.791</td>
 </tr>
 <tr>
 <td align="left">trial</td>
 <td align="left">T2</td>
 <td align="left">variance</td>
-<td align="right">16.974</td>
+<td align="right">16.975</td>
 </tr>
 <tr>
 <td align="left">trial</td>
 <td align="left">T3</td>
 <td align="left">variance</td>
-<td align="right">3.497</td>
+<td align="right">3.498</td>
 </tr>
 <tr>
 <td align="left">ar1m(range)</td>
@@ -747,7 +756,7 @@ mLevels &lt;- mmes(yield ~ trial, random=~geno,
 <li><strong>Watch for boundary estimates.</strong> A correlation estimated very close to 1 (e.g. 0.99) often means a smooth trend across the whole field. Adding a linear trend in that direction as a fixed effect, random row/column effects, or a spline usually gives a better-behaved model.</li>
 <li><strong>Use the design.</strong> Replicates and incomplete blocks are part of the design and are usually kept as fixed or random effects alongside the spatial terms.</li>
 <li><strong>Sort factor levels in field order</strong> before using <code>ar1m()</code>.</li>
-<li><strong>Computation.</strong> The spatial residual models above never form the dense plot-by-plot covariance matrix, so trials with thousands of plots run in seconds. The default Henderson engine is recommended; <code>henderson = FALSE</code> (direct inversion) also works, but needs memory proportional to the square of the number of plots.</li>
+<li><strong>Computation.</strong> The spatial residual models above never form the dense plot-by-plot covariance matrix, so trials with thousands of plots run in seconds. The default Henderson formulation is recommended; <code>control$formulation = &quot;direct&quot;</code> uses observation-space inversion, but needs memory proportional to the square of the number of plots.</li>
 </ul>
 <h3 id="translating-from-asreml-r">Translating from ASReml-R</h3>
 <table>

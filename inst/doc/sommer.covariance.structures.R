@@ -11,34 +11,29 @@
 # DT <- DT_example
 
 ## ----eval=FALSE---------------------------------------------------------------
-# fit_cs <- mmes(
-#   Yield ~ Env,
+# fit_cs <- mmes(Yield ~ Env,
 #   random = ~ vsm(csm(Env), ism(Name)),
 #   rcov = ~ vsm(ism(units)),
 #   data = DT,
-#   verbose = FALSE
-# )
+#   control = mmes_control(diagnostics = list(verbose = FALSE)))
 
 ## ----eval=FALSE---------------------------------------------------------------
 # n_env <- nlevels(factor(DT$Env))
 # 
-# fit_csh <- mmes(
-#   Yield ~ Env,
+# fit_csh <- mmes(Yield ~ Env,
 #   random = ~ vsm(
 #     csm(Env, variance="heterogeneous", values=rep(1, n_env)),
 #     ism(Name)
 #   ),
 #   rcov = ~ vsm(ism(units)),
 #   data = DT,
-#   verbose = FALSE
-# )
+#   control = mmes_control(diagnostics = list(verbose = FALSE)))
 
 ## ----eval=FALSE---------------------------------------------------------------
 # DT$EnvOrder <- factor(DT$Env, levels=unique(DT$Env), ordered=TRUE)
 # n_env <- nlevels(DT$EnvOrder)
 # 
-# fit_ar1h <- mmes(
-#   Yield ~ Env,
+# fit_ar1h <- mmes(Yield ~ Env,
 #   random = ~ vsm(
 #     ar1m(EnvOrder, rho=0.30, variance="heterogeneous",
 #          values=rep(1, n_env)),
@@ -46,8 +41,7 @@
 #   ),
 #   rcov = ~ vsm(ism(units)),
 #   data = DT,
-#   verbose = FALSE
-# )
+#   control = mmes_control(diagnostics = list(verbose = FALSE)))
 
 ## ----eval=FALSE---------------------------------------------------------------
 # n_env <- nlevels(factor(DT$Env))
@@ -60,13 +54,11 @@
 # )
 
 ## ----eval=FALSE---------------------------------------------------------------
-# fit_fixed_residual <- mmes(
-#   Yield ~ Env,
+# fit_fixed_residual <- mmes(Yield ~ Env,
 #   random = ~ vsm(ism(Name)),
 #   rcov = ~ vsm(ism(units), sigma2=1, fixedSigma2=TRUE),
 #   data = DT,
-#   verbose = FALSE
-# )
+#   control = mmes_control(diagnostics = list(verbose = FALSE)))
 
 ## ----eval=FALSE---------------------------------------------------------------
 # library(sommer)
@@ -132,13 +124,11 @@
 
 ## ----eval=FALSE---------------------------------------------------------------
 # fit_environment_shape <- function(shape){
-#   mmes(
-#     Yield ~ Env,
-#     random = ~ vsm(shape, ism(DT$Name)),
-#     rcov = ~ vsm(ism(units)),
-#     data = DT,
-#     verbose = FALSE
-#   )
+#   mmes(Yield ~ Env,
+#   random = ~ vsm(shape, ism(DT$Name)),
+#   rcov = ~ vsm(ism(units)),
+#   data = DT,
+#   control = mmes_control(diagnostics = list(verbose = FALSE)))
 # }
 # 
 # fit_identity <- fit_environment_shape(environment_shapes$identity)
@@ -159,8 +149,11 @@
 # covparams_mmes(fit, 1)  # variances and covariances among dir, mat and pe
 
 ## ----eval=FALSE---------------------------------------------------------------
-# p <- mmes(Y ~ V * N, random = ~ B + B:MP, rcov = ~ units, data = DT_yatesoats,
-#           returnParam = TRUE)
+# p <- mmes(Y ~ V * N,
+#   random = ~ B + B:MP,
+#   rcov = ~ units,
+#   data = DT_yatesoats,
+#   control = mmes_control(output = list(setup = TRUE)))
 # p$vcParams
 # fit <- mmes(Y ~ V * N, random = ~ B + B:MP, rcov = ~ units, data = DT_yatesoats,
 #             vcc = data.frame(parameter = c("vsm(ism(B:MP)):sigma2", "vsm(ism(B)):sigma2"),

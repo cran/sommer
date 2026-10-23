@@ -5,11 +5,7 @@
 # Marker transform used by A.mat(): imputation, MAF and monomorphic filters,
 # centring by 2p and the VanRaden scale 2*sum(p*q).
 .amat_marker_transform <- function(M, min.MAF){
-  missing <- which(is.na(M), arr.ind=TRUE)
-  if(nrow(missing) > 0L){
-    cols <- unique(missing[, 2])
-    M[, cols] <- apply(M[, cols, drop=FALSE], 2, imputev)
-  }
+  M <- .relationship_impute(M)
   p <- colMeans(M + 1) / 2
   maf <- pmin(p, 1 - p)
   keep <- maf > min.MAF
@@ -31,20 +27,21 @@ meffects_mmes <- function(object, term, M, method=c("A.mat", "custom"),
   if(length(blend) != 1L || !is.finite(blend) || blend < 0 || blend >= 1){
     stop("blend must be one value in [0, 1).", call.=FALSE)
   }
+  chunk <- .mme_positive(chunk, "chunk", integer=TRUE)
   U <- as.matrix(object$uList[[ti]])
   levels <- rownames(U)
 
   # G^{-1} exactly as used in the fit
   if(!is.null(Gu)){
     if(.is_giv(Gu)) Gu <- .giv_to_precision(Gu)
-    Ginv <- if(isTRUE(attr(Gu, "inverse"))) as.matrix(Gu) else solve(as.matrix(Gu))
+    Ginv <- if(isTRUE(attr(Gu, "inverse"))) Gu else solve(as.matrix(Gu))
   }else if(!is.null(object$rotation) &&
            as.character(object$rotation$term) %in% c(as.character(ti), term)){
     V <- object$rotation$vectors
     Ginv <- V %*% (object$rotation$precision * t(V))
     dimnames(Ginv) <- list(object$rotation$levels, object$rotation$levels)
   }else{
-    Ginv <- as.matrix(.mmes_rebuild_inputs(object)$Ai[[ti]])
+    Ginv <- .mmes_random_precision(object)[[ti]]
     if(is.null(rownames(Ginv))) dimnames(Ginv) <- list(levels, levels)
   }
   if(!all(levels %in% rownames(Ginv))){
@@ -80,8 +77,7 @@ meffects_mmes <- function(object, term, M, method=c("A.mat", "custom"),
     markerNames <- if(is.null(colnames(Z))) paste0("m", seq_len(ncol(Z))) else colnames(Z)
   }
 
-  GiZ <- Ginv %*% Zm
-  effects <- s * crossprod(GiZ, U)
+  effects <- s * crossprod(Zm, Matrix::crossprod(Ginv, U))
   coords <- colnames(U)
   if(is.null(coords)) coords <- paste0("c", seq_len(ncol(U)))
 
@@ -92,29 +88,31 @@ meffects_mmes <- function(object, term, M, method=c("A.mat", "custom"),
   for(c in seq_len(ncol(U))) out$effect[rows(c)] <- effects[, c]
 
   if(se){
+    .mmes_require_coefficient_matrix(object)
     if(is.null(object$C) || nrow(object$C) == 0){
       stop("se=TRUE requires the coefficient matrix C in the fitted object.", call.=FALSE)
     }
     theta <- as.matrix(object$theta[[ti]])
-    gPart <- s^2 * colSums(Zm * GiZ)
     part <- object$partitions[[ti]]
     nEff <- nrow(object$bu)
-    H <- s * GiZ
+    solveVcov <- .mmes_vcov_solver(object)
     out$se <- NA_real_
-    for(c in seq_len(ncol(U))){
-      cols <- part[c, 1]:part[c, 2]
-      pev <- numeric(ncol(H))
-      for(start in seq(1L, ncol(H), by=chunk)){
-        idx <- start:min(ncol(H), start + chunk - 1L)
+    for(start in seq.int(1L, max(1L, ncol(Zm)), by=chunk)){
+      if(!ncol(Zm)) break
+      idx <- seq.int(start, min(ncol(Zm), start + chunk - 1))
+      GiZ <- Ginv %*% Zm[, idx, drop=FALSE]
+      gPart <- s^2 * colSums(Zm[, idx, drop=FALSE] * GiZ)
+      H <- s * GiZ
+      for(c in seq_len(ncol(U))){
+        cols <- part[c, 1]:part[c, 2]
         D <- Matrix::sparseMatrix(i=rep(seq_along(idx), each=length(cols)),
                                   j=rep(cols, times=length(idx)),
-                                  x=as.vector(H[, idx, drop=FALSE]),
+                                  x=as.vector(H),
                                   dims=c(length(idx), nEff))
-        V <- predict_mmes_vcov_cpp(object, .mmes_engine_contrast(object, D))
-        pev[idx] <- diag(as.matrix(V))
+        pev <- diag(solveVcov(D))
+        v <- theta[c, c] * gPart - pev
+        out$se[rows(c)[idx]] <- sqrt(pmax(v, 0))
       }
-      v <- theta[c, c] * gPart - pev
-      out$se[rows(c)] <- sqrt(pmax(v, 0))
     }
     out$z <- out$effect / out$se
     out$p.value <- 2 * stats::pnorm(-abs(out$z))

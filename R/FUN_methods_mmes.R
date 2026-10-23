@@ -1,40 +1,27 @@
-##################################################################################################
-#Startup function
-#this function is executed once the library is loaded
-.onAttach = function(library, pkg)
-{
-  Rv = R.Version()
-  if(!exists("getRversion", baseenv()) || (getRversion() < "3.5.0"))
-    stop("This package requires R 3.5.0 or later")
-  if(interactive()) {
-    desc <- utils::packageDescription(pkg)
-    packageStartupMessage(magenta(paste("[]==================================================================[]")),appendLF=TRUE)
-    packageStartupMessage(magenta(paste("[]  Solving Mixed Model Equations in R (sommer) ", desc$Version," (", desc$Date, ") []",sep="")),appendLF=TRUE)
-    packageStartupMessage(magenta(paste("[]  ------------- Multivariate Linear Mixed Models --------------   []")),appendLF=TRUE)
-    packageStartupMessage(paste0(magenta("[]  Author: Giovanny Covarrubias-Pazaran",paste0(bgGreen
-                                                                                           (white(" ")), bgWhite(magenta("M")), bgRed(white(" ")),"  ", bgRed(bold(yellow(" (") )),bgRed(bold(white("W"))), bgRed(bold(yellow(") "))) ) ,"                []")),appendLF=TRUE)
-    packageStartupMessage(magenta("[]  Published: PLoS ONE 2016, 11(6):1-15                            []"),appendLF=TRUE)
-    packageStartupMessage(magenta("[]  Dedicated to the University of Chapingo and UW-Madison          []"),appendLF=TRUE)
-    packageStartupMessage(magenta("[]  Type 'vignette('sommer.qg')' for a short tutorial               []"),appendLF=TRUE)
-    packageStartupMessage(magenta("[]  Type 'citation('sommer')' to know how to cite sommer            []"),appendLF=TRUE)
-    packageStartupMessage(magenta(paste("[]==================================================================[]")),appendLF=TRUE)
-    packageStartupMessage(magenta("sommer is updated on CRAN every 3-months due to CRAN policies"),appendLF=TRUE)
-    packageStartupMessage(magenta("Current source is available at https://github.com/covaruber/sommer"),appendLF=TRUE)
-    packageStartupMessage(magenta("If needed, install as: remotes::install_github('covaruber/sommer')"),appendLF=TRUE)
-    packageStartupMessage(magenta("Visit https://covaruber.github.io/sommer/ for more information"),appendLF=TRUE)
-  }
-  invisible()
-}
-
-.onLoad = function(libname, pkgname)
-{
-  if(requireNamespace("emmeans", quietly=TRUE))
-    emmeans::.emm_register("mmes", pkgname)
-}
 
 #### =========== ####
 ## SUMMARY FUNCTION mmes #
 #### =========== ####
+
+.mmes_require_covariance_information <- function(object){
+  if(identical(object$covarianceInformation, "none") ||
+     identical(object$control$output$covariance, "none") ||
+     identical(object$engineControl$covarianceInformation, "none")){
+    stop("Covariance information was omitted; refit with output=list(covariance='full') for this inference method.",
+         call.=FALSE)
+  }
+  invisible(NULL)
+}
+
+.mmes_require_coefficient_matrix <- function(object){
+  if(identical(object$retainCoefficientMatrix, FALSE) ||
+     identical(object$control$output$coefficientMatrix, FALSE) ||
+     identical(object$engineControl$retainCoefficientMatrix, FALSE)){
+    stop("Coefficient matrix C was not retained; refit with output=list(coefficientMatrix=TRUE) for this method.",
+         call.=FALSE)
+  }
+  invisible(NULL)
+}
 
 "summary.mmes" <- function(object, ...) {
 
@@ -71,20 +58,31 @@
   nX <- length(object$b)
   if(identical(object$engine, "direct")){
     VarBeta <- object$VarBeta
-    s2.beta <- if(is.null(VarBeta)) rep(NA, nX) else diag(as.matrix(VarBeta))
+    s2.beta <- rep(NA_real_, nX)
+    if(!is.null(VarBeta)){
+      varianceColumns <- if(is.null(object$fixedRank)) seq_len(nX) else object$fixedRank$retained
+      s2.beta[varianceColumns] <- diag(as.matrix(VarBeta))
+    }
   }else if(object$CiMode == 0){
     s2.beta <- rep(NA, length(1:nX))
   }else if(object$CiMode == 1){
     s2.beta <- rep(NA, length(1:nX))
   }else if(object$CiMode == 2){
     VarBeta <- object$Ci[1:nX,1:nX]
-    s2.beta <- diag(as.matrix(VarBeta))
+    s2.beta <- Matrix::diag(VarBeta)
   }else{}
   
   coef$Std.Error <- sqrt(abs(s2.beta))
   coef$t.value <- coef$Estimate/coef$Std.Error
+  if(!is.null(object$fixedRank)){
+    coef$Status <- "retained (conditional on zero constraints)"
+    coef$Status[object$fixedRank$omitted] <- "aliased (constrained to zero)"
+    coef$Std.Error[object$fixedRank$omitted] <- NA_real_
+    coef$t.value[object$fixedRank$omitted] <- NA_real_
+  }
   
-varcomp <- object$covParNative[,c("term",  "parameter", "estimate",  "StdError",  "Zratio"  )]
+varcomp <- object$covParNative[,c("term", "parameter", "estimate", "StdError", "Zratio",
+                                intersect("status", names(object$covParNative)))]
 
   # lapply(object$covStruct, function(x){x$free})
   # constraints <- unlist(lapply(object$thetaC, as.vector))
@@ -92,9 +90,16 @@ varcomp <- object$covParNative[,c("term",  "parameter", "estimate",  "StdError",
   # varcomp$Constraint <- replace.values(constraints, 1:3, c("Positive","Unconstr","Fixed"))
 
   output <- list(varcomp=varcomp, betas=coef, method=method,logo=LLAIC,
+                 remlOmissions=object$remlOmissions, fixedRank=object$fixedRank,
                  REML=if(is.null(object$REML)) TRUE else object$REML,
                  family=object$family,
                  pqlConverged=object$pqlConverged)
+  if(identical(object$covarianceInformation, "none")){
+    output$covarianceInformation <- "none"
+  }
+  if(identical(object$retainCoefficientMatrix, FALSE)){
+    output$retainCoefficientMatrix <- FALSE
+  }
   attr(output, "class")<-c("summary.mmes", "list")
   return(output)
 }
@@ -125,9 +130,21 @@ varcomp <- object$covParNative[,c("term",  "parameter", "estimate",  "StdError",
   print(x$logo)#, digits = digits)
   cat(paste(rep("=",nmaxchar), collapse = ""))
   cat("\nVariance-Covariance components:\n")
+  if(!is.null(x$remlOmissions)){
+    cat("Structurally unestimable REML components were omitted; their zeros are not variance estimates and their standard errors are unavailable.\n")
+  }
+  if(identical(x$covarianceInformation, "none")){
+    cat("Covariance information omitted (covarianceInformation='none'); standard errors are unavailable.\n")
+  }
+  if(identical(x$retainCoefficientMatrix, FALSE)){
+    cat("Coefficient matrix C was not retained; post-fit C-based inference requires a refit.\n")
+  }
   print(x$varcomp, digits = digits)
   cat(paste(rep("=",nmaxchar), collapse = ""))
   cat("\nFixed effects:\n")
+  if(!is.null(x$fixedRank)){
+    cat("Rank-reduced fit: aliased coefficients are constrained to zero, not estimated; retained coefficients are conditional on these constraints.\n")
+  }
   if(nrow(x$betas) > 8){
     print(x$betas[1:8,], digits = digits)
     cat("   ... please access the object to see more\n")
@@ -332,8 +349,8 @@ rotate_back_mmes <- function(object){
     loadingsRaw[rows[a], cols[a]] <- natural[a]
   }
 
-  specificRaw <- rep(1, q)
-  if(f$model == "fa" && q > 1L){
+  specificRaw <- if(isTRUE(f$zero_specific)) rep(0, q) else rep(1, q)
+  if(f$model == "fa" && !identical(f$variance, "homogeneous") && q > 1L){
     specificRaw[-1] <- natural[nload + seq_len(q-1L)]
   }
 
@@ -349,7 +366,7 @@ rotate_back_mmes <- function(object){
   
   if(varianceScale){
     loadings <- loadings * sqrt(sigma2)
-    specific <- specific * sqrt(sigma2)
+    specific <- specific * sigma2
   }
   
   if(rotation){
@@ -367,6 +384,93 @@ rotate_back_mmes <- function(object){
   )
 }
 
+.covparams_term_names <- function(object){
+  termNames <- names(object$covStruct)
+  if(is.null(termNames) || any(!nzchar(termNames))){
+    termNames <- names(object$covPar)
+  }
+  if(is.null(termNames) || length(termNames) != length(object$covStruct)){
+    termNames <- paste0("structure", seq_along(object$covStruct))
+  }
+  termNames
+}
+
+.covparams_select_terms <- function(termNames, term=NULL){
+  selected <- seq_along(termNames)
+  if(!is.null(term)){
+    if(is.numeric(term)){
+      selected <- as.integer(term)
+      if(anyNA(selected) || any(selected < 1L | selected > length(termNames))){
+        stop("Numeric term indices are outside the fitted covariance structures.",
+             call.=FALSE)
+      }
+    }else{
+      selected <- match(as.character(term), termNames)
+      if(anyNA(selected)){
+        stop("Unknown covariance term: ",
+             paste(as.character(term)[is.na(selected)], collapse=", "),
+             call.=FALSE)
+      }
+    }
+  }
+  selected
+}
+
+.covparams_term_report <- function(descriptor, current, termName){
+  if(!length(current)) return(list())
+  scale <- current[1L]
+  factors <- descriptor$factors
+  rows <- list()
+  if(!length(factors)){
+    return(list(list(term=termName, factor="sigma2", section=NA_character_,
+                     parameter="sigma2", estimate=scale)))
+  }
+  scaleAbsorbed <- FALSE
+  for(j in seq_along(factors)){
+    factor <- factors[[j]]
+    start <- as.integer(factor$par_start)
+    end <- as.integer(factor$par_end)
+    factorPar <- if(end >= start) current[start:end] else numeric()
+    reporter <- factor$native_report
+    if(is.null(reporter) || !identical(reporter$backend, "R") ||
+       !is.function(reporter$fun)){
+      stop("Covariance factor ", j, " in term '", termName,
+           "' has no valid native reporting callback.", call.=FALSE)
+    }
+    absorbScale <- !scaleAbsorbed
+    values <- reporter$fun(scale=scale, par=factorPar, factor=factor,
+                           absorb_scale=absorbScale)
+    values <- unlist(values, use.names=TRUE)
+    if(!length(values)) next
+    if(is.null(names(values)) || any(!nzchar(names(values)))){
+      stop("Native reporting callbacks must return named values.", call.=FALSE)
+    }
+    if(any(!is.finite(values))){
+      stop("Native reporting callback returned non-finite values for term '",
+           termName, "'.", call.=FALSE)
+    }
+    parameterNames <- names(values)
+    section <- rep(NA_character_, length(values))
+    if(!is.null(factor$section_levels) || isTRUE(factor$section_owner)){
+      section <- sub("^(.*)\\[([^]]*)\\]$", "\\2", parameterNames)
+      parameterNames <- sub("^(.*)\\[([^]]*)\\]$", "\\1", parameterNames)
+    }
+    factorName <- if(!is.null(factor$label)) factor$label else
+      if(!is.null(factor$model) && nzchar(factor$model)) factor$model else
+        paste0("factor", j)
+    rows[[length(rows) + 1L]] <- list(
+      term=rep(termName, length(values)), factor=rep(factorName, length(values)),
+      section=section, parameter=parameterNames, estimate=as.numeric(values))
+    scaleAbsorbed <- scaleAbsorbed || absorbScale
+  }
+  if(!scaleAbsorbed){
+    rows[[length(rows) + 1L]] <- list(
+      term=termName, factor="sigma2", section=NA_character_,
+      parameter="sigma2", estimate=scale)
+  }
+  rows
+}
+
 # Extract descriptor-defined covariance parameters on their native scale.
 .covparams_mmes <- function(object, term=NULL){
   if(!inherits(object, "mmes")){
@@ -376,119 +480,25 @@ rotate_back_mmes <- function(object){
     stop("The fitted object does not contain covariance descriptors and parameters.",
          call.=FALSE)
   }
-
-  termNames <- names(object$covStruct)
-  if(is.null(termNames) || any(!nzchar(termNames))){
-    termNames <- names(object$covPar)
-  }
-  if(is.null(termNames) || length(termNames) != length(object$covStruct)){
-    termNames <- paste0("structure", seq_along(object$covStruct))
-  }
-
-  selected <- seq_along(object$covStruct)
-  if(!is.null(term)){
-    if(is.numeric(term)){
-      selected <- as.integer(term)
-      if(anyNA(selected) || any(selected < 1L | selected > length(termNames))){
-        stop("Numeric term indices are outside the fitted covariance structures.",
-             call.=FALSE)
-      }
-    }else{
-      selected <- match(as.character(term), termNames)
-      if(anyNA(selected)){
-        stop("Unknown covariance term: ",
-             paste(as.character(term)[is.na(selected)], collapse=", "),
-             call.=FALSE)
-      }
-    }
-  }
-
+  termNames <- .covparams_term_names(object)
+  selected <- .covparams_select_terms(termNames, term)
   rows <- list()
-  outputIndex <- 0L
-
   for(i in selected){
-    descriptor <- object$covStruct[[i]]
-    current <- as.numeric(object$covPar[[i]])
-    if(!length(current)) next
-    scale <- current[1L]
-    factors <- descriptor$factors
-
-    if(!length(factors)){
-      outputIndex <- outputIndex + 1L
-      rows[[outputIndex]] <- data.frame(
-        term=termNames[i], factor="sigma2", section=NA_character_, parameter="sigma2",
-        estimate=scale, stringsAsFactors=FALSE
-      )
-      next
-    }
-
-    scaleAbsorbed <- FALSE
-    for(j in seq_along(factors)){
-      factor <- factors[[j]]
-      start <- as.integer(factor$par_start)
-      end <- as.integer(factor$par_end)
-      factorPar <- if(end >= start) current[start:end] else numeric()
-      reporter <- factor$native_report
-      if(is.null(reporter) || !identical(reporter$backend, "R") ||
-         !is.function(reporter$fun)){
-        stop("Covariance factor ", j, " in term '", termNames[i],
-             "' has no valid native reporting callback.", call.=FALSE)
-      }
-
-      absorbScale <- !scaleAbsorbed
-      values <- reporter$fun(
-        scale=scale,
-        par=factorPar,
-        factor=factor,
-        absorb_scale=absorbScale
-      )
-      values <- unlist(values, use.names=TRUE)
-      if(!length(values)) next
-      if(is.null(names(values)) || any(!nzchar(names(values)))){
-        stop("Native reporting callbacks must return named values.", call.=FALSE)
-      }
-      if(any(!is.finite(values))){
-        stop("Native reporting callback returned non-finite values for term '",
-             termNames[i], "'.", call.=FALSE)
-      }
-
-      parameterNames <- names(values)
-      section <- rep(NA_character_, length(values))
-      if(!is.null(factor$section_levels) || isTRUE(factor$section_owner)){
-        section <- sub("^(.*)\\[([^]]*)\\]$", "\\2", parameterNames)
-        parameterNames <- sub("^(.*)\\[([^]]*)\\]$", "\\1", parameterNames)
-      }
-
-      outputIndex <- outputIndex + 1L
-      rows[[outputIndex]] <- data.frame(
-        term=termNames[i],
-        factor=if(!is.null(factor$label)) factor$label else
-          if(!is.null(factor$model) && nzchar(factor$model)) factor$model else
-          paste0("factor", j),
-        section=section,
-        parameter=parameterNames,
-        estimate=as.numeric(values),
-        stringsAsFactors=FALSE
-      )
-      scaleAbsorbed <- scaleAbsorbed || absorbScale
-    }
-
-    if(!scaleAbsorbed){
-      outputIndex <- outputIndex + 1L
-      rows[[outputIndex]] <- data.frame(
-        term=termNames[i], factor="sigma2", section=NA_character_, parameter="sigma2",
-        estimate=scale, stringsAsFactors=FALSE
-      )
-    }
+    reported <- .covparams_term_report(
+      object$covStruct[[i]], as.numeric(object$covPar[[i]]), termNames[i])
+    if(length(reported)) rows <- c(rows, reported)
   }
-
   if(!length(rows)){
     return(data.frame(term=character(), factor=character(), section=character(),
                       parameter=character(), estimate=numeric()))
   }
-  out <- do.call(rbind, rows)
+  columns <- lapply(names(rows[[1L]]), function(column){
+    unlist(lapply(rows, `[[`, column), use.names=FALSE)
+  })
+  names(columns) <- names(rows[[1L]])
+  out <- as.data.frame(columns, stringsAsFactors=FALSE)
   rownames(out) <- NULL
-  out
+  .mmes_reml_report_status(object, out)
 }
 
 "covparams_mmes" <- function(object, term=NULL){
@@ -496,6 +506,7 @@ rotate_back_mmes <- function(object){
 }
 
 .covparams_mmes_se <- function(object, term=NULL, rel_step=1e-6){
+  .mmes_require_covariance_information(object)
   if(length(rel_step) != 1L || !is.finite(rel_step) || rel_step <= 0){
     stop("rel_step must be one positive finite value.", call.=FALSE)
   }
@@ -504,30 +515,14 @@ rotate_back_mmes <- function(object){
          call.=FALSE)
   }
 
-  termNames <- names(object$covStruct)
-  if(is.null(termNames) || any(!nzchar(termNames))){
-    termNames <- names(object$covPar)
-  }
-  if(is.null(termNames) || length(termNames) != length(object$covStruct)){
-    termNames <- paste0("structure", seq_along(object$covStruct))
-  }
+  termNames <- .covparams_term_names(object)
+  selected <- .covparams_select_terms(termNames, term)
 
-  selected <- seq_along(object$covStruct)
-  if(!is.null(term)){
-    if(is.numeric(term)){
-      selected <- as.integer(term)
-      if(anyNA(selected) || any(selected < 1L | selected > length(termNames))){
-        stop("Numeric term indices are outside the fitted covariance structures.",
-             call.=FALSE)
-      }
-    }else{
-      selected <- match(as.character(term), termNames)
-      if(anyNA(selected)){
-        stop("Unknown covariance term: ",
-             paste(as.character(term)[is.na(selected)], collapse=", "),
-             call.=FALSE)
-      }
-    }
+  if(!length(selected)){
+    out <- .covparams_mmes(object, term)
+    out$StdError <- out$Zratio <- numeric()
+    attr(out, "vcov") <- matrix(numeric(), 0L, 0L)
+    return(out)
   }
 
   parameterCounts <- vapply(object$covPar, length, integer(1))
@@ -538,20 +533,9 @@ rotate_back_mmes <- function(object){
   }
   starts <- cumsum(c(1L, head(parameterCounts, -1L)))
 
-  evaluateTerm <- function(index, parameterValues, template){
-    candidate <- object
-    candidate$covPar[[index]] <- parameterValues
-    reported <- .covparams_mmes(candidate, index)
-    if(nrow(reported) != nrow(template) ||
-       !identical(reported$parameter, template$parameter) ||
-       !identical(reported$factor, template$factor)){
-      stop("Native reporting callback changed its output shape during numerical differentiation.",
-           call.=FALSE)
-    }
-    reported$estimate
-  }
-
   output <- vector("list", length(selected))
+  jacobians <- vector("list", length(selected))
+  globalIndices <- vector("list", length(selected))
   for(outputIndex in seq_along(selected)){
     i <- selected[outputIndex]
     base <- .covparams_mmes(object, i)
@@ -563,24 +547,48 @@ rotate_back_mmes <- function(object){
       stop("Covariance descriptor free flags do not match covPar.", call.=FALSE)
     }
 
+    reportValues <- function(values){
+        rows <- .covparams_term_report(object$covStruct[[i]], values, termNames[i])
+        if(!length(rows)) return(list(estimate=numeric(), factor=character(),
+                                      section=character(), parameter=character()))
+        flatten <- function(column){
+          unlist(lapply(rows, `[[`, column), use.names=FALSE)
+        }
+        list(estimate=flatten("estimate"), factor=flatten("factor"),
+             section=flatten("section"), parameter=flatten("parameter"))
+    }
+    sameShape <- function(reported){
+      length(reported$estimate) == nrow(base) &&
+        identical(as.character(reported$factor), as.character(base$factor)) &&
+        identical(as.character(reported$section), as.character(base$section)) &&
+        identical(as.character(reported$parameter), as.character(base$parameter))
+    }
     for(k in which(free)){
       h <- rel_step * max(1, abs(current[k]))
       plus <- current
       minus <- current
       plus[k] <- plus[k] + h
       minus[k] <- minus[k] - h
-
-      plusValue <- try(evaluateTerm(i, plus, base), silent=TRUE)
-      minusValue <- try(evaluateTerm(i, minus, base), silent=TRUE)
-      plusOK <- !inherits(plusValue, "try-error") && all(is.finite(plusValue))
-      minusOK <- !inherits(minusValue, "try-error") && all(is.finite(minusValue))
-
+      plusValue <- try(reportValues(plus), silent=TRUE)
+      minusValue <- try(reportValues(minus), silent=TRUE)
+      for(value in list(plusValue, minusValue)){
+        if(!inherits(value, "try-error") && !sameShape(value)){
+          stop("Native reporting callback changed output shape in term '",
+               termNames[i], "'.", call.=FALSE)
+        }
+      }
+      plusOK <- !inherits(plusValue, "try-error") &&
+        length(plusValue$estimate) == nrow(base) &&
+        all(is.finite(plusValue$estimate))
+      minusOK <- !inherits(minusValue, "try-error") &&
+        length(minusValue$estimate) == nrow(base) &&
+        all(is.finite(minusValue$estimate))
       if(plusOK && minusOK){
-        jacobian[,k] <- (plusValue - minusValue) / (2*h)
+        jacobian[,k] <- (plusValue$estimate - minusValue$estimate) / (2*h)
       }else if(plusOK){
-        jacobian[,k] <- (plusValue - base$estimate) / h
+        jacobian[,k] <- (plusValue$estimate - base$estimate) / h
       }else if(minusOK){
-        jacobian[,k] <- (base$estimate - minusValue) / h
+        jacobian[,k] <- (base$estimate - minusValue$estimate) / h
       }else{
         stop("Unable to numerically differentiate native covariance parameter '",
              base$parameter[1L], "' in term '", termNames[i], "'.", call.=FALSE)
@@ -588,30 +596,59 @@ rotate_back_mmes <- function(object){
     }
 
     global <- starts[i] + seq_len(nLocal) - 1L
-    covariance <- object$theta_se[global, global, drop=FALSE]
-    covariance[!free,] <- 0
-    covariance[,!free] <- 0
-    nativeCovariance <- jacobian %*% covariance %*% t(jacobian)
-    variance <- pmax(diag(nativeCovariance), 0)
-    standardError <- sqrt(variance)
-    zRatio <- rep(NA_real_, length(standardError))
-    positiveSE <- standardError > 0
-    zRatio[positiveSE] <- base$estimate[positiveSE] / standardError[positiveSE]
-
-    base$StdError <- standardError
-    base$Zratio <- zRatio
-    attr(base, "vcov") <- nativeCovariance
+    jacobians[[outputIndex]] <- jacobian
+    globalIndices[[outputIndex]] <- global
+    base$StdError <- rep(NA_real_, nrow(base))
+    base$Zratio <- rep(NA_real_, nrow(base))
     output[[outputIndex]] <- base
   }
 
-  vcovs <- lapply(output, function(x){attributes(x)$vcov})
-  vcovs <- do.call(enhancer::adiag1, vcovs)
-  
+  allIndices <- unlist(globalIndices, use.names=FALSE)
+  allJacobian <- matrix(0, sum(vapply(output, nrow, integer(1))),
+                        length(allIndices))
+  rowStart <- 1L
+  columnStart <- 1L
+  for(i in seq_along(output)){
+    rows <- nrow(output[[i]])
+    columns <- length(globalIndices[[i]])
+    if(rows && columns){
+      allJacobian[rowStart:(rowStart + rows - 1L),
+                  columnStart:(columnStart + columns - 1L)] <- jacobians[[i]]
+    }
+    rowStart <- rowStart + rows
+    columnStart <- columnStart + columns
+  }
+  freeAll <- unlist(lapply(selected, function(i){
+    as.logical(object$covStruct[[i]]$free)
+  }), use.names=FALSE)
+  covariance <- object$theta_se[allIndices, allIndices, drop=FALSE]
+  covariance[!freeAll,] <- 0
+  covariance[,!freeAll] <- 0
+  unavailable <- is.na(covariance)
+  covariance[unavailable] <- 0
+  nativeCovariance <- allJacobian %*% covariance %*% t(allJacobian)
+  if(any(unavailable)){
+    depends <- allJacobian != 0
+    nativeCovariance[(depends %*% unavailable %*% t(depends)) > 0] <- NA_real_
+  }
+  standardErrors <- sqrt(pmax(diag(nativeCovariance), 0))
+  estimates <- unlist(lapply(output, `[[`, "estimate"), use.names=FALSE)
+  zRatios <- rep(NA_real_, length(standardErrors))
+  positiveSE <- is.finite(standardErrors) & standardErrors > 0
+  zRatios[positiveSE] <- estimates[positiveSE] / standardErrors[positiveSE]
+  rowStart <- 1L
+  for(i in seq_along(output)){
+    rows <- nrow(output[[i]])
+    indices <- rowStart + seq_len(rows) - 1L
+    output[[i]]$StdError <- standardErrors[indices]
+    output[[i]]$Zratio <- zRatios[indices]
+    rowStart <- rowStart + rows
+  }
   out <- do.call(rbind, output)
   rownames(out) <- NULL
-  attr(out, "vcov") <- vcovs
+  attr(out, "vcov") <- nativeCovariance
   
-  out
+  .mmes_reml_report_status(object, out)
 }
 
 "covparams_mmes_se" <- function(object, term=NULL, rel_step=1e-6){
@@ -640,7 +677,6 @@ rotate_back_mmes <- function(object){
   }
 
   L <- fa$loadings
-  Sigma <- object$theta[[term]]
   U <- object$uList[[term]]
 
   if(!all(rownames(L) %in% colnames(U))){
@@ -653,12 +689,24 @@ rotate_back_mmes <- function(object){
   }
   U <- U[, rownames(L), drop=FALSE]
 
-  if(method == "regression"){
-    SigmaInv <- solve(Sigma)
-    scores <- U %*% SigmaInv %*% L
+  if(all(fa$specific == 0)){
+    if(method == "bartlett"){
+      stop("Bartlett scores are undefined for rrm(): specific variances are fixed at zero. Use method='regression'.",
+           call.=FALSE)
+    }
+    scores <- U %*% t(solve(crossprod(L), t(L)))
+  }else if(method == "regression"){
+    # Woodbury contraction needs only a rank-by-rank solve, including when
+    # the fit deliberately retains no dense trait covariance.
+    specific <- fa$specific * if(varianceScale) 1 else fa$sigma2
+    weightedL <- sweep(L, 1L, specific, `/`)
+    core <- diag(ncol(L)) + crossprod(L, weightedL) *
+      if(varianceScale) 1 else fa$sigma2
+    scores <- (U %*% weightedL) %*% solve(core)
   }else{
-    PsiInv <- diag(1/(fa$sigma2 * fa$specific), nrow=length(fa$specific))
-    scores <- U %*% PsiInv %*% L %*% solve(t(L) %*% PsiInv %*% L)
+    weights <- 1 / (fa$sigma2 * fa$specific)
+    weightedL <- sweep(L, 1L, weights, `*`)
+    scores <- U %*% weightedL %*% solve(crossprod(L, weightedL))
   }
 
   rownames(scores) <- rownames(U)
@@ -684,6 +732,8 @@ anova.mmes <- function(object, object2=NULL, ...) {
   if(is.null(object2)){
     return(wald_mmes(object, ...))
   }
+  .mmes_require_full_rank_inference(object, "Likelihood-ratio comparisons")
+  .mmes_require_full_rank_inference(object2, "Likelihood-ratio comparisons")
   if(inherits(object, "mmes.glmm") || inherits(object2, "mmes.glmm")){
     stop("Likelihood ratio tests are not available for PQL fits: their log-likelihood is that of a working Gaussian model, not of the GLMM.", call.=FALSE)
   }
@@ -733,6 +783,10 @@ anova.mmes <- function(object, object2=NULL, ...) {
 ## PLOTING FUNCTION #
 #### =========== ####
 
+.mmes_hat_diagonal <- function(W, Ci){
+  rowSums((W %*% Ci) * W)
+}
+
 plot.mmes <- function(x, stnd=TRUE, ...) {
   digits = max(3, getOption("digits") - 3)
   transp <- function (col, alpha = 0.5){
@@ -750,12 +804,11 @@ plot.mmes <- function(x, stnd=TRUE, ...) {
     qqnorm(scale(rr), pch=20, col=transp("tomato1"), ylab="Std Residuals", bty="n",...); grid()
     # hat <- Xm%*%solve(t(Xm)%*%x$Vi%*%Xm)%*%t(Xm)%*%x$Vi # leverage including variance from random effects H= X(X'V-X)X'V-
     if(is.null(x$Ci)){
-      stop("plot.mmes() currently requires the Henderson engine's coefficient-matrix inverse (Ci); it is not available for the direct-inversion engine (henderson=FALSE).", call.=FALSE)
+      stop("plot.mmes() currently requires the Henderson engine's coefficient-matrix inverse (Ci); it is not available for the direct-inversion engine (control$formulation='direct').", call.=FALSE)
     }
-    hat = x$W %*% x$Ci %*% t(x$W)
-    plot(diag(hat), scale(rr), pch=20, col=transp("blue"), ylab="Std Residuals", xlab="Leverage", main="Residual vs Leverage", bty="n", ...); grid()
+    leverage <- .mmes_hat_diagonal(x$W, x$Ci)
+    plot(leverage, scale(rr), pch=20, col=transp("blue"), ylab="Std Residuals", xlab="Leverage", main="Residual vs Leverage", bty="n", ...); grid()
   # }
   #####################
   layout(matrix(1,1,1))
 }
-

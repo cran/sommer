@@ -9,9 +9,10 @@ Ai <- as(as(as( Ai,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
 attr(Ai, "inverse")=TRUE
 
 ansSingle <- mmes(Yield~1,
-              random= ~ vsm(ism(Name), Gu=Ai),
-              rcov= ~ units,
-              data=DT, verbose = FALSE)
+  random= ~ vsm(ism(Name), Gu=Ai),
+  rcov= ~ units,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 summary(ansSingle)
 
 
@@ -19,9 +20,10 @@ summary(ansSingle)
 ## -----------------------------------------------------------------------------
 
 ansMain <- mmes(Yield~Env,
-              random= ~ vsm(ism(Name), Gu=Ai),
-              rcov= ~ units,
-              data=DT, verbose = FALSE)
+  random= ~ vsm(ism(Name), Gu=Ai),
+  rcov= ~ units,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 summary(ansMain)
 
 
@@ -29,9 +31,10 @@ summary(ansMain)
 ## -----------------------------------------------------------------------------
 
 ansDG <- mmes(Yield~Env,
-              random= ~ vsm(dsm(Env),ism(Name), Gu=Ai),
-              rcov= ~ units,
-              data=DT, verbose = FALSE)
+  random= ~ vsm(dsm(Env),ism(Name), Gu=Ai),
+  rcov= ~ units,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 summary(ansDG)
 
 
@@ -46,18 +49,20 @@ EAi <- as(as(as( EAi,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
 attr(Ai, "inverse")=TRUE
 attr(EAi, "inverse")=TRUE
 ansCS <- mmes(Yield~Env,
-              random= ~ vsm(ism(Name), Gu=Ai) + vsm(ism(Env:Name), Gu=EAi),
-              rcov= ~ units, 
-              data=DT, verbose = FALSE)
+  random= ~ vsm(ism(Name), Gu=Ai) + vsm(ism(Env:Name), Gu=EAi),
+  rcov= ~ units,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 summary(ansCS)
 
 
 ## -----------------------------------------------------------------------------
 
 ansUS <- mmes(Yield~Env,
-              random= ~ vsm(usm(Env),ism(Name), Gu=Ai),
-              rcov= ~ units,
-              data=DT, verbose = FALSE)
+  random= ~ vsm(usm(Env),ism(Name), Gu=Ai),
+  rcov= ~ units,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 summary(ansUS)
 
 
@@ -67,9 +72,10 @@ library(orthopolynom)
 DT$EnvN <- as.numeric(as.factor(DT$Env))
 
 ansRR <- mmes(Yield~Env,
-              random= ~ vsm(dsm(leg(EnvN,1)),ism(Name)),
-              rcov= ~ units,
-              data=DT, verbose = FALSE)
+  random= ~ vsm(dsm(leg(EnvN,1)),ism(Name)),
+  rcov= ~ units,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 summary(ansRR)
 
 
@@ -78,18 +84,20 @@ library(orthopolynom)
 DT$EnvN <- as.numeric(as.factor(DT$Env))
 
 ansRR <- mmes(Yield~Env,
-              random= ~ vsm(usm(leg(EnvN,1)),ism(Name)),
-              rcov= ~ units,
-              data=DT, verbose = FALSE)
+  random= ~ vsm(usm(leg(EnvN,1)),ism(Name)),
+  rcov= ~ units,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 summary(ansRR)
 
 
 ## -----------------------------------------------------------------------------
 
 ansAR1 <- mmes(Yield~Env,
-              random= ~ vsm(csm(Env),ism(Name)),
-              rcov= ~ units,
-              data=DT, verbose = FALSE)
+  random= ~ vsm(csm(Env),ism(Name)),
+  rcov= ~ units,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 summary(ansAR1)
 
 
@@ -110,11 +118,13 @@ DT2 <- merge(DT,ei, by="Env")
 # numeric by factor variables like envIndex:Name can't be used in the random part like this
 # they need to come with the vsm() structure
 DT2 <- DT2[with(DT2, order(Name)), ]
-mix2 <- mmes(y~ envIndex, 
-             random=~ Name + vsm(ism(envIndex),ism(Name)), data=DT2,
-             rcov=~vsm(dsm(Name),ism(units)),
-             nIters = 50, verbose = FALSE
-)
+mix2 <- mmes(y~ envIndex,
+  random=~ Name + vsm(ism(envIndex),ism(Name)),
+  data=DT2,
+  rcov=~vsm(dsm(Name),ism(units)),
+  control = mmes_control(
+    # convergence = list(maxIters = 50),
+  diagnostics = list(verbose = FALSE)))
 # summary(mix2)$varcomp
 
 b=mix2$uList$`vsm(ism(envIndex), ism(Name` # adaptability (b) or genotype slopes
@@ -151,11 +161,13 @@ A <- diag(length(indNames))
 rownames(A) <- colnames(A) <- indNames
 
 # factor analytic model with 2 factors
-ansFA2 <- mmes(y~Env, 
-               random=~vsm( fam(Env, 2) , ism(Name)) ,
-               rcov=~units,
-               nIters = 100, verbose = FALSE,
-               data=DT)
+ansFA2 <- mmes(y~Env,
+  random=~vsm( fam(Env, 2) , ism(Name)),
+  rcov=~units,
+  data=DT,
+  control = mmes_control(
+    convergence = list(maxIters = 1L),
+  diagnostics = list(verbose = FALSE)))
 
 Dt <- ansFA2$Dtable; Dt
 Dt[1:2,"average"]=TRUE
@@ -168,12 +180,15 @@ head(ppfa$pvals)
 ## -----------------------------------------------------------------------------
 
 # reduced rank model with 2 factors
-ansRR2 <- mmes(y~Env, henderson=TRUE,
-              random=~vsm( rrm(Env, 2) , ism(Name)) + # rr
-                vsm(dsm(Env), ism(Name)), # diag
+ansRR2 <- mmes(y~Env,
+  random=~vsm( rrm(Env, 2) , ism(Name)) + # rr
+                vsm(dsm(Env), ism(Name)),
+  # diag
               rcov=~units,
-              nIters = 100, verbose = FALSE,
-              data=DT)
+  data=DT,
+  control = mmes_control(formulation = "henderson",
+              convergence = list(maxIters = 1L),
+  diagnostics = list(verbose = FALSE)))
 
 
 Dt <- ansRR2$Dtable; Dt
@@ -190,20 +205,25 @@ plot(ppfa$pvals[,"predicted.value"],pprr$pvals[,"predicted.value"])
 ## -----------------------------------------------------------------------------
 
 # fit diagonal model first to produce H matrix
-ansDG <- mmes(y~Env, henderson=TRUE,
-              random=~ vsm(dsm(Env), ism(Name)),
-              rcov=~units, nIters = 100,
-              data=DT, verbose = FALSE)
-
-H0 <- ansDG$uList$`vsm(dsm(Env), ism(Name))` # GxE table
+# ansDG <- mmes(y~Env,
+#   random=~ vsm(dsm(Env), ism(Name)),
+#   rcov=~units,
+#   data=DT,
+#   control = mmes_control(formulation = "henderson",
+#   # convergence = list(maxIters = 100),
+#   diagnostics = list(verbose = FALSE)))
+# 
+# H0 <- ansDG$uList$`vsm(dsm(Env), ism(Name))` # GxE table
 
 # # reduced rank model
-# ansFA <- mmes(y~Env, henderson=TRUE,
+# ansFA <- mmes(y~Env,
 #               random=~vsm( usm(rrmat(Env, H = H0, nPC = 2)) , ism(Name)) + # rr
 #                 vsm(dsm(Env), ism(Name)), # diag
 #               rcov=~units,
 #               # we recommend giving more iterations to these models
-#               nIters = 100, verbose = FALSE,
+#               control=mmes_control(formulation="henderson",
+#                 convergence=list(maxIters=100),
+#                 diagnostics=list(verbose=FALSE)),
 #               # we recommend giving more EM iterations at the beggining
 #               data=DT)
 # 
@@ -240,11 +260,11 @@ BLUEL <- list()
 XtXL <- list()
 for(i in 1:length(envs)){
   ans1 <- mmes(y~Name-1,
-               random=~Block,
-               verbose=FALSE,
-               computeCi = 2,
-               data=droplevels(DT[which(DT$Env == envs[i]),])
-  )
+  random=~Block,
+  data=droplevels(DT[which(DT$Env == envs[i]),]),
+  control = mmes_control(convergence = list(maxIters = 1L),
+  diagnostics = list(verbose = FALSE),
+  output = list(inverse = 2)))
   ans1$Beta$Env <- envs[i]
   
   BLUEL[[i]] <- data.frame( Effect=factor(rownames(ans1$b)), 
@@ -263,17 +283,18 @@ OM <- Reduce(adiag1,lapply(XtXL,as.matrix))
 ##########
 m <- matrix(1/var(DT2$Estimate, na.rm = TRUE))
 
-ans2 <- mmes(Estimate~Env, henderson=TRUE,
-             random=~ Effect + Env:Effect, 
-             rcov = ~ vsm(
+ans2 <- mmes(Estimate~Env,
+  random=~ Effect + Env:Effect,
+  rcov = ~ vsm(
                ism(units),
                sigma2 = 1,
                fixedSigma2 = TRUE
              ),
-             W=OM, 
-             verbose=FALSE,
-             data=DT2
-)
+  W=OM,
+  data=DT2,
+  control = mmes_control(formulation = "henderson",
+  convergence = list(maxIters = 1L),
+  diagnostics = list(verbose = FALSE)))
 summary(ans2)$varcomp
 
 

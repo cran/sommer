@@ -10,19 +10,14 @@ test_that("factor analytic random effects with dense Gu preserve exact fits", {
   dimnames(relationship) <- list(levels(data$id), levels(data$id))
   attr(relationship, "inverse") <- TRUE
 
-  fit <- suppressMessages(mmes(
-    y~envf,
-    random=~vsm(fam(envf, 1), ism(id), Gu=relationship) +
-      vsm(dsm(envf), ism(repf)),
-    rcov=~units, data=data, solver="cholmod", nIters=2,
-    verbose=FALSE, dateWarning=FALSE
-  ))
+  fit <- suppressMessages(mmes(y~envf, random=~vsm(fam(envf, 1), ism(id), Gu=relationship) +
+      vsm(dsm(envf), ism(repf)), rcov=~units, data=data, control=mmes_control(solve=list(method="cholmod"), convergence=list(maxIters=2), update=list(blendWeight=20), diagnostics=list(verbose=FALSE, dateWarning=FALSE))))
 
-  expect_equal(as.numeric(fit$llik), c(-82.92354132851109, -81.10458105294998),
+  expect_equal(as.numeric(fit$llik), c(-82.9235413285111, -77.0570036960967),
                tolerance=1e-7)
   expect_equal(head(as.numeric(fit$bu), 4L),
-               c(-0.01976577434524176, 0.31310560257702447,
-                 -0.14463758346058719, -0.10188982610961937), tolerance=1e-7)
+               c(-0.0233242976305157, 0.305738509375516,
+                 -0.140712941332944, -0.0945203121102623), tolerance=1e-7)
 })
 test_that("unused factor levels do not enter covariance or fixed designs", {
   set.seed(3)
@@ -34,8 +29,7 @@ test_that("unused factor levels do not enter covariance or fixed designs", {
   attr(relationship, "inverse") <- TRUE
 
   expect_equal(ncol(sommer:::rrm(data$envf, 2)$Z), 3L)
-  p <- suppressMessages(mmes(y~envf, random=~vsm(rrm(envf, 2), ism(id), Gu=relationship),
-                             data=data, returnParam=TRUE, dateWarning=FALSE))
+  p <- suppressMessages(mmes(y~envf, random=~vsm(rrm(envf, 2), ism(id), Gu=relationship), data=data, control=mmes_control(output=list(setup=TRUE), diagnostics=list(dateWarning=FALSE))))
   expect_equal(ncol(p$X), 3L)
   expect_equal(p$covStruct[[1]]$dim, 3L)
 })

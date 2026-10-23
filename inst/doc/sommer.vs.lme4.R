@@ -18,8 +18,10 @@ DT <- DT_sleepstudy
 ## sommer
 ###########
 fm2 <- mmes(Reaction ~ Days,
-            random= ~ Subject, 
-            data=DT, tolParInv = 1e-6, verbose = FALSE)
+  random= ~ Subject,
+  data=DT,
+  control = mmes_control(execution = list(inverseTol = 1e-6),
+  diagnostics = list(verbose = FALSE)))
 summary(fm2)$varcomp
 
 
@@ -40,8 +42,10 @@ summary(fm2)$varcomp
 ## sommer
 ###########
 fm2 <- mmes(Reaction ~ Days,
-            random= ~ Subject + vsm(ism(Days), ism(Subject)), 
-            data=DT, tolParInv = 1e-6, verbose = FALSE)
+  random= ~ Subject + vsm(ism(Days), ism(Subject)),
+  data=DT,
+  control = mmes_control(execution = list(inverseTol = 1e-6),
+  diagnostics = list(verbose = FALSE)))
 summary(fm2)$varcomp
 
 
@@ -60,9 +64,13 @@ summary(fm2)$varcomp
 ###########
 ## sommer
 ###########
-fm2 <- mmes(Reaction ~ Days, # henderson=TRUE,
-            random= ~ vsm(usm(cbind(1,Days)), ism(Subject)) , 
-            nIters = 200, data=DT, tolParInv = 1e-6, verbose = FALSE)
+fm2 <- mmes(Reaction ~ Days,
+  # control = mmes_control(formulation="henderson"),
+            random= ~ vsm(usm(cbind(1,Days)), ism(Subject)),
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 200),
+  execution = list(inverseTol = 1e-6),
+  diagnostics = list(verbose = FALSE)))
 summary(fm2)$varcomp
 cov2cor(fm2$theta[[1]])
 
@@ -82,8 +90,10 @@ cov2cor(fm2$theta[[1]])
 ## sommer
 ###########
 fm2 <- mmes(Reaction ~ Days,
-            random= ~ vsm(ism(Days), ism(Subject)), 
-            data=DT, tolParInv = 1e-6, verbose = FALSE)
+  random= ~ vsm(ism(Days), ism(Subject)),
+  data=DT,
+  control = mmes_control(execution = list(inverseTol = 1e-6),
+  diagnostics = list(verbose = FALSE)))
 summary(fm2)$varcomp
 
 
@@ -91,23 +101,31 @@ summary(fm2)$varcomp
 library(orthopolynom)
 ## diagonal model
 fm2 <- mmes(Reaction ~ Days,
-            random= ~ vsm(dsm(Daysf), ism(Subject)), 
-            data=DT, tolParInv = 1e-6, verbose = FALSE)
+  random= ~ vsm(dsm(Daysf), ism(Subject)),
+  data=DT,
+  control = mmes_control(execution = list(inverseTol = 1e-6),
+  diagnostics = list(verbose = FALSE)))
 summary(fm2)$varcomp
 ## unstructured model
 fm2 <- mmes(Reaction ~ Days,
-            random= ~ vsm(usm(Daysf), ism(Subject)), 
-            data=DT, tolParInv = 1e-6, verbose = FALSE)
+  random= ~ vsm(usm(Daysf), ism(Subject)),
+  data=DT,
+  control = mmes_control(execution = list(inverseTol = 1e-6),
+  diagnostics = list(verbose = FALSE)))
 summary(fm2)$varcomp
 ## random regression (legendre polynomials)
 fm2 <- mmes(Reaction ~ Days,
-            random= ~ vsm(dsm(leg(Days,1)), ism(Subject)), 
-            data=DT, tolParInv = 1e-6, verbose = FALSE)
+  random= ~ vsm(dsm(leg(Days,1)), ism(Subject)),
+  data=DT,
+  control = mmes_control(execution = list(inverseTol = 1e-6),
+  diagnostics = list(verbose = FALSE)))
 summary(fm2)$varcomp
 ## unstructured random regression (legendre)
 fm2 <- mmes(Reaction ~ Days,
-            random= ~ vsm(usm(leg(Days,1)), ism(Subject)), 
-            data=DT, tolParInv = 1e-6, verbose = FALSE)
+  random= ~ vsm(usm(leg(Days,1)), ism(Subject)),
+  data=DT,
+  control = mmes_control(execution = list(inverseTol = 1e-6),
+  diagnostics = list(verbose = FALSE)))
 summary(fm2)$varcomp
 
 

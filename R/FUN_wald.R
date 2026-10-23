@@ -3,6 +3,7 @@
 #### =========== ####
 
 .wald_fixed_vcov <- function(object){
+  .mmes_require_coefficient_matrix(object)
   p <- nrow(object$b)
   if(identical(object$engine, "direct")){
     if(is.null(object$VarBeta)) stop("The fitted object does not contain VarBeta.", call.=FALSE)
@@ -29,6 +30,7 @@
 }
 
 .fixed_rank <- function(object){
+  if(!is.null(object$fixedRank)) return(object$fixedRank$rank)
   .sparse_rank(object$W[, seq_len(nrow(object$b)), drop=FALSE])
 }
 
@@ -68,7 +70,7 @@
                  dateWarning=FALSE),
             object$inputArgs[!vapply(object$inputArgs, is.null, logical(1))])
   if(!is.null(object$args$random)) args$random <- object$args$random
-  inputs <- tryCatch(do.call(mmes, args), error=function(e){
+  inputs <- tryCatch(do.call(.mmes_fit, args), error=function(e){
     stop("Could not rebuild the model inputs: ", conditionMessage(e), call.=FALSE)
   })
   if(nrow(inputs$X) != nrow(object$W) || ncol(inputs$X) != nrow(object$b)){
@@ -91,16 +93,11 @@
     }
     for(k in seq_len(e - s + 1L)){
       idx <- s + k - 1L
-      v <- theta[idx]
-      work[idx] <- switch(report$transform[k],
-        identity=v,
-        exp=log(v),
-        tanh=atanh(v),
-        bounded_logit={
-          lo <- report$lower[k]; hi <- report$upper[k]
-          stats::qlogis((v - lo) / (hi - lo))
-        },
-        stop("Unknown report transform: ", report$transform[k], call.=FALSE))
+      if(!report$transform[k] %in% c("identity", "exp", "tanh", "bounded_logit")){
+        stop("Unknown report transform: ", report$transform[k], call.=FALSE)
+      }
+      work[idx] <- .vc_to_working(theta[idx], report$transform[k],
+                                 report$lower[k], report$upper[k])
     }
   }
   work
@@ -108,7 +105,9 @@
 
 # Information of the fixed effects, X'V^{-1}X, at natural covariance parameters.
 .mmes_fixed_information_at <- function(object, inputs, thetaList){
+  if(!is.null(object$remlActiveTerms)) thetaList <- thetaList[object$remlActiveTerms]
   cs <- inputs$covStruct
+  attr(cs, "commonScale") <- "off"
   for(i in seq_along(cs)){
     cs[[i]]$par <- .natural_to_working(cs[[i]], thetaList[[i]])
     cs[[i]]$free[] <- FALSE
@@ -116,13 +115,14 @@
   p <- ncol(inputs$X)
   if(isTRUE(inputs$henderson)){
     solver <- if(identical(object$solver, "cholmod")) "cholmod" else "ldlt"
-    r <- .Call("_sommer_ai_mme_sp2", PACKAGE="sommer",
+    r <- get("ai_mme_sp2", mode="function")(
                inputs$X, inputs$Z, inputs$Zind, inputs$Ai, inputs$yvar, inputs$W,
                inputs$useH, inputs$residualBlock, inputs$residualIndex,
                1L, 1e-4, 1e-4, inputs$tolParInv, cs, 0, 1, FALSE, 0L, solver,
                1e-8, 0L, 8L, 20L, isTRUE(inputs$REML),
                inputs$responsePrepared, inputs$preparedMean, inputs$preparedSd,
-               inputs$preparedIntercept)
+               inputs$preparedIntercept, gpu = isTRUE(inputs$engine$gpu),
+               gpuMinSize = if(is.null(inputs$engine$gpuMinSize)) 256L else inputs$engine$gpuMinSize)
     D <- cbind(Matrix::Diagonal(p), Matrix::Matrix(0, p, nrow(r$C) - p, sparse=TRUE))
     D <- as(as(D, "generalMatrix"), "CsparseMatrix")
     Phi <- as.matrix(predict_mmes_vcov_cpp(r, D))
@@ -141,6 +141,9 @@
 # Numerical derivatives of M = X'V^{-1}X with respect to the free covariance
 # parameters on their reported scale (the scale of theta_se).
 .mmes_df_machinery <- function(object, second=FALSE, rel_step=1e-3){
+  .mmes_require_full_rank_inference(object, "Satterthwaite/Kenward-Roger inference")
+  .mmes_require_coefficient_matrix(object)
+  .mmes_require_covariance_information(object)
   if(inherits(object, "mmes.glmm")){
     stop("Satterthwaite and Kenward-Roger degrees of freedom are not available for PQL fits.",
          call.=FALSE)
@@ -252,6 +255,7 @@ wald_mmes <- function(object, ssType=c("incremental", "conditional"),
                       denDF=c("none", "residual", "satterthwaite", "kr"),
                       terms=NULL){
   if(!inherits(object, "mmes")) stop("object must inherit from class 'mmes'.", call.=FALSE)
+  .mmes_require_full_rank_inference(object, "Wald term tests")
   ssType <- match.arg(ssType)
   denDF <- match.arg(denDF)
   cols <- .wald_term_columns(object)

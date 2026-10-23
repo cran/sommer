@@ -1,7 +1,6 @@
 oatsFit <- function(){
   data(DT_yatesoats, package="enhancer", envir=environment())
-  mmes(Y ~ V + N + V:N, random=~ B + B:MP, rcov=~units, data=DT_yatesoats,
-       verbose=FALSE)
+  mmes(Y ~ V + N + V:N, random=~ B + B:MP, rcov=~units, data=DT_yatesoats, control=mmes_control(diagnostics=list(verbose=FALSE)))
 }
 
 oatsDtable <- function(m){
@@ -44,7 +43,7 @@ test_that("SED and pairwise comparisons follow from the prediction covariance", 
   expect_null(predict(m, Dtable=oatsDtable(m), D="N")$sed)
 })
 
-test_that("levels restrict averaging and prediction rows through the Dtable", {
+test_that("levels restrict averaging and prediction rows separately from Dtable", {
   skip_if_not_installed("emmeans")
   m <- oatsFit()
   keep <- c("Marvellous", "Victory")
@@ -52,7 +51,10 @@ test_that("levels restrict averaging and prediction rows through the Dtable", {
   p <- predict(m, Dtable=oatsDtable(m), D="N", levels=list(V=keep, "V:N"=cells))
   e <- summary(emmeans::emmeans(m, ~N, at=list(V=keep)))
   expect_equal(p$pvals$predicted.value, e$emmean, tolerance=1e-10)
-  expect_equal(p$Dtable$levels[[2]], keep)
+  expect_equal(p$levels$V, keep)
+  expect_false("levels" %in% names(m$Dtable))
+  expect_false("levels" %in% names(p$Dtable))
+  expect_equal(predict(m, Dtable=p$Dtable, D="N", levels=p$levels)$D, p$D)
 
   rows <- predict(m, Dtable=oatsDtable(m), D="N", levels=list(N=c("0.6", "0.2")))
   expect_equal(rows$pvals$N, c("0.6", "0.2"))
@@ -60,6 +62,13 @@ test_that("levels restrict averaging and prediction rows through the Dtable", {
   expect_error(predict(m, D="N", levels=list(foo=1)), "Valid terms")
   expect_error(predict(m, Dtable=oatsDtable(m), D="N", levels=list(V="Nope")),
                "Unknown levels")
+  for(invalidLevels in list(list(N="0", N="0.2"), setNames(list("0"), NA_character_),
+                            list("0"), "0")){
+    expect_error(predict(m, D="N", levels=invalidLevels), "named list")
+  }
+  legacyRules <- oatsDtable(m)
+  legacyRules$levels <- vector("list", nrow(legacyRules))
+  expect_error(predict(m, D="N", Dtable=legacyRules), "no longer accepts a levels column")
 })
 
 test_that("levels can request random-effect levels without phenotypes", {
@@ -69,8 +78,10 @@ test_that("levels can request random-effect levels without phenotypes", {
   dimnames(G) <- list(ids, ids)
   Gi <- solve(G); attr(Gi, "inverse") <- TRUE
   d <- data.frame(id=factor(rep(ids[1:10], each=3), levels=ids))
-  d$y <- rnorm(30)
-  m <- mmes(y~1, random=~vsm(ism(id), Gu=Gi), data=d, verbose=FALSE)
+  genetic <- drop(t(chol(G)) %*% rnorm(length(ids)))
+  d$y <- genetic[as.integer(d$id)] + rnorm(nrow(d), sd=0.5)
+  m <- mmes(y~1, random=~vsm(ism(id), Gu=Gi), data=d, control=mmes_control(diagnostics=list(verbose=FALSE)))
+  expect_true(m$convergence)
   term <- m$Dtable$term[2]
   p <- predict(m, D="id", levels=setNames(list(c("i1", "i12")), term))
   expect_equal(p$pvals$id, c("i1", "i12"))

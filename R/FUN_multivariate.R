@@ -29,6 +29,7 @@ stackTraits <- function(data, traits, keep=NULL, trait="trait", value="value",
 
 covmatrix_mmes <- function(object, term, se=TRUE, max.dim=500L, rel_step=1e-5){
   if(!inherits(object, "mmes")) stop("object must inherit from class 'mmes'.", call.=FALSE)
+  if(se) .mmes_require_covariance_information(object)
   terms <- names(object$covStruct)
   if(is.numeric(term)) term <- terms[term]
   i <- match(term, terms)
@@ -50,6 +51,10 @@ covmatrix_mmes <- function(object, term, se=TRUE, max.dim=500L, rel_step=1e-5){
     s <- sqrt(diag(K))
     R <- K / outer(s, s)
     diag(R) <- 1
+    if(!is.null(cs$reml_omitted)){
+      R[cs$reml_omitted,] <- NA_real_
+      R[,cs$reml_omitted] <- NA_real_
+    }
     R
   }
   V <- evalAt(natural)
@@ -73,13 +78,19 @@ covmatrix_mmes <- function(object, term, se=TRUE, max.dim=500L, rel_step=1e-5){
       Jr[, k] <- as.vector(corOf(Vu) - corOf(Vd)) / (2*h)
     }
     toMat <- function(J){
-      M <- matrix(sqrt(pmax(diag(J %*% W %*% t(J)), 0)), q, q)
+      M <- matrix(sqrt(pmax(rowSums((J %*% W) * J), 0)), q, q)
       dimnames(M) <- dimnames(V)
       M
     }
     out$covariance.se <- toMat(Jc)
     out$correlation.se <- toMat(Jr)
     diag(out$correlation.se) <- 0
+    if(!is.null(cs$reml_omitted)){
+      out$covariance.se[cs$reml_omitted,] <- NA_real_
+      out$covariance.se[,cs$reml_omitted] <- NA_real_
+      out$correlation.se[cs$reml_omitted,] <- NA_real_
+      out$correlation.se[,cs$reml_omitted] <- NA_real_
+    }
   }
   out
 }

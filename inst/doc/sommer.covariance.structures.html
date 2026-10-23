@@ -143,7 +143,7 @@ section.footnotes::before {
 <div class="frontmatter">
 <div class="title"><h1>Using covariance structures with sommer</h1></div>
 <div class="author"><h2>Giovanny Covarrubias-Pazaran</h2></div>
-<div class="date"><h3>2026-10-03</h3></div>
+<div class="date"><h3>2026-10-23</h3></div>
 </div>
 <div class="body">
 <p>The <code>sommer</code> package fits mixed models with structured covariance models for random effects and residuals. In <code>mmes()</code>, covariance structures are supplied through <code>vsm()</code>. This vignette explains the relation between <code>vsm()</code>, the covariance constructors, and the internal CovarianceFactor descriptor used by the Henderson mixed-model solver.</p>
@@ -204,27 +204,23 @@ DT &lt;- DT_example
 </code></pre>
 <h3 id="1-compound-symmetry">1) Compound symmetry</h3>
 <p>The following model fits a homogeneous compound-symmetry covariance among environments for genotype effects:</p>
-<pre><code class="language-r">fit_cs &lt;- mmes(
-  Yield ~ Env,
+<pre><code class="language-r">fit_cs &lt;- mmes(Yield ~ Env,
   random = ~ vsm(csm(Env), ism(Name)),
   rcov = ~ vsm(ism(units)),
   data = DT,
-  verbose = FALSE
-)
+  control = mmes_control(diagnostics = list(verbose = FALSE)))
 </code></pre>
 <p>To estimate environment-specific variance ratios while retaining the same common correlation, select heterogeneous variance mode. <code>values</code> supplies positive starting marginal variances:</p>
 <pre><code class="language-r">n_env &lt;- nlevels(factor(DT$Env))
 
-fit_csh &lt;- mmes(
-  Yield ~ Env,
+fit_csh &lt;- mmes(Yield ~ Env,
   random = ~ vsm(
     csm(Env, variance=&quot;heterogeneous&quot;, values=rep(1, n_env)),
     ism(Name)
   ),
   rcov = ~ vsm(ism(units)),
   data = DT,
-  verbose = FALSE
-)
+  control = mmes_control(diagnostics = list(verbose = FALSE)))
 </code></pre>
 <p>The homogeneous and heterogeneous models have one overall random-effect variance from <code>vsm()</code>. The heterogeneous model additionally estimates one common correlation and \(q-1\) environment variance ratios.</p>
 <h3 id="2-autoregressive-covariance">2) Autoregressive covariance</h3>
@@ -232,8 +228,7 @@ fit_csh &lt;- mmes(
 <pre><code class="language-r">DT$EnvOrder &lt;- factor(DT$Env, levels=unique(DT$Env), ordered=TRUE)
 n_env &lt;- nlevels(DT$EnvOrder)
 
-fit_ar1h &lt;- mmes(
-  Yield ~ Env,
+fit_ar1h &lt;- mmes(Yield ~ Env,
   random = ~ vsm(
     ar1m(EnvOrder, rho=0.30, variance=&quot;heterogeneous&quot;,
          values=rep(1, n_env)),
@@ -241,8 +236,7 @@ fit_ar1h &lt;- mmes(
   ),
   rcov = ~ vsm(ism(units)),
   data = DT,
-  verbose = FALSE
-)
+  control = mmes_control(diagnostics = list(verbose = FALSE)))
 </code></pre>
 <p>For AR(2) and AR(3), use <code>ar2m()</code> or <code>ar3m()</code> and provide starting partial autocorrelations through <code>pacf</code>. Their heterogeneous mode uses the same <code>variance</code> and <code>values</code> arguments.</p>
 <h3 id="3-fixing-covariance-parameters">3) Fixing covariance parameters</h3>
@@ -257,13 +251,11 @@ environment_cs &lt;- csm(
 )
 </code></pre>
 <p>To fix a residual variance to one, fix the product-level <code>vsm()</code> scale rather than a covariance-factor parameter:</p>
-<pre><code class="language-r">fit_fixed_residual &lt;- mmes(
-  Yield ~ Env,
+<pre><code class="language-r">fit_fixed_residual &lt;- mmes(Yield ~ Env,
   random = ~ vsm(ism(Name)),
   rcov = ~ vsm(ism(units), sigma2=1, fixedSigma2=TRUE),
   data = DT,
-  verbose = FALSE
-)
+  control = mmes_control(diagnostics = list(verbose = FALSE)))
 </code></pre>
 <p>For a heterogeneous residual structure, <code>fixedSigma2=TRUE</code> fixes the reference residual variance. Fixing the associated variance-ratio entries to <code>TRUE</code> fixes the other marginal residual variances relative to that reference.</p>
 <h2 id="section-3-complete-covariance-structure-catalog">SECTION 3: Complete covariance-structure catalog</h2>
@@ -332,13 +324,11 @@ environment_shapes &lt;- list(
 <p><code>mam(order=1L)</code> and <code>mam(order=2L)</code> are the canonical moving-average interfaces; <code>ma1m()</code> and <code>ma2m()</code> are convenience wrappers. <code>atm()</code> is a selected-level diagonal structure: observations outside <code>levs</code> have zero incidence in that covariance factor, so it is appropriate only when that selected-level interpretation is intended. The AR(3) entries use <code>CatalogOrder</code> only because <code>DT_example</code> has three environment levels; an AR(3) analysis requires at least four scientifically meaningful ordered levels.</p>
 <p>The common fitting pattern is identical for all entries in <code>environment_shapes</code>:</p>
 <pre><code class="language-r">fit_environment_shape &lt;- function(shape){
-  mmes(
-    Yield ~ Env,
-    random = ~ vsm(shape, ism(DT$Name)),
-    rcov = ~ vsm(ism(units)),
-    data = DT,
-    verbose = FALSE
-  )
+  mmes(Yield ~ Env,
+  random = ~ vsm(shape, ism(DT$Name)),
+  rcov = ~ vsm(ism(units)),
+  data = DT,
+  control = mmes_control(diagnostics = list(verbose = FALSE)))
 }
 
 fit_identity &lt;- fit_environment_shape(environment_shapes$identity)
@@ -354,7 +344,7 @@ fit_car &lt;- fit_environment_shape(environment_shapes$car)
 <li><code>ar1m()</code>, <code>ar2m()</code>, and <code>ar3m()</code> use stationary ordered-level correlations. AR(2) and AR(3) use partial autocorrelations, and all AR functions offer homogeneous or heterogeneous marginal variances.</li>
 <li><code>mam()</code> specifies an MA(1) or MA(2) correlation with zero correlation beyond its order.</li>
 <li><code>usm()</code> estimates a fully unstructured positive-definite covariance, whereas <code>corgm()</code> estimates a general correlation matrix and leaves marginal scale to <code>vsm()</code>.</li>
-<li><code>fam()</code> fits a reduced factor-analytic covariance plus specific variances; <code>rrm()</code> fits a reduced-rank covariance with an identity remainder.</li>
+<li><code>fam()</code> fits a factor-analytic covariance with heterogeneous specific variances by default, or an estimated common specific variance with <code>variance=&quot;homogeneous&quot;</code>. <code>rrm()</code> fits a genuine reduced-rank covariance with all specific variances fixed at zero.</li>
 <li><code>antem()</code> uses a modified-Cholesky antedependence covariance with ordered levels.</li>
 <li><code>ownm()</code> accepts either a known positive-definite matrix through <code>K</code> or a user-supplied covariance function.</li>
 <li><code>maternm()</code> uses numeric spatial coordinates and estimates range and smoothness.</li>
@@ -380,8 +370,11 @@ covparams_mmes(fit, 1)  # variances and covariances among dir, mat and pe
 <p><code>cov</code> can be any constructor applied to the term index, e.g. <code>cov = dsm</code> (independent terms), <code>cov = corgm</code>, or <code>cov = function(x) fam(x, k = 1)</code>. Inner factors are shared, e.g. <code>strm(vsm(dsm(env), ism(id)), vsm(dsm(env), ism(dam)), Gu = Ainv)</code>.</p>
 <h3 id="4-equality-and-scaling-constraints-with-vcc">4) Equality and scaling constraints with <code>vcc</code></h3>
 <p>Covariance parameters can be constrained to be equal or to keep fixed ratios (ASReml <code>vcc</code>). Parameters are identified in the <code>vcParams</code> table:</p>
-<pre><code class="language-r">p &lt;- mmes(Y ~ V * N, random = ~ B + B:MP, rcov = ~ units, data = DT_yatesoats,
-          returnParam = TRUE)
+<pre><code class="language-r">p &lt;- mmes(Y ~ V * N,
+  random = ~ B + B:MP,
+  rcov = ~ units,
+  data = DT_yatesoats,
+  control = mmes_control(output = list(setup = TRUE)))
 p$vcParams
 fit &lt;- mmes(Y ~ V * N, random = ~ B + B:MP, rcov = ~ units, data = DT_yatesoats,
             vcc = data.frame(parameter = c(&quot;vsm(ism(B:MP)):sigma2&quot;, &quot;vsm(ism(B)):sigma2&quot;),

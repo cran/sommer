@@ -7,7 +7,7 @@ round(ar1(5, 0.6), 3)
 
 ## -----------------------------------------------------------------------------
 set.seed(3)
-nRange <- 16; nRow <- 24; nGeno <- 96
+nRange <- 6; nRow <- 8; nGeno <- 12
 g <- setNames(rnorm(nGeno, sd=3), sprintf("G%02d", seq_len(nGeno)))
 
 field <- expand.grid(range=seq_len(nRange), row=seq_len(nRow))
@@ -15,7 +15,7 @@ field$geno <- sample(rep(names(g), each=4))
 trueField <- as.vector(t(chol(8 * kronecker(ar1(nRow, 0.4), ar1(nRange, 0.7)))) %*%
                          rnorm(nrow(field)))
 field$yield <- 50 + g[field$geno] + trueField + rnorm(nrow(field), sd=1)
-field <- field[-sample(nrow(field), 15), ]
+field <- field[-sample(nrow(field), 6), ]
 
 field$geno <- factor(field$geno)
 field$rangef <- factor(field$range, levels=seq_len(nRange))
@@ -26,19 +26,37 @@ head(field)
 ## -----------------------------------------------------------------------------
 fits <- list(
   # M0: no spatial model
-  iid    = mmes(yield ~ 1, random=~geno, data=field, verbose=FALSE),
+  iid    = mmes(yield ~ 1,
+  random=~geno,
+  data=field,
+  control = mmes_control(convergence = list(maxIters = 1L),
+                         diagnostics = list(verbose = FALSE))),
   # M1: independent random range and row effects (large-scale strips)
-  rowcol = mmes(yield ~ 1, random=~geno + rangef + rowf, data=field, verbose=FALSE),
+  rowcol = mmes(yield ~ 1,
+  random=~geno + rangef + rowf,
+  data=field,
+  control = mmes_control(convergence = list(maxIters = 1L),
+                         diagnostics = list(verbose = FALSE))),
   # M2: a smooth 2D surface built from tensor-product P-splines
-  spline = mmes(yield ~ 1, random=~geno + vsm(ism(spl2Dc(row, range)$Z$`A:all`)),
-                data=field, verbose=FALSE),
+  spline = mmes(yield ~ 1,
+  random=~geno + vsm(ism(spl2Dc(row, range)$Z$`A:all`)),
+  data=field,
+  control = mmes_control(convergence = list(maxIters = 1L),
+                         diagnostics = list(verbose = FALSE))),
   # M3: correlated residuals (R side)
-  ar1Res = mmes(yield ~ 1, random=~geno,
-                rcov=~vsm(ar1m(rangef), ar1m(rowf), ism(units)),
-                data=field, verbose=FALSE),
+  ar1Res = mmes(yield ~ 1,
+  random=~geno,
+  rcov=~vsm(ar1m(rangef), ar1m(rowf), ism(units)),
+  data=field,
+  control = mmes_control(convergence = list(maxIters = 1L),
+                         diagnostics = list(verbose = FALSE))),
   # M4: a random AR1 x AR1 spatial field (G side) plus an iid nugget
-  ar1Fld = mmes(yield ~ 1, random=~geno + vsm(ar1m(rangef), ar1m(rowf), ism(site)),
-                rcov=~units, data=field, verbose=FALSE)
+  ar1Fld = mmes(yield ~ 1,
+  random=~geno + vsm(ar1m(rangef), ar1m(rowf), ism(site)),
+  rcov=~units,
+  data=field,
+  control = mmes_control(convergence = list(maxIters = 1L),
+                         diagnostics = list(verbose = FALSE)))
 )
 
 ## -----------------------------------------------------------------------------
@@ -98,15 +116,18 @@ DT$C <- as.factor(DT$col)
 # Residual          3.987e+02     1.997e+01 
 
 # SOMMER MODEL
-M <- spl2Dmats(x.coord.name = "col", y.coord.name = "row", data=DT, 
-               nseg =c(14,21), degree = c(3,3), penaltyord = c(2,2) 
+M <- spl2Dmats(x.coord.name = "col", y.coord.name = "row", data=DT,
+               nseg =c(6,8), degree = c(3,3), penaltyord = c(2,2)
                )
-mix <- mmes(Y~V, henderson = TRUE,
-            random=~ R + C + vsm(ism(M$fC)) + vsm(ism(M$fR)) + 
+mix <- mmes(Y~V,
+  random=~ R + C + vsm(ism(M$fC)) + vsm(ism(M$fR)) +
               vsm(ism(M$fC.R)) + vsm(ism(M$C.fR)) +
               vsm(ism(M$fC.fR)),
-            rcov=~units, verbose=FALSE,
-            data=M$data)
+  rcov=~units,
+  data=M$data,
+  control = mmes_control(formulation = "henderson",
+  convergence = list(maxIters = 1L),
+  diagnostics = list(verbose = FALSE)))
 summary(mix)$varcomp
 
 
@@ -132,15 +153,19 @@ MET$row <- factor(MET$row, levels=1:24)
 table(MET$trial)
 
 ## -----------------------------------------------------------------------------
-mShared <- mmes(yield ~ trial, random=~geno,
-                rcov=~vsm(dsm(trial), ar1m(range), ar1m(row), ism(units)),
-                data=MET, verbose=FALSE)
+mShared <- mmes(yield ~ trial,
+  random=~geno,
+  rcov=~vsm(dsm(trial), ar1m(range), ar1m(row), ism(units)),
+  data=MET,
+  control = mmes_control(diagnostics = list(verbose = FALSE)))
 knitr::kable(covparams_mmes(mShared)[, c("factor", "parameter", "estimate")], digits=3)
 
 ## -----------------------------------------------------------------------------
-mDsum <- mmes(yield ~ trial, random=~geno,
-              rcov=~dsumm(vsm(ar1m(range), ar1m(row), ism(units)), by=trial),
-              data=MET, verbose=FALSE)
+mDsum <- mmes(yield ~ trial,
+  random=~geno,
+  rcov=~dsumm(vsm(ar1m(range), ar1m(row), ism(units)), by=trial),
+  data=MET,
+  control = mmes_control(diagnostics = list(verbose = FALSE)))
 knitr::kable(covparams_mmes(mDsum)[, c("factor", "section", "parameter", "estimate")],
              digits=3)
 
@@ -155,10 +180,12 @@ MET2 <- MET
 MET2$range[MET2$trial == "T3"] <- NA  # T3 has no field coordinates
 MET2$row[MET2$trial == "T3"] <- NA
 
-mLevels <- mmes(yield ~ trial, random=~geno,
-                rcov=~dsumm(vsm(ar1m(range), ar1m(row), ism(units)),
+mLevels <- mmes(yield ~ trial,
+  random=~geno,
+  rcov=~dsumm(vsm(ar1m(range), ar1m(row), ism(units)),
                             by=trial, levels=c("T1", "T2")),
-                data=MET2, verbose=FALSE)
+  data=MET2,
+  control = mmes_control(diagnostics = list(verbose = FALSE)))
 knitr::kable(covparams_mmes(mLevels)[, c("factor", "section", "parameter", "estimate")],
              digits=3)
 c(used = nrow(mLevels$y), available = nrow(MET2))

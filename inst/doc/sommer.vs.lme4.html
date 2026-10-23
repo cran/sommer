@@ -142,10 +142,10 @@ section.footnotes::before {
 <div class="frontmatter">
 <div class="title"><h1>Translating lme4 models to sommer</h1></div>
 <div class="author"><h2>Giovanny Covarrubias-Pazaran</h2></div>
-<div class="date"><h3>2026-10-03</h3></div>
+<div class="date"><h3>2026-10-23</h3></div>
 </div>
 <div class="body">
-<p>The sommer package was developed to provide R users with a powerful and reliable multivariate mixed model solver for different genetic and non-genetic analyses in diploid and polyploid organisms. This package allows the user to estimate variance components for a mixed model with the advantages of specifying the variance-covariance structure of the random effects, specifying heterogeneous variances, and obtaining other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc. The core algorithms of the package are coded in C++ using the Armadillo library to optimize dense matrix operations common in the derect-inversion algorithms. Although the vignette shows examples using the mmes function with the default direct inversion algorithm (henderson=FALSE) the Henderson’s approach can be faster when the number of records surpasses the number of coefficients to estimate and setting the henderson argument to TRUE can bring significant speed ups.</p>
+<p>The sommer package was developed to provide R users with a powerful and reliable multivariate mixed model solver for different genetic and non-genetic analyses in diploid and polyploid organisms. This package allows the user to estimate variance components for a mixed model with the advantages of specifying the variance-covariance structure of the random effects, specifying heterogeneous variances, and obtaining other parameters such as BLUPs, BLUEs, residuals, fitted values, variances for fixed and random effects, etc. The core algorithms of the package are coded in C++ using the Armadillo library to optimize dense matrix operations common in the derect-inversion algorithms. Although the vignette shows examples using the mmes function with the default direct inversion algorithm (formulation=“direct”) the Henderson’s approach can be faster when the number of records surpasses the number of coefficients to estimate and setting the henderson argument to TRUE can bring significant speed ups.</p>
 <p>The purpose of this vignette is to show how to translate the syntax formula from <code>lme4</code> models to <code>sommer</code> models. Feel free to remove the comment marks from the lme4 code so you can compare the results.</p>
 <ol>
 <li>Random slopes with same intercept</li>
@@ -175,16 +175,15 @@ DT &lt;- DT_sleepstudy
 ## sommer
 ###########
 fm2 &lt;- mmes(Reaction ~ Days,
-            random= ~ Subject, 
-            data=DT, tolParInv = 1e-6, verbose = FALSE)
-</code></pre>
-<pre><code>## Solver selected: ldlt
-</code></pre>
-<pre><code class="language-r">summary(fm2)$varcomp
+  random= ~ Subject,
+  data=DT,
+  control = mmes_control(execution = list(inverseTol = 1e-6),
+  diagnostics = list(verbose = FALSE)))
+summary(fm2)$varcomp
 </code></pre>
 <pre><code>##                term parameter  estimate StdError   Zratio
-## 1 vsm(ism(Subject))    sigma2 1377.9699 505.6628 2.725077
-## 2   vsm(ism(units))    sigma2  960.4965 107.0550 8.971993
+## 1 vsm(ism(Subject))    sigma2 1378.2022 505.7744 2.724935
+## 2   vsm(ism(units))    sigma2  960.3449 107.0296 8.972701
 </code></pre>
 <h2 id="2-random-slopes-and-random-intercepts-without-correlation">2) Random slopes and random intercepts (without correlation)</h2>
 <p>This is the a model where you assume that the random effect has different intercepts based on the levels of another variable. In addition the <code>||</code> in <code>lme4</code> assumes that slopes and intercepts have no correlation.</p>
@@ -203,17 +202,16 @@ fm2 &lt;- mmes(Reaction ~ Days,
 ## sommer
 ###########
 fm2 &lt;- mmes(Reaction ~ Days,
-            random= ~ Subject + vsm(ism(Days), ism(Subject)), 
-            data=DT, tolParInv = 1e-6, verbose = FALSE)
-</code></pre>
-<pre><code>## Solver selected: ldlt
-</code></pre>
-<pre><code class="language-r">summary(fm2)$varcomp
+  random= ~ Subject + vsm(ism(Days), ism(Subject)),
+  data=DT,
+  control = mmes_control(execution = list(inverseTol = 1e-6),
+  diagnostics = list(verbose = FALSE)))
+summary(fm2)$varcomp
 </code></pre>
 <pre><code>##                           term parameter  estimate  StdError   Zratio
-## 1            vsm(ism(Subject))    sigma2 627.47974 283.61898 2.212404
-## 2 vsm(ism(Days), ism(Subject))    sigma2  35.86523  14.53347 2.467768
-## 3              vsm(ism(units))    sigma2 653.72685  76.68247 8.525115
+## 1            vsm(ism(Subject))    sigma2 627.72619 283.71771 2.212503
+## 2 vsm(ism(Days), ism(Subject))    sigma2  35.84895  14.52471 2.468135
+## 3              vsm(ism(units))    sigma2 653.57166  76.65528 8.526114
 </code></pre>
 <p>Notice that Days is a numerical (not factor) variable.</p>
 <h2 id="3-random-slopes-and-random-intercepts-with-correlation">3) Random slopes and random intercepts (with correlation)</h2>
@@ -232,30 +230,31 @@ fm2 &lt;- mmes(Reaction ~ Days,
 ###########
 ## sommer
 ###########
-fm2 &lt;- mmes(Reaction ~ Days, # henderson=TRUE,
-            random= ~ vsm(usm(cbind(1,Days)), ism(Subject)) , 
-            nIters = 200, data=DT, tolParInv = 1e-6, verbose = FALSE)
-</code></pre>
-<pre><code>## Solver selected: ldlt
-</code></pre>
-<pre><code class="language-r">summary(fm2)$varcomp
+fm2 &lt;- mmes(Reaction ~ Days,
+  # control = mmes_control(formulation=&quot;henderson&quot;),
+            random= ~ vsm(usm(cbind(1,Days)), ism(Subject)),
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 200),
+  execution = list(inverseTol = 1e-6),
+  diagnostics = list(verbose = FALSE)))
+summary(fm2)$varcomp
 </code></pre>
 <pre><code>##                                     term         parameter   estimate  StdError
-## 1 vsm(usm(cbind(1, Days)), ism(Subject))        variance[] 611.679210 288.57422
-## 2 vsm(usm(cbind(1, Days)), ism(Subject)) covariance[Days,]   9.615479  46.66683
-## 3 vsm(usm(cbind(1, Days)), ism(Subject))    variance[Days]  35.078371  14.78558
-## 4                        vsm(ism(units))            sigma2 654.951742  77.18743
+## 1 vsm(usm(cbind(1, Days)), ism(Subject))        variance[] 612.019224 288.74643
+## 2 vsm(usm(cbind(1, Days)), ism(Subject)) covariance[Days,]   9.664236  46.66108
+## 3 vsm(usm(cbind(1, Days)), ism(Subject))    variance[Days]  35.057071  14.77457
+## 4                        vsm(ism(units))            sigma2 654.941025  77.18554
 ##      Zratio
-## 1 2.1196599
-## 2 0.2060453
-## 3 2.3724724
-## 4 8.4852120
+## 1 2.1195733
+## 2 0.2071156
+## 3 2.3727978
+## 4 8.4852814
 </code></pre>
 <pre><code class="language-r">cov2cor(fm2$theta[[1]])
 </code></pre>
-<pre><code>##            [,1]       [,2]
-## [1,] 1.00000000 0.06564314
-## [2,] 0.06564314 1.00000000
+<pre><code>##           [,1]      [,2]
+## [1,] 1.0000000 0.0659777
+## [2,] 0.0659777 1.0000000
 </code></pre>
 <p>Notice that this last model require a new function called covm() which creates the two random effects as before but now they have to be encapsulated in covm() instead of just added.</p>
 <h2 id="4-random-slopes-with-a-different-intercept">4) Random slopes with a different intercept</h2>
@@ -274,146 +273,198 @@ fm2 &lt;- mmes(Reaction ~ Days, # henderson=TRUE,
 ## sommer
 ###########
 fm2 &lt;- mmes(Reaction ~ Days,
-            random= ~ vsm(ism(Days), ism(Subject)), 
-            data=DT, tolParInv = 1e-6, verbose = FALSE)
-</code></pre>
-<pre><code>## Solver selected: ldlt
-</code></pre>
-<pre><code class="language-r">summary(fm2)$varcomp
+  random= ~ vsm(ism(Days), ism(Subject)),
+  data=DT,
+  control = mmes_control(execution = list(inverseTol = 1e-6),
+  diagnostics = list(verbose = FALSE)))
+summary(fm2)$varcomp
 </code></pre>
 <pre><code>##                           term parameter  estimate StdError   Zratio
-## 1 vsm(ism(Days), ism(Subject))    sigma2  52.71141 19.09684 2.760217
-## 2              vsm(ism(units))    sigma2 842.12287 93.86454 8.971683
+## 1 vsm(ism(Days), ism(Subject))    sigma2  52.70579 19.09378 2.760365
+## 2              vsm(ism(units))    sigma2 842.02965 93.84896 8.972179
 </code></pre>
 <h2 id="4-other-models-available-in-sommer-but-not-in-lme4">4) Other models available in sommer but not in lme4</h2>
 <p>One of the strengths of sommer is the availability of other variance covariance structures. In this section we show 4 models available in sommer that are not available in lme4 and might be useful.</p>
 <pre><code class="language-r">library(orthopolynom)
 ## diagonal model
 fm2 &lt;- mmes(Reaction ~ Days,
-            random= ~ vsm(dsm(Daysf), ism(Subject)), 
-            data=DT, tolParInv = 1e-6, verbose = FALSE)
+  random= ~ vsm(dsm(Daysf), ism(Subject)),
+  data=DT,
+  control = mmes_control(execution = list(inverseTol = 1e-6),
+  diagnostics = list(verbose = FALSE)))
+summary(fm2)$varcomp
 </code></pre>
-<pre><code>## Solver selected: ldlt
-</code></pre>
-<pre><code class="language-r">summary(fm2)$varcomp
-</code></pre>
-<pre><code>##                             term   parameter  estimate   StdError    Zratio
-## 1  vsm(dsm(Daysf), ism(Subject)) variance[0]  502.6988   74.47413 6.7499788
-## 2  vsm(dsm(Daysf), ism(Subject)) variance[1]  559.2660  503.31690 1.1111608
-## 3  vsm(dsm(Daysf), ism(Subject)) variance[2]  362.3340  439.69453 0.8240585
-## 4  vsm(dsm(Daysf), ism(Subject)) variance[3]  918.4486  607.42693 1.5120314
-## 5  vsm(dsm(Daysf), ism(Subject)) variance[4] 1217.5541  695.56641 1.7504499
-## 6  vsm(dsm(Daysf), ism(Subject)) variance[5] 2061.7874  953.75270 2.1617631
-## 7  vsm(dsm(Daysf), ism(Subject)) variance[6] 3273.2376 1339.72125 2.4432229
-## 8  vsm(dsm(Daysf), ism(Subject)) variance[7] 1901.9830  906.29992 2.0986243
-## 9  vsm(dsm(Daysf), ism(Subject)) variance[8] 2959.8719 1243.30782 2.3806429
-## 10 vsm(dsm(Daysf), ism(Subject)) variance[9] 3835.0209 1530.77404 2.5052822
-## 11               vsm(ism(units))      sigma2  517.2536  345.32710 1.4978656
+<pre><code>##                             term   parameter  estimate  StdError   Zratio
+## 1  vsm(dsm(Daysf), ism(Subject)) variance[0]  656.2651  114.9900 5.707151
+## 2  vsm(dsm(Daysf), ism(Subject)) variance[1]  713.5638  445.0486 1.603339
+## 3  vsm(dsm(Daysf), ism(Subject)) variance[2]  516.6946  383.4608 1.347451
+## 4  vsm(dsm(Daysf), ism(Subject)) variance[3] 1072.7899  556.7946 1.926725
+## 5  vsm(dsm(Daysf), ism(Subject)) variance[4] 1371.9225  651.2555 2.106581
+## 6  vsm(dsm(Daysf), ism(Subject)) variance[5] 2216.1361  921.8138 2.404104
+## 7  vsm(dsm(Daysf), ism(Subject)) variance[6] 3427.6151 1317.2583 2.602083
+## 8  vsm(dsm(Daysf), ism(Subject)) variance[7] 2056.3370  872.7117 2.356261
+## 9  vsm(dsm(Daysf), ism(Subject)) variance[8] 3114.2466 1218.9363 2.554889
+## 10 vsm(dsm(Daysf), ism(Subject)) variance[9] 3989.4234 1510.9733 2.640300
+## 11               vsm(ism(units))      sigma2  362.9853  255.5421 1.420452
 </code></pre>
 <pre><code class="language-r">## unstructured model
 fm2 &lt;- mmes(Reaction ~ Days,
-            random= ~ vsm(usm(Daysf), ism(Subject)), 
-            data=DT, tolParInv = 1e-6, verbose = FALSE)
+  random= ~ vsm(usm(Daysf), ism(Subject)),
+  data=DT,
+  control = mmes_control(execution = list(inverseTol = 1e-6),
+  diagnostics = list(verbose = FALSE)))
+summary(fm2)$varcomp
 </code></pre>
-<pre><code>## Solver selected: ldlt
-</code></pre>
-<pre><code class="language-r">summary(fm2)$varcomp
-</code></pre>
-<pre><code>##                             term       parameter   estimate   StdError   Zratio
-## 1  vsm(usm(Daysf), ism(Subject))     variance[0]  405.57603  112.77359 3.596374
-## 2  vsm(usm(Daysf), ism(Subject)) covariance[1,0]  419.54898  149.60096 2.804454
-## 3  vsm(usm(Daysf), ism(Subject)) covariance[2,0]  269.94635  154.77620 1.744108
-## 4  vsm(usm(Daysf), ism(Subject)) covariance[3,0]  396.56888  224.89559 1.763347
-## 5  vsm(usm(Daysf), ism(Subject)) covariance[4,0]  437.22604  260.40675 1.679012
-## 6  vsm(usm(Daysf), ism(Subject)) covariance[5,0]  519.16370  331.44832 1.566349
-## 7  vsm(usm(Daysf), ism(Subject)) covariance[6,0]  444.15322  378.45746 1.173588
-## 8  vsm(usm(Daysf), ism(Subject)) covariance[7,0]  531.80093  308.08739 1.726137
-## 9  vsm(usm(Daysf), ism(Subject)) covariance[8,0]  571.59031  406.90707 1.404720
-## 10 vsm(usm(Daysf), ism(Subject)) covariance[9,0]  774.18737  411.63528 1.880761
-## 11 vsm(usm(Daysf), ism(Subject))     variance[1]  842.93172  286.50404 2.942129
-## 12 vsm(usm(Daysf), ism(Subject)) covariance[2,1]  753.02600  254.71659 2.956329
-## 13 vsm(usm(Daysf), ism(Subject)) covariance[3,1] 1014.18375  363.07725 2.793300
-## 14 vsm(usm(Daysf), ism(Subject)) covariance[4,1] 1011.38456  380.20322 2.660116
-## 15 vsm(usm(Daysf), ism(Subject)) covariance[5,1] 1106.77204  497.95570 2.222632
-## 16 vsm(usm(Daysf), ism(Subject)) covariance[6,1]  976.74160  540.36119 1.807572
-## 17 vsm(usm(Daysf), ism(Subject)) covariance[7,1]  889.23135  449.88349 1.976581
-## 18 vsm(usm(Daysf), ism(Subject)) covariance[8,1] 1116.15712  595.53479 1.874210
-## 19 vsm(usm(Daysf), ism(Subject)) covariance[9,1] 1320.83826  638.38385 2.069035
-## 20 vsm(usm(Daysf), ism(Subject))     variance[2]  978.22845  304.93364 3.208004
-## 21 vsm(usm(Daysf), ism(Subject)) covariance[3,2] 1253.82005  401.35567 3.123962
-## 22 vsm(usm(Daysf), ism(Subject)) covariance[4,2] 1279.81144  433.98172 2.948999
-## 23 vsm(usm(Daysf), ism(Subject)) covariance[5,2] 1289.74905  560.51727 2.300998
-## 24 vsm(usm(Daysf), ism(Subject)) covariance[6,2] 1490.62884  664.18520 2.244297
-## 25 vsm(usm(Daysf), ism(Subject)) covariance[7,2] 1319.86722  551.93759 2.391334
-## 26 vsm(usm(Daysf), ism(Subject)) covariance[8,2] 1468.18756  705.19623 2.081956
-## 27 vsm(usm(Daysf), ism(Subject)) covariance[9,2] 1403.69388  712.59805 1.969826
-## 28 vsm(usm(Daysf), ism(Subject))     variance[3] 1916.91118  673.49316 2.846222
-## 29 vsm(usm(Daysf), ism(Subject)) covariance[4,3] 2117.49170  750.70371 2.820676
-## 30 vsm(usm(Daysf), ism(Subject)) covariance[5,3] 2331.60879  960.06810 2.428587
-## 31 vsm(usm(Daysf), ism(Subject)) covariance[6,3] 2665.24651 1121.75369 2.375964
-## 32 vsm(usm(Daysf), ism(Subject)) covariance[7,3] 1899.64099  852.86867 2.227355
-## 33 vsm(usm(Daysf), ism(Subject)) covariance[8,3] 2552.46704 1165.80535 2.189445
-## 34 vsm(usm(Daysf), ism(Subject)) covariance[9,3] 2438.70404 1156.17321 2.109290
-## 35 vsm(usm(Daysf), ism(Subject))     variance[4] 2536.35767  931.08330 2.724093
-## 36 vsm(usm(Daysf), ism(Subject)) covariance[5,4] 2968.06557 1191.87407 2.490251
-## 37 vsm(usm(Daysf), ism(Subject)) covariance[6,4] 3283.10388 1378.42518 2.381779
-## 38 vsm(usm(Daysf), ism(Subject)) covariance[7,4] 2432.16306 1063.19059 2.287608
-## 39 vsm(usm(Daysf), ism(Subject)) covariance[8,4] 3356.86980 1458.41214 2.301729
-## 40 vsm(usm(Daysf), ism(Subject)) covariance[9,4] 3250.12813 1442.77951 2.252685
-## 41 vsm(usm(Daysf), ism(Subject))     variance[5] 4132.83284 1677.97235 2.462992
-## 42 vsm(usm(Daysf), ism(Subject)) covariance[6,5] 4140.83371 1841.98376 2.248029
-## 43 vsm(usm(Daysf), ism(Subject)) covariance[7,5] 3130.01495 1448.87371 2.160309
-## 44 vsm(usm(Daysf), ism(Subject)) covariance[8,5] 4824.14737 2064.51791 2.336694
-## 45 vsm(usm(Daysf), ism(Subject)) covariance[9,5] 4671.98066 2025.63569 2.306427
-## 46 vsm(usm(Daysf), ism(Subject))     variance[6] 5843.09484 2355.66296 2.480446
-## 47 vsm(usm(Daysf), ism(Subject)) covariance[7,6] 3820.45430 1733.85978 2.203439
-## 48 vsm(usm(Daysf), ism(Subject)) covariance[8,6] 5083.37605 2341.09439 2.171367
-## 49 vsm(usm(Daysf), ism(Subject)) covariance[9,6] 4028.45638 2159.88736 1.865123
-## 50 vsm(usm(Daysf), ism(Subject))     variance[7] 3602.47750 1494.52761 2.410446
-## 51 vsm(usm(Daysf), ism(Subject)) covariance[8,7] 4163.51193 1903.74792 2.187008
-## 52 vsm(usm(Daysf), ism(Subject)) covariance[9,7] 3749.93743 1814.18180 2.067013
-## 53 vsm(usm(Daysf), ism(Subject))     variance[8] 6262.42482 2700.09447 2.319335
-## 54 vsm(usm(Daysf), ism(Subject)) covariance[9,8] 5978.41689 2613.24451 2.287737
-## 55 vsm(usm(Daysf), ism(Subject))     variance[9] 6404.46192 2665.80185 2.402452
-## 56               vsm(ism(units))          sigma2   68.32424   30.65416 2.228873
+<pre><code>##                             term       parameter   estimate    StdError
+## 1  vsm(usm(Daysf), ism(Subject))     variance[0] 1268.77852  453.444065
+## 2  vsm(usm(Daysf), ism(Subject)) covariance[1,0] 1025.26011  412.018184
+## 3  vsm(usm(Daysf), ism(Subject)) covariance[2,0]  542.32445  302.772674
+## 4  vsm(usm(Daysf), ism(Subject)) covariance[3,0]  800.96870  418.325945
+## 5  vsm(usm(Daysf), ism(Subject)) covariance[4,0]  760.09680  430.117020
+## 6  vsm(usm(Daysf), ism(Subject)) covariance[5,0]  935.56751  543.891217
+## 7  vsm(usm(Daysf), ism(Subject)) covariance[6,0]  668.59057  587.829326
+## 8  vsm(usm(Daysf), ism(Subject)) covariance[7,0]  934.99295  516.331803
+## 9  vsm(usm(Daysf), ism(Subject)) covariance[8,0]  923.15021  609.787646
+## 10 vsm(usm(Daysf), ism(Subject)) covariance[9,0] 1443.87797  724.815191
+## 11 vsm(usm(Daysf), ism(Subject))     variance[1] 1283.40078  456.728924
+## 12 vsm(usm(Daysf), ism(Subject)) covariance[2,1]  830.27716  337.251946
+## 13 vsm(usm(Daysf), ism(Subject)) covariance[3,1] 1139.78810  461.506048
+## 14 vsm(usm(Daysf), ism(Subject)) covariance[4,1] 1041.70165  462.612795
+## 15 vsm(usm(Daysf), ism(Subject)) covariance[5,1] 1182.37196  572.665606
+## 16 vsm(usm(Daysf), ism(Subject)) covariance[6,1]  853.23543  602.848268
+## 17 vsm(usm(Daysf), ism(Subject)) covariance[7,1]  929.33238  515.203643
+## 18 vsm(usm(Daysf), ism(Subject)) covariance[8,1] 1047.58355  622.380620
+## 19 vsm(usm(Daysf), ism(Subject)) covariance[9,1] 1517.96895  735.589826
+## 20 vsm(usm(Daysf), ism(Subject))     variance[2]  864.18179  305.515212
+## 21 vsm(usm(Daysf), ism(Subject)) covariance[3,2] 1058.69346  395.030295
+## 22 vsm(usm(Daysf), ism(Subject)) covariance[4,2]  912.38538  383.888145
+## 23 vsm(usm(Daysf), ism(Subject)) covariance[5,2]  861.24333  456.261634
+## 24 vsm(usm(Daysf), ism(Subject)) covariance[6,2]  917.77390  511.519355
+## 25 vsm(usm(Daysf), ism(Subject)) covariance[7,2]  925.94761  434.135584
+## 26 vsm(usm(Daysf), ism(Subject)) covariance[8,2]  833.40150  502.396582
+## 27 vsm(usm(Daysf), ism(Subject)) covariance[9,2]  970.10478  569.046106
+## 28 vsm(usm(Daysf), ism(Subject))     variance[3] 1625.70109  573.919675
+## 29 vsm(usm(Daysf), ism(Subject)) covariance[4,3] 1592.55514  578.038076
+## 30 vsm(usm(Daysf), ism(Subject)) covariance[5,3] 1675.69555  687.760610
+## 31 vsm(usm(Daysf), ism(Subject)) covariance[6,3] 1787.99565  765.354119
+## 32 vsm(usm(Daysf), ism(Subject)) covariance[7,3] 1284.71638  602.347291
+## 33 vsm(usm(Daysf), ism(Subject)) covariance[8,3] 1609.52031  744.950281
+## 34 vsm(usm(Daysf), ism(Subject)) covariance[9,3] 1745.53527  830.511762
+## 35 vsm(usm(Daysf), ism(Subject))     variance[4] 1821.88734  632.943941
+## 36 vsm(usm(Daysf), ism(Subject)) covariance[5,4] 2005.33942  755.257543
+## 37 vsm(usm(Daysf), ism(Subject)) covariance[6,4] 2079.29219  829.907539
+## 38 vsm(usm(Daysf), ism(Subject)) covariance[7,4] 1551.39672  653.864246
+## 39 vsm(usm(Daysf), ism(Subject)) covariance[8,4] 2031.24336  822.544602
+## 40 vsm(usm(Daysf), ism(Subject)) covariance[9,4] 2200.83568  914.359995
+## 41 vsm(usm(Daysf), ism(Subject))     variance[5] 2934.25537 1029.107633
+## 42 vsm(usm(Daysf), ism(Subject)) covariance[6,5] 2605.86800 1054.744915
+## 43 vsm(usm(Daysf), ism(Subject)) covariance[7,5] 1943.83905  836.864790
+## 44 vsm(usm(Daysf), ism(Subject)) covariance[8,5] 3061.11908 1125.462884
+## 45 vsm(usm(Daysf), ism(Subject)) covariance[9,5] 3240.13035 1235.852640
+## 46 vsm(usm(Daysf), ism(Subject))     variance[6] 3988.45679 1363.983743
+## 47 vsm(usm(Daysf), ism(Subject)) covariance[7,6] 2307.78914  961.835533
+## 48 vsm(usm(Daysf), ism(Subject)) covariance[8,6] 2930.00477 1196.080618
+## 49 vsm(usm(Daysf), ism(Subject)) covariance[9,6] 2213.36722 1213.841096
+## 50 vsm(usm(Daysf), ism(Subject))     variance[7] 2534.50387  883.079248
+## 51 vsm(usm(Daysf), ism(Subject)) covariance[8,7] 2435.35192  980.468596
+## 52 vsm(usm(Daysf), ism(Subject)) covariance[9,7] 2401.95756 1059.128113
+## 53 vsm(usm(Daysf), ism(Subject))     variance[8] 3813.09647 1337.192658
+## 54 vsm(usm(Daysf), ism(Subject)) covariance[9,8] 3850.07266 1432.545785
+## 55 vsm(usm(Daysf), ism(Subject))     variance[9] 4812.81819 1692.833775
+## 56               vsm(ism(units))          sigma2   20.04725    6.613576
+##      Zratio
+## 1  2.798093
+## 2  2.488386
+## 3  1.791194
+## 4  1.914700
+## 5  1.767186
+## 6  1.720137
+## 7  1.137389
+## 8  1.810837
+## 9  1.513888
+## 10 1.992064
+## 11 2.809984
+## 12 2.461890
+## 13 2.469714
+## 14 2.251779
+## 15 2.064681
+## 16 1.415340
+## 17 1.803816
+## 18 1.683188
+## 19 2.063608
+## 20 2.828605
+## 21 2.680031
+## 22 2.376696
+## 23 1.887608
+## 24 1.794211
+## 25 2.132854
+## 26 1.658852
+## 27 1.704791
+## 28 2.832628
+## 29 2.755104
+## 30 2.436452
+## 31 2.336168
+## 32 2.132850
+## 33 2.160574
+## 34 2.101759
+## 35 2.878434
+## 36 2.655173
+## 37 2.505450
+## 38 2.372659
+## 39 2.469463
+## 40 2.406968
+## 41 2.851262
+## 42 2.470614
+## 43 2.322764
+## 44 2.719876
+## 45 2.621777
+## 46 2.924123
+## 47 2.399359
+## 48 2.449672
+## 49 1.823441
+## 50 2.870075
+## 51 2.483865
+## 52 2.267863
+## 53 2.851569
+## 54 2.687574
+## 55 2.843054
+## 56 3.031227
 </code></pre>
 <pre><code class="language-r">## random regression (legendre polynomials)
 fm2 &lt;- mmes(Reaction ~ Days,
-            random= ~ vsm(dsm(leg(Days,1)), ism(Subject)), 
-            data=DT, tolParInv = 1e-6, verbose = FALSE)
-</code></pre>
-<pre><code>## Solver selected: ldlt
-</code></pre>
-<pre><code class="language-r">summary(fm2)$varcomp
+  random= ~ vsm(dsm(leg(Days,1)), ism(Subject)),
+  data=DT,
+  control = mmes_control(execution = list(inverseTol = 1e-6),
+  diagnostics = list(verbose = FALSE)))
+summary(fm2)$varcomp
 </code></pre>
 <pre><code>##                                   term      parameter  estimate   StdError
-## 1 vsm(dsm(leg(Days, 1)), ism(Subject)) variance[leg0] 2815.6001 1010.47021
-## 2 vsm(dsm(leg(Days, 1)), ism(Subject)) variance[leg1]  473.6353  199.64378
-## 3                      vsm(ism(units))         sigma2  654.9382   77.18503
+## 1 vsm(dsm(leg(Days, 1)), ism(Subject)) variance[leg0] 2817.4417 1011.41776
+## 2 vsm(dsm(leg(Days, 1)), ism(Subject)) variance[leg1]  473.4674  199.55780
+## 3                      vsm(ism(units))         sigma2  654.9410   77.18554
 ##     Zratio
-## 1 2.786426
-## 2 2.372402
-## 3 8.485300
+## 1 2.785636
+## 2 2.372583
+## 3 8.485282
 </code></pre>
 <pre><code class="language-r">## unstructured random regression (legendre)
 fm2 &lt;- mmes(Reaction ~ Days,
-            random= ~ vsm(usm(leg(Days,1)), ism(Subject)), 
-            data=DT, tolParInv = 1e-6, verbose = FALSE)
-</code></pre>
-<pre><code>## Solver selected: ldlt
-</code></pre>
-<pre><code class="language-r">summary(fm2)$varcomp
+  random= ~ vsm(usm(leg(Days,1)), ism(Subject)),
+  data=DT,
+  control = mmes_control(execution = list(inverseTol = 1e-6),
+  diagnostics = list(verbose = FALSE)))
+summary(fm2)$varcomp
 </code></pre>
 <pre><code>##                                   term             parameter  estimate
-## 1 vsm(usm(leg(Days, 1)), ism(Subject))        variance[leg0] 2816.8784
-## 2 vsm(usm(leg(Days, 1)), ism(Subject)) covariance[leg1,leg0]  869.8019
-## 3 vsm(usm(leg(Days, 1)), ism(Subject))        variance[leg1]  473.4508
-## 4                      vsm(ism(units))                sigma2  654.9370
+## 1 vsm(usm(leg(Days, 1)), ism(Subject))        variance[leg0] 2817.4277
+## 2 vsm(usm(leg(Days, 1)), ism(Subject)) covariance[leg1,leg0]  869.9652
+## 3 vsm(usm(leg(Days, 1)), ism(Subject))        variance[leg1]  473.4643
+## 4                      vsm(ism(units))                sigma2  654.9410
 ##     StdError   Zratio
-## 1 1011.12756 2.785878
-## 2  381.00537 2.282913
-## 3  199.54894 2.372605
-## 4   77.18482 8.485308
+## 1 1011.41057 2.785642
+## 2  381.08010 2.282893
+## 3  199.55625 2.372586
+## 4   77.18554 8.485281
 </code></pre>
 <h2 id="literature">Literature</h2>
 <p>Covarrubias-Pazaran G. 2016. Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6):1-15.</p>
@@ -423,7 +474,7 @@ fm2 &lt;- mmes(Reaction ~ Days,
 <p>Henderson C.R. 1975. Best Linear Unbiased Estimation and Prediction under a Selection Model. Biometrics vol. 31(2):423-447.</p>
 <p>Kang et al. 2008. Efficient control of population structure in model organism association mapping. Genetics 178:1709-1723.</p>
 <p>Lee, D.-J., Durban, M., and Eilers, P.H.C. (2013). Efficient two-dimensional smoothing with P-spline ANOVA mixed models and nested bases. Computational Statistics and Data Analysis, 61, 22 - 37.</p>
-<p>Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: <a href="http://dx.doi.org/10.1101/027201">http://dx.doi.org/10.1101/027201</a>.</p>
+<p>Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: <a href="https://doi.org/10.1101/027201">https://doi.org/10.1101/027201</a>.</p>
 <p>Maier et al. 2015. Joint analysis of psychiatric disorders increases accuracy of risk prediction for schizophrenia, bipolar disorder, and major depressive disorder. Am J Hum Genet; 96(2):283-294.</p>
 <p>Rodriguez-Alvarez, Maria Xose, et al. Correcting for spatial heterogeneity in plant breeding experiments with P-splines. Spatial Statistics 23 (2018): 52-71.</p>
 <p>Searle. 1993. Applying the EM algorithm to calculating ML and REML estimates of variance components. Paper invited for the 1993 American Statistical Association Meeting, San Francisco.</p>

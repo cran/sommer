@@ -5,12 +5,12 @@ DT <- DT_example
 A <- A_example
 
 ans1 <- mmes(Yield~1,
-             random= ~ Name + Env + Env:Name + Env:Block,
-             rcov= ~ units, 
-             data=DT, verbose = FALSE)
+  random= ~ Name + Env + Env:Name + Env:Block,
+  rcov= ~ units,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 summary(ans1)$varcomp
-(n.env <- length(levels(DT$Env)))
-vpredict(ans1, h2 ~ V1 / ( V1 + (V3/n.env) + (V5/(2*n.env)) ) )
+vpredict(ans1, h2 ~ V1 / ( V1 + (V3/5) + (V5/10) ) )
 
 ## -----------------------------------------------------------------------------
 data(DT_cpdata, package="enhancer")
@@ -35,8 +35,9 @@ attr(Di, "inverse")=TRUE
 
 # ans.ADE <- mmes(Yield~1, 
 #                  random=~vsm(ism(id),Gu=Ai) + vsm(ism(idd),Gu=Di), 
-#                  rcov=~units, nIters=10,
-#                  data=DT,verbose = FALSE)
+#                  rcov=~units, data=DT,
+#                  control=mmes_control(convergence=list(maxIters=10),
+#                    diagnostics=list(verbose=FALSE)))
 # (summary(ans.ADE)$varcomp)
 # vpredict(ans.ADE, h2 ~ (V1) / ( V1+V3) ) # narrow sense
 # vpredict(ans.ADE, h2 ~ (V1+V2) / ( V1+V2+V3) ) # broad-sense
@@ -48,9 +49,10 @@ DTi <- DTi_cornhybrids
 GT <- GT_cornhybrids
 ### fit the model
 modFD <- mmes(Yield~1,
-              random=~ vsm(atm(Location,c("3","4")),ism(GCA2)),
-              rcov= ~ vsm(dsm(Location),ism(units)), 
-              data=DT, verbose = FALSE)
+  random=~ vsm(atm(Location,c("3","4")),ism(GCA2)),
+  rcov= ~ vsm(dsm(Location),ism(units)),
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 summary(modFD)
 
 ## -----------------------------------------------------------------------------
@@ -65,10 +67,12 @@ Ai[lower.tri(Ai)] <- t(Ai)[lower.tri(Ai)] # fill the lower triangular
 Ai <- as(as(as( Ai,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
 attr(Ai, "inverse")=TRUE
 
-ans <- mmes(color~1, 
-            random=~vsm(ism(id),Gu=Ai), 
-            rcov=~units, nIters=10,
-            data=DT, verbose = FALSE)
+ans <- mmes(color~1,
+  random=~vsm(ism(id),Gu=Ai),
+  rcov=~units,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 10),
+  diagnostics = list(verbose = FALSE)))
 summary(ans)$varcomp
 vpredict(ans, h2 ~ (V1) / ( V1+V2) )
 
@@ -80,9 +84,10 @@ DTi <- DTi_cornhybrids
 GT <- GT_cornhybrids
 
 modFD <- mmes(Yield~Location,
-              random=~GCA1+GCA2+SCA,
-              rcov=~units,
-              data=DT, verbose = FALSE)
+  random=~GCA1+GCA2+SCA,
+  rcov=~units,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 (suma <- summary(modFD)$varcomp)
 Vgca <- sum(suma[1:2,"estimate"])
 Vsca <- suma[3,"estimate"]
@@ -101,17 +106,20 @@ DT$femalef <- as.factor(DT$female)
 DT$malef <- as.factor(DT$male)
 DT$genof <- as.factor(DT$geno)
 #### model using overlay
-modh <- mmes(sugar~1, 
-             random=~vsm(ism(overlay(femalef,malef)) )
-             + genof, data=DT, verbose = FALSE)
+modh <- mmes(sugar~1,
+  random=~vsm(ism(overlay(femalef,malef)) )
+             + genof,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 summary(modh)$varcomp
 
 ## -----------------------------------------------------------------------------
 
 data(DT_wheat, package="enhancer")
-DT <- DT_wheat
-GT <- apply(GT_wheat,2,as.numeric)
-rownames(GT) <- rownames(GT_wheat)
+DT <- DT_wheat[seq_len(min(250L, nrow(DT_wheat))), , drop=FALSE]
+GT <- apply(GT_wheat[seq_len(nrow(DT)), seq_len(min(100L, ncol(GT_wheat))), drop=FALSE],
+            2, as.numeric) - 1
+rownames(GT) <- rownames(DT)
 
 colnames(DT) <- paste0("X",1:ncol(DT))
 DT <- as.data.frame(DT);DT$id <- as.factor(rownames(DT))
@@ -132,15 +140,18 @@ y.trn[vv,"X1"] <- NA
 head(y.trn)
 ## GBLUP with mmes
 ans <- mmes(X1~1,
-            random=~vsm(ism(id),Gu=Ki), 
-            rcov=~units,
-            data=y.trn, verbose = FALSE) # kinship based
+  random=~vsm(ism(id),Gu=Ki),
+  rcov=~units,
+  data=y.trn,
+  control = mmes_control(convergence = list(maxIters = 1L),
+                         diagnostics = list(verbose = FALSE))) # kinship based
 cor(ans$u[vv,] ,DT[vv,"X1"], use="complete")
 
 ## rrBLUP with mmer
 ans2 <- mmer(X1~1,
              random=~vsr(list(GT)), 
              rcov=~units, getPEV = TRUE,
+             nIters = 1,
              data=y.trn, verbose = FALSE) # kinship based
 
 u <- GT %*% ans2$U$`u:GT`$X1 # BLUPs for individuals
@@ -153,8 +164,15 @@ cor(u[vv,],DT[vv,"X1"]) # same correlation
 ## ----eval=FALSE---------------------------------------------------------------
 # G <- A.mat(GT)
 # Ki <- solve(0.99 * G + 0.01 * diag(nrow(G))); attr(Ki, "inverse") <- TRUE
-# ans <- mmes(X1 ~ 1, random = ~ vsm(ism(id), Gu = Ki), data = y.trn, verbose = FALSE)
-# markers <- meffects_mmes(ans, 1, GT, blend = 0.01, se = TRUE)
+# ans <- mmes(X1 ~ 1,
+#   random = ~ vsm(ism(id), Gu = Ki),
+#   data = y.trn,
+#   control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
+# markers <- meffects_mmes(ans,
+#   1,
+#   GT,
+#   se = TRUE,
+#   control = mmes_control(update = list(recovery = 0.01)))
 # head(markers[order(markers$p.value), ])
 
 ## -----------------------------------------------------------------------------
@@ -165,9 +183,10 @@ An <- A_ige
 
 # Direct genetic effects model
 modDGE <- mmes(trait ~ block,
-               random = ~ focal,
-               rcov = ~ units,
-               data = DT, verbose=FALSE)
+  random = ~ focal,
+  rcov = ~ units,
+  data = DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 summary(modDGE)$varcomp
 
 
@@ -177,19 +196,21 @@ DT <- DT_ige
 A <- A_ige
 
 ## Indirect genetic effects model
-modIGE <- mmes(trait ~ block, dateWarning = FALSE,
-               random = ~ focal + neighbour, verbose = FALSE,
-               rcov = ~ units, 
-              data = DT)
+modIGE <- mmes(trait ~ block,
+  random = ~ focal + neighbour,
+  rcov = ~ units,
+  data = DT,
+  control = mmes_control(diagnostics = list(dateWarning = FALSE, verbose = FALSE)))
 summary(modIGE)$varcomp
 
 
 ## -----------------------------------------------------------------------------
 
-modIGE <- mmes(trait ~ block, dateWarning = FALSE,
-               random = ~ strm(dge = vsm(ism(focal)), ige = vsm(ism(neighbour))),
-               rcov = ~ units, verbose = FALSE,
-              data = DT)
+modIGE <- mmes(trait ~ block,
+  random = ~ strm(dge = vsm(ism(focal)), ige = vsm(ism(neighbour))),
+  rcov = ~ units,
+  data = DT,
+  control = mmes_control(diagnostics = list(dateWarning = FALSE, verbose = FALSE)))
 summary(modIGE)$varcomp
 
 
@@ -197,10 +218,11 @@ summary(modIGE)$varcomp
 
 Ai <- solve(A_ige + diag(1e-5, nrow(A_ige),nrow(A_ige) ))
 attr(Ai, "inverse") <- TRUE
-modIGE <- mmes(trait ~ block, dateWarning = FALSE,
-               random = ~ strm(dge = vsm(ism(focal)), ige = vsm(ism(neighbour)), Gu = Ai),
-               rcov = ~ units, verbose = FALSE,
-              data = DT)
+modIGE <- mmes(trait ~ block,
+  random = ~ strm(dge = vsm(ism(focal)), ige = vsm(ism(neighbour)), Gu = Ai),
+  rcov = ~ units,
+  data = DT,
+  control = mmes_control(diagnostics = list(dateWarning = FALSE, verbose = FALSE)))
 summary(modIGE)$varcomp
 
 
@@ -230,10 +252,13 @@ y.trn <- DT
 vv1 <- which(!is.na(DT$GY))
 vv2 <- sample(vv1, 100)
 y.trn[vv2,"GY"] <- NA
-anss2 <- mmes(GY~1,  henderson=TRUE,
-              random=~vsm(ism(dent),Gu=Adi) + vsm(ism(flint),Gu=Afi), 
-              rcov=~units, nIters=15,
-              data=y.trn, verbose = FALSE) 
+anss2 <- mmes(GY~1,
+  random=~vsm(ism(dent),Gu=Adi) + vsm(ism(flint),Gu=Afi),
+  rcov=~units,
+  data=y.trn,
+  control = mmes_control(formulation = "henderson",
+  convergence = list(maxIters = 15),
+  diagnostics = list(verbose = FALSE)))
 summary(anss2)$varcomp
 
 # zu1 <- model.matrix(~dent-1,y.trn) %*% anss2$uList$`vsm(ism(dent), Gu = Adi)`
@@ -263,10 +288,11 @@ summary(anss2)$varcomp
 # Ai <- as(as(as( Ai,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
 # attr(Ai, 'inverse')=TRUE
 # #### be patient this model is heavier
-# ansm <- mmes( value ~ trait, # henderson=TRUE,
+# ansm <- mmes( value ~ trait,
 #                random=~ vsm(usm(trait), ism(id), Gu=Ai), # Ai if henderson
 #                rcov=~ vsm(dsm(trait), ism(units)),
-#                data=DTL)
+#                data=DTL,
+#                control=mmes_control(formulation="henderson"))
 # cov2cor(ansm$theta[[1]])
 
 
@@ -277,6 +303,81 @@ summary(anss2)$varcomp
 #              rcov = ~ vsm(usm(trait), ism(record)), data = DTL)
 # covmatrix_mmes(ansm, 1)$correlation  # genetic correlation
 # covmatrix_mmes(ansm, 2)$correlation  # residual correlation
+
+## ----qg-conditional-fa, eval=FALSE--------------------------------------------
+# library(sommer)
+# set.seed(2026)
+# n.fa <- 20L
+# p.fa <- 4L
+# traits.fa <- paste0("T", seq_len(p.fa))
+# ids.fa <- paste0("g", seq_len(n.fa))
+# A.fa <- outer(seq_len(n.fa), seq_len(n.fa),
+#               function(i, j) 0.3^abs(i - j))
+# dimnames(A.fa) <- list(ids.fa, ids.fa)
+# Ai.fa <- solve(A.fa)
+# attr(Ai.fa, "inverse") <- TRUE
+# 
+# L.fa <- matrix(c(0.9, 0.6, -0.5, 0.8), p.fa, 1L)
+# G.fa <- 0.7 * tcrossprod(L.fa) + diag(c(0.4, 0.5, 0.6, 0.4))
+# R.fa <- 0.3 * tcrossprod(L.fa) + diag(c(0.7, 0.6, 0.8, 0.9))
+# U.fa <- t(chol(A.fa)) %*% matrix(rnorm(n.fa * p.fa), n.fa, p.fa) %*%
+#   chol(G.fa)
+# wide.fa <- data.frame(id = factor(rep(ids.fa, each = 3L), levels = ids.fa))
+# Y.fa <- U.fa[as.integer(wide.fa$id), , drop = FALSE] +
+#   matrix(rnorm(nrow(wide.fa) * p.fa), nrow(wide.fa), p.fa) %*% chol(R.fa)
+# wide.fa[traits.fa] <- as.data.frame(Y.fa)
+# wide.fa$T2[c(2, 17)] <- NA
+# wide.fa$T4[9] <- NA
+# long.fa <- stackTraits(wide.fa, traits = traits.fa, keep = "id")
+# 
+# control.fa <- mmes_control(
+#   representation = list(equations = "conditional"),
+#   update = list(method = "ai"),
+#   convergence = list(maxIters = 500L),
+#   output = list(inverse = 0, covariance = "none",
+#                 coefficientMatrix = FALSE, panelSize = 16L),
+#   diagnostics = list(verbose = FALSE)
+# )
+# 
+# fit.fa <- mmes(
+#   value ~ trait,
+#   random = ~ vsm(fam(trait, k = 1), ism(id), Gu = Ai.fa),
+#   rcov = ~ vsm(fam(trait, k = 1), ism(record)),
+#   data = long.fa, control = control.fa
+# )
+# fit.fa$convergence
+# plot(fit.fa$conditionalFA$likelihood, type = "l",
+#      xlab = "Covariance update (including initial state)", ylab = "Restricted log likelihood")
+# fit.fa$conditionalFA$updates  # AI or EM recovery at each accepted update
+
+## ----qg-shared-fa, eval=FALSE-------------------------------------------------
+# fit.shared.fa <- mmes(
+#   value ~ trait,
+#   random = ~ vsm(fam(trait, k = 1, shared = "axes"), ism(id), Gu = Ai.fa),
+#   rcov = ~ vsm(fam(trait, k = 1, shared = "axes"), ism(record)),
+#   data = long.fa, control = control.fa
+# )
+# fit.shared.fa$convergence
+# fit.shared.fa$conditionalFA$state$loading
+# fit.shared.fa$conditionalFA$state$weightG
+# fit.shared.fa$conditionalFA$state$weightE
+# 
+# if (fit.shared.fa$convergence) {
+#   covmatrix_mmes(fit.shared.fa, term = 1, se = FALSE)$correlation
+#   covmatrix_mmes(fit.shared.fa, term = 2, se = FALSE)$correlation
+#   loadings_mmes(fit.shared.fa, term = names(fit.shared.fa$uList)[1L])
+#   scores_mmes(fit.shared.fa, term = names(fit.shared.fa$uList)[1L])
+# }
+
+## ----qg-conditional-em-control, eval=FALSE------------------------------------
+# control.em.fa <- mmes_control(
+#   representation = list(equations = "conditional"),
+#   update = list(method = "em"),
+#   convergence = list(maxIters = 500L),
+#   output = list(inverse = 0, covariance = "none",
+#                 coefficientMatrix = FALSE, panelSize = 16L),
+#   diagnostics = list(verbose = FALSE)
+# )
 
 ## -----------------------------------------------------------------------------
 data(DT_legendre)
@@ -310,8 +411,9 @@ DTC <- rbind(DT1,DT2)
 # mRR2b<-mmes(Y ~ Xf,
 #             random=~ vsm( usm( M ) ,  ism(SUBJECT) , Gu = Ai),
 #             rcov = ~ vsm( dsm(TRAIT), ism(units) ),
-#             nIters = 10, verbose = FALSE,
-#             data=DTC)
+#             data=DTC,
+#             control=mmes_control(convergence=list(maxIters=10),
+#               diagnostics=list(verbose=FALSE)))
 # summary(mRR2b)$varcomp
 
 ## -----------------------------------------------------------------------------
@@ -326,7 +428,7 @@ M <- GT_cpdata
 mix.marker <- mmer(Yield~1,
                    random=~Rowf+vsr(list(M)),
                    rcov=~units,data=DT, 
-                   verbose = FALSE)
+                   nIters = 1, verbose = FALSE)
 
 
 me.marker <- mix.marker$U$`u:M`$Yield
@@ -341,10 +443,12 @@ MTMMTinv<-t(M)%*%MMTinv # M' %*% (M'M)-
 MMTinv <- as(as(as( MMTinv,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
 attr(MMTinv, 'inverse')=TRUE
 
-mix.part <- mmes(Yield~1, nIters = 20, 
-                 random=~Rowf+vsm(ism(id), Gu=MMTinv),
-                 rcov=~units,data=DT,
-                 verbose = FALSE)
+mix.part <- mmes(Yield~1,
+  random=~Rowf+vsm(ism(id), Gu=MMTinv),
+  rcov=~units,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L),
+  diagnostics = list(verbose = FALSE)))
 
 #convert BLUPs to marker effects me=M'(M'M)- u
 me.part<-MTMMTinv%*%matrix(mix.part$uList$`vsm(ism(id), Gu = MMTinv`,ncol=1)
@@ -358,8 +462,10 @@ plot(me.marker,me.part)
 
 data("DT_wheat", package="enhancer")
 rownames(GT_wheat) <- rownames(DT_wheat)
-GT <- apply(GT_wheat,2,as.numeric)
-rownames(GT) <- rownames(GT_wheat)
+DT <- DT_wheat[seq_len(min(200L, nrow(DT_wheat))), , drop=FALSE]
+GT <- apply(GT_wheat[rownames(DT), seq_len(min(100L, ncol(GT_wheat))), drop=FALSE],
+            2, as.numeric) - 1
+rownames(GT) <- rownames(DT)
 A <- A.mat(GT)
 Ai <- solve(A + diag(1e-5, nrow(A)))
 Ai[lower.tri(Ai)] <- t(Ai)[lower.tri(Ai)] # fill the lower triangular
@@ -369,28 +475,33 @@ isSymmetric(Ai)
 # One complete observation per relationship level gives a balanced example.
 DTn <- data.frame(
   id=rownames(A),
-  y=as.numeric(DT_wheat[,1])
+  y=as.numeric(DT[,1])
 )
 
-model_regular <- mmes(
-  y~1,
+model_regular <- mmes(y~1,
   random=~vsm(ism(id), Gu=Ai),
-  rcov=~units, data=DTn, verbose=FALSE
-)
+  rcov=~units,
+  data=DTn,
+  control = mmes_control(convergence = list(maxIters = 1L),
+                         diagnostics = list(verbose = FALSE)))
 
 # Henderson MME formulation with eigenbasis random coefficients.
-model_rotation_h <- mmes(
-  y~1,
+model_rotation_h <- mmes(y~1,
   random=~vsm(ism(id), Gu=Ai, rotation=TRUE),
-  rcov=~units, data=DTn, henderson=TRUE, verbose=FALSE
-)
+  rcov=~units,
+  data=DTn,
+  control = mmes_control(formulation = "henderson",
+  convergence = list(maxIters = 1L),
+  diagnostics = list(verbose = FALSE)))
 
 # Lee--van der Werf direct observation-covariance formulation.
-model_rotation_d <- mmes(
-  y~1,
+model_rotation_d <- mmes(y~1,
   random=~vsm(ism(id), Gu=Ai, rotation=TRUE),
-  rcov=~units, data=DTn, henderson=FALSE, verbose=FALSE
-)
+  rcov=~units,
+  data=DTn,
+  control = mmes_control(formulation = "direct",
+  convergence = list(maxIters = 1L),
+  diagnostics = list(verbose = FALSE)))
 
 model_regular$covParNative
 model_rotation_h$covParNative
@@ -404,8 +515,10 @@ plot(model_rotation_d$bu[,1], model_regular$bu[,1])
 
 data("DT_wheat", package="enhancer")
 rownames(GT_wheat) <- rownames(DT_wheat)
-GT <- apply(GT_wheat,2,as.numeric)
-rownames(GT) <- rownames(GT_wheat)
+DT <- DT_wheat[seq_len(min(200L, nrow(DT_wheat))), , drop=FALSE]
+GT <- apply(GT_wheat[rownames(DT), seq_len(min(100L, ncol(GT_wheat))), drop=FALSE],
+            2, as.numeric) - 1
+rownames(GT) <- rownames(DT)
 A <- A.mat(GT)
 Ai <- solve(A + diag(1e-5, nrow(A)))
 Ai[lower.tri(Ai)] <- t(Ai)[lower.tri(Ai)] # fill the lower triangular
@@ -414,19 +527,22 @@ attr(Ai, "inverse") <- TRUE
 isSymmetric(Ai)
 # One complete observation per relationship level gives a balanced example.
 data(DT_wheat)
-DT <- DT_wheat
-GT <- apply(GT_wheat,2,as.numeric)
-rownames(GT) <- rownames(GT_wheat)
+DT <- DT_wheat[rownames(A), , drop=FALSE]
+GT <- apply(GT_wheat[rownames(A), seq_len(min(100L, ncol(GT_wheat))), drop=FALSE],
+            2, as.numeric) - 1
+rownames(GT) <- rownames(DT)
 DT <- data.frame(pheno=as.vector(DT),
                  env=as.factor(paste0("e", sort(rep(1:4,nrow(DT))))),
                  id=rep(rownames(DT),4))
 
 # Henderson MME formulation with eigenbasis random coefficients.
-model_rotation_h <- mmes(
-  pheno~1,
+model_rotation_h <- mmes(pheno~1,
   random=~vsm(usm(env),ism(id), Gu=Ai, rotation=TRUE),
-  rcov=~vsm(dsm(env),ism(units)), data=DT, henderson=TRUE, verbose=FALSE
-)
+  rcov=~vsm(dsm(env),ism(units)),
+  data=DT,
+  control = mmes_control(formulation = "henderson",
+  convergence = list(maxIters = 1L),
+  diagnostics = list(verbose = FALSE)))
 
 # genetic correlation
 cov2cor(model_rotation_h$theta[[1]])
@@ -463,8 +579,9 @@ Vg=c(Va,Vd); names(Vg) <- c("Va","Vd"); Vg
 ## REML method
 ##############################
 mix2 <- mmes(yield~ setf + setf:repf,
-            random=~femalef:malef:setf + malef:setf, 
-            data=DT, verbose = FALSE)
+  random=~femalef:malef:setf + malef:setf,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 vc <- summary(mix2)$varcomp; vc
 Vfm <- vc[1,"estimate"]
 Vm <- vc[2,"estimate"]
@@ -518,9 +635,10 @@ Vg=c(Va,Vd); names(Vg) <- c("Va","Vd"); Vg
 ## REML method
 ##############################
 
-mix2 <- mmes(yield~ setf + setf:repf ,
-            random=~femalef:malef:setf + malef:setf + femalef:setf, 
-            data=DT, verbose = FALSE)
+mix2 <- mmes(yield~ setf + setf:repf,
+  random=~femalef:malef:setf + malef:setf + femalef:setf,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 vc <- summary(mix2)$varcomp; vc
 Vfm <- vc[1,"estimate"]
 Vm <- vc[2,"estimate"]
@@ -581,9 +699,9 @@ k <- 1 # to be used for degrees of freedom (number of levels in fixed effects)
 # 
 # mixGBLUP <- mmes(Yield~1,
 #              random=~vsm(ism(id), Gu=MMTinv) + Rowf + Colf,
-#              rcov=~units, nIters=25,
-#              verbose = T, computeCi = 2,
-#              data=DT)
+#              rcov=~units, data=DT,
+#              control=mmes_control(convergence=list(maxIters=25),
+#                diagnostics=list(verbose=TRUE), output=list(inverse=2)))
 # a.from.g <-MTMMTinv%*%matrix(mixGBLUP$uList$`vsm(ism(id), Gu = MMTinv`,ncol=1)
 # start=mixGBLUP$partitions[[1]][1]
 # end=mixGBLUP$partitions[[1]][2]

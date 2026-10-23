@@ -145,12 +145,12 @@ DT <- DT_example
 A <- A_example
 
 ans1 <- mmes(Yield~1,
-             random= ~ Name + Env + Env:Name + Env:Block,
-             rcov= ~ units, 
-             data=DT, verbose = FALSE)
+  random= ~ Name + Env + Env:Name + Env:Block,
+  rcov= ~ units,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 summary(ans1)$varcomp
-(n.env <- length(levels(DT$Env)))
-vpredict(ans1, h2 ~ V1 / ( V1 + (V3/n.env) + (V5/(2*n.env)) ) )
+vpredict(ans1, h2 ~ V1 / ( V1 + (V3/5) + (V5/10) ) )
 ```
 That is an estimate of broad-sense heritability.
 
@@ -181,14 +181,15 @@ attr(Di, "inverse")=TRUE
 
 # ans.ADE <- mmes(Yield~1, 
 #                  random=~vsm(ism(id),Gu=Ai) + vsm(ism(idd),Gu=Di), 
-#                  rcov=~units, nIters=10,
-#                  data=DT,verbose = FALSE)
+#                  rcov=~units, data=DT,
+#                  control=mmes_control(convergence=list(maxIters=10),
+#                    diagnostics=list(verbose=FALSE)))
 # (summary(ans.ADE)$varcomp)
 # vpredict(ans.ADE, h2 ~ (V1) / ( V1+V3) ) # narrow sense
 # vpredict(ans.ADE, h2 ~ (V1+V2) / ( V1+V2+V3) ) # broad-sense
 ```
 
-This example illustrates how marker-derived additive and dominance relationship structures can be associated with random effects and used to estimate additive and dominance variance components, from which narrow- and broad-sense heritability functions can be formed. In the current Henderson-based `mmes()` interface, `vsm()` defines the covariance structure of a random term. When a matrix supplied through `Gu` is already a precision matrix, as `Ai` and `Di` are in the code above, it is converted to sparse form and marked with `attr(..., "inverse")=TRUE`. Thus the solver can use the supplied precision directly rather than inverting it internally. This replaces the older `henderson=FALSE` direct-inversion distinction.
+This example illustrates how marker-derived additive and dominance relationship structures can be associated with random effects and used to estimate additive and dominance variance components, from which narrow- and broad-sense heritability functions can be formed. In the current Henderson-based `mmes()` interface, `vsm()` defines the covariance structure of a random term. When a matrix supplied through `Gu` is already a precision matrix, as `Ai` and `Di` are in the code above, it is converted to sparse form and marked with `attr(..., "inverse")=TRUE`. Thus the solver can use the supplied precision directly rather than inverting it internally. This replaces the older `formulation="direct"` direct-inversion distinction.
 
 ### 2) Specifying heterogeneous variances in univariate models
 
@@ -203,9 +204,10 @@ DTi <- DTi_cornhybrids
 GT <- GT_cornhybrids
 ### fit the model
 modFD <- mmes(Yield~1,
-              random=~ vsm(atm(Location,c("3","4")),ism(GCA2)),
-              rcov= ~ vsm(dsm(Location),ism(units)), 
-              data=DT, verbose = FALSE)
+  random=~ vsm(atm(Location,c("3","4")),ism(GCA2)),
+  rcov= ~ vsm(dsm(Location),ism(units)),
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 summary(modFD)
 ```
 
@@ -230,10 +232,12 @@ Ai[lower.tri(Ai)] <- t(Ai)[lower.tri(Ai)] # fill the lower triangular
 Ai <- as(as(as( Ai,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
 attr(Ai, "inverse")=TRUE
 
-ans <- mmes(color~1, 
-            random=~vsm(ism(id),Gu=Ai), 
-            rcov=~units, nIters=10,
-            data=DT, verbose = FALSE)
+ans <- mmes(color~1,
+  random=~vsm(ism(id),Gu=Ai),
+  rcov=~units,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 10),
+  diagnostics = list(verbose = FALSE)))
 summary(ans)$varcomp
 vpredict(ans, h2 ~ (V1) / ( V1+V2) )
 
@@ -261,9 +265,10 @@ DTi <- DTi_cornhybrids
 GT <- GT_cornhybrids
 
 modFD <- mmes(Yield~Location,
-              random=~GCA1+GCA2+SCA,
-              rcov=~units,
-              data=DT, verbose = FALSE)
+  random=~GCA1+GCA2+SCA,
+  rcov=~units,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 (suma <- summary(modFD)$varcomp)
 Vgca <- sum(suma[1:2,"estimate"])
 Vsca <- suma[3,"estimate"]
@@ -289,9 +294,11 @@ DT$femalef <- as.factor(DT$female)
 DT$malef <- as.factor(DT$male)
 DT$genof <- as.factor(DT$geno)
 #### model using overlay
-modh <- mmes(sugar~1, 
-             random=~vsm(ism(overlay(femalef,malef)) )
-             + genof, data=DT, verbose = FALSE)
+modh <- mmes(sugar~1,
+  random=~vsm(ism(overlay(femalef,malef)) )
+             + genof,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 summary(modh)$varcomp
 ```
 
@@ -309,12 +316,15 @@ $y = X\beta + Zu + \epsilon$
 
 and takes advantage of the variance covariance matrix for the genotype effect known as the additive relationship matrix (A) and calculated using the `A.mat` function to establish connections among all individuals and predict the BLUPs for individuals that were not measured. The prediction accuracy depends on several factors such as the heritability ($h^2$), training population used (TP), size of TP, etc.
 
+The example below uses 250 lines and 100 markers and limits each fit to one iteration so the vignette stays quick; increase the data and iteration limits for a full analysis.
+
 ```{r}
 
 data(DT_wheat, package="enhancer")
-DT <- DT_wheat
-GT <- apply(GT_wheat,2,as.numeric)
-rownames(GT) <- rownames(GT_wheat)
+DT <- DT_wheat[seq_len(min(250L, nrow(DT_wheat))), , drop=FALSE]
+GT <- apply(GT_wheat[seq_len(nrow(DT)), seq_len(min(100L, ncol(GT_wheat))), drop=FALSE],
+            2, as.numeric) - 1
+rownames(GT) <- rownames(DT)
 
 colnames(DT) <- paste0("X",1:ncol(DT))
 DT <- as.data.frame(DT);DT$id <- as.factor(rownames(DT))
@@ -335,15 +345,18 @@ y.trn[vv,"X1"] <- NA
 head(y.trn)
 ## GBLUP with mmes
 ans <- mmes(X1~1,
-            random=~vsm(ism(id),Gu=Ki), 
-            rcov=~units,
-            data=y.trn, verbose = FALSE) # kinship based
+  random=~vsm(ism(id),Gu=Ki),
+  rcov=~units,
+  data=y.trn,
+  control = mmes_control(convergence = list(maxIters = 1L),
+                         diagnostics = list(verbose = FALSE))) # kinship based
 cor(ans$u[vv,] ,DT[vv,"X1"], use="complete")
 
 ## rrBLUP with mmer
 ans2 <- mmer(X1~1,
              random=~vsr(list(GT)), 
              rcov=~units, getPEV = TRUE,
+             nIters = 1,
              data=y.trn, verbose = FALSE) # kinship based
 
 u <- GT %*% ans2$U$`u:GT`$X1 # BLUPs for individuals
@@ -361,8 +374,15 @@ Marker effects can also be recovered from a GBLUP fit without refitting, with `m
 ```{r, eval=FALSE}
 G <- A.mat(GT)
 Ki <- solve(0.99 * G + 0.01 * diag(nrow(G))); attr(Ki, "inverse") <- TRUE
-ans <- mmes(X1 ~ 1, random = ~ vsm(ism(id), Gu = Ki), data = y.trn, verbose = FALSE)
-markers <- meffects_mmes(ans, 1, GT, blend = 0.01, se = TRUE)
+ans <- mmes(X1 ~ 1,
+  random = ~ vsm(ism(id), Gu = Ki),
+  data = y.trn,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
+markers <- meffects_mmes(ans,
+  1,
+  GT,
+  se = TRUE,
+  control = mmes_control(update = list(recovery = 0.01)))
 head(markers[order(markers$p.value), ])
 ```
 
@@ -379,9 +399,10 @@ An <- A_ige
 
 # Direct genetic effects model
 modDGE <- mmes(trait ~ block,
-               random = ~ focal,
-               rcov = ~ units,
-               data = DT, verbose=FALSE)
+  random = ~ focal,
+  rcov = ~ units,
+  data = DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 summary(modDGE)$varcomp
 
 ```
@@ -394,10 +415,11 @@ DT <- DT_ige
 A <- A_ige
 
 ## Indirect genetic effects model
-modIGE <- mmes(trait ~ block, dateWarning = FALSE,
-               random = ~ focal + neighbour, verbose = FALSE,
-               rcov = ~ units, 
-              data = DT)
+modIGE <- mmes(trait ~ block,
+  random = ~ focal + neighbour,
+  rcov = ~ units,
+  data = DT,
+  control = mmes_control(diagnostics = list(dateWarning = FALSE, verbose = FALSE)))
 summary(modIGE)$varcomp
 
 ```
@@ -406,10 +428,11 @@ We now fit the indirect genetic effects model with covariance between DGE and IG
 
 ```{r}
 
-modIGE <- mmes(trait ~ block, dateWarning = FALSE,
-               random = ~ strm(dge = vsm(ism(focal)), ige = vsm(ism(neighbour))),
-               rcov = ~ units, verbose = FALSE,
-              data = DT)
+modIGE <- mmes(trait ~ block,
+  random = ~ strm(dge = vsm(ism(focal)), ige = vsm(ism(neighbour))),
+  rcov = ~ units,
+  data = DT,
+  control = mmes_control(diagnostics = list(dateWarning = FALSE, verbose = FALSE)))
 summary(modIGE)$varcomp
 
 ```
@@ -420,10 +443,11 @@ On top of that we can include a relationship matrix for the two random effects t
 
 Ai <- solve(A_ige + diag(1e-5, nrow(A_ige),nrow(A_ige) ))
 attr(Ai, "inverse") <- TRUE
-modIGE <- mmes(trait ~ block, dateWarning = FALSE,
-               random = ~ strm(dge = vsm(ism(focal)), ige = vsm(ism(neighbour)), Gu = Ai),
-               rcov = ~ units, verbose = FALSE,
-              data = DT)
+modIGE <- mmes(trait ~ block,
+  random = ~ strm(dge = vsm(ism(focal)), ige = vsm(ism(neighbour)), Gu = Ai),
+  rcov = ~ units,
+  data = DT,
+  control = mmes_control(diagnostics = list(dateWarning = FALSE, verbose = FALSE)))
 summary(modIGE)$varcomp
 
 ```
@@ -478,10 +502,13 @@ y.trn <- DT
 vv1 <- which(!is.na(DT$GY))
 vv2 <- sample(vv1, 100)
 y.trn[vv2,"GY"] <- NA
-anss2 <- mmes(GY~1,  henderson=TRUE,
-              random=~vsm(ism(dent),Gu=Adi) + vsm(ism(flint),Gu=Afi), 
-              rcov=~units, nIters=15,
-              data=y.trn, verbose = FALSE) 
+anss2 <- mmes(GY~1,
+  random=~vsm(ism(dent),Gu=Adi) + vsm(ism(flint),Gu=Afi),
+  rcov=~units,
+  data=y.trn,
+  control = mmes_control(formulation = "henderson",
+  convergence = list(maxIters = 15),
+  diagnostics = list(verbose = FALSE)))
 summary(anss2)$varcomp
 
 # zu1 <- model.matrix(~dent-1,y.trn) %*% anss2$uList$`vsm(ism(dent), Gu = Adi)`
@@ -520,10 +547,11 @@ Multivariate mixed models are useful for estimating genetic variances and covari
 # Ai <- as(as(as( Ai,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
 # attr(Ai, 'inverse')=TRUE
 # #### be patient this model is heavier
-# ansm <- mmes( value ~ trait, # henderson=TRUE,
+# ansm <- mmes( value ~ trait,
 #                random=~ vsm(usm(trait), ism(id), Gu=Ai), # Ai if henderson
 #                rcov=~ vsm(dsm(trait), ism(units)),
-#                data=DTL)
+#                data=DTL,
+#                control=mmes_control(formulation="henderson"))
 # cov2cor(ansm$theta[[1]])
 
 ```
@@ -542,6 +570,157 @@ For wide data, `stackTraits()` creates the long response and an explicit record 
 Mixed-family traits are also supported through `familym()`. For example, a binary disease score and a Gaussian yield can be fitted jointly with an unstructured genetic covariance. The residual covariance uses `corgm(trait, variance="heterogeneous")` so that the fixed binomial residual variance and the estimated Gaussian residual variance can coexist; see the `familym()` and `corgm()` examples for a complete reproducible fit.
 
 Other examples of multi-trait models can be found in the documentation of the rice dataset (DT_rice) and in the example dataset (DT_example).
+
+#### Low-rank genetic covariances with conditional FA REML
+
+For more traits, `fam(trait, k)` replaces an unstructured covariance with
+$G=L_gL_g^\mathsf{T}+\Psi_g$, where $k$ is the number of factors and
+$\Psi_g$ contains trait-specific variances. The default AI engine can fit
+this covariance model. Alternatively, the experimental conditional FA
+equation representation uses exact sparse posterior moments with either
+REML AI or EM updates, without forming a dense observation covariance.
+The representation and optimizer are separate building blocks, not a
+separate model-fitting function.
+
+The following self-contained example simulates four Gaussian traits measured
+on three records per genotype. The named relationship precision has the same
+`Gu` contract as the earlier genomic examples; a genomic relationship matrix
+can replace `A.fa`. Missing responses are deliberately retained in the wide
+data. `stackTraits()` supplies a distinct `record` key for each wide row, so
+residual correlations connect traits on the same record, not every record
+of the same genotype.
+
+The fitting chunks are not evaluated when building this vignette because fitting
+may require many iterations. Run them interactively and check convergence
+before interpreting estimates.
+
+```{r qg-conditional-fa, eval=FALSE}
+library(sommer)
+set.seed(2026)
+n.fa <- 20L
+p.fa <- 4L
+traits.fa <- paste0("T", seq_len(p.fa))
+ids.fa <- paste0("g", seq_len(n.fa))
+A.fa <- outer(seq_len(n.fa), seq_len(n.fa),
+              function(i, j) 0.3^abs(i - j))
+dimnames(A.fa) <- list(ids.fa, ids.fa)
+Ai.fa <- solve(A.fa)
+attr(Ai.fa, "inverse") <- TRUE
+
+L.fa <- matrix(c(0.9, 0.6, -0.5, 0.8), p.fa, 1L)
+G.fa <- 0.7 * tcrossprod(L.fa) + diag(c(0.4, 0.5, 0.6, 0.4))
+R.fa <- 0.3 * tcrossprod(L.fa) + diag(c(0.7, 0.6, 0.8, 0.9))
+U.fa <- t(chol(A.fa)) %*% matrix(rnorm(n.fa * p.fa), n.fa, p.fa) %*%
+  chol(G.fa)
+wide.fa <- data.frame(id = factor(rep(ids.fa, each = 3L), levels = ids.fa))
+Y.fa <- U.fa[as.integer(wide.fa$id), , drop = FALSE] +
+  matrix(rnorm(nrow(wide.fa) * p.fa), nrow(wide.fa), p.fa) %*% chol(R.fa)
+wide.fa[traits.fa] <- as.data.frame(Y.fa)
+wide.fa$T2[c(2, 17)] <- NA
+wide.fa$T4[9] <- NA
+long.fa <- stackTraits(wide.fa, traits = traits.fa, keep = "id")
+
+control.fa <- mmes_control(
+  representation = list(equations = "conditional"),
+  update = list(method = "ai"),
+  convergence = list(maxIters = 500L),
+  output = list(inverse = 0, covariance = "none",
+                coefficientMatrix = FALSE, panelSize = 16L),
+  diagnostics = list(verbose = FALSE)
+)
+
+fit.fa <- mmes(
+  value ~ trait,
+  random = ~ vsm(fam(trait, k = 1), ism(id), Gu = Ai.fa),
+  rcov = ~ vsm(fam(trait, k = 1), ism(record)),
+  data = long.fa, control = control.fa
+)
+fit.fa$convergence
+plot(fit.fa$conditionalFA$likelihood, type = "l",
+     xlab = "Covariance update (including initial state)", ylab = "Restricted log likelihood")
+fit.fa$conditionalFA$updates  # AI or EM recovery at each accepted update
+```
+
+This first fit estimates independent genetic and residual loading axes.
+To impose common axes, give both FA factors the same `shared` tag:
+
+```{r qg-shared-fa, eval=FALSE}
+fit.shared.fa <- mmes(
+  value ~ trait,
+  random = ~ vsm(fam(trait, k = 1, shared = "axes"), ism(id), Gu = Ai.fa),
+  rcov = ~ vsm(fam(trait, k = 1, shared = "axes"), ism(record)),
+  data = long.fa, control = control.fa
+)
+fit.shared.fa$convergence
+fit.shared.fa$conditionalFA$state$loading
+fit.shared.fa$conditionalFA$state$weightG
+fit.shared.fa$conditionalFA$state$weightE
+
+if (fit.shared.fa$convergence) {
+  covmatrix_mmes(fit.shared.fa, term = 1, se = FALSE)$correlation
+  covmatrix_mmes(fit.shared.fa, term = 2, se = FALSE)$correlation
+  loadings_mmes(fit.shared.fa, term = names(fit.shared.fa$uList)[1L])
+  scores_mmes(fit.shared.fa, term = names(fit.shared.fa$uList)[1L])
+}
+```
+
+The shared model is $G=LD_gL^\mathsf{T}+\Psi_g$ and
+$R=LD_eL^\mathsf{T}+\Psi_e$, with diagonal factor allocations normalized to
+$D_g+D_e=I$. It changes the covariance family; it is not merely a faster
+implementation of independent FA terms. The common basis is in
+`conditionalFA$state$loading`, whereas `loadings_mmes()` reports equivalent
+marginal loadings for the selected covariance source. Common axes require
+equal genetic and residual ranks; independent FA terms may have different
+ranks. For uncorrelated residuals, replace the residual formula by
+`~vsm(dsm(trait), ism(record))` and omit shared tags.
+
+The same sparse representation can instead use conditional EM:
+
+```{r qg-conditional-em-control, eval=FALSE}
+control.em.fa <- mmes_control(
+  representation = list(equations = "conditional"),
+  update = list(method = "em"),
+  convergence = list(maxIters = 500L),
+  output = list(inverse = 0, covariance = "none",
+                coefficientMatrix = FALSE, panelSize = 16L),
+  diagnostics = list(verbose = FALSE)
+)
+```
+
+Pass `control.em.fa` in either fit to change only the optimizer. The earlier
+`update=list(method="conditional-fa")` interface still selects EM.
+Without a conditional representation request, the default AI workflow is
+unchanged. Conditional AI uses exact scores and a rank-revealing AI solve,
+backtracks proposals against the observed REML objective, and records any
+EM recovery in `conditionalFA$updates`.
+To keep nearly deterministic latent equations numerically stable, conditional
+AI uses a physical-specific floor of
+`max(1e-8, execution$inverseTol) * var(value)` and analogous dimensionless
+shared-allocation bounds. Inspect `conditionalFA$ai` for the actual floors
+and active bound indices; convergence at a bound is a projected-score
+condition, not a claim of an unconstrained interior optimum. Explicit EM
+retains its earlier machine-precision floor.
+
+The conditional engine currently supports one genetic FA covariance source
+with a known positive-definite relationship precision, Gaussian REML,
+and diagonal or FA residuals. Missing and unbalanced records are supported;
+weights, rotation, additional random terms and covariance-parameter constraints
+are not. Covariances are retained in factorized form: request a small explicit
+covariance with `covmatrix_mmes(..., se=FALSE)` rather than using `theta`.
+Coefficient PEVs and covariance-parameter standard errors are unavailable on
+this path, so it cannot supply the uncertainty needed by the earlier
+heritability/`vpredict()` examples.
+
+EM can be much slower than AI near variance boundaries, and 500 updates do
+not guarantee convergence. A nonconverged fit produces a warning; inspect
+the likelihood history, consider increasing the limit or revising the rank,
+and compare only converged fits. This engine is an experimental memory/reuse
+foundation, not a guarantee of thousand-trait fitting speed.
+Conditional AI additionally retains a dense covariance-parameter curvature
+matrix and derivative RHS; oversized workspaces are rejected through
+`execution$denseMemoryMB`. Neither optimizer guarantees a global optimum.
+See `vignette("sommer.mmes.options", package="sommer")` for equations, reporting
+conventions, eligibility and measured performance limits.
 
 ### 9) Bivariate model with repeated records
 
@@ -583,8 +762,9 @@ Now we fit an unstructured model for a legendre polynomial with two traits and a
 # mRR2b<-mmes(Y ~ Xf,
 #             random=~ vsm( usm( M ) ,  ism(SUBJECT) , Gu = Ai),
 #             rcov = ~ vsm( dsm(TRAIT), ism(units) ),
-#             nIters = 10, verbose = FALSE,
-#             data=DTC)
+#             data=DTC,
+#             control=mmes_control(convergence=list(maxIters=10),
+#               diagnostics=list(verbose=FALSE)))
 # summary(mRR2b)$varcomp
 ```
 
@@ -607,7 +787,7 @@ M <- GT_cpdata
 mix.marker <- mmer(Yield~1,
                    random=~Rowf+vsr(list(M)),
                    rcov=~units,data=DT, 
-                   verbose = FALSE)
+                   nIters = 1, verbose = FALSE)
 
 
 me.marker <- mix.marker$U$`u:M`$Yield
@@ -622,10 +802,12 @@ MTMMTinv<-t(M)%*%MMTinv # M' %*% (M'M)-
 MMTinv <- as(as(as( MMTinv,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
 attr(MMTinv, 'inverse')=TRUE
 
-mix.part <- mmes(Yield~1, nIters = 20, 
-                 random=~Rowf+vsm(ism(id), Gu=MMTinv),
-                 rcov=~units,data=DT,
-                 verbose = FALSE)
+mix.part <- mmes(Yield~1,
+  random=~Rowf+vsm(ism(id), Gu=MMTinv),
+  rcov=~units,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L),
+  diagnostics = list(verbose = FALSE)))
 
 #convert BLUPs to marker effects me=M'(M'M)- u
 me.part<-MTMMTinv%*%matrix(mix.part$uList$`vsm(ism(id), Gu = MMTinv`,ncol=1)
@@ -643,12 +825,16 @@ Under the covariance construction and regularization used in this example, the t
 
 An eigendecomposition of a symmetric relationship matrix can be written \(A=UDU^\prime\), with orthogonal eigenvectors \(U\) and diagonal eigenvalue matrix \(D\). Premultiplying the model by \(U^\prime\) rotates the observations and design matrices into this eigenbasis, so the relationship component becomes diagonal. The `mmes()` interface performs this transformation internally when `rotation=TRUE` is supplied to the relationship `vsm()` term; users should provide the named relationship **precision** matrix through `Gu`, just as in an ordinary `mmes()` fit.
 
+To keep these rotation examples quick, the wheat data are restricted to 200 lines and 100 markers, and each fit is capped at one REML iteration. Increase these limits for a full analysis.
+
 ```{r}
 
 data("DT_wheat", package="enhancer")
 rownames(GT_wheat) <- rownames(DT_wheat)
-GT <- apply(GT_wheat,2,as.numeric)
-rownames(GT) <- rownames(GT_wheat)
+DT <- DT_wheat[seq_len(min(200L, nrow(DT_wheat))), , drop=FALSE]
+GT <- apply(GT_wheat[rownames(DT), seq_len(min(100L, ncol(GT_wheat))), drop=FALSE],
+            2, as.numeric) - 1
+rownames(GT) <- rownames(DT)
 A <- A.mat(GT)
 Ai <- solve(A + diag(1e-5, nrow(A)))
 Ai[lower.tri(Ai)] <- t(Ai)[lower.tri(Ai)] # fill the lower triangular
@@ -658,28 +844,33 @@ isSymmetric(Ai)
 # One complete observation per relationship level gives a balanced example.
 DTn <- data.frame(
   id=rownames(A),
-  y=as.numeric(DT_wheat[,1])
+  y=as.numeric(DT[,1])
 )
 
-model_regular <- mmes(
-  y~1,
+model_regular <- mmes(y~1,
   random=~vsm(ism(id), Gu=Ai),
-  rcov=~units, data=DTn, verbose=FALSE
-)
+  rcov=~units,
+  data=DTn,
+  control = mmes_control(convergence = list(maxIters = 1L),
+                         diagnostics = list(verbose = FALSE)))
 
 # Henderson MME formulation with eigenbasis random coefficients.
-model_rotation_h <- mmes(
-  y~1,
+model_rotation_h <- mmes(y~1,
   random=~vsm(ism(id), Gu=Ai, rotation=TRUE),
-  rcov=~units, data=DTn, henderson=TRUE, verbose=FALSE
-)
+  rcov=~units,
+  data=DTn,
+  control = mmes_control(formulation = "henderson",
+  convergence = list(maxIters = 1L),
+  diagnostics = list(verbose = FALSE)))
 
 # Lee--van der Werf direct observation-covariance formulation.
-model_rotation_d <- mmes(
-  y~1,
+model_rotation_d <- mmes(y~1,
   random=~vsm(ism(id), Gu=Ai, rotation=TRUE),
-  rcov=~units, data=DTn, henderson=FALSE, verbose=FALSE
-)
+  rcov=~units,
+  data=DTn,
+  control = mmes_control(formulation = "direct",
+  convergence = list(maxIters = 1L),
+  diagnostics = list(verbose = FALSE)))
 
 model_regular$covParNative
 model_rotation_h$covParNative
@@ -690,7 +881,7 @@ plot(model_rotation_d$bu[,1], model_regular$bu[,1])
 
 ```
 
-The transformed and untransformed formulations are algebraically equivalent under the rotation assumptions. The current implementation accepts one rotated relationship term in a complete balanced Gaussian model and `computeCi=0` during fitting. Residual structures are supported when they are rotation invariant, i.e. when residuals may covary across rotation blocks such as traits or environments but are independent and identically structured across the levels of the rotated term: \(R=\Sigma_e\otimes I\). Examples are `rcov=~units`, `rcov=~vsm(dsm(env), ism(units))`, and `rcov=~vsm(usm(trait), ism(units))`. Residual structures correlating observations of different levels (e.g., `ar1m()` or `maternm()` over plots), residual variances differing among levels, and `W` matrices that are not diagonal with a constant weight within each rotation block are not invariant and are rejected. With `henderson=TRUE`, `mmes()` uses diagonal relationship precision in the eigen-coefficient basis. With `henderson=FALSE`, it uses the Lee--van der Werf transformed observation-covariance formulation. The relative computational benefit depends on model dimensions and sparsity.
+The transformed and untransformed formulations are algebraically equivalent under the rotation assumptions. The current implementation accepts one rotated relationship term in a complete balanced Gaussian model and `output$inverse=0` during fitting. Residual structures are supported when they are rotation invariant, i.e. when residuals may covary across rotation blocks such as traits or environments but are independent and identically structured across the levels of the rotated term: \(R=\Sigma_e\otimes I\). Examples are `rcov=~units`, `rcov=~vsm(dsm(env), ism(units))`, and `rcov=~vsm(usm(trait), ism(units))`. Residual structures correlating observations of different levels (e.g., `ar1m()` or `maternm()` over plots), residual variances differing among levels, and `W` matrices that are not diagonal with a constant weight within each rotation block are not invariant and are rejected. With `formulation="henderson"`, `mmes()` uses diagonal relationship precision in the eigen-coefficient basis. With `formulation="direct"`, it uses the Lee--van der Werf transformed observation-covariance formulation. The relative computational benefit depends on model dimensions and sparsity.
 
 Another example of how usefult this can be is in the multi-trait models:
 
@@ -698,8 +889,10 @@ Another example of how usefult this can be is in the multi-trait models:
 
 data("DT_wheat", package="enhancer")
 rownames(GT_wheat) <- rownames(DT_wheat)
-GT <- apply(GT_wheat,2,as.numeric)
-rownames(GT) <- rownames(GT_wheat)
+DT <- DT_wheat[seq_len(min(200L, nrow(DT_wheat))), , drop=FALSE]
+GT <- apply(GT_wheat[rownames(DT), seq_len(min(100L, ncol(GT_wheat))), drop=FALSE],
+            2, as.numeric) - 1
+rownames(GT) <- rownames(DT)
 A <- A.mat(GT)
 Ai <- solve(A + diag(1e-5, nrow(A)))
 Ai[lower.tri(Ai)] <- t(Ai)[lower.tri(Ai)] # fill the lower triangular
@@ -708,19 +901,22 @@ attr(Ai, "inverse") <- TRUE
 isSymmetric(Ai)
 # One complete observation per relationship level gives a balanced example.
 data(DT_wheat)
-DT <- DT_wheat
-GT <- apply(GT_wheat,2,as.numeric)
-rownames(GT) <- rownames(GT_wheat)
+DT <- DT_wheat[rownames(A), , drop=FALSE]
+GT <- apply(GT_wheat[rownames(A), seq_len(min(100L, ncol(GT_wheat))), drop=FALSE],
+            2, as.numeric) - 1
+rownames(GT) <- rownames(DT)
 DT <- data.frame(pheno=as.vector(DT),
                  env=as.factor(paste0("e", sort(rep(1:4,nrow(DT))))),
                  id=rep(rownames(DT),4))
 
 # Henderson MME formulation with eigenbasis random coefficients.
-model_rotation_h <- mmes(
-  pheno~1,
+model_rotation_h <- mmes(pheno~1,
   random=~vsm(usm(env),ism(id), Gu=Ai, rotation=TRUE),
-  rcov=~vsm(dsm(env),ism(units)), data=DT, henderson=TRUE, verbose=FALSE
-)
+  rcov=~vsm(dsm(env),ism(units)),
+  data=DT,
+  control = mmes_control(formulation = "henderson",
+  convergence = list(maxIters = 1L),
+  diagnostics = list(verbose = FALSE)))
 
 # genetic correlation
 cov2cor(model_rotation_h$theta[[1]])
@@ -764,8 +960,9 @@ Vg=c(Va,Vd); names(Vg) <- c("Va","Vd"); Vg
 ## REML method
 ##############################
 mix2 <- mmes(yield~ setf + setf:repf,
-            random=~femalef:malef:setf + malef:setf, 
-            data=DT, verbose = FALSE)
+  random=~femalef:malef:setf + malef:setf,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 vc <- summary(mix2)$varcomp; vc
 Vfm <- vc[1,"estimate"]
 Vm <- vc[2,"estimate"]
@@ -824,9 +1021,10 @@ Vg=c(Va,Vd); names(Vg) <- c("Va","Vd"); Vg
 ## REML method
 ##############################
 
-mix2 <- mmes(yield~ setf + setf:repf ,
-            random=~femalef:malef:setf + malef:setf + femalef:setf, 
-            data=DT, verbose = FALSE)
+mix2 <- mmes(yield~ setf + setf:repf,
+  random=~femalef:malef:setf + malef:setf + femalef:setf,
+  data=DT,
+  control = mmes_control(convergence = list(maxIters = 1L), diagnostics = list(verbose = FALSE)))
 vc <- summary(mix2)$varcomp; vc
 Vfm <- vc[1,"estimate"]
 Vm <- vc[2,"estimate"]
@@ -902,9 +1100,9 @@ Instead of fitting the RRBLUP/SNP-BLUP model we can fit a GBLUP model which is l
 # 
 # mixGBLUP <- mmes(Yield~1,
 #              random=~vsm(ism(id), Gu=MMTinv) + Rowf + Colf,
-#              rcov=~units, nIters=25,
-#              verbose = T, computeCi = 2,
-#              data=DT)
+#              rcov=~units, data=DT,
+#              control=mmes_control(convergence=list(maxIters=25),
+#                diagnostics=list(verbose=TRUE), output=list(inverse=2)))
 # a.from.g <-MTMMTinv%*%matrix(mixGBLUP$uList$`vsm(ism(id), Gu = MMTinv`,ncol=1)
 # start=mixGBLUP$partitions[[1]][1]
 # end=mixGBLUP$partitions[[1]][2]

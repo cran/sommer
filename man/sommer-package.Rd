@@ -370,9 +370,9 @@ numerically differentiated.
 
 During optimization, \code{mmes} does not routinely materialize the complete
 \eqn{C^{-1}}. Takahashi recursions provide the selected inverse subset required
-for REML trace calculations. After convergence, \code{computeCi=1} obtains the
+for REML trace calculations. After convergence, \code{control$output$inverse=1} obtains the
 diagonal information needed for prediction error variances through the sparse
-inverse subset, whereas \code{computeCi=2} requests the complete
+inverse subset, whereas \code{control$output$inverse=2} requests the complete
 coefficient-matrix inverse.
 
 \strong{Parameter updates and numerical safeguards}
@@ -432,7 +432,7 @@ Henderson C.R. 1975. Best Linear Unbiased Estimation and Prediction under a Sele
 
 Kang et al. 2008. Efficient control of population structure in model organism association mapping. Genetics 178:1709-1723.
 
-Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: http://dx.doi.org/10.1101/027201.
+Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear mixed model analysis based on genomic information. Cold Spring Harbor. doi: https://doi.org/10.1101/027201.
 
 Maier et al. 2015. Joint analysis of psychiatric disorders increases accuracy of risk prediction for schizophrenia, bipolar disorder, and major depressive disorder. Am J Hum Genet; 96(2):283-294.
 
