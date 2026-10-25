@@ -143,7 +143,7 @@ section.footnotes::before {
 <div class="frontmatter">
 <div class="title"><h1>Quantitative genetics using the sommer package</h1></div>
 <div class="author"><h2>Giovanny Covarrubias-Pazaran</h2></div>
-<div class="date"><h3>2026-10-23</h3></div>
+<div class="date"><h3>2026-10-25</h3></div>
 </div>
 <div class="body">
 <p>The sommer package was developed to provide R users with flexible univariate and multivariate linear mixed-model tools for genetic and non-genetic analyses in diploid and polyploid organisms. The package can estimate variance-covariance parameters while allowing structured covariance models for random and residual effects, heterogeneous variances, and extraction of quantities such as BLUPs, BLUEs, residuals, fitted values, and prediction-error information. The current <code>mmes()</code> implementation uses Henderson’s mixed model equations with a sparse Average Information REML algorithm. Its numerical core uses sparse LDLT factorization, reuses the factorization for mixed-model solutions and variance-parameter differentiation, and can compute selected inverse elements with Takahashi sparse-inverse recursions when required by the REML calculations. Covariance factors supplied through <code>vsm()</code> are handled through a generic descriptor architecture and can be combined in arbitrary Kronecker products. The package also retains the complementary marginal-covariance MNR formulation through <code>mmer()</code>. The relative computational advantage of the two formulations depends on model dimensions, sparsity, and covariance structure rather than on a single <code>p</code> versus <code>n</code> rule.</p>

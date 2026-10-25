@@ -142,7 +142,7 @@ section.footnotes::before {
 <div class="frontmatter">
 <div class="title"><h1>Fitting genotype by environment models in sommer</h1></div>
 <div class="author"><h2>Giovanny Covarrubias-Pazaran</h2></div>
-<div class="date"><h3>2026-10-23</h3></div>
+<div class="date"><h3>2026-10-25</h3></div>
 </div>
 <div class="body">
 <p>The sommer package was developed to provide R users with a flexible univariate and multivariate linear mixed-model solver. The current package provides two complementary REML formulations. The <code>mmes()</code> function uses Henderson’s mixed model equations and a sparse Average Information REML algorithm: the mixed-model coefficient matrix is factorized with sparse LDLT methods, selected inverse elements required by REML calculations can be obtained with Takahashi sparse-inverse recursions, and the factorization is reused for mixed-model solutions and variance-parameter derivatives. The <code>mmer()</code> function uses the marginal-covariance MNR formulation, in which REML calculations are organized around the observation covariance matrix (V) and the REML projection matrix (P). The relative efficiency of the two formulations depends on model dimensions, sparsity, and covariance structure rather than only on whether (p&gt;n) or (n&gt;p). The core numerical algorithms are coded in C++ using Armadillo and Eigen. The package allows users to specify flexible variance-covariance structures for random and residual effects and to obtain quantities such as REML variance-covariance estimates, BLUPs, BLUEs, residuals, fitted values, and prediction error variance information.</p>

@@ -142,7 +142,7 @@ section.footnotes::before {
 <div class="frontmatter">
 <div class="title"><h1>Installing and configuring BLAS thread control</h1></div>
 <div class="author"><h2>sommer development team</h2></div>
-<div class="date"><h3>2026-10-23</h3></div>
+<div class="date"><h3>2026-10-25</h3></div>
 </div>
 <div class="body">
 <h1 id="what-the-error-means">What the error means</h1>
@@ -173,7 +173,7 @@ R’s BLAS library. No separate CHOLMOD installation is needed for
 R.home()
 #&gt; [1] &quot;/cvmfs/biogrid-software.rnd.seeds.basf.net/tools/eb/x86_64/generic/software/breeding_R_dev/4.2.2-foss-2022b/lib64/R&quot;
 .libPaths()
-#&gt; [1] &quot;/gpfs/gssgpfs1/data/run/Tools/tmp/users/u10127375/RtmpkKBN4U/Rinst12f3e94a17d53c&quot;                                           
+#&gt; [1] &quot;/gpfs/gssgpfs1/data/run/Tools/tmp/users/u10127375/RtmpDn9nMc/Rinst1797686d9f2287&quot;                                           
 #&gt; [2] &quot;/home/u10127375/R/x86_64-pc-linux-gnu-library/4.2&quot;                                                                          
 #&gt; [3] &quot;/cvmfs/biogrid-software.rnd.seeds.basf.net/tools/eb/x86_64/generic/software/breeding_R_dev/4.2.2-foss-2022b/lib64/R/library&quot;
 extSoftVersion()[&quot;BLAS&quot;]
@@ -275,8 +275,10 @@ packageVersion(&quot;sommer&quot;)
 find.package(&quot;sommer&quot;)
 stopifnot(&quot;control&quot; %in% names(formals(mmes)))
 </code></pre>
-<p>The following example runs only when the required controller and
-<code>parallelly</code> are available. It uses small synthetic data, rather than requiring
+<p>Run the following example interactively after configuring your BLAS backend.
+It is not evaluated when building this vignette: even when a controller and
+<code>parallelly</code> are installed, a backend or administrator-imposed thread limit
+can reject a request. It uses small synthetic data, rather than requiring
 your <code>DT</code> or <code>MMTi</code> objects. It tests a one-thread request first, then
 allocation-aware automatic sizing. Both are short verification fits, not
 convergence or performance benchmarks.</p>
@@ -319,53 +321,6 @@ if(requireNamespace(&quot;sommer&quot;, quietly=TRUE) &amp;&amp;
 }else{
   message(&quot;Verification skipped: install the matching controller and parallelly, and load a sommer build with blasThreads.&quot;)
 }
-#&gt; $blasBackend
-#&gt; [1] &quot;OPENBLAS&quot;
-#&gt; 
-#&gt; $controller
-#&gt; [1] &quot;flexiblas&quot;
-#&gt; 
-#&gt; $blasThreadsRequested
-#&gt; [1] 1
-#&gt; 
-#&gt; $blasThreadsConfigured
-#&gt; [1] 1
-#&gt; 
-#&gt; $availableCPUs
-#&gt; [1] 8
-#&gt; 
-#&gt; $openmpMaxThreads
-#&gt; [1] 1
-#&gt; 
-#&gt; $numericalPath
-#&gt; [1] &quot;block Schur&quot;
-#&gt; 
-#&gt; $averageCPUs
-#&gt; [1] 0.9673913
-#&gt; 
-#&gt; $blasBackend
-#&gt; [1] &quot;OPENBLAS&quot;
-#&gt; 
-#&gt; $controller
-#&gt; [1] &quot;flexiblas&quot;
-#&gt; 
-#&gt; $blasThreadsRequested
-#&gt; [1] 8
-#&gt; 
-#&gt; $blasThreadsConfigured
-#&gt; [1] 8
-#&gt; 
-#&gt; $availableCPUs
-#&gt; [1] 8
-#&gt; 
-#&gt; $openmpMaxThreads
-#&gt; [1] 8
-#&gt; 
-#&gt; $numericalPath
-#&gt; [1] &quot;block Schur&quot;
-#&gt; 
-#&gt; $averageCPUs
-#&gt; [1] 1.964286
 </code></pre>
 <p><code>blasThreadsConfigured</code> should show the setting used during the fit. The
 controller restores the previous BLAS setting on return, including on errors.

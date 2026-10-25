@@ -143,7 +143,7 @@ section.footnotes::before {
 <div class="frontmatter">
 <div class="title"><h1>Factor analytic and reduced rank models in sommer</h1></div>
 <div class="author"><h2>Giovanny Covarrubias-Pazaran</h2></div>
-<div class="date"><h3>2026-10-23</h3></div>
+<div class="date"><h3>2026-10-25</h3></div>
 </div>
 <div class="body">
 <p>The sommer package was developed to provide R users with a flexible univariate and multivariate linear mixed-model solver. Multi-environment trial (MET) analyses often need a genetic covariance structure among environments. A fully unstructured covariance (<code>usm()</code>) captures every pairwise environment relationship but requires \(q(q+1)/2-1\) parameters for \(q\) environments, which quickly becomes difficult to estimate reliably as the number of environments grows. Factor-analytic (FA) and reduced-rank (RR) models approximate that same covariance with far fewer parameters by assuming that genotype-by-environment interaction is driven by a small number of latent factors.</p>
@@ -203,7 +203,18 @@ $$</p>
 <h3 id="1-data">1) Data</h3>
 <p>We use the <code>DT_h2</code> multi-environment potato yield dataset, which has 15 environments (<code>Env</code>, combining location and year) and 41 genotypes (<code>Name</code>).</p>
 <pre><code class="language-r">library(sommer)
-data(DT_h2, package=&quot;enhancer&quot;)
+</code></pre>
+<pre><code>## Loading required package: Matrix
+</code></pre>
+<pre><code>## Loading required package: enhancer
+</code></pre>
+<pre><code>## Loading required package: MASS
+</code></pre>
+<pre><code>## Loading required package: crayon
+</code></pre>
+<pre><code>## sommer: No accessible NVIDIA GPU detected; only CPU options are available.
+</code></pre>
+<pre><code class="language-r">data(DT_h2, package=&quot;enhancer&quot;)
 DT &lt;- DT_h2
 DT &lt;- DT[with(DT, order(Env)), ]
 length(unique(DT$Env))
